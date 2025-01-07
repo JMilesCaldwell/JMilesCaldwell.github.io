@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evershroud Calendar</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      text-align: center;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    .calendar {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff9ed;
+      border: 1px solid #ddd;
+    }
+    .weather {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff5e6;
+      border: 1px solid #ddd;
+      font-style: italic;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    .button {
+      background-color: #8B0000;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      font-family: 'Cinzel', serif;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .button:hover {
+      background-color: #6B0000;
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Evershroud Calendar</h1>
+  <div class="calendar">
+    <h2>Current Date</h2>
+    <p id="evershroud-date"></p>
+    <p id="evershroud-time"></p>
+  </div>
+
+  <div class="weather">
+    <h2>Seasonal Weather</h2>
+    <p id="weather-pattern"></p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Buttons -->
+  <a href="index.html" class="button">Home</a>
+  <a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" 
+     class="button" target="_blank">
+    Learn About Weather
+  </a>
+</div>
+
+<footer>
+  &copy; 2025 Caldwell. A repository of timekeeping and weather patterns for the Evershroud Isles.
+</footer>
+
+<script>
+  // Constants for the Evershroud calendar
+  const DAYS_PER_YEAR = 250;
+  const DAYS_PER_MONTH = 25;
+  const NAMED_MONTHS = [
+    "Frostmere", "Fellwind", "Vinetide", "Verdant", "Hammerhearth",
+    "Duskwane", "Alderen", "Ashveil", "Stonereach", "Starfall"
+  ];
+  const NAMED_DAYS = ["Sunday", "Moonday", "Talsday", "Midweek", "Ralsday", "Felsday", "Berynsday"];
+
+  const WEATHER_PATTERNS = {
+    "Mist's Rise": [
+      "Dense Ground Frost", "Freezing Fog", "Sleet Showers", "Heavy Snowfall", "Biting Coastal Winds",
+      "Overcast with Ice Pellets", "Snow-Clogged Mists", "Sudden Freezing Rain", "Storm-Driven Tides",
+      "Frost-Covered Drizzle", "Windless Chill", "Dawn Hoarfrost", "Snow-Dappled Fog",
+      "Thunderous Ice Storms", "Starry Winter Nights"
+    ],
+    "Sea's Clarity": [
+      "Morning Dew", "Light Spring Rain", "Warm Coastal Breezes", "Clear, Mild Days", "Patches of Fog",
+      "Short Sunbursts", "Gentle Drizzles", "Crisp Dawn Air", "Rolling Thunderstorms", "Blooming Rainbows",
+      "Cool, Windy Evenings", "Occasional Hailstorms", "Fertile Mists", "Scattered Sunlight",
+      "Sprouting Heat"
+    ],
+    "Clear Skies": [
+      "Dry, Sunny Days", "Distant Thunderheads", "Golden Sunlight", "Warm, Breezy Afternoons", "Heat Haze",
+      "Light Cloud Cover", "Scattered Showers", "Sudden Summer Storms", "Stagnant Heat", 
+      "Rolling Meadows Breeze", "Golden Hour Haze", "Sun-Dappled Forests", "Nighttime Heat Lightning",
+      "Clear Night Skies", "Gentle, Cooling Rains"
+    ],
+    "Mist's Fall": [
+      "Cold Autumn Winds", "Heavy Rainstorms", "Thick, Creeping Mists", "Darkening Skies", "Misty Drizzle",
+      "Turbulent Coastal Storms", "Frosted Mornings", "Scattered Thunderstorms", "Chill Breezes",
+      "Leaf-Carpeted Paths", "Twilight Gloom", "Shimmering Mistlight", "Steady, Relentless Rain",
+      "Morning Fog Lifting to Sunshine", "Starry Chill Nights"
+    ]
+  };
+
+  const SEASON_MAPPING = [
+    { months: ["Frostmere", "Fellwind"], season: "Mist's Rise" },
+    { months: ["Vinetide", "Verdant"], season: "Sea's Clarity" },
+    { months: ["Hammerhearth", "Duskwane"], season: "Clear Skies" },
+    { months: ["Alderen", "Ashveil", "Stonereach", "Starfall"], season: "Mist's Fall" }
+  ];
+
+  const START_DATE = new Date(2024, 10, 27); // 15th Verdant, 784 Y.S.
+
+  function calculateEvershroudDate() {
+    const now = new Date();
+    const daysElapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
+    
+    let yearsPassed = Math.floor(daysElapsed / DAYS_PER_YEAR);
+    let remainingDays = daysElapsed % DAYS_PER_YEAR;
+
+    const year = 784 + yearsPassed;
+    const monthIndex = Math.floor(remainingDays / DAYS_PER_MONTH);
+    const dayOfMonth = (remainingDays % DAYS_PER_MONTH) + 1;
+
+    // Use real-world weekday for day names
+    const realWorldDay = new Date().getDay();
+    const dayOfWeek = NAMED_DAYS[realWorldDay];
+
+    return {
+      year,
+      month: NAMED_MONTHS[monthIndex],
+      dayOfMonth,
+      dayOfWeek
+    };
+  }
+
+  function getSeasonalWeather(month) {
+    const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
+    return WEATHER_PATTERNS[season][Math.floor(Math.random() * WEATHER_PATTERNS[season].length)];
+  }
+
+  function updateEvershroudCalendar() {
+    const date = calculateEvershroudDate();
+    const weather = getSeasonalWeather(date.month);
+
+    document.getElementById("evershroud-date").innerText = 
+      `${date.dayOfWeek}, ${date.dayOfMonth} ${date.month}, ${date.year} Y.S.`;
+    document.getElementById("evershroud-time").innerText = `Real-world time: ${new Date().toLocaleTimeString()}`;
+    document.getElementById("weather-pattern").innerText = weather;
+  }
+
+  setInterval(updateEvershroudCalendar, 1000);
+  updateEvershroudCalendar();
+</script>
+
+</body>
+</html>
