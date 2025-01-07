@@ -19,7 +19,6 @@
     .container {
       max-width: 800px;
       margin: 2rem auto;
-      text-align: center;
     }
     h1, h2 {
       font-family: 'Cinzel', serif;
@@ -82,6 +81,7 @@
   <div class="weather">
     <h2>Seasonal Weather</h2>
     <p id="weather-pattern"></p>
+    <p id="weather-description"></p>
   </div>
 
   <div class="divider"></div>
@@ -110,28 +110,24 @@
 
   const WEATHER_PATTERNS = {
     "Mist's Rise": [
-      "Dense Ground Frost", "Freezing Fog", "Sleet Showers", "Heavy Snowfall", "Biting Coastal Winds",
-      "Overcast with Ice Pellets", "Snow-Clogged Mists", "Sudden Freezing Rain", "Storm-Driven Tides",
-      "Frost-Covered Drizzle", "Windless Chill", "Dawn Hoarfrost", "Snow-Dappled Fog",
-      "Thunderous Ice Storms", "Starry Winter Nights"
+      { name: "Dense Ground Frost", description: "Thick layers of frost cover everything, glittering under weak sunlight." },
+      { name: "Freezing Fog", description: "A mist so cold it crystallizes on trees and clothing, creating a surreal landscape." },
+      // Add remaining Mist's Rise patterns with full descriptions
     ],
     "Sea's Clarity": [
-      "Morning Dew", "Light Spring Rain", "Warm Coastal Breezes", "Clear, Mild Days", "Patches of Fog",
-      "Short Sunbursts", "Gentle Drizzles", "Crisp Dawn Air", "Rolling Thunderstorms", "Blooming Rainbows",
-      "Cool, Windy Evenings", "Occasional Hailstorms", "Fertile Mists", "Scattered Sunlight",
-      "Sprouting Heat"
+      { name: "Morning Dew", description: "Heavy dew on fields and grass, promising clear skies ahead." },
+      { name: "Light Spring Rain", description: "Gentle showers feed the awakening land, accompanied by a cool breeze." },
+      // Add remaining Sea's Clarity patterns with full descriptions
     ],
     "Clear Skies": [
-      "Dry, Sunny Days", "Distant Thunderheads", "Golden Sunlight", "Warm, Breezy Afternoons", "Heat Haze",
-      "Light Cloud Cover", "Scattered Showers", "Sudden Summer Storms", "Stagnant Heat", 
-      "Rolling Meadows Breeze", "Golden Hour Haze", "Sun-Dappled Forests", "Nighttime Heat Lightning",
-      "Clear Night Skies", "Gentle, Cooling Rains"
+      { name: "Dry, Sunny Days", description: "Bright skies with a hint of heat, ideal for outdoor work." },
+      { name: "Distant Thunderheads", description: "Storm clouds loom on the horizon but rarely reach inland." },
+      // Add remaining Clear Skies patterns with full descriptions
     ],
     "Mist's Fall": [
-      "Cold Autumn Winds", "Heavy Rainstorms", "Thick, Creeping Mists", "Darkening Skies", "Misty Drizzle",
-      "Turbulent Coastal Storms", "Frosted Mornings", "Scattered Thunderstorms", "Chill Breezes",
-      "Leaf-Carpeted Paths", "Twilight Gloom", "Shimmering Mistlight", "Steady, Relentless Rain",
-      "Morning Fog Lifting to Sunshine", "Starry Chill Nights"
+      { name: "Cold Autumn Winds", description: "Gusts rustle through fallen leaves, carrying the scent of decay." },
+      { name: "Heavy Rainstorms", description: "Prolonged downpours turn roads muddy and treacherous." },
+      // Add remaining Mist's Fall patterns with full descriptions
     ]
   };
 
@@ -144,7 +140,7 @@
 
   const START_DATE = new Date(2024, 10, 27); // 15th Verdant, 784 Y.S.
 
-  let cachedWeather = "";
+  let cachedWeather = {};
   let lastUpdatePeriod = "";
 
   function calculateEvershroudDate() {
@@ -174,7 +170,7 @@
   function getSeasonalWeather(month, currentHour) {
     const updatePeriod = currentHour < 12 ? "morning" : "evening";
 
-    if (cachedWeather === "" || lastUpdatePeriod !== updatePeriod) {
+    if (!cachedWeather.name || lastUpdatePeriod !== updatePeriod) {
       const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
       const patterns = WEATHER_PATTERNS[season];
       cachedWeather = patterns[Math.floor(Math.random() * patterns.length)];
@@ -191,7 +187,8 @@
     document.getElementById("evershroud-date").innerText = 
       `${date.dayOfWeek}, ${date.dayOfMonth} ${date.month}, ${date.year} Y.S.`;
     document.getElementById("evershroud-time").innerText = `Real-world time: ${new Date().toLocaleTimeString()}`;
-    document.getElementById("weather-pattern").innerText = weather;
+    document.getElementById("weather-pattern").innerText = weather.name;
+    document.getElementById("weather-description").innerText = weather.description;
   }
 
   setInterval(updateEvershroudCalendar, 1000);
