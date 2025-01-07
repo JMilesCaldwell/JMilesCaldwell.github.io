@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -122,6 +123,11 @@
 <div class="container">
   <h1>Commoner Generator</h1>
   <div class="fancy-divider"></div>
+
+  <!-- HOME BUTTON -->
+  <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/index.html'">
+    Home
+  </button>
   
   <p>
     Generate a “level 0” commoner with a chosen or random race and background, including 
@@ -1113,7 +1119,6 @@ const BACKGROUNDS = [
 
 /* ==================================================
    ========== PERSONALITY TRAITS (VAST) =============
-   We will pick exactly 2 random traits from this list.
    ================================================== */
 const PERSONALITY_TRAITS = [
   "I always see the best in people, even if they don’t deserve it.",
@@ -1205,6 +1210,22 @@ function populateSelect(selectId, optionsArray) {
    ========== RANDOMISATION + HELPER FUNCTIONS =======
    ================================================== */
 
+function pickRandom(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function pickMultipleDistinct(array, count) {
+  const copy = [...array];
+  const result = [];
+  if (count > copy.length) count = copy.length;
+  for (let i = 0; i < count; i++) {
+    const index = Math.floor(Math.random() * copy.length);
+    result.push(copy[index]);
+    copy.splice(index, 1);
+  }
+  return result;
+}
+
 function roll4d6DropLowest() {
   let scores = [];
   for (let i = 0; i < 6; i++) {
@@ -1223,26 +1244,6 @@ function getStandardArray() {
 
 function abilityMod(score) {
   return Math.floor((score - 10) / 2);
-}
-
-function pickRandom(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-/**
- * Picks 'count' distinct random items from 'array'.
- * If 'count' > array.length, it picks as many as possible uniquely.
- */
-function pickMultipleDistinct(array, count) {
-  const copy = [...array];
-  const result = [];
-  if (count > copy.length) count = copy.length;
-  for (let i = 0; i < count; i++) {
-    const index = Math.floor(Math.random() * copy.length);
-    result.push(copy[index]);
-    copy.splice(index, 1);
-  }
-  return result;
 }
 
 /* ==================================================
