@@ -144,6 +144,9 @@
 
   const START_DATE = new Date(2024, 10, 27); // 15th Verdant, 784 Y.S.
 
+  let cachedWeather = "";
+  let lastUpdatePeriod = "";
+
   function calculateEvershroudDate() {
     const now = new Date();
     const daysElapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
@@ -156,25 +159,34 @@
     const dayOfMonth = (remainingDays % DAYS_PER_MONTH) + 1;
 
     // Use real-world weekday for day names
-    const realWorldDay = new Date().getDay();
+    const realWorldDay = now.getDay();
     const dayOfWeek = NAMED_DAYS[realWorldDay];
 
     return {
       year,
       month: NAMED_MONTHS[monthIndex],
       dayOfMonth,
-      dayOfWeek
+      dayOfWeek,
+      currentHour: now.getHours()
     };
   }
 
-  function getSeasonalWeather(month) {
-    const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
-    return WEATHER_PATTERNS[season][Math.floor(Math.random() * WEATHER_PATTERNS[season].length)];
+  function getSeasonalWeather(month, currentHour) {
+    const updatePeriod = currentHour < 12 ? "morning" : "evening";
+
+    if (cachedWeather === "" || lastUpdatePeriod !== updatePeriod) {
+      const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
+      const patterns = WEATHER_PATTERNS[season];
+      cachedWeather = patterns[Math.floor(Math.random() * patterns.length)];
+      lastUpdatePeriod = updatePeriod;
+    }
+
+    return cachedWeather;
   }
 
   function updateEvershroudCalendar() {
     const date = calculateEvershroudDate();
-    const weather = getSeasonalWeather(date.month);
+    const weather = getSeasonalWeather(date.month, date.currentHour);
 
     document.getElementById("evershroud-date").innerText = 
       `${date.dayOfWeek}, ${date.dayOfMonth} ${date.month}, ${date.year} Y.S.`;
