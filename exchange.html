@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Evershroud Exchange</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    th {
+      background-color: #8B0000;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    .button {
+      background-color: #8B0000;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      font-family: 'Cinzel', serif;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .button:hover {
+      background-color: #6B0000;
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>The Evershroud Exchange</h1>
+  <table id="stock-exchange">
+    <thead>
+      <tr>
+        <th>Location</th>
+        <th>Amber</th>
+        <th>Salt</th>
+        <th>Tin</th>
+        <th>Wool</th>
+        <th>Timber</th>
+        <th>Salted Fish</th>
+        <th>Copper</th>
+        <th>Blackleaf</th>
+        <th>Botanical Specimens</th>
+        <th>Fungus</th>
+        <th>Artifacts</th>
+        <th>Luxury Goods</th>
+        <th>Weapons/Armor</th>
+        <th>Bronze</th>
+        <th>Magical Items</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Dynamic content will be injected here -->
+    </tbody>
+  </table>
+  
+  <div id="countdown-timer">
+  <h3>Next Price Refresh:</h3>
+  <p id="timer"></p>
+</div>
+
+  <div class="divider"></div>
+
+  <!-- Home Button -->
+  <a href="https://jmilescaldwell.github.io" class="button">Home</a>
+</div>
+
+<footer>
+  &copy; 2025 Caldwell. Providing dynamic trade pricing for the Evershroud Isles.
+</footer>
+
+<script>
+  const availabilityScores = {
+    "Silt": [2, 5, 2, 1, 3, 5, 2, 1, 2, 1, 3, 4, 3, 3, 3],
+    "Villegrom Estate": [1, 1, 1, 5, 2, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1],
+    "Peyton": [1, 1, 1, 2, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1],
+    "Wren": [1, 2, 1, 2, 4, 5, 1, 1, 2, 1, 2, 3, 2, 1, 1],
+    "Gunnar’s Rest": [1, 1, 3, 1, 1, 1, 2, 1, 1, 1, 3, 1, 2, 4, 2],
+    "Kelton": [1, 1, 5, 1, 2, 2, 2, 1, 1, 1, 3, 2, 2, 4, 1],
+    "Vigden": [5, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1],
+    "Lamya": [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 5, 2, 2, 1, 2],
+    "Fulcimer Lighthouse": [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "Hermit Sanctum": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 3],
+    "World’s End": [2, 3, 1, 1, 2, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "Azure": [2, 1, 1, 2, 3, 3, 4, 2, 3, 2, 3, 5, 4, 3, 4],
+    "Ald Traeus": [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1],
+    "Ald Kundhal": [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1],
+    "Waglynn Lighthouse": [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "Holgren": [1, 1, 1, 2, 2, 5, 1, 1, 2, 1, 2, 3, 1, 1, 1],
+    "Ald Crayden": [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1],
+    "Jornath": [1, 1, 1, 1, 2, 1, 5, 1, 2, 1, 2, 2, 2, 4, 2],
+    "Sylfaene": [1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "Refuge": [1, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "Caldwell": [1, 1, 1, 2, 2, 2, 1, 5, 3, 2, 3, 4, 2, 3, 3],
+    "Ald Neloth": [1, 1, 1, 1, 2, 2, 1, 3, 2, 1, 3, 2, 1, 2, 2],
+    "Lyndell Estate": [1, 1, 1, 1, 1, 2, 1, 5, 1, 1, 2, 2, 1, 1, 1],
+    "Devyth": [1, 1, 1, 1, 1, 5, 1, 2, 1, 1, 2, 2, 1, 1, 1],
+    "Providence": [1, 1, 1, 5, 3, 3, 1, 3, 2, 2, 2, 3, 2, 3, 2],
+    "Mong Vinaya": [1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    "Morgrin Lighthouse": [1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 3, 2, 1, 1, 1],
+    "Dusk": [1, 1, 1, 1, 1, 2, 1, 1, 1, 5, 5, 3, 3, 2, 4],
+    "Verdant Acres": [1, 1, 1, 3, 1, 1, 1, 1, 2, 5, 3, 2, 1, 2, 1],
+    "Ald Margraeve": [1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 3, 2, 2, 2, 2],
+    "Mong Harrad": [1, 1, 1, 1, 1, 5, 1, 1, 1, 2, 2, 1, 1, 1, 1],
+    "Tiçenne Lighthouse": [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1]
+  };
+
+  const basePrices = [10, 5, 15, 8, 12, 6, 14, 20, 18, 10, 25, 50, 30, 40, 35]; // Base prices for commodities in CP
+
+  function calculatePrice(basePrice, availability) {
+    const shift = Math.floor((Math.random() * 10 - 5) * 0.2 * availability); // Price shift limited to 20%
+    return Math.max(basePrice + shift, 1); // Ensure price is at least 1 CP
+  }
+
+  function updateStockExchange() {
+    const tableBody = document.querySelector("#stock-exchange tbody");
+    tableBody.innerHTML = ""; // Clear existing rows
+
+    Object.entries(availabilityScores).forEach(([location, scores]) => {
+      const row = document.createElement("tr");
+      const locationCell = document.createElement("td");
+      locationCell.textContent = location;
+      row.appendChild(locationCell);
+
+      scores.forEach((score, index) => {
+        const price = calculatePrice(basePrices[index], score);
+        const cell = document.createElement("td");
+        cell.textContent = `${price} CP`;
+        row.appendChild(cell);
+      });
+
+      tableBody.appendChild(row);
+    });
+  }
+
+  setInterval(updateStockExchange, 1000 * 60 * 60 * 12); // Refresh every 12 hours
+  updateStockExchange();
+  
+  function startCountdown() {
+  const now = new Date();
+  const nextRefresh = new Date();
+  
+  // Set next refresh to the next 12-hour mark
+  nextRefresh.setHours(now.getHours() < 12 ? 12 : 24, 0, 0, 0);
+
+  function updateTimer() {
+    const currentTime = new Date();
+    const timeLeft = nextRefresh - currentTime;
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById("timer").textContent = "Refreshing...";
+      updateStockExchange(); // Refresh prices immediately
+      startCountdown(); // Start the next countdown
+      return;
+    }
+
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+    document.getElementById("timer").textContent = 
+      `${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  updateTimer(); // Call once immediately to display the timer without delay
+  const timerInterval = setInterval(updateTimer, 1000); // Update every second
+}
+
+// Start the countdown when the page loads
+startCountdown();
+
+  
+</script>
+
+</body>
+</html>
