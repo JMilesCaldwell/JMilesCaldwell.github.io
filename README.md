@@ -13,4 +13,5 @@ Features
 - Ongoing Updates: Continuously expanded to include new features and content.
 ##
 How to Use
-Visit the main site to explore the tools and resources available.
+
+Visit the main page at JmilesCaldwell.github.io to explore the tools and resources available.
