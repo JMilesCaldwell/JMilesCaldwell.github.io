@@ -207,7 +207,7 @@ const WEATHER_PATTERNS = {
   }
 
   // Deterministic weather logic
-  function getDeterministicWeather(date) {
+function getDeterministicWeather(date) {
     const { year, month, dayOfMonth } = date;
     const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
     const patterns = WEATHER_PATTERNS[season];
@@ -216,8 +216,13 @@ const WEATHER_PATTERNS = {
     const offset = (year * 7) % patterns.length;
     const patternIndex = (dayOfYear + offset) % patterns.length;
 
+    // Add a 10% chance for randomness
+    if (Math.random() < 0.1) {
+        return patterns[Math.floor(Math.random() * patterns.length)];
+    }
+
     return patterns[patternIndex];
-  }
+}
 
   // Sea lanes status logic
   function getSeaLanesStatus(month) {
