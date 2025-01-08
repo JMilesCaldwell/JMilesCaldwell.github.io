@@ -20,7 +20,7 @@
       max-width: 1200px;
       margin: 2rem auto;
     }
-    h1, h2 {
+    h1, h2, h3 {
       font-family: 'Cinzel', serif;
     }
     table {
@@ -70,6 +70,22 @@
       color: #666;
       font-family: 'Almendra', serif;
     }
+    #countdown-timer {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+    #timer {
+      font-weight: bold;
+    }
+    .price-change {
+      margin-left: 0.5rem;
+    }
+    .price-up {
+      color: green;
+    }
+    .price-down {
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -101,11 +117,11 @@
       <!-- Dynamic content will be injected here -->
     </tbody>
   </table>
-  
+
   <div id="countdown-timer">
-  <h3>Next Price Refresh:</h3>
-  <p id="timer"></p>
-</div>
+    <h3>Next Price Refresh:</h3>
+    <p id="timer"></p>
+  </div>
 
   <div class="divider"></div>
 
@@ -119,7 +135,7 @@
 
 <script>
   const availabilityScores = {
-    "Silt": [2, 5, 2, 1, 3, 5, 2, 1, 2, 1, 3, 4, 3, 3, 3],
+   "Silt": [2, 5, 2, 1, 3, 5, 2, 1, 2, 1, 3, 4, 3, 3, 3],
     "Villegrom Estate": [1, 1, 1, 5, 2, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1],
     "Peyton": [1, 1, 1, 2, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1],
     "Wren": [1, 2, 1, 2, 4, 5, 1, 1, 2, 1, 2, 3, 2, 1, 1],
@@ -151,74 +167,136 @@
     "Ald Margraeve": [1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 3, 2, 2, 2, 2],
     "Mong Harrad": [1, 1, 1, 1, 1, 5, 1, 1, 1, 2, 2, 1, 1, 1, 1],
     "Tiçenne Lighthouse": [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1]
+    // Add more locations as needed...
   };
 
-  const basePrices = [10, 5, 15, 8, 12, 6, 14, 20, 18, 10, 25, 50, 30, 40, 35]; // Base prices for commodities in CP
+  const basePrices = [10, 5, 15, 8, 12, 6, 14, 20, 18, 10, 25, 50, 30, 40, 35];
+  const CONSTANT = 0.126743124;
 
-  function calculatePrice(basePrice, availability) {
-    const shift = Math.floor((Math.random() * 10 - 5) * 0.2 * availability); // Price shift limited to 20%
-    return Math.max(basePrice + shift, 1); // Ensure price is at least 1 CP
+  function getDateNumber(date) {
+    // Convert date to European format (DDMMYYYY)
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return parseInt(`${day}${month}${year}`, 10);
   }
 
-  function updateStockExchange() {
-    const tableBody = document.querySelector("#stock-exchange tbody");
-    tableBody.innerHTML = ""; // Clear existing rows
-
-    Object.entries(availabilityScores).forEach(([location, scores]) => {
-      const row = document.createElement("tr");
-      const locationCell = document.createElement("td");
-      locationCell.textContent = location;
-      row.appendChild(locationCell);
-
-      scores.forEach((score, index) => {
-        const price = calculatePrice(basePrices[index], score);
-        const cell = document.createElement("td");
-        cell.textContent = `${price} CP`;
-        row.appendChild(cell);
-      });
-
-      tableBody.appendChild(row);
-    });
-  }
-
-  setInterval(updateStockExchange, 1000 * 60 * 60 * 12); // Refresh every 12 hours
-  updateStockExchange();
-  
-  function startCountdown() {
-  const now = new Date();
-  const nextRefresh = new Date();
-  
-  // Set next refresh to the next 12-hour mark
-  nextRefresh.setHours(now.getHours() < 12 ? 12 : 24, 0, 0, 0);
-
-  function updateTimer() {
-    const currentTime = new Date();
-    const timeLeft = nextRefresh - currentTime;
-
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      document.getElementById("timer").textContent = "Refreshing...";
-      updateStockExchange(); // Refresh prices immediately
-      startCountdown(); // Start the next countdown
-      return;
+  function generateDeterministicNumbers(dateNumber) {
+    const results = [];
+    for (let i = 0; i < 4; i++) {
+      const result = (dateNumber + i) / (dateNumber + CONSTANT + i);
+      const fractionalPart = result.toString().split(".")[1] || "0";
+      results.push(fractionalPart.slice(-9)); // Return last 9 digits
     }
-
-    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-    document.getElementById("timer").textContent = 
-      `${hours}h ${minutes}m ${seconds}s`;
+    return results;
   }
 
-  updateTimer(); // Call once immediately to display the timer without delay
-  const timerInterval = setInterval(updateTimer, 1000); // Update every second
+  function calculatePrice(basePrice, availability, determinant) {
+  // Determine adjustment based on the first two digits of the determinant
+  const adjustment = parseInt(determinant.slice(0, 2), 10) * 0.02; // Increased variability by using 0.02
+
+  // Intermediate value from basePrice and adjustment
+  const intermediateValue = basePrice + adjustment * availability;
+
+  // Determine direction based on intermediate value
+  const directionFlag = parseInt(intermediateValue.toFixed(0).slice(-1), 10) % 2 !== 0; // Odd = increase, Even = decrease
+
+  // Apply direction to the adjustment
+  const shift = directionFlag ? adjustment : -adjustment;
+
+  // Debugging: Log intermediate values and direction
+  console.log(`Base Price: ${basePrice}, Adjustment: ${adjustment}, Intermediate Value: ${intermediateValue}, Direction: ${directionFlag ? "Increase" : "Decrease"}`);
+
+  return Math.max(basePrice + shift * availability, 0.01); // Ensure minimum price is 0.01 GP
 }
 
-// Start the countdown when the page loads
-startCountdown();
+function updateStockExchange() {
+  const tableBody = document.querySelector("#stock-exchange tbody");
+  tableBody.innerHTML = "";
 
-  
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  // Generate deterministic values for today and yesterday
+  const todayNumber = getDateNumber(now);
+  const yesterdayNumber = getDateNumber(yesterday);
+
+  const todayDeterminants = generateDeterministicNumbers(todayNumber);
+  const yesterdayDeterminants = generateDeterministicNumbers(yesterdayNumber);
+
+  console.log(`Today Determinants: ${todayDeterminants}`);
+  console.log(`Yesterday Determinants: ${yesterdayDeterminants}`);
+
+  const activeBlock = Math.floor(now.getHours() / 6);
+
+  Object.entries(availabilityScores).forEach(([location, scores]) => {
+    const row = document.createElement("tr");
+    const locationCell = document.createElement("td");
+    locationCell.textContent = location;
+    row.appendChild(locationCell);
+
+    scores.forEach((score, index) => {
+      const basePrice = basePrices[index];
+
+      // Calculate today's current price and yesterday's last price
+      const todayPrice = calculatePrice(basePrice, score, todayDeterminants[activeBlock]);
+      const yesterdayPrice = calculatePrice(basePrice, score, yesterdayDeterminants[3]);
+
+      // Calculate price difference
+      const priceChange = todayPrice - yesterdayPrice;
+
+      const cell = document.createElement("td");
+      cell.innerHTML = `
+        <span class="previous-price">${yesterdayPrice.toFixed(2)} GP</span><br>
+        <span class="current-price" style="color: blue; font-weight: bold;">${todayPrice.toFixed(2)} GP</span>
+      `;
+
+      if (priceChange !== 0) {
+        const changeSpan = document.createElement("span");
+        changeSpan.className = `price-change ${priceChange > 0 ? 'price-up' : 'price-down'}`;
+        changeSpan.textContent = `(${priceChange.toFixed(2)} GP)`;
+        cell.appendChild(changeSpan);
+      }
+
+      row.appendChild(cell);
+    });
+
+    tableBody.appendChild(row);
+  });
+}
+
+  function startCountdown() {
+    const now = new Date();
+    const nextRefresh = new Date();
+    nextRefresh.setHours(Math.ceil(now.getHours() / 6) * 6, 0, 0, 0);
+
+    function updateTimer() {
+      const currentTime = new Date();
+      const timeLeft = nextRefresh - currentTime;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById("timer").textContent = "Refreshing...";
+        updateStockExchange();
+        startCountdown();
+        return;
+      }
+
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      document.getElementById("timer").textContent = `${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
+  }
+
+  updateStockExchange();
+  setInterval(updateStockExchange, 1000 * 60 * 60 * 6);
+  startCountdown();
 </script>
 
 </body>
