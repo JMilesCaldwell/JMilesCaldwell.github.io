@@ -14,4 +14,4 @@ Features
 ##
 How to Use
 
-Visit the main page at JmilesCaldwell.github.io to explore the tools and resources available.
+Visit the main page at JMilesCaldwell.github.io to explore the tools and resources available.
