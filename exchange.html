@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Evershroud Exchange</title>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Evershroud Exchange (with Seasonal Logic)</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
-  >
+  />
   <style>
     body {
       margin: 1rem;
@@ -89,7 +89,6 @@
   </style>
 </head>
 <body>
-
 <div class="container">
   <h1>The Evershroud Exchange</h1>
   <table id="stock-exchange">
@@ -134,141 +133,449 @@
 </footer>
 
 <script>
-  const availabilityScores = {
-   "Silt": [2, 5, 2, 1, 3, 5, 2, 1, 2, 1, 3, 4, 3, 3, 3],
-    "Villegrom Estate": [1, 1, 1, 5, 2, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1],
-    "Peyton": [1, 1, 1, 2, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1],
-    "Wren": [1, 2, 1, 2, 4, 5, 1, 1, 2, 1, 2, 3, 2, 1, 1],
-    "Gunnar’s Rest": [1, 1, 3, 1, 1, 1, 2, 1, 1, 1, 3, 1, 2, 4, 2],
-    "Kelton": [1, 1, 5, 1, 2, 2, 2, 1, 1, 1, 3, 2, 2, 4, 1],
-    "Vigden": [5, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 2, 1, 1, 1],
-    "Lamya": [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 5, 2, 2, 1, 2],
-    "Fulcimer Lighthouse": [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "Hermit Sanctum": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 3],
-    "World’s End": [2, 3, 1, 1, 2, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "Azure": [2, 1, 1, 2, 3, 3, 4, 2, 3, 2, 3, 5, 4, 3, 4],
-    "Ald Traeus": [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1],
-    "Ald Kundhal": [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1],
-    "Waglynn Lighthouse": [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "Holgren": [1, 1, 1, 2, 2, 5, 1, 1, 2, 1, 2, 3, 1, 1, 1],
-    "Ald Crayden": [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 2, 1, 1, 1],
-    "Jornath": [1, 1, 1, 1, 2, 1, 5, 1, 2, 1, 2, 2, 2, 4, 2],
-    "Sylfaene": [1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "Refuge": [1, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "Caldwell": [1, 1, 1, 2, 2, 2, 1, 5, 3, 2, 3, 4, 2, 3, 3],
-    "Ald Neloth": [1, 1, 1, 1, 2, 2, 1, 3, 2, 1, 3, 2, 1, 2, 2],
-    "Lyndell Estate": [1, 1, 1, 1, 1, 2, 1, 5, 1, 1, 2, 2, 1, 1, 1],
-    "Devyth": [1, 1, 1, 1, 1, 5, 1, 2, 1, 1, 2, 2, 1, 1, 1],
-    "Providence": [1, 1, 1, 5, 3, 3, 1, 3, 2, 2, 2, 3, 2, 3, 2],
-    "Mong Vinaya": [1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    "Morgrin Lighthouse": [1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 3, 2, 1, 1, 1],
-    "Dusk": [1, 1, 1, 1, 1, 2, 1, 1, 1, 5, 5, 3, 3, 2, 4],
-    "Verdant Acres": [1, 1, 1, 3, 1, 1, 1, 1, 2, 5, 3, 2, 1, 2, 1],
-    "Ald Margraeve": [1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 3, 2, 2, 2, 2],
-    "Mong Harrad": [1, 1, 1, 1, 1, 5, 1, 1, 1, 2, 2, 1, 1, 1, 1],
-    "Tiçenne Lighthouse": [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1]
-    // Add more locations as needed...
+  /*******************************************************
+   * 1) Berynian Calendar & Season Logic (embedded)
+   *******************************************************/
+  const DAYS_PER_YEAR = 250;
+  const DAYS_PER_MONTH = 25;
+  const NAMED_MONTHS = [
+    "Frostmere", "Fellwind", "Vinetide", "Verdant", 
+    "Hammerhearth", "Duskwane", "Alderen", "Ashveil",
+    "Stonereach", "Starfall"
+  ];
+  // We’ll keep the same naming as your doc for day-of-week, but we only need months & season here
+  const SEASON_MAPPING = [
+    { months: ["Frostmere", "Fellwind"], season: "Mist's Rise" },
+    { months: ["Vinetide", "Verdant"], season: "Sea's Clarity" },
+    { months: ["Hammerhearth", "Duskwane"], season: "Clear Skies" },
+    { months: ["Alderen", "Ashveil", "Stonereach", "Starfall"], season: "Mist's Fall" }
+  ];
+  // Start date you used in your second page
+  const START_DATE = new Date(2024, 10, 27); // 15th Verdant, 784 Y.S.
+
+  // Determine current Berynian month & season
+  function getCurrentSeason() {
+    const now = new Date();
+    // Days elapsed since START_DATE
+    const daysElapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
+    // Which year & which day in that year
+    const yearsPassed = Math.floor(daysElapsed / DAYS_PER_YEAR);
+    const remainingDays = daysElapsed % DAYS_PER_YEAR;
+
+    const monthIndex = Math.floor(remainingDays / DAYS_PER_MONTH);
+    const currentMonth = NAMED_MONTHS[monthIndex] || NAMED_MONTHS[0];
+
+    // Find the season object that includes this month
+    const foundSeasonObj = SEASON_MAPPING.find(obj => obj.months.includes(currentMonth));
+    return foundSeasonObj ? foundSeasonObj.season : "Unknown";
+  }
+
+  /*******************************************************
+   * 2) Seasonal multipliers for each commodity
+   *    Tweak these as you see fit to reflect scarcity,
+   *    demand, etc. for each of the four phases.
+   *******************************************************/
+  // Each commodity has a base multiplier of 1.0 if not otherwise changed.
+  // For demonstration, we’ll apply a few variations:
+  const seasonalMultipliers = {
+    "Mist's Rise": {
+      "Amber": 1.1,
+      "Salt": 1.2,
+      "Tin": 1.05,
+      "Wool": 1.3,           // Maybe wool is in high demand for warmth.
+      "Timber": 0.95,
+      "Salted Fish": 1.2,
+      "Copper": 1.0,
+      "Blackleaf": 1.1,
+      "Botanical Specimens": 0.9,
+      "Fungus": 1.05,
+      "Artifacts": 1.0,
+      "Luxury Goods": 0.8,   // Fewer people buying luxuries in the cold months
+      "Weapons/Armor": 1.1,  // Potential conflicts over scarce resources
+      "Bronze": 1.05,
+      "Magical Items": 1.0
+    },
+    "Sea's Clarity": {
+      "Amber": 1.0,
+      "Salt": 0.95,
+      "Tin": 1.0,
+      "Wool": 1.0,
+      "Timber": 1.1,
+      "Salted Fish": 1.0,
+      "Copper": 1.05,
+      "Blackleaf": 1.1,
+      "Botanical Specimens": 1.2,   // Plant-based items flourish in spring
+      "Fungus": 1.1,
+      "Artifacts": 1.0,
+      "Luxury Goods": 1.05,
+      "Weapons/Armor": 1.0,
+      "Bronze": 1.0,
+      "Magical Items": 1.0
+    },
+    "Clear Skies": {
+      "Amber": 1.0,
+      "Salt": 1.0,
+      "Tin": 1.0,
+      "Wool": 0.9,           // Less demand for heavy clothing
+      "Timber": 1.2,         // Construction thrives in good weather
+      "Salted Fish": 0.95,
+      "Copper": 1.05,
+      "Blackleaf": 1.0,
+      "Botanical Specimens": 1.1,
+      "Fungus": 0.9,
+      "Artifacts": 1.05,
+      "Luxury Goods": 1.15,  // Good trade weather => more commerce
+      "Weapons/Armor": 0.95,
+      "Bronze": 1.05,
+      "Magical Items": 1.1   // Summertime festivals & intrigue might drive demand
+    },
+    "Mist's Fall": {
+      "Amber": 1.15,
+      "Salt": 1.1,
+      "Tin": 1.05,
+      "Wool": 1.2,
+      "Timber": 1.0,
+      "Salted Fish": 1.15,  
+      "Copper": 1.0,
+      "Blackleaf": 1.1,
+      "Botanical Specimens": 1.0,
+      "Fungus": 1.2,         // Damp, cold conditions => fungal interest
+      "Artifacts": 1.05,
+      "Luxury Goods": 0.9,
+      "Weapons/Armor": 1.1,
+      "Bronze": 1.05,
+      "Magical Items": 1.05
+    }
   };
 
-  const basePrices = [10, 5, 15, 8, 12, 6, 14, 20, 18, 10, 25, 50, 30, 40, 35];
-  const CONSTANT = 0.126743124;
+  // Helper to retrieve the correct multiplier for the current season & commodity
+  function getSeasonalMultiplier(commodityName) {
+    const currentSeason = getCurrentSeason();
+    const seasonObj = seasonalMultipliers[currentSeason];
+    if (!seasonObj) return 1.0; // default if unknown or not found
+    return seasonObj[commodityName] ?? 1.0;
+  }
 
+  /*******************************************************
+   * 3) Original Stock Exchange Code
+   *******************************************************/
+  // Commodity names (order must match your basePrices)
+  const commodityNames = [
+    "Amber",
+    "Salt",
+    "Tin",
+    "Wool",
+    "Timber",
+    "Salted Fish",
+    "Copper",
+    "Blackleaf",
+    "Botanical Specimens",
+    "Fungus",
+    "Artifacts",
+    "Luxury Goods",
+    "Weapons/Armor",
+    "Bronze",
+    "Magical Items"
+  ];
+
+  // Availability for each location (same order as commodityNames above)
+  const availabilityScores = {
+    "Silt": [
+      2.34, 4.42, 2.43, 1.34, 3.61,
+      4.74, 2.02, 1.55, 2.55, 1.08,
+      3.18, 4.36, 3.02, 3.66, 3.29
+    ],
+    "Villegrom Estate": [
+      1.33, 1.57, 1.64, 4.66, 2.12,
+      1.05, 1.28, 1.62, 2.65, 2.05,
+      2.44, 2.58, 1.34, 1.42, 1.19
+    ],
+    "Peyton": [
+      1.21, 1.48, 1.37, 2.51, 2.09,
+      2.25, 1.55, 1.12, 2.63, 1.06,
+      2.34, 2.42, 1.66, 1.03, 1.47
+    ],
+    "Wren": [
+      1.33, 2.62, 1.58, 2.24, 4.48,
+      4.81, 1.66, 1.13, 2.56, 1.26,
+      2.63, 3.09, 2.02, 1.51, 1.27
+    ],
+    "Gunnar’s Rest": [
+      1.23, 1.44, 3.55, 1.37, 1.66,
+      1.09, 2.51, 1.25, 1.33, 1.48,
+      3.39, 1.17, 2.15, 4.08, 2.03
+    ],
+    "Kelton": [
+      1.26, 1.39, 4.59, 1.42, 2.25,
+      2.62, 2.03, 1.55, 1.14, 1.61,
+      3.26, 2.57, 2.11, 4.51, 1.49
+    ],
+    "Vigden": [
+      4.99, 1.59, 1.31, 1.52, 2.14,
+      2.65, 1.08, 1.43, 2.11, 1.44,
+      2.24, 2.37, 1.14, 1.64, 1.36
+    ],
+    "Lamya": [
+      1.07, 1.44, 1.19, 1.37, 1.22,
+      1.65, 1.58, 1.03, 2.47, 2.68,
+      4.83, 2.01, 2.11, 1.36, 2.24
+    ],
+    "Fulcimer Lighthouse": [
+      1.02, 1.12, 1.44, 1.56, 1.66,
+      3.33, 1.48, 1.38, 1.59, 1.22,
+      1.63, 1.11, 1.45, 1.61, 1.25
+    ],
+    "Hermit Sanctum": [
+      1.44, 1.24, 1.15, 1.08, 1.65,
+      1.05, 1.56, 1.49, 1.23, 1.36,
+      4.57, 1.38, 1.22, 1.63, 3.31
+    ],
+    "World’s End": [
+      2.03, 3.59, 1.16, 1.32, 2.52,
+      4.85, 1.64, 1.58, 1.11, 1.35,
+      1.52, 1.28, 1.44, 1.12, 1.62
+    ],
+    "Azure": [
+      2.21, 1.08, 1.55, 2.39, 3.66,
+      3.25, 4.09, 2.43, 3.19, 2.02,
+      3.55, 4.91, 4.44, 3.14, 4.68
+    ],
+    "Ald Traeus": [
+      1.28, 1.62, 1.15, 1.38, 2.65,
+      2.09, 1.51, 1.07, 1.44, 1.36,
+      2.53, 2.16, 1.64, 1.59, 1.26
+    ],
+    "Ald Kundhal": [
+      1.38, 1.19, 1.42, 1.64, 2.24,
+      2.56, 1.07, 1.34, 1.15, 1.46,
+      2.17, 2.33, 1.66, 1.49, 1.25
+    ],
+    "Waglynn Lighthouse": [
+      1.56, 1.32, 1.13, 1.43, 1.27,
+      2.42, 1.65, 1.05, 1.58, 1.66,
+      1.34, 1.53, 1.14, 1.39, 1.55
+    ],
+    "Holgren": [
+      1.18, 1.62, 1.46, 2.05, 2.66,
+      4.79, 1.37, 1.14, 2.54, 1.22,
+      2.39, 3.48, 1.51, 1.08, 1.29
+    ],
+    "Ald Crayden": [
+      1.11, 1.35, 1.48, 1.13, 1.19,
+      3.62, 1.66, 1.31, 1.53, 1.26,
+      1.46, 2.64, 1.43, 1.08, 1.55
+    ],
+    "Jornath": [
+      1.16, 1.28, 1.64, 1.05, 2.18,
+      1.65, 4.92, 1.37, 2.66, 1.13,
+      2.35, 2.04, 2.14, 4.38, 2.55
+    ],
+    "Sylfaene": [
+      1.22, 1.61, 1.05, 1.47, 1.33,
+      4.53, 1.18, 1.26, 1.53, 1.13,
+      1.55, 1.66, 1.45, 1.06, 1.38
+    ],
+    "Refuge": [
+      1.09, 1.65, 1.12, 1.24, 2.64,
+      3.36, 1.05, 1.58, 1.43, 1.66,
+      1.36, 1.28, 1.64, 1.21, 1.53
+    ],
+    "Caldwell": [
+      1.31, 1.06, 1.27, 2.39, 2.09,
+      2.14, 1.63, 4.92, 3.31, 2.58,
+      3.07, 4.45, 2.17, 3.58, 3.36
+    ],
+    "Ald Neloth": [
+      1.53, 1.16, 1.45, 1.65, 2.59,
+      2.07, 1.44, 3.57, 2.64, 1.06,
+      3.18, 2.22, 1.63, 2.41, 2.02
+    ],
+    "Lyndell Estate": [
+      1.15, 1.27, 1.49, 1.62, 1.56,
+      2.14, 1.31, 4.76, 1.52, 1.07,
+      2.46, 2.32, 1.11, 1.23, 1.44
+    ],
+    "Devyth": [
+      1.07, 1.33, 1.47, 1.58, 1.66,
+      4.85, 1.16, 2.56, 1.42, 1.64,
+      2.29, 2.59, 1.12, 1.09, 1.25
+    ],
+    "Providence": [
+      1.28, 1.63, 1.46, 4.59, 3.43,
+      3.21, 1.55, 3.31, 2.03, 2.56,
+      2.48, 3.66, 2.09, 3.19, 2.11
+    ],
+    "Mong Vinaya": [
+      1.46, 1.21, 1.61, 1.38, 1.07,
+      4.95, 1.66, 1.15, 1.26, 1.56,
+      1.04, 1.28, 1.58, 1.44, 1.35
+    ],
+    "Morgrin Lighthouse": [
+      1.07, 1.41, 1.08, 1.37, 1.16,
+      1.59, 1.28, 1.63, 4.74, 1.05,
+      3.47, 2.09, 1.51, 1.38, 1.62
+    ],
+    "Dusk": [
+      1.13, 1.55, 1.24, 1.03, 1.41,
+      2.42, 1.57, 1.08, 1.61, 4.72,
+      4.99, 3.16, 3.47, 2.11, 4.22
+    ],
+    "Verdant Acres": [
+      1.22, 1.47, 1.66, 3.44, 1.08,
+      1.38, 1.64, 1.23, 2.14, 4.72,
+      3.05, 2.48, 1.32, 2.63, 1.12
+    ],
+    "Ald Margraeve": [
+      1.14, 1.56, 1.22, 1.32, 1.19,
+      2.09, 1.65, 1.44, 1.28, 4.35,
+      3.66, 2.33, 2.61, 2.09, 2.54
+    ],
+    "Mong Harrad": [
+      1.21, 1.37, 1.53, 1.04, 1.66,
+      4.81, 1.16, 1.48, 1.63, 2.12,
+      2.55, 1.09, 1.24, 1.57, 1.05
+    ],
+    "Tiçenne Lighthouse": [
+      1.35, 1.05, 1.14, 1.41, 1.54,
+      2.63, 1.29, 1.62, 1.58, 1.21,
+      2.15, 1.66, 1.37, 1.19, 1.42
+    ]
+    // Add more as needed...
+  };
+
+  // Base prices for each commodity (matching commodityNames' order)
+  const basePrices = [10, 5, 15, 8, 12, 6, 14, 20, 18, 10, 25, 50, 30, 40, 35];
+
+  // Helper to sum ASCII values of a string
+  function getAsciiSum(str) {
+    let sum = 0;
+    for (let i = 0; i < str.length; i++) {
+      sum += str.charCodeAt(i);
+    }
+    return sum;
+  }
+
+  // Convert date to integer (DDMMYYYY)
   function getDateNumber(date) {
-    // Convert date to European format (DDMMYYYY)
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return parseInt(`${day}${month}${year}`, 10);
   }
 
+  // Generate four deterministic "seed" strings for each day
   function generateDeterministicNumbers(dateNumber) {
     const results = [];
     for (let i = 0; i < 4; i++) {
-      const result = (dateNumber + i) / (dateNumber + CONSTANT + i);
-      const fractionalPart = result.toString().split(".")[1] || "0";
-      results.push(fractionalPart.slice(-9)); // Return last 9 digits
+      // Some pseudo-random operation that yields consistent results for the same date
+      const val = ((dateNumber + i) * 2654435761) >>> 0; 
+      results.push(String(val % 1000000)); // up to 6 digits
     }
     return results;
   }
 
-  function calculatePrice(basePrice, availability, determinant) {
-  // Determine adjustment based on the first two digits of the determinant
-  const adjustment = parseInt(determinant.slice(0, 2), 10) * 0.02; // Increased variability by using 0.02
+  // The core function, factoring in the base price, location availability, plus seasonal & random variations
+  function calculatePrice(basePrice, availability, determinant, locationAscii, commodityAscii, commodityName) {
+    const seed = parseInt(determinant, 10) || 1;
+    const combined = (seed * locationAscii * commodityAscii) % 20000;
+    const directionFlag = combined % 2 === 1;  // odd => up, even => down
+    const magnitude = (combined % 100);
+    const floatShift = (magnitude / 33) * availability;
+    const finalShift = directionFlag ? floatShift : -floatShift;
 
-  // Intermediate value from basePrice and adjustment
-  const intermediateValue = basePrice + adjustment * availability;
+    // Seasonal multiplier:
+    const seasonMult = getSeasonalMultiplier(commodityName);
 
-  // Determine direction based on intermediate value
-  const directionFlag = parseInt(intermediateValue.toFixed(0).slice(-1), 10) % 2 !== 0; // Odd = increase, Even = decrease
+    let newPrice = basePrice + finalShift;
+    // Apply seasonal multiplier last
+    newPrice *= seasonMult;
 
-  // Apply direction to the adjustment
-  const shift = directionFlag ? adjustment : -adjustment;
+    return Math.max(1, newPrice); // floor of 0.01
+  }
 
-  // Debugging: Log intermediate values and direction
-  console.log(`Base Price: ${basePrice}, Adjustment: ${adjustment}, Intermediate Value: ${intermediateValue}, Direction: ${directionFlag ? "Increase" : "Decrease"}`);
+  function updateStockExchange() {
+    const tableBody = document.querySelector("#stock-exchange tbody");
+    tableBody.innerHTML = "";
 
-  return Math.max(basePrice + shift * availability, 0.01); // Ensure minimum price is 0.01 GP
-}
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
 
-function updateStockExchange() {
-  const tableBody = document.querySelector("#stock-exchange tbody");
-  tableBody.innerHTML = "";
+    const todayNumber = getDateNumber(now);
+    const yesterdayNumber = getDateNumber(yesterday);
 
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
+    // Generate 4 seeds for each date
+    const todayDeterminants = generateDeterministicNumbers(todayNumber);
+    const yesterdayDeterminants = generateDeterministicNumbers(yesterdayNumber);
 
-  // Generate deterministic values for today and yesterday
-  const todayNumber = getDateNumber(now);
-  const yesterdayNumber = getDateNumber(yesterday);
+    // 6-hour block => index 0..3
+    const activeBlock = Math.floor(now.getHours() / 6);
+    // For 'yesterday', we’ll do block 3
+    const yesterdaysBlock = 3;
 
-  const todayDeterminants = generateDeterministicNumbers(todayNumber);
-  const yesterdayDeterminants = generateDeterministicNumbers(yesterdayNumber);
+    Object.entries(availabilityScores).forEach(([location, scores]) => {
+      const row = document.createElement("tr");
+      // Location cell
+      const locationCell = document.createElement("td");
+      locationCell.textContent = location;
+      row.appendChild(locationCell);
 
-  console.log(`Today Determinants: ${todayDeterminants}`);
-  console.log(`Yesterday Determinants: ${yesterdayDeterminants}`);
+      // Precompute location ASCII sum
+      const locationAscii = getAsciiSum(location);
 
-  const activeBlock = Math.floor(now.getHours() / 6);
+      scores.forEach((score, index) => {
+        const thisBasePrice = basePrices[index];
+        const commodityName = commodityNames[index];
+        const commodityAscii = getAsciiSum(commodityName);
 
-  Object.entries(availabilityScores).forEach(([location, scores]) => {
-    const row = document.createElement("tr");
-    const locationCell = document.createElement("td");
-    locationCell.textContent = location;
-    row.appendChild(locationCell);
+        // Today’s price
+        const todayPrice = calculatePrice(
+          thisBasePrice,
+          score,
+          todayDeterminants[activeBlock],
+          locationAscii,
+          commodityAscii,
+          commodityName
+        );
+        // Yesterday’s price
+        const yesterdayPrice = calculatePrice(
+          thisBasePrice,
+          score,
+          yesterdayDeterminants[yesterdaysBlock],
+          locationAscii,
+          commodityAscii,
+          commodityName
+        );
+        const priceChange = todayPrice - yesterdayPrice;
 
-    scores.forEach((score, index) => {
-      const basePrice = basePrices[index];
+        const cell = document.createElement("td");
+        cell.innerHTML = `
+          <span class="previous-price">${yesterdayPrice.toFixed(2)} GP</span><br>
+          <span class="current-price" style="color: blue; font-weight: bold;">
+            ${todayPrice.toFixed(2)} GP
+          </span>
+        `;
+        // Show how much changed
+        if (priceChange !== 0) {
+          const changeSpan = document.createElement("span");
+          changeSpan.className = `price-change ${
+            priceChange > 0 ? "price-up" : "price-down"
+          }`;
+          changeSpan.textContent = `(${priceChange.toFixed(2)} GP)`;
+          cell.appendChild(changeSpan);
+        }
+        row.appendChild(cell);
+      });
 
-      // Calculate today's current price and yesterday's last price
-      const todayPrice = calculatePrice(basePrice, score, todayDeterminants[activeBlock]);
-      const yesterdayPrice = calculatePrice(basePrice, score, yesterdayDeterminants[3]);
-
-      // Calculate price difference
-      const priceChange = todayPrice - yesterdayPrice;
-
-      const cell = document.createElement("td");
-      cell.innerHTML = `
-        <span class="previous-price">${yesterdayPrice.toFixed(2)} GP</span><br>
-        <span class="current-price" style="color: blue; font-weight: bold;">${todayPrice.toFixed(2)} GP</span>
-      `;
-
-      if (priceChange !== 0) {
-        const changeSpan = document.createElement("span");
-        changeSpan.className = `price-change ${priceChange > 0 ? 'price-up' : 'price-down'}`;
-        changeSpan.textContent = `(${priceChange.toFixed(2)} GP)`;
-        cell.appendChild(changeSpan);
-      }
-
-      row.appendChild(cell);
+      tableBody.appendChild(row);
     });
+  }
 
-    tableBody.appendChild(row);
-  });
-}
-
+  // Countdown logic
   function startCountdown() {
     const now = new Date();
     const nextRefresh = new Date();
+    // Next refresh at top of next 6-hour block
     nextRefresh.setHours(Math.ceil(now.getHours() / 6) * 6, 0, 0, 0);
 
     function updateTimer() {
@@ -294,10 +601,11 @@ function updateStockExchange() {
     const timerInterval = setInterval(updateTimer, 1000);
   }
 
+  // On page load
   updateStockExchange();
+  // Auto-refresh every 6 hours
   setInterval(updateStockExchange, 1000 * 60 * 60 * 6);
   startCountdown();
 </script>
-
 </body>
 </html>
