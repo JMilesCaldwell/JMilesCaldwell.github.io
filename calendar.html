@@ -207,21 +207,29 @@ const WEATHER_PATTERNS = {
   }
 
   // Deterministic weather logic
+let cachedWeather = {};
+let lastWeatherUpdateDate = "";
+
 function getDeterministicWeather(date) {
     const { year, month, dayOfMonth } = date;
     const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
     const patterns = WEATHER_PATTERNS[season];
 
-    const dayOfYear = NAMED_MONTHS.indexOf(month) * DAYS_PER_MONTH + (dayOfMonth - 1);
-    const offset = (year * 7) % patterns.length;
-    const patternIndex = (dayOfYear + offset) % patterns.length;
+    const currentDateKey = `${year}-${month}-${dayOfMonth}`;
+    if (lastWeatherUpdateDate !== currentDateKey) {
+        const dayOfYear = NAMED_MONTHS.indexOf(month) * DAYS_PER_MONTH + (dayOfMonth - 1);
+        const offset = (year * 7) % patterns.length;
+        const patternIndex = (dayOfYear + offset) % patterns.length;
 
-    // Add a 10% chance for randomness
-    if (Math.random() < 0.1) {
-        return patterns[Math.floor(Math.random() * patterns.length)];
+        // Add a 10% chance for randomness
+        cachedWeather = Math.random() < 0.1
+            ? patterns[Math.floor(Math.random() * patterns.length)]
+            : patterns[patternIndex];
+
+        lastWeatherUpdateDate = currentDateKey;
     }
 
-    return patterns[patternIndex];
+    return cachedWeather;
 }
 
   // Sea lanes status logic
