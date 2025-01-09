@@ -11,6 +11,8 @@ Features
 - Lore and Maps: Access documents and maps detailing the history and geography of the Isles.
 
 - Ongoing Updates: Continuously expanded to include new features and content.
+
+- The Evershroud Exchange: a simulated stock exchange for the game.
 ##
 How to Use
 
