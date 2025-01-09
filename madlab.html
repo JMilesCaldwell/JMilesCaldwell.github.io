@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deterministic Mock Stock Exchange</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 40px;
+    }
+    h1, h2 {
+      color: #444;
+    }
+    #controls {
+      margin-bottom: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 600px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: left;
+      padding: 8px;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mock Stock Exchange</h1>
+  <div id="controls">
+    <p>
+      Select a date to generate deterministic market data for a variety of goods in multiple locations:
+    </p>
+    <input type="date" id="datePicker" />
+    <button onclick="generatePricesForSelectedDate()">Generate</button>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    /**
+     * We need a custom seeded random generator since JavaScript's built-in
+     * Math.random() cannot be directly seeded. Here, we use a simple
+     * Mulberry32 pseudo-random number generator.
+     *
+     * @param {number} seed
+     * @returns {function} - A PRNG that returns a float in [0, 1).
+     */
+    function mulberry32(seed) {
+      return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    /**
+     * Convert the given date into an integer seed.
+     * For instance, 2025-01-09 => 20250109
+     */
+    function dateToSeed(year, month, day) {
+      return (year * 10000) + (month * 100) + day;
+    }
+
+    // 1. Goods definition
+    //   Each good includes:
+    //   - basePrice
+    //   - volatility
+    //   - seasonalProfile (object keyed by month: 1..12)
+    const goods = {
+      "Wheat": {
+        basePrice: 100,
+        volatility: 0.1,
+        seasonalProfile: {
+          1: 1.1, 2: 1.05, 3: 0.95, 4: 0.9, 5: 0.8,
+          6: 0.8,  7: 0.85, 8: 0.9, 9: 0.95, 10: 1.0,
+          11: 1.05,12: 1.1
+        }
+      },
+      "Steel": {
+        basePrice: 500,
+        volatility: 0.15,
+        seasonalProfile: {
+          1: 1.0, 2: 0.95, 3: 0.95, 4: 1.0, 5: 1.05,
+          6: 1.1, 7: 1.05, 8: 1.0, 9: 1.0, 10: 1.0,
+          11: 0.95,12: 1.0
+        }
+      },
+      "Coffee": {
+        basePrice: 80,
+        volatility: 0.2,
+        seasonalProfile: {
+          1: 1.2,  2: 1.15, 3: 1.1,  4: 1.0,  5: 0.95,
+          6: 0.9,  7: 0.9,  8: 0.95, 9: 1.0,  10: 1.05,
+          11: 1.1, 12: 1.15
+        }
+      }
+      // Feel free to add more goods
+    };
+
+    // 2. Locations definition
+    //   Each location has an availability factor per good.
+    //   For any good not listed, default to 1.0
+    const locations = {
+      "Northlands": {
+        "Wheat": 1.1,
+        "Steel": 0.9,
+        "Coffee": 1.2
+      },
+      "Tropicana": {
+        "Wheat": 0.9,
+        "Steel": 1.1,
+        "Coffee": 0.8
+      },
+      "Urbania": {
+        "Wheat": 1.0,
+        "Steel": 1.0,
+        "Coffee": 1.0
+      }
+      // Add as many locations as needed
+    };
+
+    /**
+     * Generate a dictionary of prices for all goods in each location,
+     * using date-seeded randomness.
+     */
+    function generatePrices(year, month, day) {
+      const seedValue = dateToSeed(year, month, day);
+      const prng = mulberry32(seedValue); // seeded PRNG
+
+      const prices = {};
+
+      // For each location...
+      for (const loc in locations) {
+        const localFactors = locations[loc];
+        prices[loc] = {};
+
+        // ...and for each good
+        for (const good in goods) {
+          const data = goods[good];
+          const basePrice = data.basePrice;
+          const volatility = data.volatility;
+          const seasonalMultiplier = data.seasonalProfile[month] || 1.0;
+          const localAvailability = localFactors[good] || 1.0;
+
+          // We create a random fluctuation in the range [-1, 1].
+          // Our PRNG returns [0, 1), so shift and scale.
+          const fluctuation = (prng() * 2) - 1;
+
+          // Final price formula
+          const finalPrice = basePrice
+            * (1 + fluctuation * volatility)
+            * seasonalMultiplier
+            * localAvailability;
+
+          // Round the result to two decimals
+          prices[loc][good] = parseFloat(finalPrice.toFixed(2));
+        }
+      }
+      return prices;
+    }
+
+    /**
+     * Grabs the date input, generates the prices, and updates the DOM.
+     */
+    function generatePricesForSelectedDate() {
+      const dateInput = document.getElementById("datePicker");
+      if (!dateInput.value) {
+        alert("Please select a date first.");
+        return;
+      }
+
+      // Extract year, month, day from the <input type="date" ... />
+      const selectedDate = new Date(dateInput.value);
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth() + 1;  // zero-based in JS
+      const day = selectedDate.getDate();
+
+      const priceData = generatePrices(year, month, day);
+      displayResults(year, month, day, priceData);
+    }
+
+    /**
+     * Creates a table for each location, showing the goods and prices.
+     */
+    function displayResults(year, month, day, data) {
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = ""; // Clear previous output
+
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const heading = document.createElement("h2");
+      heading.textContent = `Market Prices for ${dateStr}`;
+      resultsDiv.appendChild(heading);
+
+      for (const locationName in data) {
+        const table = document.createElement("table");
+        
+        // Table caption
+        const caption = document.createElement("caption");
+        caption.textContent = locationName;
+        table.appendChild(caption);
+
+        // Header row
+        const headerRow = document.createElement("tr");
+        const thGood = document.createElement("th");
+        thGood.textContent = "Good";
+        const thPrice = document.createElement("th");
+        thPrice.textContent = "Price";
+        headerRow.appendChild(thGood);
+        headerRow.appendChild(thPrice);
+        table.appendChild(headerRow);
+
+        // Rows for each good
+        const locationData = data[locationName];
+        for (const goodName in locationData) {
+          const row = document.createElement("tr");
+          const cellGood = document.createElement("td");
+          cellGood.textContent = goodName;
+          const cellPrice = document.createElement("td");
+          cellPrice.textContent = locationData[goodName];
+          row.appendChild(cellGood);
+          row.appendChild(cellPrice);
+          table.appendChild(row);
+        }
+
+        resultsDiv.appendChild(table);
+      }
+    }
+  </script>
+</body>
+</html>
