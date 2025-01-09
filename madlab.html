@@ -560,6 +560,7 @@ function getCurrentSeason() {
 
     return Math.max(1, newPrice);
   }
+  
 
   function updateStockExchange() {
     const tableBody = document.querySelector("#stock-exchange tbody");
@@ -664,14 +665,56 @@ Object.entries(availabilityScores).forEach(([location, scores]) => {
     const timerInterval = setInterval(updateTimer, 1000);
   }
 
+function attachHoverListeners() {
+  const table = document.getElementById("stock-exchange");
+  table.querySelectorAll("td").forEach((cell, index) => {
+    const row = cell.parentNode.rowIndex - 1; // Adjust for header row
+    const col = cell.cellIndex - 1; // Adjust for location column
+
+    if (row < 0 || col < 0) return; // Skip header cells
+
+    const location = Object.keys(availabilityScores)[row];
+    const commodityName = commodityNames[col];
+    const availability = availabilityScores[location][col];
+    const basePrice = basePrices[col];
+    const locationAscii = getAsciiSum(location);
+    const commodityAscii = getAsciiSum(commodityName);
+
+    const priceHistory = generatePriceHistory(
+      basePrice,
+      availability,
+      locationAscii,
+      commodityAscii,
+      commodityName
+    ).join(", ");
+
+    cell.addEventListener("mouseover", (event) => {
+      showTooltip(event, `Price History (7 Days): ${priceHistory}`);
+    });
+
+    cell.addEventListener("mousemove", (event) => {
+      showTooltip(event, `Price History (7 Days): ${priceHistory}`);
+    });
+
+    cell.addEventListener("mouseout", hideTooltip);
+  });
+}
+
   // On load
   
 document.addEventListener("DOMContentLoaded", () => {
     updateStockExchange();
     setInterval(updateStockExchange, 1000 * 60 * 60 * 6);
     startCountdown();
-  });
+    attachHoverListeners(); // Add this here
+});
+
 </script>
+
+<div id="tooltip" style="position: absolute; display: none; background: #FAF4E0; border: 1px solid #8B0000; padding: 0.5rem; font-family: 'Almendra', serif; font-size: 0.9rem; box-shadow: 0 0 5px rgba(0, 0, 0, 0.3); z-index: 1000;">
+  <span id="tooltip-content"></span>
+</div>
+
 
 </body>
 </html>
