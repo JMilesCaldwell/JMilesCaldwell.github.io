@@ -8,92 +8,96 @@
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <style>
-    body {
-      margin: 1rem;
-      background: #FAF4E0;
-      color: #333;
-      font-family: 'Almendra', serif;
-      text-align: center;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 2rem auto;
-    }
-    h1, h2, h3 {
-      font-family: 'Cinzel', serif;
-    }
-   table {
-  /* Let the table be just as wide as needed */
-  width: auto;
-  /* Centre it by automagic margins */
-  margin: 2rem auto;
-  border-collapse: collapse;
-}
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.75rem;
-      text-align: center;
-    }
-    th {
-      background-color: #8B0000;
-      color: white;
-    }
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-    .divider {
-      margin: 1rem auto;
-      font-size: 1.5rem;
-    }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
-    }
-    .button {
-      background-color: #8B0000;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-      font-family: 'Cinzel', serif;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .button:hover {
-      background-color: #6B0000;
-    }
-    footer {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #666;
-      font-family: 'Almendra', serif;
-    }
-    #countdown-timer {
-      margin-top: 1rem;
-      font-size: 1.2rem;
-    }
-    #timer {
-      font-weight: bold;
-    }
-    .price-change {
-      margin-left: 0.5rem;
-    }
-    .price-up {
-      color: green;
-    }
-    .price-down {
-      color: red;
-    }
-  </style>
+<style>
+  body {
+    margin: 1rem;
+    background: #FAF4E0;
+    color: #333;
+    font-family: 'Almendra', serif;
+    text-align: center;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 2rem auto;
+  }
+  h1, h2, h3 {
+    font-family: 'Cinzel', serif;
+  }
+  table {
+    /* Let the table be just as wide as needed */
+    width: auto;
+    /* Centre it by automagic margins */
+    margin: 2rem auto;
+    border-collapse: collapse;
+  }
+  .table-container {
+    overflow-x: auto;
+    margin: 2rem auto;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  th {
+    background-color: #8B0000;
+    color: white;
+  }
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  .divider {
+    margin: 1rem auto;
+    font-size: 1.5rem;
+  }
+  .divider::after {
+    content: "✦ ✧ ✦";
+    color: #8B0000;
+    letter-spacing: 0.5rem;
+  }
+  .button {
+    background-color: #8B0000;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 1rem;
+    margin: 0.5rem 0;
+    font-family: 'Cinzel', serif;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .button:hover {
+    background-color: #6B0000;
+  }
+  footer {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #666;
+    font-family: 'Almendra', serif;
+  }
+  #countdown-timer {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+  }
+  #timer {
+    font-weight: bold;
+  }
+  .price-change {
+    margin-left: 0.5rem;
+  }
+  .price-up {
+    color: green;
+  }
+  .price-down {
+    color: red;
+  }
+</style>
 </head>
 <body>
 <div class="container">
   <h1>The Evershroud Exchange</h1>
+  <div class="table-container">
   <table id="stock-exchange">
     <thead>
       <tr>
@@ -123,6 +127,7 @@
       <!-- Dynamic content will be injected here -->
     </tbody>
   </table>
+</div>
 
   <div id="countdown-timer">
     <h3>Next Price Refresh:</h3>
@@ -159,15 +164,14 @@
   // Start date from your weather page
   const START_DATE = new Date(2024, 10, 27); // 15th Verdant, 784 Y.S.
 
-  function getCurrentSeason() {
-    const now = new Date();
-    const daysElapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
-    const monthIndex = Math.floor((daysElapsed % DAYS_PER_YEAR) / DAYS_PER_MONTH);
-    const currentMonth = NAMED_MONTHS[monthIndex] || NAMED_MONTHS[0];
-    const foundSeasonObj = SEASON_MAPPING.find(obj => obj.months.includes(currentMonth));
-    return foundSeasonObj ? foundSeasonObj.season : "Unknown";
-  }
-
+function getCurrentSeason() {
+  const now = new Date();
+  const daysElapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
+  const monthIndex = Math.floor((daysElapsed % DAYS_PER_YEAR) / DAYS_PER_MONTH);
+  const currentMonth = NAMED_MONTHS[monthIndex] || NAMED_MONTHS[0];
+  const foundSeasonObj = SEASON_MAPPING.find(obj => obj.months.includes(currentMonth));
+  return foundSeasonObj ? foundSeasonObj.season : "Mist's Rise"; // Default to a known season
+}
   /*******************************************************
    * 2) Seasonal multipliers (updated to include new items)
    *******************************************************/
@@ -574,18 +578,23 @@
     const activeBlock = Math.floor(now.getHours() / 6);
     const yesterdaysBlock = 3;
 
-    Object.entries(availabilityScores).forEach(([location, scores]) => {
-      const row = document.createElement("tr");
-      const locationCell = document.createElement("td");
-      locationCell.textContent = location;
-      row.appendChild(locationCell);
+Object.entries(availabilityScores).forEach(([location, scores]) => {
+  const row = document.createElement("tr");
+  const locationCell = document.createElement("td");
+  locationCell.textContent = location;
+  row.appendChild(locationCell);
 
-      const locationAscii = getAsciiSum(location);
+  const locationAscii = getAsciiSum(location);
 
-      scores.forEach((score, index) => {
-        const thisBasePrice = basePrices[index];
-        const commodityName = commodityNames[index];
-        const commodityAscii = getAsciiSum(commodityName);
+  if (scores.length < commodityNames.length) {
+    console.warn(`Location ${location} has fewer scores than commodities.`);
+    return; // Skip this location
+  }
+
+  scores.forEach((score, index) => {
+    const thisBasePrice = basePrices[index];
+    const commodityName = commodityNames[index];
+    const commodityAscii = getAsciiSum(commodityName);
 
         const todayPrice = calculatePrice(
           thisBasePrice,
@@ -656,10 +665,14 @@
   }
 
   // On load
-  updateStockExchange();
-  setInterval(updateStockExchange, 1000 * 60 * 60 * 6);
-  startCountdown();
+  
+document.addEventListener("DOMContentLoaded", () => {
+    updateStockExchange();
+    setInterval(updateStockExchange, 1000 * 60 * 60 * 6);
+    startCountdown();
+  });
 </script>
+
 </body>
 </html>
 
