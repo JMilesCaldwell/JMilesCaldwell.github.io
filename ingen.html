@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instance Generator</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    select, button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin: 1rem;
+      border: 1px solid #8B0000;
+      border-radius: 5px;
+      background: #FAF4E0;
+      color: #8B0000;
+    }
+    button:hover {
+      background: #8B0000;
+      color: #FAF4E0;
+      cursor: pointer;
+    }
+    .home-button {
+      display: inline-block;
+      margin: 1rem 0;
+      padding: 0.5rem 1rem;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+      background: #8B0000;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #660000;
+      letter-spacing: 0.1rem;
+    }
+    .home-button:hover {
+      background: #660000;
+      border-color: #8B0000;
+    }
+    .results {
+      margin-top: 1rem;
+      text-align: left;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Instance Generator</h1>
+  
+  <img src="resources/InGen.JPG" alt="..." style="max-width: 100%; height: auto;">
+
+  <div class="divider"></div>
+
+  <!-- Dice Selection and Button -->
+  <label for="dice-select">Select Dice Type:</label>
+  <select id="dice-select">
+    <option value="4">d4</option>
+    <option value="6">d6</option>
+    <option value="8">d8</option>
+    <option value="10" selected>d10</option>
+    <option value="12">d12</option>
+    <option value="20">d20</option>
+    <option value="100">d100</option>
+  </select>
+
+  <button onclick="generateDiceRoll()">Generate Instances</button>
+
+  <div class="results" id="results"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Home Button -->
+<a href="index.html" class="home-button">Home</a>
+
+<script>
+  // Array of items
+  const items = [
+    { name: "The walls glow with shifting glyphs", description: "Players must match glyphs to corresponding symbols. Incorrect matches release bursts of magical energy." },
+    { name: "The room hums with an eerie melody", description: "Players must hum or play the correct notes. Incorrect notes intensify the hum and deal psychic damage." },
+    { name: "A massive mechanical wall looms ahead", description: "Players must fit smaller gears into the mechanism to align the symbols and unlock the door." },
+    { name: "The ground shifts beneath you", description: "Players must balance a tilting platform by placing weights correctly. Tilting too far triggers spikes below." },
+    { name: "A grid of stone blocks lies embedded in the floor", description: "Players must slide the blocks to recreate an emblem. Completing the pattern unlocks the door." },
+    { name: "A massive pendulum swings back and forth", description: "Players must time their movements to set tumblers in sequence. Creative solutions like jamming the pendulum can help." },
+    { name: "Four wheels marked with elemental symbols", description: "Players must rotate the wheels in the correct sequence to unlock the door. Incorrect turns trigger minor elemental effects." },
+    { name: "A beam of light shoots from a pedestal", description: "Players must arrange mirrors to direct the beam onto a sigil. Misaligned beams split and reset the puzzle." },
+    { name: "A mechanical knight stands motionless", description: "Players must find and insert a key to deactivate the knight. Damaging it increases its aggression." },
+    { name: "Five braziers surround the room", description: "Players must light the braziers in a specific sequence (Beryn, Nergál, Origen, Talia, Rael). Incorrect lighting extinguishes all flames." },
+    { name: "A massive hourglass dominates the room", description: "Players must solve three smaller puzzles before the timer runs out." },
+    { name: "The floor rumbles as large tiles begin to move", description: "Players must memorize shifting patterns and safely cross the room. Missteps cause tiles to collapse into pits." },
+    { name: "Steam hisses from pipes lining the walls", description: "Players must turn valves to balance pressure and unlock the door. Incorrect adjustments release scalding steam." },
+    { name: "The walls of the chamber creak ominously", description: "Players must solve a riddle or input the correct sequence to stop the walls. Incorrect answers accelerate the mechanism." },
+    { name: "Three large levers stand in the center", description: "Players must use teamwork to hold all levers simultaneously to unlock the exit." },
+    { name: "The hallway ahead is lined with tiles", description: "Players must step on tiles marked with the correct symbols. Wrong steps trigger darts or spikes." },
+    { name: "A low hum fills the air", description: "Players must deactivate magnetic walls by reducing carried metal or using a hidden control panel." },
+    { name: "A massive disk embedded in the floor rotates", description: "Players must align symbols by activating pressure plates around the room." },
+    { name: "A moving conveyor belt pulls toward spinning blades", description: "Players must deactivate switches to stop the belt or jam the blades." },
+    { name: "Platforms stretch across a chasm", description: "Players must identify stable platforms using symbols or patterns. Incorrect steps cause platforms to collapse." },
+    { name: "A platform hangs in a vertical shaft", description: "Players must crank an elevator manually or secure it with weights or magic." },
+    { name: "Narrow bridges stretch across a pit", description: "Players must balance their movements or stabilize the bridges to cross safely." },
+    { name: "An hourglass drains rapidly as you enter", description: "Players must complete tasks before time runs out." },
+    { name: "Chains dangle from the ceiling", description: "Players must pull chains in the correct order to align symbols." },
+    { name: "Gas pours from vents", description: "Players must press buttons in the correct sequence to vent the gas." },
+    { name: "The ceiling begins to lower", description: "Players must press a central plate and solve a puzzle before the ceiling crushes them." },
+    { name: "Dense fog fills the room", description: "Players must follow sound cues to navigate safely. Missteps trigger traps." },
+    { name: "The walls grind as they slide", description: "Players must push walls into specific positions to reveal an exit." },
+    { name: "Runes glow faintly on the walls", description: "Players must match glowing runes to floor symbols. Incorrect matches release radiant damage." },
+    { name: "Water begins to rise", description: "Players must solve a riddle or find switches before the room floods." },
+    { name: "Torches on the walls spin rapidly", description: "Players must light torches in the correct order to avoid triggering fire damage." },
+    { name: "A key dangles from the ceiling", description: "Players must retrieve the key without triggering traps." },
+    { name: "A large statue begins to crack", description: "Players must interpret inscriptions and remove pieces carefully." },
+    { name: "A labyrinth of levers stands before you", description: "Players must pull levers in the correct sequence to escape." },
+    { name: "Shadows rise from the floor", description: "Players must outwit or trap their doppelgangers." },
+    { name: "The air grows heavy", description: "Players must adjust valves to reduce pressure and avoid an explosion." },
+    { name: "The floor glows faintly", description: "Players must step on tiles in the correct sequence to avoid shocks." },
+    { name: "Heavy chains swing across a hallway", description: "Players must time their movements or dislodge the chains." },
+    { name: "The ceiling begins to drop", description: "Players must solve a riddle quickly or jam the mechanism." },
+    { name: "Magical glyphs pulse faintly", description: "Players must arrange glowing glyphs in the correct sequence." }
+  ];
+
+  function generateDiceRoll() {
+    const diceSelect = document.getElementById("dice-select").value;
+    const diceSides = parseInt(diceSelect);
+    const results = document.getElementById("results");
+    let rollResults = [];
+
+    // Roll the dice and select random items
+    for (let i = 0; i < diceSides; i++) {
+      const randomIndex = Math.floor(Math.random() * items.length);
+      rollResults.push(items[randomIndex]);
+    }
+
+    // Display the results
+    results.innerHTML = `<h3>You rolled a ${diceSelect}-sided dice!</h3><ul>` + 
+      rollResults.map((item, index) => 
+        `<li><strong>${index + 1}:</strong> ${item.name} - ${item.description}</li>`
+      ).join('') + `</ul>`;
+  }
+</script>
+
+</body>
+</html>
