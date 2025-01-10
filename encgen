@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evershroud Encounter Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+    }
+
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    label {
+      display: inline-block;
+      width: 150px;
+      margin-right: 8px;
+      font-weight: bold;
+    }
+
+    input, select {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+      background-color: #fff9ed;
+      border: 1px solid #999;
+      font-family: 'Almendra', serif;
+    }
+
+    .button {
+      background-color: #8B0000;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+    }
+
+    .button:hover {
+      background-color: #6B0000;
+    }
+
+    .output {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #aaa;
+      background-color: #fff5e6;
+    }
+
+    .output strong {
+      display: block;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Evershroud Isles Encounter Generator</h1>
+
+  <div>
+    <label for="party-level">Party Level:</label>
+    <input type="number" id="party-level" placeholder="e.g., 5" min="1" max="20">
+  </div>
+  <div>
+    <label for="party-size">Party Size:</label>
+    <input type="number" id="party-size" placeholder="e.g., 4" min="1">
+  </div>
+  <div>
+    <label for="region">Region:</label>
+    <select id="region">
+      <option value="">-- Choose --</option>
+      <option value="Withering Fields">Withering Fields</option>
+      <option value="Margraeve-Duskhaven">Margraeve-Duskhaven</option>
+      <option value="Caldwell Dominion">Caldwell Dominion</option>
+      <option value="Azurean League">Azurean League</option>
+      <option value="Underground (Avernum)">Underground (Avernum)</option>
+    </select>
+  </div>
+
+  <button class="button" onclick="generateEncounter()">Generate Encounter</button>
+
+  <div id="output" class="output" style="display: none;">
+    <h2>Generated Encounter</h2>
+    <div id="encounter-description"></div>
+    <div id="stat-block"></div>
+  </div>
+</div>
+
+<script>
+  const CREATURES = {
+    "Withering Fields": [
+      { name: "White Goblin", cr: 0.25, statBlock: "HP 7, AC 13, Attack: Shortsword +4 (1d6+2)." },
+      { name: "Bulette", cr: 5, statBlock: "HP 94, AC 17, Attack: Bite +7 (4d12+4)." },
+    ],
+    "Margraeve-Duskhaven": [
+      { name: "Undead Guard", cr: 1, statBlock: "HP 22, AC 15, Attack: Longsword +4 (1d8+2)." },
+      { name: "Necromancer", cr: 6, statBlock: "HP 66, AC 12, Spells: Fireball (8d6), Chill Touch (2d8)." },
+    ],
+    "Caldwell Dominion": [
+      { name: "Brigand", cr: 0.5, statBlock: "HP 16, AC 12, Attack: Crossbow +3 (1d8+1)." },
+      { name: "Caldwell Overseer", cr: 4, statBlock: "HP 88, AC 16, Attack: Greataxe +6 (2d10+4)." },
+    ],
+    "Azurean League": [
+      { name: "Halfling Scout", cr: 0.5, statBlock: "HP 14, AC 14, Attack: Bow +5 (1d6+3)." },
+      { name: "Elven Duelist", cr: 3, statBlock: "HP 52, AC 15, Attack: Rapier +6 (1d8+4)." },
+    ],
+    "Underground (Avernum)": [
+      { name: "Duergar Warrior", cr: 2, statBlock: "HP 39, AC 16, Attack: War Pick +5 (2d8+2)." },
+      { name: "Hook Horror", cr: 3, statBlock: "HP 75, AC 15, Attack: Hooks +6 (2d6+4)." },
+    ],
+  };
+
+  function generateEncounter() {
+    const level = parseInt(document.getElementById("party-level").value, 10);
+    const size = parseInt(document.getElementById("party-size").value, 10);
+    const region = document.getElementById("region").value;
+
+    if (!level || !size || !region) {
+      alert("Please fill out all fields.");
+      return;
+    }
+
+    const difficulty = calculateDifficulty(level, size);
+    const encounter = selectCreatures(region, difficulty);
+
+    const output = document.getElementById("output");
+    output.style.display = "block";
+    document.getElementById("encounter-description").innerHTML = `
+      <strong>Region:</strong> ${region}<br>
+      <strong>Difficulty:</strong> ${difficulty}<br>
+      <strong>Creatures:</strong> ${encounter.map(c => c.name).join(", ")}
+    `;
+
+    const statBlocks = encounter.map(
+      c => `<strong>${c.name}</strong>: ${c.statBlock}`
+    ).join("<br><br>");
+    document.getElementById("stat-block").innerHTML = statBlocks;
+  }
+
+  function calculateDifficulty(level, size) {
+    const baseXP = level * size * 100;
+    if (baseXP < 300) return "Easy";
+    if (baseXP < 1000) return "Medium";
+    if (baseXP < 3000) return "Hard";
+    return "Deadly";
+  }
+
+  function selectCreatures(region, difficulty) {
+    const creatures = CREATURES[region];
+    const filtered = creatures.filter(c => {
+      if (difficulty === "Easy") return c.cr <= 1;
+      if (difficulty === "Medium") return c.cr <= 3;
+      if (difficulty === "Hard") return c.cr <= 6;
+      return c.cr > 6;
+    });
+    return filtered.length ? filtered : creatures.slice(0, 1);
+  }
+</script>
+
+</body>
+</html>
