@@ -515,9 +515,19 @@
   ]
 };
 
+
   /*******************************************************
    * 5) Original Deterministic Pricing Logic, unchanged
    *******************************************************/
+  function hashSeed(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0; // Simple hashing function
+  }
+  return hash;
+  }
+
+  
   function getAsciiSum(str) {
     let sum = 0;
     for (let i = 0; i < str.length; i++) {
@@ -533,129 +543,141 @@
     return parseInt(`${day}${month}${year}`, 10);
   }
 
-  function generateDeterministicNumbers(dateNumber) {
-    const results = [];
-    for (let i = 0; i < 4; i++) {
-      const val = ((dateNumber + i) * 2654435761) >>> 0; 
-      results.push(String(val % 1000000));
-    }
-    return results;
+function generateDeterministicNumbers(seed) {
+  const results = [];
+  for (let i = 0; i < 4; i++) {
+    const hash = (seed + i) * 2654435761; // Use the seed + time block index
+    const scaledValue = (hash % 1000) / 1000 + 0.5; // Scale to 0.5–1.5
+    results.push(scaledValue);
   }
+  return results;
+}
 
-  function calculatePrice(basePrice, availability, determinant, locationAscii, commodityAscii, commodityName) {
-    const seed = parseInt(determinant, 10) || 1;
-    const combined = (seed * locationAscii * commodityAscii) % 20000;
-    const directionFlag = combined % 2 === 1; 
-    const magnitude = (combined % 100);
-    const floatShift = (magnitude / 33) * availability;
-    const finalShift = directionFlag ? floatShift : -floatShift;
+function calculatePrice(basePrice, availability, determinant, location, commodityName) {
+  // Create a unique seed for this calculation
+  const seed = `${determinant}-${location}-${commodityName}`;
+  const hashedSeed = hashSeed(seed); // Generate a hashed seed
+  const randomValue = (hashedSeed % 1000) / 1000 + 0.5; // Scale to 0.5–1.5
 
-    // Factor in seasonal multiplier
-    const seasonMult = getSeasonalMultiplier(commodityName);
+  const finalShift = randomValue * availability;
 
-    let newPrice = basePrice + finalShift;
-    newPrice *= seasonMult;
+  // Factor in seasonal multiplier
+  const seasonMult = getSeasonalMultiplier(commodityName);
 
-    return Math.max(1, newPrice);
-  }
+  let newPrice = basePrice + finalShift;
+  newPrice *= seasonMult;
 
-  function updateStockExchange() {
-    const tableBody = document.querySelector("#stock-exchange tbody");
-    tableBody.innerHTML = "";
+  return Math.max(1, newPrice); // Ensure no price drops below 1
+}
 
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
+function updateStockExchange() {
+  const tableBody = document.querySelector("#stock-exchange tbody");
+  tableBody.innerHTML = "";
 
-    const todayNumber = getDateNumber(now);
-    const yesterdayNumber = getDateNumber(yesterday);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
 
-    const todayDeterminants = generateDeterministicNumbers(todayNumber);
-    const yesterdayDeterminants = generateDeterministicNumbers(yesterdayNumber);
+  const todayNumber = getDateNumber(now);
+  const yesterdayNumber = getDateNumber(yesterday);
 
-    const activeBlock = Math.floor(now.getHours() / 6);
-    const yesterdaysBlock = 3;
+  const todayDeterminants = generateDeterministicNumbers(todayNumber);
+  const yesterdayDeterminants = generateDeterministicNumbers(yesterdayNumber);
 
-    Object.entries(availabilityScores).forEach(([location, scores]) => {
-      const row = document.createElement("tr");
-      const locationCell = document.createElement("td");
-      locationCell.textContent = location;
-      row.appendChild(locationCell);
+  const activeBlock = Math.floor(now.getHours() / 6); // Current time block
+  const yesterdaysBlock = (activeBlock === 0) ? 3 : activeBlock - 1; // Dynamically calculate
 
-      const locationAscii = getAsciiSum(location);
+  console.log("Today Determinants:", todayDeterminants);
+  console.log("Yesterday Determinants:", yesterdayDeterminants);
+  console.log("Active Block:", activeBlock, "Yesterday's Block:", yesterdaysBlock);
 
-      scores.forEach((score, index) => {
-        const thisBasePrice = basePrices[index];
-        const commodityName = commodityNames[index];
-        const commodityAscii = getAsciiSum(commodityName);
+  Object.entries(availabilityScores).forEach(([location, scores]) => {
+    const row = document.createElement("tr");
+    const locationCell = document.createElement("td");
+    locationCell.textContent = location;
+    row.appendChild(locationCell);
 
-        const todayPrice = calculatePrice(
-          thisBasePrice,
-          score,
-          todayDeterminants[activeBlock],
-          locationAscii,
-          commodityAscii,
-          commodityName
-        );
-        const yesterdayPrice = calculatePrice(
-          thisBasePrice,
-          score,
-          yesterdayDeterminants[yesterdaysBlock],
-          locationAscii,
-          commodityAscii,
-          commodityName
-        );
-        const priceChange = todayPrice - yesterdayPrice;
+    scores.forEach((score, index) => {
+      const basePrice = basePrices[index];
+      const commodityName = commodityNames[index];
 
-        const cell = document.createElement("td");
-        cell.innerHTML = `
-          <span class="previous-price">${yesterdayPrice.toFixed(2)} GP</span><br>
-          <span class="current-price" style="color: blue; font-weight: bold;">
-            ${todayPrice.toFixed(2)} GP
-          </span>
-        `;
-        if (priceChange !== 0) {
-          const changeSpan = document.createElement("span");
-          changeSpan.className = `price-change ${
-            priceChange > 0 ? "price-up" : "price-down"
-          }`;
-          changeSpan.textContent = `(${priceChange.toFixed(2)} GP)`;
-          cell.appendChild(changeSpan);
-        }
-        row.appendChild(cell);
-      });
+      // Calculate today's and yesterday's prices
+      const todayPrice = calculatePrice(
+        basePrice,
+        score,
+        todayDeterminants[activeBlock],
+        location,
+        commodityName
+      );
 
-      tableBody.appendChild(row);
+      const yesterdayPrice = calculatePrice(
+        basePrice,
+        score,
+        yesterdayDeterminants[yesterdaysBlock],
+        location,
+        commodityName
+      );
+
+      console.log(
+        "Location:", location,
+        "Commodity:", commodityName,
+        "Today Price:", todayPrice,
+        "Yesterday Price:", yesterdayPrice
+      );
+
+      // Calculate price change
+      const priceChange = todayPrice - yesterdayPrice;
+
+      // Create table cell
+      const cell = document.createElement("td");
+      cell.innerHTML = `
+        <span class="previous-price">${yesterdayPrice.toFixed(2)} GP</span><br>
+        <span class="current-price" style="color: blue; font-weight: bold;">
+          ${todayPrice.toFixed(2)} GP
+        </span>
+      `;
+      if (priceChange !== 0) {
+        const changeSpan = document.createElement("span");
+        changeSpan.className = `price-change ${
+          priceChange > 0 ? "price-up" : "price-down"
+        }`;
+        changeSpan.textContent = `(${priceChange.toFixed(2)} GP)`;
+        cell.appendChild(changeSpan);
+      }
+      row.appendChild(cell);
     });
-  }
+
+    tableBody.appendChild(row);
+  });
+}
 
   // Countdown logic
-  function startCountdown() {
-    const now = new Date();
-    const nextRefresh = new Date();
-    nextRefresh.setHours(Math.ceil(now.getHours() / 6) * 6, 0, 0, 0);
+ function startCountdown() {
+  const now = new Date();
+  const nextRefresh = new Date();
+  nextRefresh.setHours(Math.ceil(now.getHours() / 6) * 6, 0, 0, 0);
 
-    function updateTimer() {
-      const currentTime = new Date();
-      const timeLeft = nextRefresh - currentTime;
+  function updateTimer() {
+    const currentTime = new Date();
+    const timeLeft = nextRefresh - currentTime;
 
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        document.getElementById("timer").textContent = "Refreshing...";
-        updateStockExchange();
-        startCountdown();
-        return;
-      }
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-      document.getElementById("timer").textContent = `${hours}h ${minutes}m ${seconds}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      updateStockExchange();
+      setTimeout(startCountdown, 1000); // Restart countdown
+      return;
     }
 
-    updateTimer();
-    const timerInterval = setInterval(updateTimer, 1000);
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+    document.getElementById("timer").textContent = `${hours}h ${minutes}m ${seconds}s`;
   }
+
+  const timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
+}
 
   // On load
   updateStockExchange();
@@ -664,4 +686,3 @@
 </script>
 </body>
 </html>
-
