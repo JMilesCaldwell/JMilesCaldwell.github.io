@@ -25,7 +25,7 @@
     h1, h2 {
       font-family: 'Cinzel', serif;
     }
-    select, button {
+    button {
       padding: 0.5rem 1rem;
       font-size: 1rem;
       margin: 1rem;
@@ -58,7 +58,7 @@
     }
     .results {
       margin-top: 1rem;
-      text-align: left;
+      text-align: center;
     }
     .divider {
       margin: 1rem auto;
@@ -80,19 +80,8 @@
 
   <div class="divider"></div>
 
-  <!-- Dice Selection and Button -->
-  <label for="dice-select">Select Dice Type:</label>
-  <select id="dice-select">
-    <option value="4">d4</option>
-    <option value="6">d6</option>
-    <option value="8">d8</option>
-    <option value="10" selected>d10</option>
-    <option value="12">d12</option>
-    <option value="20">d20</option>
-    <option value="100">d100</option>
-  </select>
-
-  <button onclick="generateDiceRoll()">Generate Instances</button>
+  <!-- Generate Button -->
+  <button onclick="generateInstance()">Generate Instance</button>
 
   <div class="results" id="results"></div>
 </div>
@@ -147,23 +136,11 @@
     { name: "Magical glyphs pulse faintly", description: "Players must arrange glowing glyphs in the correct sequence." }
   ];
 
-  function generateDiceRoll() {
-    const diceSelect = document.getElementById("dice-select").value;
-    const diceSides = parseInt(diceSelect);
+  function generateInstance() {
+    const randomIndex = Math.floor(Math.random() * items.length);
+    const selectedItem = items[randomIndex];
     const results = document.getElementById("results");
-    let rollResults = [];
-
-    // Roll the dice and select random items
-    for (let i = 0; i < diceSides; i++) {
-      const randomIndex = Math.floor(Math.random() * items.length);
-      rollResults.push(items[randomIndex]);
-    }
-
-    // Display the results
-    results.innerHTML = `<h3>You rolled a ${diceSelect}-sided dice!</h3><ul>` + 
-      rollResults.map((item, index) => 
-        `<li><strong>${index + 1}:</strong> ${item.name} - ${item.description}</li>`
-      ).join('') + `</ul>`;
+    results.innerHTML = `<h3>${selectedItem.name}</h3><p>${selectedItem.description}</p>`;
   }
 </script>
 
