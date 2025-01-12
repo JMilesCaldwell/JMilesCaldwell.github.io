@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Tinkerer’s Trove</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>The Tinkerer’s Trove</h1>
+  <p>Welcome to The Tinkerer’s Trove, home of marvellous mechanical creations and enchanting inventions. Check back hourly for new gadgets!</p>
+
+  <div class="divider"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="store-items">
+      <!-- Store items will be dynamically generated here -->
+    </tbody>
+  </table>
+
+  <p class="timer" id="countdown">Next update in: </p>
+
+  <div class="divider"></div>
+</div>
+
+<script>
+  const items = [
+    // Gadgets and Mechanical Devices
+    { name: "Clockwork Spider", description: "A tiny mechanical spider that scuttles about.", basePrice: 50, properties: ["Can climb walls", "Mildly creepy"] },
+    { name: "Gnomish Timekeeper", description: "A precise pocket watch.", basePrice: 75, properties: ["Tracks time accurately"] },
+    { name: "Automaton Hand", description: "A mechanical hand capable of simple tasks.", basePrice: 200, properties: ["Can hold small objects"] },
+    { name: "Music Box", description: "Plays a hauntingly beautiful tune.", basePrice: 30, properties: ["Creates ambience"] },
+    { name: "Arcane Dynamo", description: "Generates minor magical energy.", basePrice: 300, properties: ["Power small devices"] },
+    { name: "Mechanical Bird", description: "Flaps its wings and whistles tunes.", basePrice: 100, properties: ["Amusing and decorative"] },
+
+    // Utility Tools
+    { name: "Goggles of Detection", description: "Reveals hidden objects.", basePrice: 250, properties: ["Advantage on Perception checks"] },
+    { name: "Tinker’s Toolkit", description: "All the tools needed for mechanical work.", basePrice: 50, properties: ["Essential for repairs"] },
+    { name: "Portable Forge", description: "A compact smithing setup.", basePrice: 500, properties: ["Heats metal for crafting"] },
+    { name: "Self-Writing Quill", description: "Writes on command.", basePrice: 75, properties: ["Requires dictation"] },
+    { name: "Magnetic Gloves", description: "Attract metal objects.", basePrice: 100, properties: ["Advantage on Sleight of Hand checks involving metal"] },
+    { name: "Miniature Drill", description: "Perfect for delicate work.", basePrice: 25, properties: ["Battery lasts 1 hour"] },
+
+    // Explosives and Projectiles
+    { name: "Clockwork Grenade", description: "A timed explosive device.", basePrice: 150, properties: ["Deals 3d6 fire damage"] },
+    { name: "Spring-Loaded Dart Launcher", description: "A hidden dart launcher.", basePrice: 200, properties: ["1d4 piercing damage"] },
+    { name: "Firestarter Capsule", description: "Instantly ignites a small fire.", basePrice: 10, properties: ["Single-use"] },
+    { name: "Net Launcher", description: "Fires a net to entangle targets.", basePrice: 300, properties: ["Restrains targets"] },
+    { name: "Smoke Capsule", description: "Creates a 10 ft cloud of smoke.", basePrice: 20, properties: ["Obscures vision"] },
+
+    // Enchanted and Rare Items
+    { name: "Perpetual Motion Orb", description: "A magical sphere that never stops spinning.", basePrice: 1000, properties: ["Hypnotic to watch"] },
+    { name: "Mechanical Familiar Core", description: "Transforms into a mechanical animal companion.", basePrice: 500, properties: ["Choose form on activation"] },
+    { name: "Arcane Battery", description: "Stores and releases magical energy.", basePrice: 750, properties: ["Holds 3 spell levels"] },
+    { name: "Automaton Kit", description: "Build your own small automaton.", basePrice: 400, properties: ["Takes 8 hours to assemble"] },
+    { name: "Flame Turret", description: "Deploys a small turret that shoots fire.", basePrice: 1000, properties: ["Deals 2d8 fire damage"] },
+    { name: "Hover Disk", description: "A levitating platform for carrying items.", basePrice: 600, properties: ["Carries up to 300 lbs"] },
+  ];
+
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "artificer-store-stock";
+  const lastRefreshKey = "artificer-last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 8) + 5; // Between 5 and 12 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayStock(newStock);
+  }
+
+  function displayStock(stock) {
+    const storeItemsContainer = document.getElementById("store-items");
+    storeItemsContainer.innerHTML = stock.length
+      ? stock
+          .map(
+            item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>${item.properties.join(", ") || "-"}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="4">No items available. Check back later!</td></tr>`;
+  }
+
+  function startCountdown() {
+    const lastRefresh = parseInt(localStorage.getItem(lastRefreshKey)) || 0;
+    const nextRefresh = lastRefresh + storeRefreshTime;
+    const timerElement = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const currentTime = Date.now();
+      const remainingTime = nextRefresh - currentTime;
+
+      if (remainingTime <= 0) {
+        refreshStore();
+        startCountdown();
+        return;
+      }
+
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      timerElement.textContent = `Next update in: ${minutes}m ${seconds}s`;
+
+      setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+      }
+
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
+  startCountdown();
+</script>
+
+</body>
+</html>
+
