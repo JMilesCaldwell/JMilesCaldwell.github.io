@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>General Store</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>General Store</h1>
+  <p>Welcome to the General Store! Stock up on all the essentials for your next adventure.</p>
+
+  <div class="divider"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Weight</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="store-items">
+      <!-- Store items will be dynamically generated here -->
+    </tbody>
+  </table>
+
+  <p class="timer" id="countdown">Next update in: </p>
+
+  <div class="divider"></div>
+</div>
+
+<script>
+ const items = [
+  // Tools and Gear
+  { name: "Backpack", description: "A sturdy leather backpack.", basePrice: 2, weight: "5 lbs", properties: ["Capacity: 30 lbs"] },
+  { name: "Bedroll", description: "A basic roll for sleeping.", basePrice: 1, weight: "5 lbs", properties: ["Comfortable in most weather"] },
+  { name: "Rope (50 ft)", description: "50 feet of hempen rope.", basePrice: 1, weight: "10 lbs", properties: ["Durable"] },
+  { name: "Rope (Silk, 50 ft)", description: "50 feet of lightweight silk rope.", basePrice: 10, weight: "5 lbs", properties: ["Durable", "Light"] },
+  { name: "Lantern, Hooded", description: "A hooded lantern to light your way.", basePrice: 5, weight: "2 lbs", properties: ["Bright light (30 ft)", "Dim light (60 ft)"] },
+  { name: "Lantern, Bullseye", description: "A focused light source.", basePrice: 10, weight: "2 lbs", properties: ["Bright cone (60 ft)", "Dim light (120 ft)"] },
+  { name: "Torch", description: "A simple wooden torch.", basePrice: 0.1, weight: "1 lb", properties: ["Burns for 1 hour"] },
+  { name: "Flint and Steel", description: "Used to start a fire.", basePrice: 1, weight: "0.5 lbs", properties: ["Essential for survival"] },
+  { name: "Crowbar", description: "A sturdy iron crowbar.", basePrice: 2, weight: "5 lbs", properties: ["+2 bonus to leverage checks"] },
+  { name: "Hammer", description: "A basic tool for driving nails.", basePrice: 1, weight: "3 lbs", properties: ["Versatile utility"] },
+  { name: "Pitons (10)", description: "Metal spikes for climbing.", basePrice: 5, weight: "5 lbs", properties: ["Used with rope"] },
+  { name: "Grappling Hook", description: "A hook for climbing.", basePrice: 2, weight: "4 lbs", properties: ["Useful with rope"] },
+  { name: "Healer's Kit", description: "A kit for stabilising wounds.", basePrice: 5, weight: "3 lbs", properties: ["10 uses"] },
+  { name: "Signal Whistle", description: "A small, loud whistle.", basePrice: 0.5, weight: "0.1 lbs", properties: ["Carries sound for 1 mile"] },
+  { name: "Spyglass", description: "A magnifying telescope.", basePrice: 1000, weight: "1 lb", properties: ["Magnifies distant objects"] },
+  { name: "Climber's Kit", description: "A kit for climbing.", basePrice: 25, weight: "12 lbs", properties: ["Includes pitons and gloves"] },
+  { name: "Portable Ram", description: "A ram for breaking doors.", basePrice: 4, weight: "35 lbs", properties: ["+4 bonus to break checks"] },
+  { name: "Shovel", description: "A simple digging tool.", basePrice: 2, weight: "5 lbs", properties: ["Essential for excavation"] },
+  { name: "Tinderbox", description: "A box to light fires.", basePrice: 0.5, weight: "1 lb", properties: ["Essential for survival"] },
+  { name: "Watertight Chest", description: "A small, sealed chest.", basePrice: 15, weight: "20 lbs", properties: ["Keeps contents dry"] },
+
+  // Food and Provisions
+  { name: "Rations (1 day)", description: "Food for one day.", basePrice: 0.5, weight: "2 lbs", properties: ["Non-perishable"] },
+  { name: "Waterskin", description: "A leather container for water.", basePrice: 0.5, weight: "5 lbs when full", properties: ["Holds 4 pints"] },
+  { name: "Cooking Pot", description: "A basic metal pot.", basePrice: 2, weight: "4 lbs", properties: ["Useful for cooking"] },
+  { name: "Bag of Flour", description: "A small sack of flour.", basePrice: 1, weight: "1 lb", properties: ["Cooking ingredient"] },
+  { name: "Wheel of Cheese", description: "A large wheel of cheese.", basePrice: 5, weight: "4 lbs", properties: ["Long-lasting"] },
+  { name: "Bottle of Wine", description: "A fine bottle of wine.", basePrice: 10, weight: "2 lbs", properties: ["Restores morale"] },
+  { name: "Dried Meat (1 lb)", description: "Preserved for long journeys.", basePrice: 1, weight: "1 lb", properties: ["Long-lasting"] },
+  { name: "Honey Jar", description: "A small jar of honey.", basePrice: 3, weight: "1 lb", properties: ["Sweet and nutritious"] },
+  { name: "Herbal Tea (Bundle)", description: "Dried leaves for tea.", basePrice: 1, weight: "0.5 lbs", properties: ["Restores morale"] },
+  { name: "Salt (Bag)", description: "A small bag of salt.", basePrice: 1, weight: "1 lb", properties: ["Preserves food"] },
+  { name: "Fruit Basket", description: "A basket of fresh fruit.", basePrice: 3, weight: "5 lbs", properties: ["Perishable"] },
+
+  // Miscellaneous Items
+  { name: "Pouch", description: "A small leather pouch.", basePrice: 1, weight: "1 lb", properties: ["Holds 5 lbs of items"] },
+  { name: "Bag of Ball Bearings (1000)", description: "A bag of metal balls.", basePrice: 1, weight: "2 lbs", properties: ["Covers a 10-foot square area"] },
+  { name: "Ink and Quill", description: "For writing notes.", basePrice: 10, weight: "0.5 lbs", properties: ["Essential for scribes"] },
+  { name: "Paper (1 sheet)", description: "A blank sheet of paper.", basePrice: 0.2, weight: "0.1 lbs", properties: ["For recording information"] },
+  { name: "Chalk (1 piece)", description: "A small piece of chalk.", basePrice: 0.1, weight: "0.1 lbs", properties: ["Used for marking"] },
+  { name: "Mirror, Steel", description: "A polished steel mirror.", basePrice: 5, weight: "0.5 lbs", properties: ["Reflects images"] },
+  { name: "Holy Water (flask)", description: "Sacred water to repel undead.", basePrice: 25, weight: "1 lb", properties: ["1d6 radiant damage to undead"] },
+  { name: "Perfume (vial)", description: "A fine vial of perfume.", basePrice: 5, weight: "0.1 lbs", properties: ["Adds flair to conversations"] },
+  { name: "Candle", description: "A small wax candle.", basePrice: 0.1, weight: "0.1 lbs", properties: ["Burns for 1 hour"] },
+  { name: "Marbles (Bag)", description: "A bag of smooth marbles.", basePrice: 1, weight: "2 lbs", properties: ["Disrupts footing"] },
+  { name: "Net", description: "A small net for capturing prey.", basePrice: 1, weight: "3 lbs", properties: ["Restrains small targets"] },
+  { name: "Bucket", description: "A simple wooden bucket.", basePrice: 0.5, weight: "2 lbs", properties: ["Carries liquid"] },
+  { name: "Bell", description: "A small, metal bell.", basePrice: 1, weight: "0.5 lbs", properties: ["Audible alarm"] },
+  { name: "Vial", description: "A small glass vial.", basePrice: 1, weight: "0.1 lbs", properties: ["Holds 4 ounces"] },
+];
+
+
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "general-store-stock";
+  const lastRefreshKey = "general-store-last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 8) + 8; // Between 8 and 15 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayStock(newStock);
+  }
+
+  function displayStock(stock) {
+    const storeItemsContainer = document.getElementById("store-items");
+    storeItemsContainer.innerHTML = stock.length
+      ? stock
+          .map(
+            item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>${item.weight}</td>
+          <td>${item.properties.join(", ") || "-"}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="5">No items available. Check back later!</td></tr>`;
+  }
+
+  function startCountdown() {
+    const lastRefresh = parseInt(localStorage.getItem(lastRefreshKey)) || 0;
+    const nextRefresh = lastRefresh + storeRefreshTime;
+    const timerElement = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const currentTime = Date.now();
+      const remainingTime = nextRefresh - currentTime;
+
+      if (remainingTime <= 0) {
+        refreshStore();
+        startCountdown();
+        return;
+      }
+
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      timerElement.textContent = `Next update in: ${minutes}m ${seconds}s`;
+
+      setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+  }
+
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
+  startCountdown();
+</script>
+
+</body>
+</html>
