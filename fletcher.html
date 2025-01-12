@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Feathered Shaft</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>The Feathered Shaft</h1>
+  <p>Welcome to The Feathered Shaft, where precision meets craftsmanship. Stock up on bows, arrows, and other ranged necessities!</p>
+
+  <div class="divider"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="store-items">
+      <!-- Store items will be dynamically generated here -->
+    </tbody>
+  </table>
+
+  <p class="timer" id="countdown">Next update in: </p>
+
+  <div class="divider"></div>
+</div>
+
+<script>
+  const items = [
+    // Bows and Crossbows
+    { name: "Shortbow", description: "A simple, lightweight bow.", basePrice: 25, properties: ["Range 80/320 ft", "Simple weapon"] },
+    { name: "Longbow", description: "A powerful bow for long-range attacks.", basePrice: 50, properties: ["Range 150/600 ft", "Martial weapon"] },
+    { name: "Crossbow, Light", description: "A smaller, easier-to-handle crossbow.", basePrice: 25, properties: ["Range 80/320 ft", "Loading"] },
+    { name: "Crossbow, Heavy", description: "A large crossbow for devastating power.", basePrice: 50, properties: ["Range 100/400 ft", "Heavy", "Loading"] },
+    { name: "Hand Crossbow", description: "A compact crossbow for quick attacks.", basePrice: 75, properties: ["Range 30/120 ft", "Light", "Loading"] },
+
+    // Ammunition
+    { name: "Arrows (20)", description: "A bundle of standard arrows.", basePrice: 1, properties: ["Used with bows"] },
+    { name: "Bolts (20)", description: "A bundle of standard crossbow bolts.", basePrice: 1, properties: ["Used with crossbows"] },
+    { name: "Barbed Arrows (10)", description: "Arrows with sharp barbs for extra damage.", basePrice: 5, properties: ["+1 to damage"] },
+    { name: "Fire Arrows (10)", description: "Arrows tipped with flammable materials.", basePrice: 10, properties: ["Ignite targets on hit"] },
+    { name: "Silvered Bolts (5)", description: "Bolts coated in silver.", basePrice: 10, properties: ["Bypass resistances to silver"] },
+    { name: "Explosive Arrows (5)", description: "Arrows with small explosive tips.", basePrice: 25, properties: ["1d6 fire damage in a 5 ft radius"] },
+
+    // Accessories
+    { name: "Quiver", description: "Holds up to 20 arrows.", basePrice: 1, properties: ["Durable"] },
+    { name: "Bolt Case", description: "Holds up to 20 crossbow bolts.", basePrice: 1, properties: ["Compact"] },
+    { name: "Bowstring", description: "A replacement string for bows.", basePrice: 2, properties: ["Essential for maintenance"] },
+    { name: "Crossbow Mechanism", description: "Replacement parts for crossbows.", basePrice: 5, properties: ["Essential for repairs"] },
+    { name: "Tension Wrench", description: "Used for adjusting crossbow tension.", basePrice: 3, properties: ["Improves accuracy"] },
+
+    // Enchanted Ranged Equipment
+    { name: "Bow of Accuracy", description: "Grants a bonus to attack rolls.", basePrice: 500, properties: ["+1 to attack rolls"] },
+    { name: "Quiver of Endless Arrows", description: "Generates non-magical arrows.", basePrice: 1000, properties: ["Unlimited arrows"] },
+    { name: "Arrows of Slaying (3)", description: "Arrows enchanted to deal extra damage to specific creatures.", basePrice: 500, properties: ["+3d6 damage to chosen creature type"] },
+    { name: "Bracers of Archery", description: "Enhances proficiency with bows.", basePrice: 400, properties: ["+2 damage with bows"] },
+    { name: "Crossbow of Speed", description: "Allows for rapid firing.", basePrice: 750, properties: ["Ignore loading property"] },
+    { name: "Arrow Catching Shield", description: "Attracts arrows aimed at nearby allies.", basePrice: 600, properties: ["Draw ranged attacks to you"] },
+  ];
+
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "fletcher-store-stock";
+  const lastRefreshKey = "fletcher-last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 8) + 5; // Between 5 and 12 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayStock(newStock);
+  }
+
+  function displayStock(stock) {
+    const storeItemsContainer = document.getElementById("store-items");
+    storeItemsContainer.innerHTML = stock.length
+      ? stock
+          .map(
+            item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>${item.properties.join(", ") || "-"}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="4">No items available. Check back later!</td></tr>`;
+  }
+
+  function startCountdown() {
+    const lastRefresh = parseInt(localStorage.getItem(lastRefreshKey)) || 0;
+    const nextRefresh = lastRefresh + storeRefreshTime;
+    const timerElement = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const currentTime = Date.now();
+      const remainingTime = nextRefresh - currentTime;
+
+      if (remainingTime <= 0) {
+        refreshStore();
+        startCountdown();
+        return;
+      }
+
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      timerElement.textContent = `Next update in: ${minutes}m ${seconds}s`;
+
+      setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+  }
+
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
+  startCountdown();
+</script>
+
+</body>
+</html>
