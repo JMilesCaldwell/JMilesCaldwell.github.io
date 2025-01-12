@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Origen's Forge Store</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+    .home-button {
+      display: inline-block;
+      margin: 1rem 0;
+      padding: 0.5rem 1rem;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+      background: #8B0000;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #660000;
+      letter-spacing: 0.1rem;
+    }
+    .home-button:hover {
+      background: #660000;
+      border-color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Origen's Forge Store</h1>
+  <p>The Forge roars, ready to conjure forth a plethora of goods! Check back hourly for new stock.</p>
+
+  <div class="divider"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Stats</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="store-items">
+      <!-- Store items will be dynamically generated here -->
+    </tbody>
+  </table>
+
+  <p class="timer" id="countdown">Next update in: </p>
+
+  <div class="divider"></div>
+  <a href="index.html" class="home-button">Home</a>
+</div>
+
+<script>
+  const items = [
+    { name: "Iron Sword", description: "A sturdy longsword.", basePrice: 50, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
+    { name: "Steel Dagger", description: "Sharp and throwable.", basePrice: 35, damage: "1d4 piercing", properties: ["Finesse", "Light", "Thrown (20/60)"] },
+    { name: "Wooden Shield", description: "Basic shield.", basePrice: 40, armourClass: "+2 AC" },
+    { name: "Leather Armour", description: "Light and flexible.", basePrice: 60, armourClass: "AC 11 + Dex" },
+    { name: "Chainmail Shirt", description: "Good protection.", basePrice: 120, armourClass: "AC 13 + Dex (max 2)" },
+    { name: "Battle Axe", description: "Heavy combat axe.", basePrice: 75, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
+    { name: "Longbow", description: "Ranged weapon.", basePrice: 65, damage: "1d8 piercing", properties: ["Ammunition (150/600)", "Two-Handed"] },
+    { name: "Greatsword", description: "Massive sword.", basePrice: 130, damage: "2d6 slashing", properties: ["Heavy", "Two-Handed"] },
+    { name: "Halberd", description: "Versatile polearm.", basePrice: 120, damage: "1d10 slashing", properties: ["Reach", "Two-Handed"] },
+    { name: "Throwing Knives", description: "Balanced knives.", basePrice: 25, damage: "1d4 piercing", properties: ["Thrown (20/60)"] }
+  ];
+
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "store-stock";
+  const lastRefreshKey = "last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 5) + 3; // Between 3 and 7 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayStock(newStock);
+  }
+
+  function displayStock(stock) {
+    const storeItemsContainer = document.getElementById("store-items");
+    storeItemsContainer.innerHTML = stock.length
+      ? stock
+          .map(
+            item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>${item.damage || item.armourClass || "-"}</td>
+          <td>${item.properties ? item.properties.join(", ") : "-"}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="5">No items available. Check back later!</td></tr>`;
+  }
+
+  function startCountdown() {
+    const lastRefresh = parseInt(localStorage.getItem(lastRefreshKey)) || 0;
+    const nextRefresh = lastRefresh + storeRefreshTime;
+    const timerElement = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const currentTime = Date.now();
+      const remainingTime = nextRefresh - currentTime;
+
+      if (remainingTime <= 0) {
+        refreshStore();
+        startCountdown();
+        return;
+      }
+
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      timerElement.textContent = `Next update in: ${minutes}m ${seconds}s`;
+
+      setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+  }
+
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
+  startCountdown();
+</script>
+
+</body>
+</html>
