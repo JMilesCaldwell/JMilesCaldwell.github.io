@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alchemist's Emporium</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Alchemist's Emporium</h1>
+  <p>The Forge roars, ready to conjure forth alchemical wonders! Check back hourly for fresh stock.</p>
+
+  <div class="divider"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Effect</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="store-items">
+      <!-- Store items will be dynamically generated here -->
+    </tbody>
+  </table>
+
+  <p class="timer" id="countdown">Next update in: </p>
+
+  <div class="divider"></div>
+</div>
+
+<script>
+  const items = [
+    // Potions
+    { name: "Healing Potion", description: "A red liquid that heals wounds.", basePrice: 50, effect: "Restores 2d4 + 2 HP", properties: ["Consumable"] },
+    { name: "Greater Healing Potion", description: "A stronger healing potion.", basePrice: 150, effect: "Restores 4d4 + 4 HP", properties: ["Consumable"] },
+    { name: "Potion of Fire Breath", description: "Grants the ability to breathe fire.", basePrice: 200, effect: "Exhale fire (4d6 damage)", properties: ["Consumable", "Fire"] },
+    { name: "Potion of Invisibility", description: "Makes you invisible for 1 hour.", basePrice: 300, effect: "Grants invisibility", properties: ["Consumable", "Illusion"] },
+
+    // Alchemical Items
+    { name: "Alchemist's Fire", description: "A sticky, flammable liquid.", basePrice: 50, effect: "1d4 fire damage per turn", properties: ["Thrown (20/60)"] },
+    { name: "Acid Flask", description: "A flask of corrosive acid.", basePrice: 25, effect: "2d6 acid damage", properties: ["Thrown (20/60)"] },
+    { name: "Smoke Bomb", description: "Creates a cloud of smoke.", basePrice: 30, effect: "Obscures a 10-foot radius", properties: ["Thrown (10/30)"] },
+    { name: "Tanglefoot Bag", description: "Entangles a target in sticky goo.", basePrice: 50, effect: "Restrains target", properties: ["Thrown (20/60)"] },
+
+    // Reagents
+    { name: "Mandrake Root", description: "A rare magical root.", basePrice: 10, effect: "Enhances spellcasting", properties: ["Spell Component"] },
+    { name: "Pixie Dust", description: "Glittering magical powder.", basePrice: 100, effect: "Grants flight for 1 minute", properties: ["Consumable"] },
+    { name: "Dragon's Blood", description: "Rare reagent from a dragon.", basePrice: 500, effect: "Used for powerful rituals", properties: ["Alchemy"] },
+    { name: "Sulfuric Crystal", description: "A bright yellow crystal.", basePrice: 25, effect: "Key ingredient in explosions", properties: ["Alchemy"] }
+  ];
+
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "alchemist-store-stock";
+  const lastRefreshKey = "alchemist-last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 5) + 5; // Between 5 and 9 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayStock(newStock);
+  }
+
+  function displayStock(stock) {
+    const storeItemsContainer = document.getElementById("store-items");
+    storeItemsContainer.innerHTML = stock.length
+      ? stock
+          .map(
+            item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>${item.effect || "-"}</td>
+          <td>${item.properties.join(", ") || "-"}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="5">No items available. Check back later!</td></tr>`;
+  }
+
+  function startCountdown() {
+    const lastRefresh = parseInt(localStorage.getItem(lastRefreshKey)) || 0;
+    const nextRefresh = lastRefresh + storeRefreshTime;
+    const timerElement = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const currentTime = Date.now();
+      const remainingTime = nextRefresh - currentTime;
+
+      if (remainingTime <= 0) {
+        refreshStore();
+        startCountdown();
+        return;
+      }
+
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      timerElement.textContent = `Next update in: ${minutes}m ${seconds}s`;
+
+      setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+  }
+
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
+  startCountdown();
+</script>
+
+</body>
+</html>
