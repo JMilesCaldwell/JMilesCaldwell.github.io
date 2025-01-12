@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Gilded Trinket</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 1rem;
+      background: #FAF4E0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+    @media (max-width: 600px) {
+      table {
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>The Gilded Trinket</h1>
+  <p>Welcome to The Gilded Trinket, where dazzling gems and enchanted jewellery await! Check back hourly for new treasures.</p>
+
+  <div class="divider"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="store-items">
+      <!-- Store items will be dynamically generated here -->
+    </tbody>
+  </table>
+
+  <p class="timer" id="countdown">Next update in: </p>
+
+  <div class="divider"></div>
+</div>
+
+<script>
+  const items = [
+    // Gemstones
+    { name: "Ruby", description: "A deep red gemstone.", basePrice: 100, properties: ["Rare"] },
+    { name: "Sapphire", description: "A dazzling blue gemstone.", basePrice: 150, properties: ["Rare"] },
+    { name: "Emerald", description: "A vibrant green gemstone.", basePrice: 200, properties: ["Rare"] },
+    { name: "Amethyst", description: "A purple gemstone with magical properties.", basePrice: 75, properties: ["Enhances concentration"] },
+    { name: "Topaz", description: "A golden-yellow gemstone.", basePrice: 50, properties: ["Resilient"] },
+    { name: "Onyx", description: "A black gemstone with a polished surface.", basePrice: 40, properties: ["Mysterious"] },
+    { name: "Diamond", description: "A brilliant gemstone of unmatched beauty.", basePrice: 500, properties: ["Extremely rare"] },
+
+    // Rings
+    { name: "Gold Ring", description: "A simple gold band.", basePrice: 50, properties: ["Stylish"] },
+    { name: "Silver Ring", description: "A finely crafted silver band.", basePrice: 25, properties: ["Elegant"] },
+    { name: "Platinum Ring", description: "A luxurious platinum ring.", basePrice: 150, properties: ["Expensive"] },
+    { name: "Ring of Protection", description: "Grants a bonus to AC.", basePrice: 500, properties: ["+1 AC"] },
+    { name: "Ring of Spell Storing", description: "Can hold up to 5 levels of spells.", basePrice: 1000, properties: ["Stores spells"] },
+    { name: "Ring of Fire Resistance", description: "Reduces fire damage.", basePrice: 700, properties: ["Fire resistance"] },
+
+    // Necklaces
+    { name: "Gold Necklace", description: "A delicate gold chain.", basePrice: 75, properties: ["Stylish"] },
+    { name: "Silver Pendant", description: "A silver chain with a small pendant.", basePrice: 50, properties: ["Elegant"] },
+    { name: "Amulet of Health", description: "Boosts Constitution to 19.", basePrice: 4000, properties: ["Enchanted"] },
+    { name: "Necklace of Adaptation", description: "Allows the wearer to breathe normally in any environment.", basePrice: 500, properties: ["Environmental adaptation"] },
+    { name: "Periapt of Wound Closure", description: "Stabilises you when dying.", basePrice: 300, properties: ["Magical healing"] },
+
+    // Earrings and Bracelets
+    { name: "Pearl Earrings", description: "Elegant pearl earrings.", basePrice: 200, properties: ["Stylish"] },
+    { name: "Bracelet of Charisma", description: "Enhances social charm.", basePrice: 1000, properties: ["+2 to Charisma checks"] },
+    { name: "Charmed Bracelet", description: "A bracelet that enhances saving throws against enchantments.", basePrice: 600, properties: ["Enchantment resistance"] },
+
+    // Miscellaneous
+    { name: "Jeweled Goblet", description: "A golden goblet encrusted with gems.", basePrice: 250, properties: ["Ornate"] },
+    { name: "Tiara of Insight", description: "Grants a bonus to Wisdom checks.", basePrice: 800, properties: ["+2 to Wisdom checks"] },
+    { name: "Brooch of Shielding", description: "Grants resistance to force damage.", basePrice: 1200, properties: ["Force resistance"] },
+    { name: "Crown of Command", description: "Enables the wearer to command loyalty.", basePrice: 2500, properties: ["Command ability"] },
+  ];
+
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "jeweller-store-stock";
+  const lastRefreshKey = "jeweller-last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 8) + 5; // Between 5 and 12 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayStock(newStock);
+  }
+
+  function displayStock(stock) {
+    const storeItemsContainer = document.getElementById("store-items");
+    storeItemsContainer.innerHTML = stock.length
+      ? stock
+          .map(
+            item => `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>${item.properties.join(", ") || "-"}</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="4">No items available. Check back later!</td></tr>`;
+  }
+
+  function startCountdown() {
+    const lastRefresh = parseInt(localStorage.getItem(lastRefreshKey)) || 0;
+    const nextRefresh = lastRefresh + storeRefreshTime;
+    const timerElement = document.getElementById("countdown");
+
+    function updateCountdown() {
+      const currentTime = Date.now();
+      const remainingTime = nextRefresh - currentTime;
+
+      if (remainingTime <= 0) {
+        refreshStore();
+        startCountdown();
+        return;
+      }
+
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      timerElement.textContent = `Next update in: ${minutes}m ${seconds}s`;
+
+      setTimeout(updateCountdown, 1000);
+    }
+
+    updateCountdown();
+  }
+
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
+  startCountdown();
+</script>
+
+</body>
+</html>
