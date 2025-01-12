@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Origen's Forge Store</title>
-  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <link 
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
@@ -43,23 +42,6 @@
       margin-top: 1rem;
       color: #8B0000;
     }
-    .home-button {
-      display: inline-block;
-      margin: 1rem 0;
-      padding: 0.5rem 1rem;
-      font-size: 1.2rem;
-      font-family: 'Cinzel', serif;
-      color: #FAF4E0;
-      background: #8B0000;
-      text-decoration: none;
-      border-radius: 5px;
-      border: 2px solid #660000;
-      letter-spacing: 0.1rem;
-    }
-    .home-button:hover {
-      background: #660000;
-      border-color: #8B0000;
-    }
     .divider {
       margin: 1rem auto;
       font-size: 1.5rem;
@@ -83,90 +65,193 @@
 
 <div class="container">
   <h1>Origen's Forge Store</h1>
-  <p>The Forge roars, ready to conjure forth a plethora of goods! Check back hourly for new stock.</p>
+  <p>Welcome to the Forge! Check back hourly for new stock.</p>
 
   <div class="divider"></div>
 
+  <!-- Weapons Table -->
+  <h2>Weapons</h2>
   <table>
     <thead>
       <tr>
         <th>Item</th>
         <th>Description</th>
         <th>Price (Gold)</th>
-        <th>Stats</th>
+        <th>Damage</th>
         <th>Properties</th>
       </tr>
     </thead>
-    <tbody id="store-items">
-      <!-- Store items will be dynamically generated here -->
+    <tbody id="weapons-table">
+      <!-- Weapon items will be dynamically populated here -->
+    </tbody>
+  </table>
+
+  <!-- Armour Table -->
+  <h2>Armour</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Price (Gold)</th>
+        <th>Armour Class</th>
+        <th>Properties</th>
+      </tr>
+    </thead>
+    <tbody id="armour-table">
+      <!-- Armour items will be dynamically populated here -->
     </tbody>
   </table>
 
   <p class="timer" id="countdown">Next update in: </p>
 
   <div class="divider"></div>
-  <a href="index.html" class="home-button">Home</a>
 </div>
 
 <script>
-  const items = [
-    { name: "Iron Sword", description: "A sturdy longsword.", basePrice: 50, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
-    { name: "Steel Dagger", description: "Sharp and throwable.", basePrice: 35, damage: "1d4 piercing", properties: ["Finesse", "Light", "Thrown (20/60)"] },
-    { name: "Wooden Shield", description: "Basic shield.", basePrice: 40, armourClass: "+2 AC" },
-    { name: "Leather Armour", description: "Light and flexible.", basePrice: 60, armourClass: "AC 11 + Dex" },
-    { name: "Chainmail Shirt", description: "Good protection.", basePrice: 120, armourClass: "AC 13 + Dex (max 2)" },
-    { name: "Battle Axe", description: "Heavy combat axe.", basePrice: 75, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
-    { name: "Longbow", description: "Ranged weapon.", basePrice: 65, damage: "1d8 piercing", properties: ["Ammunition (150/600)", "Two-Handed"] },
-    { name: "Greatsword", description: "Massive sword.", basePrice: 130, damage: "2d6 slashing", properties: ["Heavy", "Two-Handed"] },
-    { name: "Halberd", description: "Versatile polearm.", basePrice: 120, damage: "1d10 slashing", properties: ["Reach", "Two-Handed"] },
-    { name: "Throwing Knives", description: "Balanced knives.", basePrice: 25, damage: "1d4 piercing", properties: ["Thrown (20/60)"] }
-  ];
+  // Separate data arrays for weapons and armour
+const weapons = [
+  // Simple Melee Weapons
+  { name: "Club", description: "A small wooden club.", basePrice: 0.1, damage: "1d4 bludgeoning", properties: ["Light"] },
+  { name: "Dagger", description: "Sharp and throwable.", basePrice: 2, damage: "1d4 piercing", properties: ["Finesse", "Light", "Thrown (20/60)"] },
+  { name: "Greatclub", description: "A large, two-handed club.", basePrice: 0.2, damage: "1d8 bludgeoning", properties: ["Two-Handed"] },
+  { name: "Handaxe", description: "A small axe for combat or throwing.", basePrice: 5, damage: "1d6 slashing", properties: ["Light", "Thrown (20/60)"] },
+  { name: "Javelin", description: "A throwable spear.", basePrice: 0.5, damage: "1d6 piercing", properties: ["Thrown (30/120)"] },
+  { name: "Light Hammer", description: "A small hammer.", basePrice: 2, damage: "1d4 bludgeoning", properties: ["Light", "Thrown (20/60)"] },
+  { name: "Mace", description: "A heavy, spiked club.", basePrice: 5, damage: "1d6 bludgeoning", properties: [] },
+  { name: "Quarterstaff", description: "A wooden staff.", basePrice: 0.2, damage: "1d6 bludgeoning", properties: ["Versatile (1d8)"] },
+  { name: "Sickle", description: "A small farming implement.", basePrice: 1, damage: "1d4 slashing", properties: ["Light"] },
+  { name: "Spear", description: "A long spear for melee or throwing.", basePrice: 1, damage: "1d6 piercing", properties: ["Thrown (20/60)", "Versatile (1d8)"] },
+
+  // Simple Ranged Weapons
+  { name: "Crossbow, Light", description: "A simple ranged weapon.", basePrice: 25, damage: "1d8 piercing", properties: ["Ammunition (80/320)", "Loading", "Two-Handed"] },
+  { name: "Dart", description: "A small throwable weapon.", basePrice: 0.05, damage: "1d4 piercing", properties: ["Finesse", "Thrown (20/60)"] },
+  { name: "Shortbow", description: "A small, lightweight bow.", basePrice: 25, damage: "1d6 piercing", properties: ["Ammunition (80/320)", "Two-Handed"] },
+  { name: "Sling", description: "A small sling for stones.", basePrice: 0.1, damage: "1d4 bludgeoning", properties: ["Ammunition (30/120)"] },
+
+  // Martial Melee Weapons
+  { name: "Battleaxe", description: "A heavy axe for combat.", basePrice: 10, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
+  { name: "Flail", description: "A spiked weapon with a chain.", basePrice: 10, damage: "1d8 bludgeoning", properties: [] },
+  { name: "Glaive", description: "A polearm with a blade.", basePrice: 20, damage: "1d10 slashing", properties: ["Heavy", "Reach", "Two-Handed"] },
+  { name: "Greataxe", description: "A massive axe.", basePrice: 30, damage: "1d12 slashing", properties: ["Heavy", "Two-Handed"] },
+  { name: "Greatsword", description: "A massive sword.", basePrice: 50, damage: "2d6 slashing", properties: ["Heavy", "Two-Handed"] },
+  { name: "Halberd", description: "A polearm with an axe head.", basePrice: 20, damage: "1d10 slashing", properties: ["Heavy", "Reach", "Two-Handed"] },
+  { name: "Lance", description: "A long weapon for mounted combat.", basePrice: 10, damage: "1d12 piercing", properties: ["Reach", "Special"] },
+  { name: "Longsword", description: "A versatile blade.", basePrice: 15, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
+  { name: "Maul", description: "A large hammer.", basePrice: 10, damage: "2d6 bludgeoning", properties: ["Heavy", "Two-Handed"] },
+  { name: "Morningstar", description: "A spiked mace.", basePrice: 15, damage: "1d8 piercing", properties: [] },
+  { name: "Pike", description: "A long spear.", basePrice: 5, damage: "1d10 piercing", properties: ["Heavy", "Reach", "Two-Handed"] },
+  { name: "Rapier", description: "A thin, piercing blade.", basePrice: 25, damage: "1d8 piercing", properties: ["Finesse"] },
+  { name: "Scimitar", description: "A curved blade.", basePrice: 25, damage: "1d6 slashing", properties: ["Finesse", "Light"] },
+  { name: "Shortsword", description: "A small, sharp blade.", basePrice: 10, damage: "1d6 piercing", properties: ["Finesse", "Light"] },
+  { name: "Trident", description: "A three-pronged spear.", basePrice: 5, damage: "1d6 piercing", properties: ["Thrown (20/60)", "Versatile (1d8)"] },
+  { name: "War Pick", description: "A spiked weapon.", basePrice: 5, damage: "1d8 piercing", properties: [] },
+  { name: "Warhammer", description: "A large hammer.", basePrice: 15, damage: "1d8 bludgeoning", properties: ["Versatile (1d10)"] },
+  { name: "Whip", description: "A long, flexible weapon.", basePrice: 2, damage: "1d4 slashing", properties: ["Finesse", "Reach"] },
+
+  // Martial Ranged Weapons
+  { name: "Blowgun", description: "A small, stealthy weapon.", basePrice: 10, damage: "1 piercing", properties: ["Ammunition (25/100)", "Loading"] },
+  { name: "Crossbow, Hand", description: "A compact crossbow.", basePrice: 75, damage: "1d6 piercing", properties: ["Ammunition (30/120)", "Light", "Loading"] },
+  { name: "Crossbow, Heavy", description: "A large crossbow.", basePrice: 50, damage: "1d10 piercing", properties: ["Ammunition (100/400)", "Heavy", "Loading", "Two-Handed"] },
+  { name: "Longbow", description: "A powerful bow.", basePrice: 50, damage: "1d8 piercing", properties: ["Ammunition (150/600)", "Heavy", "Two-Handed"] },
+  { name: "Net", description: "A throwing trap.", basePrice: 1, damage: "None", properties: ["Special", "Thrown (5/15)"] }
+];
+
+
+ const armour = [
+  // Light Armour
+  { name: "Padded", description: "A quilted outfit.", basePrice: 5, armourClass: "AC 11 + Dex", properties: ["Disadvantage on Stealth"] },
+  { name: "Leather", description: "A basic leather armour.", basePrice: 10, armourClass: "AC 11 + Dex", properties: [] },
+  { name: "Studded Leather", description: "Reinforced leather armour.", basePrice: 45, armourClass: "AC 12 + Dex", properties: [] },
+
+  // Medium Armour
+  { name: "Hide", description: "Armour made of animal hides.", basePrice: 10, armourClass: "AC 12 + Dex (max 2)", properties: [] },
+  { name: "Chain Shirt", description: "A chainmail shirt.", basePrice: 50, armourClass: "AC 13 + Dex (max 2)", properties: [] },
+  { name: "Scale Mail", description: "Armour with metal scales.", basePrice: 50, armourClass: "AC 14 + Dex (max 2)", properties: ["Disadvantage on Stealth"] },
+  { name: "Breastplate", description: "A metal chest piece.", basePrice: 400, armourClass: "AC 14 + Dex (max 2)", properties: [] },
+  { name: "Half Plate", description: "Partial plate armour.", basePrice: 750, armourClass: "AC 15 + Dex (max 2)", properties: ["Disadvantage on Stealth"] },
+
+  // Heavy Armour
+  { name: "Ring Mail", description: "Armour of metal rings.", basePrice: 30, armourClass: "AC 14", properties: ["Disadvantage on Stealth"] },
+  { name: "Chain Mail", description: "Armour made of interlocking rings.", basePrice: 75, armourClass: "AC 16", properties: ["Disadvantage on Stealth"] },
+  { name: "Splint", description: "Armour with splinted plates.", basePrice: 200, armourClass: "AC 17", properties: ["Disadvantage on Stealth"] },
+  { name: "Plate", description: "Full plate armour.", basePrice: 1500, armourClass: "AC 18", properties: ["Disadvantage on Stealth"] },
+
+  // Shields
+  { name: "Shield", description: "A basic shield.", basePrice: 10, armourClass: "+2 AC", properties: [] }
+];
+
 
   const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
-  const storeKey = "store-stock";
+  const weaponsKey = "weapons-stock";
+  const armourKey = "armour-stock";
   const lastRefreshKey = "last-refresh";
 
   function getRandomPrice(basePrice) {
     return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
   }
 
-  function generateStock() {
-    const stock = [];
-    const stockSize = Math.floor(Math.random() * 5) + 3; // Between 3 and 7 items
-    const shuffledItems = items.sort(() => 0.5 - Math.random());
-    for (let i = 0; i < stockSize; i++) {
-      const item = { ...shuffledItems[i] };
-      item.price = getRandomPrice(item.basePrice);
-      stock.push(item);
-    }
-    return stock;
+  function generateWeaponsStock() {
+    return weapons.map(weapon => ({
+      ...weapon,
+      price: getRandomPrice(weapon.basePrice)
+    }));
   }
 
-  function refreshStore() {
-    const currentTime = Date.now();
-    const newStock = generateStock();
-    localStorage.setItem(storeKey, JSON.stringify(newStock));
-    localStorage.setItem(lastRefreshKey, currentTime);
-    displayStock(newStock);
+  function generateArmourStock() {
+    return armour.map(piece => ({
+      ...piece,
+      price: getRandomPrice(piece.basePrice)
+    }));
   }
 
-  function displayStock(stock) {
-    const storeItemsContainer = document.getElementById("store-items");
-    storeItemsContainer.innerHTML = stock.length
+  function displayWeaponsStock(stock) {
+    const weaponsTable = document.getElementById("weapons-table");
+    weaponsTable.innerHTML = stock.length
       ? stock
           .map(
-            item => `
+            weapon => `
         <tr>
-          <td>${item.name}</td>
-          <td>${item.description}</td>
-          <td>${item.price}</td>
-          <td>${item.damage || item.armourClass || "-"}</td>
-          <td>${item.properties ? item.properties.join(", ") : "-"}</td>
+          <td>${weapon.name}</td>
+          <td>${weapon.description}</td>
+          <td>${weapon.price}</td>
+          <td>${weapon.damage}</td>
+          <td>${weapon.properties.join(", ") || "-"}</td>
         </tr>
       `
           )
           .join("")
-      : `<tr><td colspan="5">No items available. Check back later!</td></tr>`;
+      : `<tr><td colspan="5">No weapons available.</td></tr>`;
+  }
+
+  function displayArmourStock(stock) {
+    const armourTable = document.getElementById("armour-table");
+    armourTable.innerHTML = stock.length
+      ? stock
+          .map(
+            piece => `
+        <tr>
+          <td>${piece.name}</td>
+          <td>${piece.description}</td>
+          <td>${piece.price}</td>
+          <td>${piece.armourClass}</td>
+          <td>-</td>
+        </tr>
+      `
+          )
+          .join("")
+      : `<tr><td colspan="5">No armour available.</td></tr>`;
+  }
+
+  function refreshStore() {
+    const currentTime = Date.now();
+    const newWeaponsStock = generateWeaponsStock();
+    const newArmourStock = generateArmourStock();
+    localStorage.setItem(weaponsKey, JSON.stringify(newWeaponsStock));
+    localStorage.setItem(armourKey, JSON.stringify(newArmourStock));
+    localStorage.setItem(lastRefreshKey, currentTime);
+    displayWeaponsStock(newWeaponsStock);
+    displayArmourStock(newArmourStock);
   }
 
   function startCountdown() {
@@ -194,12 +279,16 @@
     updateCountdown();
   }
 
-  const initialStock = localStorage.getItem(storeKey);
-  if (initialStock) {
-    displayStock(JSON.parse(initialStock));
+  const initialWeaponsStock = localStorage.getItem(weaponsKey);
+  const initialArmourStock = localStorage.getItem(armourKey);
+
+  if (initialWeaponsStock && initialArmourStock) {
+    displayWeaponsStock(JSON.parse(initialWeaponsStock));
+    displayArmourStock(JSON.parse(initialArmourStock));
   } else {
     refreshStore();
   }
+
   startCountdown();
 </script>
 
