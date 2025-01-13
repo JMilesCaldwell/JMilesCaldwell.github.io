@@ -9,7 +9,7 @@
     rel="stylesheet"
   >
   <style>
-    /* Shared Navbar Styling */
+    /* Navigation Bar Styling */
     .navbar {
       display: flex;
       justify-content: space-between;
@@ -61,11 +61,11 @@
     }
 
     /* General Styling */
-    body {
+  body {
       margin: 0;
       background: url('resources/alchemist.png') no-repeat center center fixed;
       background-size: cover;
-      color: #333;
+      color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
@@ -73,10 +73,9 @@
     .container {
       max-width: 800px;
       margin: 2rem auto;
-      background: rgba(250, 244, 224, 0.95); /* Slightly opaque for readability */
+      background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
       border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     }
 
     h1, h2 {
@@ -87,6 +86,8 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
     }
 
     th, td {
@@ -100,13 +101,19 @@
       color: #FAF4E0;
     }
 
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+      color: #8B0000;
+    }
+
     .divider {
       margin: 1rem auto;
       font-size: 1.5rem;
     }
 
     .divider::after {
-      content: "✦ ✨ ✦";
+      content: "✦ ✧ ✦";
       color: #8B0000;
       letter-spacing: 0.5rem;
     }
@@ -154,15 +161,12 @@
     </tbody>
   </table>
 
+  <p class="timer" id="countdown">Next update in: </p>
+
   <div class="divider"></div>
 </div>
 
-<div style="text-align: center;">
-  <a href="index.html" class="home-button">Home</a>
-</div>
-
 <script>
-  // Dynamic Item Generation Logic
    const items = [
     // Potions
     { name: "Healing Potion", description: "A red liquid that heals wounds.", basePrice: 50, effect: "Restores 2d4 + 2 HP", properties: ["Consumable"] },
@@ -201,6 +205,32 @@
   { name: "Amber Shard", description: "A shard of glowing amber.", basePrice: 25, effect: "Used in lightning-based potions", properties: ["Alchemy"] }
   ];
 
+  const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
+  const storeKey = "alchemist-store-stock";
+  const lastRefreshKey = "alchemist-last-refresh";
+
+  function getRandomPrice(basePrice) {
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+  }
+
+  function generateStock() {
+    const stock = [];
+    const stockSize = Math.floor(Math.random() * 5) + 5; // Between 5 and 9 items
+    const shuffledItems = items.sort(() => 0.5 - Math.random());
+    for (let i = 0; i < stockSize; i++) {
+      const item = { ...shuffledItems[i] };
+      item.price = getRandomPrice(item.basePrice);
+      stock.push(item);
+    }
+    return stock;
+  }
+
+  function refreshStore() {
+    const newStock = generateStock();
+    localStorage.setItem(storeKey, JSON.stringify(newStock));
+    displayStock(newStock);
+  }
+
   function displayStock(stock) {
     const storeItemsContainer = document.getElementById("store-items");
     storeItemsContainer.innerHTML = stock
@@ -209,7 +239,7 @@
           <tr>
             <td>${item.name}</td>
             <td>${item.description}</td>
-            <td>${item.basePrice}</td>
+            <td>${item.price}</td>
             <td>${item.effect || "-"}</td>
             <td>${item.properties.join(", ") || "-"}</td>
           </tr>
@@ -218,8 +248,17 @@
       .join("");
   }
 
-  displayStock(items);
+  const initialStock = localStorage.getItem(storeKey);
+  if (initialStock) {
+    displayStock(JSON.parse(initialStock));
+  } else {
+    refreshStore();
+  }
 </script>
+
+<div style="text-align: center;">
+  <a href="index.html" class="home-button">Home</a>
+</div>
 
 </body>
 </html>
