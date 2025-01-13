@@ -1,1 +1,166 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coastal Travel System</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+    rel="stylesheet"
+  >
+  <style>
+    body {
+      margin: 0;
+      background: url('resources/docks.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 10px;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+    }
+    .button {
+      background-color: #8B0000;
+      color: #FAF4E0;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      font-family: 'Cinzel', serif;
+      text-decoration: none;
+      display: inline-block;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    .button:hover {
+      background-color: #6B0000;
+    }
+    select, input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      margin: 0.5rem;
+    }
+    .result {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Coastal Travel System</h1>
+    <form id="travel-form">
+      <label for="departure">Departure:</label>
+      <select id="departure" required>
+        <!-- Options will be dynamically added -->
+      </select>
+
+      <label for="destination">Destination:</label>
+      <select id="destination" required>
+        <!-- Options will be dynamically added -->
+      </select>
+
+      <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
+    </form>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <footer>
+    &copy; 2025 Caldwell. Efficient travel for the Evershroud Isles.
+  </footer>
+
+  <script>
+    const locations = [
+      { name: "Azure", distance: 0 },
+      { name: "Sylfaene", distance: 2 },
+      { name: "Holgren", distance: 7 },
+      { name: "Ryer", distance: 9 },
+      { name: "Waglynn Lighthouse", distance: 10 },
+      { name: "Mong Harrad", distance: 13 },
+      { name: "World's End", distance: 15 },
+      { name: "Fulcimer Lighthouse", distance: 25 },
+      { name: "Vigden", distance: 28 },
+      { name: "Virgil", distance: 30 },
+      { name: "Hermit Sanctum", distance: 33 },
+      { name: "Wren", distance: 35 },
+      { name: "Villegrom Estate", distance: 61 },
+      { name: "Silt", distance: 63 },
+      { name: "Freeport", distance: 80 },
+      { name: "Morgrin Lighthouse", distance: 18 },
+      { name: "Mong Vinaya", distance: 47 },
+      { name: "Meowygg", distance: 47 },
+      { name: "Devyth", distance: 14 },
+      { name: "Commorragh", distance: 10 },
+      { name: "Refuge", distance: 17 },
+      { name: "Giant's Head", distance: 3 }
+    ];
+
+    const ratePerUnitDistance = 3; // Cost in GP per unit distance
+
+    function populateOptions() {
+      const departureSelect = document.getElementById("departure");
+      const destinationSelect = document.getElementById("destination");
+
+      locations.forEach(location => {
+        const option = document.createElement("option");
+        option.value = location.name;
+        option.textContent = location.name;
+
+        departureSelect.appendChild(option.cloneNode(true));
+        destinationSelect.appendChild(option);
+      });
+    }
+
+    function calculateTravel() {
+      const departure = document.getElementById("departure").value;
+      const destination = document.getElementById("destination").value;
+
+      if (departure === destination) {
+        document.getElementById("result").textContent = "Departure and destination cannot be the same.";
+        return;
+      }
+
+      const departureIndex = locations.findIndex(loc => loc.name === departure);
+      const destinationIndex = locations.findIndex(loc => loc.name === destination);
+
+      const totalLocations = locations.length;
+      const forwardDistance = 
+        destinationIndex > departureIndex
+          ? locations.slice(departureIndex, destinationIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
+          : locations.slice(departureIndex).concat(locations.slice(0, destinationIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
+
+      const backwardDistance = 
+        departureIndex > destinationIndex
+          ? locations.slice(destinationIndex, departureIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
+          : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
+
+      const travelDistance = Math.min(forwardDistance, backwardDistance);
+      const travelCost = travelDistance * ratePerUnitDistance;
+
+      document.getElementById("result").textContent = `Travel Distance: ${travelDistance} units | Cost: ${travelCost.toFixed(2)} GP.`;
+    }
+
+    window.onload = populateOptions;
+  </script>
+</body>
+</html>
