@@ -1,25 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Encounter Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Commoner Generator</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <!-- ========== GOOGLE FONTS ========== -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+
   <style>
-     body {
+    /* ============ BASIC STYLES ============ */
+    body {
       margin: 0;
-      background: url('resources/encounter.png') no-repeat center center fixed;
+      background: url('resources/commoner.png') no-repeat center center fixed;
       background-size: cover; /* Ensures the image covers the entire screen */
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
-    h1, h2 {
-      font-family: 'Cinzel', serif;
+
+
+    h1, h2, h3 {
+      font-family: 'Cinzel', serif; /* Headings: Cinzel */
+      margin-bottom: 0.5rem;
     }
 
+    .fancy-divider {
+      margin: 0.25rem 0 1rem;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .fancy-divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+
+    
     .container {
       max-width: 800px;
       margin: 2rem auto;
@@ -35,307 +56,1304 @@
       font-weight: bold;
     }
 
-    input, select {
+    select, input[type="text"], input[type="number"] {
       margin-bottom: 1rem;
-      padding: 0.5rem;
+      padding: 0.2rem;
       font-size: 1rem;
-      background-color: #fff9ed;
+      background-color: #fff9ed; /* Slightly off-white for parchment vibe */
+      color: #333;
       border: 1px solid #999;
       font-family: 'Almendra', serif;
     }
 
     .button {
-      background-color: #8B0000;
+      background-color: #8B0000; /* A deeper red */
       color: #fff;
       border: none;
       padding: 0.5rem 1rem;
-      font-size: 1rem;
       cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
       font-family: 'Cinzel', serif;
     }
 
     .button:hover {
-      background-color: #6B0000;
+      background-color: #6B0000; /* Darker red on hover */
     }
 
     .output {
       margin-top: 2rem;
       padding: 1rem;
       border: 1px solid #aaa;
-      background-color: #fff5e6;
+      background-color: #fff5e6; /* Slightly lighter than body background */
+      color: #333;
     }
 
-    .output strong {
-      display: block;
-      margin-top: 1rem;
+    .ability-scores, .background-info, .race-info {
+      margin-bottom: 1rem;
     }
 
-    .home-button {
-      margin-top: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    footer {
-      margin-top: auto;
-      padding: 20px;
-      font-size: 12px;
-      text-align: center;
-    }
-
-    .license-text {
-      font-size: 10px;
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
       color: #666;
-}
+      font-family: 'Almendra', serif;
+    }
 
-a {
-  color: #007bff;
-  text-decoration: none;
-}
+    /* Hide the print button if the output is not visible yet */
+    #printButton {
+      display: none;
+    }
 
-a:hover {
-  text-decoration: underline;
-}
+    /* ============= PRINT ONLY THE SHEET =============
+       When printing, hide everything except #output. */
 
+    @media print {
+      body * {
+        visibility: hidden !important; /* Hide everything by default */
+      }
+      #output,
+      #output * {
+        visibility: visible !important; /* Show the output content */
+      }
+      #output {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Encounter Generator</h1>
+  <h1>Commoner Generator</h1>
+  <div class="fancy-divider"></div>
 
-  <!-- Home Button -->
-  <button class="button home-button" onclick="window.location.href='https://jmilescaldwell.github.io/index.html'">
+  <!-- HOME BUTTON -->
+  <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/index.html'">
     Home
   </button>
+  
+  <p>
+    Generate a “level 0” commoner with a chosen or random race and background, including 
+    ability scores, skill proficiencies, personality traits, and more.
+  </p>
 
-  <div>
-    <label for="party-level">Party Level:</label>
-    <input type="number" id="party-level" placeholder="e.g., 5" min="1" max="20">
-  </div>
-  <div>
-    <label for="party-size">Party Size:</label>
-    <input type="number" id="party-size" placeholder="e.g., 4" min="1">
-  </div>
-  <div>
-    <label for="faction">Faction:</label>
-    <select id="faction">
-      <option value="">-- Choose --</option>
-      <option value="Silt">Silt</option>
-      <option value="Margraeve-Duskhaven">Margraeve-Duskhaven</option>
-      <option value="Caldwell People's Republic">Caldwell People's Republic</option>
-      <option value="Azurean League">Azurean League</option>
-      <option value="Dwarven Union">Dwarven Union</option>
-      <option value="Order of the Dragon’s Phallus">Order of the Dragon’s Phallus</option>
-      <option value="Berynian Scythes">Berynian Scythes</option>
-      <option value="Children of Nergál">Children of Nergál</option>
-      <option value="Origen Brotherhood">Origen Brotherhood</option>
-      <option value="The Cult of Rael">The Cult of Rael</option>
-      <option value="Independent Freeholds">Independent Freeholds</option>
-      <option value="The Adventurers Guild">The Adventurers Guild</option>
-      <option value="Zhilan Triads">Zhilan Triads</option>
-      <option value="Xondaran Syndicate">Xondaran Syndicate</option>
-      <option value="The Blackjacks">The Blackjacks</option>
-      <option value="The Scarlet Swallows">The Scarlet Swallows</option>
-      <option value="Harbingers">Harbingers</option>
-      <option value="The Noble Guild of Assassins">The Noble Guild of Assassins</option>
-      <option value="Sisters Benevolent">Sisters Benevolent</option>
-      <option value="Duskhaven Black Arts Education Centre">Duskhaven Black Arts Education Centre</option>
-      <option value="Madame Seryell’s School of Song and Spell">Madame Seryell’s School of Song and Spell</option>
-      <option value="Unaligned">Unaligned</option>
-    </select>
+  <!-- ============ CHARACTER CREATION FORM ============ -->
+  <div id="creation-form">
+
+    <!-- Character Name -->
+    <div>
+      <label for="name-input">Name:</label>
+      <input type="text" id="name-input" placeholder="Enter or randomise" />
+      <button class="button" onclick="randomName()">Random</button>
+    </div>
+
+    <!-- Race Selection -->
+    <div>
+      <label for="race-select">Race:</label>
+      <select id="race-select">
+        <option value="">-- Choose --</option>
+      </select>
+      <button class="button" onclick="randomRace()">Random</button>
+    </div>
+
+    <!-- Background Selection -->
+    <div>
+      <label for="background-select">Background:</label>
+      <select id="background-select">
+        <option value="">-- Choose --</option>
+      </select>
+      <button class="button" onclick="randomBackground()">Random</button>
+    </div>
+
+    <!-- Ability Scores -->
+    <div>
+      <label>Ability Scores:</label><br/>
+      <button class="button" onclick="rollAbilityScores()">Roll (4d6 drop lowest)</button>
+      <button class="button" onclick="standardArray()">Standard Array (15,14,13,12,10,8)</button>
+      <div id="abilities-display" style="margin-top:0.5rem;"></div>
+    </div>
+
+    <!-- Generate Character & Full Random -->
+    <div>
+      <button class="button" onclick="generateCharacter()">Generate Commoner</button>
+      <button class="button" onclick="fullRandom()">Full Random</button>
+    </div>
   </div>
 
-  <button class="button" onclick="generateEncounter()">Generate Encounter</button>
-
+  <!-- ============ OUTPUT ============ -->
   <div id="output" class="output" style="display: none;">
-    <h2>Generated Encounter</h2>
-    <div id="encounter-description"></div>
-    <div id="stat-block"></div>
+    <h2>Your Generated Commoner</h2>
+    <div class="fancy-divider"></div>
+
+    <div id="charName"></div>
+    <div id="charRace"></div>
+    <div id="charBackground"></div>
+    <div id="charAbilityScores"></div>
+    <div id="charProficiencies"></div>
+    <div id="charLanguages"></div>
+    <div id="charEquipment"></div>
+
+    <hr/>
+    <div id="charTraits" style="margin-top:1rem;"></div>
   </div>
-</div>
 
-<script>
-  const CREATURES = {
-    "Silt": [
-    { "name": "Raellan Inquisitor", "cr": 5, "statBlock": "HP 80, AC 18, Spells: Hold Person, Smite." },
-    { "name": "Sister Militant", "cr": 4, "statBlock": "HP 75, AC 17, Attack: Longsword +7 (2d8+4)." },
-    { "name": "Cult Zealot", "cr": 3, "statBlock": "HP 60, AC 14, Attack: Mace +6 (1d8+3)." }
-  ],
-  "Margraeve-Duskhaven": [
-    { "name": "Undead Guard", "cr": 1, "statBlock": "HP 22, AC 15, Attack: Longsword +4 (1d8+2)." },
-    { "name": "Necromancer", "cr": 6, "statBlock": "HP 66, AC 12, Spells: Fireball (8d6), Chill Touch (2d8)." },
-    { "name": "Haunting Spirit", "cr": 4, "statBlock": "HP 50, AC 14, Effect: Fear Aura (DC 15)." }
-  ],
-  "Caldwell People's Republic": [
-    { "name": "Brigand", "cr": 0.5, "statBlock": "HP 16, AC 12, Attack: Crossbow +3 (1d8+1)." },
-    { "name": "Caldwell Overseer", "cr": 4, "statBlock": "HP 88, AC 16, Attack: Greataxe +6 (2d10+4)." },
-    { "name": "Slave Rebellion Leader", "cr": 3, "statBlock": "HP 55, AC 14, Attack: Whip +5 (1d6+3)." }
-  ],
-  "Azurean League": [
-    { "name": "Halfling Scout", "cr": 0.5, "statBlock": "HP 14, AC 14, Attack: Bow +5 (1d6+3)." },
-    { "name": "Elven Duelist", "cr": 3, "statBlock": "HP 52, AC 15, Attack: Rapier +6 (1d8+4)." },
-    { "name": "Azurean Mage", "cr": 5, "statBlock": "HP 60, AC 13, Spells: Lightning Bolt (8d6), Mage Armor." }
-  ],
-  "Dwarven Union": [
-    { "name": "Duergar Warrior", "cr": 2, "statBlock": "HP 39, AC 16, Attack: War Pick +5 (2d8+2)." },
-    { "name": "Stone Guardian", "cr": 4, "statBlock": "HP 85, AC 17, Attack: Slam +7 (3d10+5)." },
-    { "name": "Cave Hydra", "cr": 6, "statBlock": "HP 120, AC 16, Attack: Multiattack (3 heads, 2d10+4)." }
-  ],
-  "Order of the Dragon’s Phallus": [
-    { "name": "Acolyte of the Flame", "cr": 2, "statBlock": "HP 38, AC 13, Spells: Firebolt (2d10), Flame Blade (3d6)." },
-    { "name": "Archivist of Kar’el", "cr": 4, "statBlock": "HP 60, AC 12, Spells: Magic Missile (1d4+1), Fireball (8d6)." },
-    { "name": "Dragonkin Avatar", "cr": 7, "statBlock": "HP 110, AC 17, Attack: Bite +8 (2d10+5), Tail Swipe (2d8+4)." }
-  ],
-  "Berynian Scythes": [
-    { "name": "Druidic Protector", "cr": 3, "statBlock": "HP 58, AC 14, Spells: Entangle, Thunderwave (3d8)." },
-    { "name": "Forest Guardian", "cr": 5, "statBlock": "HP 85, AC 16, Attack: Claw +7 (2d8+4), Root Snare (1d6+3)." },
-    { "name": "Wild Elemental", "cr": 6, "statBlock": "HP 110, AC 15, Attack: Slam +6 (2d10+5), Tempest Strike (3d8)." }
-  ],
-  "Children of Nergál": [
-    { "name": "Bone Servant", "cr": 1, "statBlock": "HP 22, AC 13, Attack: Claw +3 (1d8+2)." },
-    { "name": "Plague Bearer", "cr": 4, "statBlock": "HP 78, AC 15, Effect: Diseased Strike (1d10+3, DC 14 Constitution Save)." },
-    { "name": "Death Warden", "cr": 7, "statBlock": "HP 120, AC 16, Spells: Inflict Wounds (4d10), Animate Dead." }
-  ],
-  "Origen Brotherhood": [
-    { "name": "Forge Sentinel", "cr": 2, "statBlock": "HP 44, AC 18, Attack: Hammer Strike +5 (1d10+2)." },
-    { "name": "Arcane Engineer", "cr": 5, "statBlock": "HP 75, AC 14, Spells: Scorching Ray, Arcane Lock." },
-    { "name": "Steel Construct", "cr": 6, "statBlock": "HP 120, AC 19, Attack: Multiattack (2d10+5)." }
-  ],
-  "The Cult of Rael": [
-    { "name": "Zealous Knight", "cr": 3, "statBlock": "HP 50, AC 17, Attack: Longsword +5 (1d10+3)." },
-    { "name": "Raellan Acolyte", "cr": 2, "statBlock": "HP 35, AC 13, Spells: Bless, Smite." },
-    { "name": "High Arbiter", "cr": 6, "statBlock": "HP 85, AC 18, Spells: Flame Strike (4d6+4), Silence." }
-  ],
-  "Independent Freeholds": [
-    { "name": "Wildling Ranger", "cr": 1, "statBlock": "HP 20, AC 14, Attack: Bow +4 (1d8+2)." },
-    { "name": "Forest Bandit", "cr": 2, "statBlock": "HP 32, AC 13, Attack: Scimitar +5 (1d6+3)." },
-    { "name": "Poacher", "cr": 3, "statBlock": "HP 45, AC 14, Attack: Crossbow +6 (1d10+3)." }
-  ],
-  "The Adventurers Guild": [
-    { "name": "Novice Adventurer", "cr": 1, "statBlock": "HP 22, AC 13, Attack: Shortsword +4 (1d6+2)." },
-    { "name": "Guild Mercenary", "cr": 3, "statBlock": "HP 52, AC 15, Attack: Greataxe +6 (1d12+3)." },
-    { "name": "Veteran Explorer", "cr": 5, "statBlock": "HP 75, AC 16, Spells: Misty Step, Firebolt (2d10)." }
-  ],
-  "Zhilan Triads": [
-    { "name": "Triad Enforcer", "cr": 2, "statBlock": "HP 40, AC 14, Attack: Dagger +6 (1d8+3)." },
-    { "name": "Silent Blade", "cr": 5, "statBlock": "HP 65, AC 16, Attack: Sneak Attack (2d6), Shortbow +6 (1d8+3)." },
-    { "name": "Shadow Master", "cr": 7, "statBlock": "HP 100, AC 17, Spells: Darkness, Invisibility, Shadow Blade." }
-  ],
-  "Xondaran Syndicate": [
-    { "name": "Dockside Thug", "cr": 1, "statBlock": "HP 22, AC 13, Attack: Club +4 (1d8+2)." },
-    { "name": "Rahib Overseer", "cr": 4, "statBlock": "HP 75, AC 15, Attack: Whip +5 (1d6+3), Command." },
-    { "name": "Syndicate Sorcerer", "cr": 6, "statBlock": "HP 88, AC 14, Spells: Fireball, Mage Hand, Charm Person." }
-  ],
-  "The Blackjacks": [
-    { "name": "Street Tough", "cr": 0.5, "statBlock": "HP 18, AC 12, Attack: Fist +3 (1d6+1)." },
-    { "name": "Blackjack Enforcer", "cr": 3, "statBlock": "HP 55, AC 14, Attack: Sap +6 (1d8+3)." },
-    { "name": "The Jack", "cr": 6, "statBlock": "HP 90, AC 16, Attack: Short Sword +7 (2d6+4), Evasion." }
-  ],
-  "The Scarlet Swallows": [
-    { "name": "Scarlet Enchantress", "cr": 2, "statBlock": "HP 40, AC 13, Spells: Charm Person, Minor Illusion." },
-    { "name": "Swallow Escort", "cr": 4, "statBlock": "HP 68, AC 15, Attack: Rapier +5 (1d8+2)." },
-    { "name": "The Madame", "cr": 7, "statBlock": "HP 100, AC 17, Spells: Suggestion, Hypnotic Pattern." }
-  ],
-  "Harbingers": [
-    { "name": "Courier Spy", "cr": 1, "statBlock": "HP 22, AC 12, Attack: Dagger +4 (1d4+2)." },
-    { "name": "Message Thief", "cr": 3, "statBlock": "HP 50, AC 14, Attack: Shortsword +5 (1d6+3), Evasion." },
-    { "name": "Harbinger Coordinator", "cr": 5, "statBlock": "HP 70, AC 15, Spells: Message, Blur." }
-  ],
-  "The Noble Guild of Assassins": [
-    { "name": "Novice Assassin", "cr": 2, "statBlock": "HP 34, AC 14, Attack: Dagger +5 (1d8+3), Poisoned Blade." },
-    { "name": "Skilled Cutthroat", "cr": 5, "statBlock": "HP 68, AC 16, Attack: Sneak Attack (3d6), Shortbow +6 (1d8+3)." },
-    { "name": "Guild Master", "cr": 8, "statBlock": "HP 120, AC 17, Spells: Greater Invisibility, Assassinate." }
-  ],
-  "Sisters Benevolent": [
-    { "name": "Healing Sister", "cr": 2, "statBlock": "HP 40, AC 12, Spells: Cure Wounds, Sanctuary." },
-    { "name": "Shield Bearer", "cr": 4, "statBlock": "HP 65, AC 16, Attack: Shield Bash +5 (1d8+3)." },
-    { "name": "Benevolent Martyr", "cr": 6, "statBlock": "HP 85, AC 14, Spells: Mass Healing Word, Spirit Guardians." }
-  ],
-  "Duskhaven Black Arts Education Centre": [
-    { "name": "Necrotic Apprentice", "cr": 2, "statBlock": "HP 38, AC 13, Spells: Chill Touch (2d8), Mage Armor." },
-    { "name": "Dark Scholar", "cr": 5, "statBlock": "HP 70, AC 14, Spells: Animate Dead, Vampiric Touch." },
-    { "name": "Master Necromancer", "cr": 8, "statBlock": "HP 100, AC 15, Spells: Circle of Death, Finger of Death." }
-  ],
-  "Madame Seryell’s School of Song and Spell": [
-    { "name": "Illusionist Performer", "cr": 2, "statBlock": "HP 36, AC 12, Spells: Minor Illusion, Silent Image." },
-    { "name": "Arcane Dancer", "cr": 4, "statBlock": "HP 60, AC 13, Spells: Hypnotic Pattern, Mirror Image." },
-    { "name": "Songweaver Master", "cr": 7, "statBlock": "HP 95, AC 15, Spells: Greater Invisibility, Confusion." }
-  ],
-  "Unaligned": [
-    { "name": "Highwayman", "cr": 1, "statBlock": "HP 20, AC 12, Attack: Shortsword +4 (1d6+2)." },
-    { "name": "Mist Stalker", "cr": 5, "statBlock": "HP 70, AC 14, Attack: Dagger +6 (2d6+3), Mist Step (Recharges on 5-6)." },
-    { "name": "Rogue Elemental", "cr": 6, "statBlock": "HP 110, AC 15, Attack: Slam +7 (2d10+4), Whirlwind (3d8)." }
-  ]
-  };
+  <!-- PRINT BUTTON (will appear once there's a generated character) -->
+  <button class="button" id="printButton" onclick="window.print()">Print Commoner</button>
 
-  function generateEncounter() {
-    const level = parseInt(document.getElementById("party-level").value, 10);
-    const size = parseInt(document.getElementById("party-size").value, 10);
-    const faction = document.getElementById("faction").value;
-
-    if (!level || !size || !faction) {
-      alert("Please fill out all fields.");
-      return;
-    }
-
-    const difficulty = calculateDifficulty(level, size);
-    const encounter = selectCreatures(faction, level, size, difficulty);
-
-    const output = document.getElementById("output");
-    output.style.display = "block";
-    document.getElementById("encounter-description").innerHTML = `
-      <strong>Faction:</strong> ${faction}<br>
-      <strong>Difficulty:</strong> ${difficulty}<br>
-      <strong>Creatures:</strong> ${encounter.map(c => c.name).join(", ")}
-    `;
-
-    const statBlocks = encounter.map(
-      c => `<strong>${c.name}</strong>: ${c.statBlock}`
-    ).join("<br><br>");
-    document.getElementById("stat-block").innerHTML = statBlocks;
-  }
-
-  function calculateDifficulty(level, size) {
-    const baseXP = level * size * 100;
-    if (baseXP < 300) return "Easy";
-    if (baseXP < 1000) return "Medium";
-    if (baseXP < 3000) return "Hard";
-    return "Deadly";
-  }
-
-  function selectCreatures(faction, level, size, difficulty) {
-    const creatures = CREATURES[faction];
-    const encounter = [];
-    let remainingBudget = level * size * 100;
-
-    while (remainingBudget > 0 && encounter.length < 5) {
-      const validCreatures = creatures.filter(c => {
-        if (difficulty === "Easy") return c.cr <= 1;
-        if (difficulty === "Medium") return c.cr <= 3;
-        if (difficulty === "Hard") return c.cr <= 6;
-        return c.cr > 6;
-      });
-
-      if (validCreatures.length === 0) break;
-
-      const chosen = validCreatures[Math.floor(Math.random() * validCreatures.length)];
-      encounter.push(chosen);
-      remainingBudget -= chosen.cr * 100; // CR approximated to 100 XP per level.
-    }
-
-    return encounter;
-  }
-</script>
-
-  <footer>
-    <p class="license-text">
-      This tool may include content derived from the System Reference Document (SRD 5.1) under the Open Gaming License (OGL) Version 1.0a. The OGL applies to all elements defined as Open Game Content.
-      <br><br>
+  <!-- ============ OGL NOTICE (FULL) ============ -->
+  <div class="footer">
+    <h3>Open Game License</h3>
+    <p>
+      This work includes material taken from the 5e System Reference Document (SRD),
+      © 2016, Wizards of the Coast, Inc. and is covered by the 
+      <strong>Open Game License, Version 1.0a</strong>. 
+     
+      <br/><br/>
+      <em>
       OPEN GAME LICENSE Version 1.0a<br>
       The following text is the property of Wizards of the Coast, Inc., and is Copyright 2000 Wizards of the Coast, Inc ("Wizards"). All Rights Reserved.<br>
       1. Definitions: (a)"Contributors" means the copyright and/or trademark owners who have contributed Open Game Content;...
       <a href="https://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf" target="_blank">Read the full license</a>.
+      </em>
     </p>
-  </footer>
+  </div>
+</div>
+
+
+<script>
+/* ==================================================
+   ========== LARGE NAME SYSTEM (FIRST + LAST) ======
+   ================================================== */
+
+/**
+ * RAW_NAMES is the exhaustive list, with NO omissions.
+ * This includes southern-inspired, Cajun/French, German,
+ * Finnish, and additional/mixed names.
+ */
+const RAW_NAMES = [
+  // --- Southern-Inspired Names ---
+  "Abby Sue",
+  "Adelaide Rae",
+  "Alvin Lee",
+  "Annabeth Lou",
+  "Arlen James",
+  "Bea Mae",
+  "Beckett Mose",
+  "Belle Jo",
+  "Bobby Ray",
+  "Bonnie Faye",
+  "Buck Harding",
+  "Clarabelle",
+  "Claudette Pearl",
+  "Clinton Dean",
+  "Cordelia Grace",
+  "Darcy Lynn",
+  "Darlene Rose",
+  "Delilah Kay",
+  "Duke Earle",
+  "Ella Beth",
+  "Etta Lou",
+  "Flannery Kate",
+  "Florence Jean",
+  "Forrest Wade",
+  "Franklin Dale",
+  "Freddie Sue",
+  "Grady Lance",
+  "Hannah Leigh",
+  "Harper June",
+  "Hollis Reed",
+  "Ida Mae",
+  "Iris Jeanine",
+  "Jebediah \"Jeb\"",
+  "Jessaline \"Jess\"",
+  "Jolene Pearl",
+  "Judd Carter",
+  "Kady Lynne",
+  "Kinley Grace",
+  "Kirby Wyatt",
+  "Lambert Clyde",
+  "Lavinia Belle",
+  "Leona Rae",
+  "Lester Hoyt",
+  "Lila Rose",
+  "Loretta Gale",
+  "Louis Hunter",
+  "Lucille Anne",
+  "Mack Travis",
+  "Marlena Jo",
+  "Maude Elaine",
+  "Memphis Dale",
+  "Merrilee Lou",
+  "Millie Joyce",
+  "Nola Paige",
+  "Orabelle Jane",
+  "Orin Mac",
+  "Patsy Lee",
+  "Peyton Vance",
+  "Presley Dawn",
+  "Reba Quinn",
+  "Reuben Clive",
+  "Rosalee Lynn",
+  "Sadie Beth",
+  "Sheridan Clay",
+  "Sonny Ralph",
+  "Stella Jean",
+  "Sully Dean",
+  "Susannah Ray",
+  "Tanner Royce",
+  "Tara Jo",
+  "Tate Abel",
+  "Tennessee Wells",
+  "Tessa Rae",
+  "Travis Wade",
+  "Trixie Lynn",
+  "Tyson Lee",
+  "Velma Kay",
+  "Vernon Todd",
+  "Violet June",
+  "Waylon Clark",
+  "Waverly Lane",
+  "Willodean \"Willie\"",
+  "Winnie Belle",
+  "Zelda Ruth",
+  
+  // --- Cajun/French-Inspired Names ---
+  "Aimée-Noelle",
+  "Alphonsine",
+  "Amélie Colette",
+  "Antoine Reynaud",
+  "Armand Gautier",
+  "Beaufort \"Beau\"",
+  "Bernadette Delacroix",
+  "Camille Dupont",
+  "Cécile Marin",
+  "Chantal Boudreaux",
+  "Charlot Dupuis",
+  "Claudine Désirée",
+  "Corinne Lajoie",
+  "Delphine Robichaux",
+  "Édouard Babineaux",
+  "Eloise Broussard",
+  "Estelle LaFleur",
+  "Étienne Dubois",
+  "Evangeline Badeaux",
+  "Félix Morel",
+  "Florent Dupre",
+  "Gaëtan Renault",
+  "Gervais Bouchard",
+  "Honoré Lavigne",
+  "Jacques Landry",
+  "Jean-Baptiste Robillard",
+  "Jean-Luc Martine",
+  "Jolie Esmé",
+  "Leonie Arcenaux",
+  "Lisette Dauphin",
+  "Lucette Violette",
+  "Lucien Armand",
+  "Madelon Artois",
+  "Margot Pellerin",
+  "Marius Gaspard",
+  "Mathilde Perreault",
+  "Maurice LeClerc",
+  "Odette Marchand",
+  "Pierre Lafayette",
+  "Remy Roux",
+  "Sylvain Thibodeaux",
+  "Thierry Gaspard",
+  
+  // --- German-Inspired Names ---
+  "Adelheid Roth",
+  "Albert Drechsler",
+  "Anneliese Becker",
+  "Bastian Jäger",
+  "Beate Vogel",
+  "Benedikt Kraus",
+  "Bernd Baumann",
+  "Brigitte Neumann",
+  "Carla Meier",
+  "Christa Zielke",
+  "Dieter Vogel",
+  "Dorothea Hauer",
+  "Eberhard Zeigler",
+  "Edith Schuster",
+  "Elias Drescher",
+  "Erika Sasse",
+  "Ernst Kaufmann",
+  "Ferdinand Braun",
+  "Frieda Hoffman",
+  "Friedrich Schaller",
+  "Gerda Mayer",
+  "Gerhard Weber",
+  "Gertrud Hauck",
+  "Giselher Bauer",
+  "Gudrun Fischer",
+  "Hans König",
+  "Heide Rösler",
+  "Heinrich Beck",
+  "Helga Möbius",
+  "Hilde Schaefer",
+  "Ingrid Pfaff",
+  "Johann Albrecht",
+  "Jörg Vogt",
+  "Karin Ziegler",
+  "Karl Kempf",
+  "Katharina Scholz",
+  "Konrad Schmitt",
+  "Liesel Engel",
+  "Marlene Wilke",
+  "Otto Kuhl",
+  "Sigmund Richter",
+  "Stefan Eberhardt",
+  "Ulrike Werner",
+  
+  // --- Finnish-Inspired Names ---
+  "Aino Tuulikki",
+  "Aleksi Heikkinen",
+  "Alina Koivunen",
+  "Anja Saarinen",
+  "Arto Mikkonen",
+  "Eelis Pennanen",
+  "Eero Ranta",
+  "Elina Kaarina",
+  "Emilia Järvinen",
+  "Esko Niemi",
+  "Hanna Vartiainen",
+  "Heikki Pulkkinen",
+  "Henna Korhonen",
+  "Ilkka Pennanen",
+  "Johanna Heikkilä",
+  "Joonas Rantala",
+  "Juha Partanen",
+  "Juho Virtanen",
+  "Kaarina Salminen",
+  "Kaisa Kurki",
+  "Kalevi Mäkinen",
+  "Katja Peltonen",
+  "Kristiina Väisänen",
+  "Lasse Lehtonen",
+  "Liisa Erkkilä",
+  "Maarit Halonen",
+  "Matti Aalto",
+  "Miika Nurmi",
+  "Mikko Korpi",
+  "Niko Hautala",
+  "Noora Rinne",
+  "Olli Kukkonen",
+  "Orvokki Paananen",
+  "Paavo Kallio",
+  "Petri Vainio",
+  "Riikka Mustonen",
+  "Saara Piirainen",
+  "Sanna Koivu",
+  "Seppo Valtonen",
+  "Tapio Leppänen",
+  "Taru Korpela",
+  "Tiina Koski",
+  "Tuula Mäkelä",
+  "Vilma Pelkonen",
+
+  // --- Additional (Southern, Cajun, German, Finnish) Mix & Misc. ---
+  "Alina Reznik",
+  "Beck Mullins",
+  "Bernard Lamar",
+  "Celestine Broussard",
+  "Darla Gros",
+  "Darrell Louviere",
+  "Donovan Lee",
+  "Ervin Halvari",
+  "Eulalie Chauvin",
+  "Felicia Merle",
+  "Finn Jääskeläinen",
+  "Gaston Lavigne",
+  "Gunther Ernst",
+  "Heike Näslund",
+  "Hilda Lamm",
+  "Inka Lampinen",
+  "Jaana Pihkala",
+  "Jesse-Mae Glover",
+  "Kasper Autio",
+  "Katrin Müller",
+  "Kylah Beth",
+  "Lafayette Boudreau",
+  "Lavinia Faye",
+  "Lola Mignon",
+  "Lorelei Stein",
+  "Louella Hicks",
+  "Luke Monroe",
+  "Maija Heiskanen",
+  "Manfred Erber",
+  "Marceline Arnaud",
+  "Marja-Leena Koivu",
+  "Mason Wyatt",
+  "Mireille Malveaux",
+  "Neville Fontenot",
+  "Odile Champoux",
+  "Oscar Wendel",
+  "Pearl Nettles",
+  "Priscilla Joplin",
+  "Reinhardt Faust",
+  "Risto Vaananen",
+  "Rudolf Meissner",
+  "Ruth Ellen",
+  "Sade Rantanen",
+  "Sallie June",
+  "Severin Vogel",
+  "Signe Ollila",
+  "Suzette Armond",
+  "Timo Harkonen",
+  "Toby Luther",
+  "Vera Gail",
+  "Viktoria Haas",
+  "Ville Rautio",
+  "Wilhelm Schuster",
+  "Winifred Lane"
+];
+
+// We'll parse RAW_NAMES to produce separate FIRST_NAMES and LAST_NAMES arrays.
+let FIRST_NAMES = [];
+let LAST_NAMES = [];
+
+function parseName(fullName) {
+  const trimmed = fullName.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    // single word => first name only
+    return { first: parts[0].replace(/"/g, ""), last: "" };
+  } else {
+    const first = parts[0].replace(/"/g, "");
+    const last = parts[parts.length - 1].replace(/"/g, "");
+    return { first, last };
+  }
+}
+
+// Build FIRST_NAMES and LAST_NAMES from RAW_NAMES
+RAW_NAMES.forEach(entry => {
+  const parsed = parseName(entry);
+  if (parsed) {
+    if (parsed.first) FIRST_NAMES.push(parsed.first);
+    if (parsed.last) LAST_NAMES.push(parsed.last);
+  }
+});
+
+/* ==================================================
+   ========== SRD-BASED DATA (SIMPLIFIED) ==========
+   ================================================== */
+
+/* --- Races --- */
+const RACES = [
+  {
+    name: "Dwarf",
+    abilityScoreBonuses: { CON: 2 },
+    speed: 25,
+    features: [
+      "Darkvision (60 ft)",
+      "Dwarven Resilience (adv. on poison saves)",
+      "Dwarven Combat Training",
+      "Stonecunning"
+    ],
+    languages: ["Common", "Dwarvish"]
+  },
+  {
+    name: "Elf",
+    abilityScoreBonuses: { DEX: 2 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Keen Senses (proficiency in Perception)",
+      "Fey Ancestry (adv. on charm saves)",
+      "Trance"
+    ],
+    languages: ["Common", "Elvish"]
+  },
+  {
+    name: "Halfling",
+    abilityScoreBonuses: { DEX: 2 },
+    speed: 25,
+    features: [
+      "Lucky (reroll 1s on attack/ability/saving throws)",
+      "Brave (adv. on fear saves)",
+      "Halfling Nimbleness"
+    ],
+    languages: ["Common", "Halfling"]
+  },
+  {
+    name: "Human",
+    abilityScoreBonuses: {
+      STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1
+    },
+    speed: 30,
+    features: [],
+    languages: ["Common", "One Extra Language of your choice"]
+  },
+  {
+    name: "Dragonborn",
+    abilityScoreBonuses: { STR: 2, CHA: 1 },
+    speed: 30,
+    features: [
+      "Draconic Ancestry",
+      "Breath Weapon",
+      "Damage Resistance (based on ancestry)"
+    ],
+    languages: ["Common", "Draconic"]
+  },
+  {
+    name: "Gnome",
+    abilityScoreBonuses: { INT: 2 },
+    speed: 25,
+    features: [
+      "Darkvision (60 ft)",
+      "Gnome Cunning (adv. on mental saves vs. magic)"
+    ],
+    languages: ["Common", "Gnomish"]
+  },
+  {
+    name: "Half-Elf",
+    abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Fey Ancestry (adv. on charm saves)",
+      "Skill Versatility (proficiency in two skills)"
+    ],
+    languages: ["Common", "Elvish", "One Extra Language"]
+  },
+  {
+    name: "Half-Orc",
+    abilityScoreBonuses: { STR: 2, CON: 1 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Relentless Endurance (once per long rest)",
+      "Savage Attacks"
+    ],
+    languages: ["Common", "Orc"]
+  },
+  {
+    name: "Tiefling",
+    abilityScoreBonuses: { CHA: 2, INT: 1 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Hellish Resistance (resist fire)",
+      "Infernal Legacy"
+    ],
+    languages: ["Common", "Infernal"]
+  }
+];
+
+/* --- Backgrounds, with full featureDesc + nicknames (1/5 chance) --- */
+const BACKGROUNDS = [
+  {
+    name: "Acolyte",
+    skillProficiencies: ["Insight", "Religion"],
+    languages: ["Two of your choice"],
+    equipment: [
+      "Holy symbol",
+      "Prayer book or prayer wheel",
+      "5 sticks of incense",
+      "Vestments",
+      "Set of common clothes",
+      "Belt pouch containing 15 gp"
+    ],
+    feature: "Shelter of the Faithful",
+    featureDesc: "As an Acolyte, you command the respect of those who share your faith. You can perform religious ceremonies and can call upon fellow adherents for shelter and support, though you must uphold the practices of your religion in return.",
+    nicknames: ["Chant", "Chapel", "Faith", "Lumen", "Reverie"]
+  },
+  {
+    name: "Criminal/Spy",
+    skillProficiencies: ["Deception", "Stealth"],
+    equipment: [
+      "Crowbar",
+      "Set of dark common clothes including hood",
+      "Belt pouch containing 15 gp"
+    ],
+    feature: "Criminal Contact",
+    featureDesc: "You have a reliable, trustworthy contact who acts as your liaison to a network of other criminals. You know how to get messages to and from your contact, even over great distances.",
+    nicknames: ["Shade", "Slick", "Pockets", "Rook", "Whisper"]
+  },
+  {
+    name: "Folk Hero",
+    skillProficiencies: ["Animal Handling", "Survival"],
+    equipment: [
+      "Set of artisan's tools (one of your choice)",
+      "Shovel",
+      "Iron pot",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Rustic Hospitality",
+    featureDesc: "You fit in among common folk easily. They will shield you from the law or anyone else searching for you, though they will not risk their lives for you. In return, you must come to their aid in times of need.",
+    nicknames: ["Buck", "Rusty", "Spotts", "Sarge", "Oakie"]
+  },
+  {
+    name: "Guild Artisan (Guild Merchant)",
+    skillProficiencies: ["Insight", "Persuasion"],
+    languages: ["One of your choice"],
+    equipment: [
+      "Set of artisan's tools (one of your choice)",
+      "Letter of introduction from your guild",
+      "Set of traveller's clothes",
+      "Belt pouch containing 15 gp"
+    ],
+    feature: "Guild Membership",
+    featureDesc: "Your guild offers you lodging and food, and you can receive legal and political support from them when needed. Guild members will often support you if it does not risk their own standing.",
+    nicknames: ["Hammer", "Chisel", "Scribe", "Barter", "Ledger"]
+  },
+  {
+    name: "Hermit",
+    skillProficiencies: ["Medicine", "Religion"],
+    equipment: [
+      "Scroll case stuffed full of notes from your studies or prayers",
+      "Winter blanket",
+      "Set of common clothes",
+      "Herbalism kit",
+      "5 gp"
+    ],
+    feature: "Discovery",
+    featureDesc: "Your seclusion allowed you to uncover a unique truth about the cosmos—an insight that may shape your destiny. Some might not accept your findings; you must decide how to share them, if at all.",
+    nicknames: ["Quiet", "Wisp", "Moony", "Muse", "Cloister"]
+  },
+  {
+    name: "Noble",
+    skillProficiencies: ["History", "Persuasion"],
+    equipment: [
+      "Set of fine clothes",
+      "Signet ring",
+      "Scroll of pedigree",
+      "Purse containing 25 gp"
+    ],
+    feature: "Position of Privilege",
+    featureDesc: "You carry the authority of your noble birth. Commoners treat you with respect, and other nobles see you as a peer. You can often secure an audience with the local ruler if you need to.",
+    nicknames: ["Lordy", "Duchess", "Grace", "Count", "Regal"]
+  },
+  {
+    name: "Outlander",
+    skillProficiencies: ["Athletics", "Survival"],
+    languages: ["One of your choice"],
+    equipment: [
+      "Staff",
+      "Hunting trap",
+      "Trophy from an animal you killed",
+      "Set of traveller's clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Wanderer",
+    featureDesc: "You have an excellent memory for geography and can always recall the general layout of terrain, settlements, and other features around you. You can find food and fresh water for yourself and up to five other people each day.",
+    nicknames: ["Tracks", "Wild", "Hawk", "Cairn", "Scout"]
+  },
+  {
+    name: "Sage",
+    skillProficiencies: ["Arcana", "History"],
+    equipment: [
+      "Bottle of black ink",
+      "Quill",
+      "Small knife",
+      "Letter from a dead colleague posing a question you have not yet been able to answer",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Researcher",
+    featureDesc: "When you attempt to learn or recall a piece of lore, if you don't know that information, you often know where and from whom you can obtain it. Your DM might rule that the knowledge you seek is secreted away or that it simply cannot be found.",
+    nicknames: ["Quill", "Stacks", "Owl", "Doc", "Booker"]
+  },
+  {
+    name: "Sailor",
+    skillProficiencies: ["Athletics", "Perception"],
+    equipment: [
+      "Belaying pin (club)",
+      "50 feet of silk rope",
+      "Lucky charm",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Ship's Passage",
+    featureDesc: "You can secure free passage on a sailing ship for yourself and your adventuring companions. In return, you must assist the crew during the voyage. You can't be certain of a schedule, however.",
+    nicknames: ["Salty", "Anchor", "Rudder", "Knotty", "Seabreeze"]
+  },
+  {
+    name: "Soldier",
+    skillProficiencies: ["Athletics", "Intimidation"],
+    equipment: [
+      "Insignia of rank",
+      "Trophy taken from a fallen enemy",
+      "Set of bone dice or deck of cards",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Military Rank",
+    featureDesc: "You have a military rank from your career as a soldier. Soldiers loyal to your former military organisation still recognise your authority and influence, and they defer to you if they are of a lower rank.",
+    nicknames: ["Sarge", "Brass", "Boots", "Vets", "Gunner"]
+  },
+  {
+    name: "Urchin",
+    skillProficiencies: ["Sleight of Hand", "Stealth"],
+    equipment: [
+      "Small knife",
+      "Map of the city you grew up in",
+      "Pet mouse",
+      "Token to remember your parents by",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "City Secrets",
+    featureDesc: "You know the secret patterns and flow to cities and can find passages through the urban sprawl that others would miss. You and your companions can travel between any two locations in the city twice as fast as your speed would normally allow.",
+    nicknames: ["Rat", "Stray", "Alley", "Gutters", "Pebbles"]
+  },
+  {
+    name: "Tanner",
+    skillProficiencies: ["Survival", "Nature"],
+    languages: [],
+    equipment: [
+      "A small set of tanning tools",
+      "A sturdy apron",
+      "A cured hide you’re particularly proud of",
+      "A set of common clothes",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Leatherwise",
+    featureDesc: "You instantly identify the quality and source of hides or leather goods. You can also typically find buyers for raw hides or furs, even in remote settlements, thanks to your trade connections.",
+    nicknames: ["Hide", "Skins", "Tannic", "Pelt", "Sinew"]
+  },
+  {
+    name: "Alchemist",
+    skillProficiencies: ["Arcana", "Medicine"],
+    languages: [],
+    equipment: [
+      "An alchemist’s kit (including flasks, mortar & pestle)",
+      "A weathered notebook filled with formulae",
+      "A set of common clothes stained with reagents",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Experimental Brewer",
+    featureDesc: "Local apothecaries or herbalists often grant you discounts or small freebies, hoping your next discovery will be lucrative. You can usually identify common magical or chemical substances on sight.",
+    nicknames: ["Vial", "Fume", "Brew", "Pestle", "Tonic"]
+  },
+  {
+    name: "Miner",
+    skillProficiencies: ["Athletics", "Perception"],
+    languages: [],
+    equipment: [
+      "A pickaxe",
+      "A lantern and a flask of oil",
+      "A small sample of precious ore (souvenir)",
+      "Sturdy boots and a set of rugged common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Tunnel Instinct",
+    featureDesc: "You have an uncanny sense for detecting structural weaknesses underground and can often identify if a tunnel is stable. Other miners or dwarves typically trust your word on subterranean matters.",
+    nicknames: ["Pick", "Sparky", "Ore", "Dusty", "Coal"]
+  },
+  {
+    name: "Beast Tamer",
+    skillProficiencies: ["Animal Handling", "Nature"],
+    languages: [],
+    equipment: [
+      "A length of rope",
+      "A small, carved token of a favourite beast",
+      "A supply of dried meat or treats",
+      "A set of simple outdoor attire",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Animal Rapport",
+    featureDesc: "You have a calm and trustworthy air that most domestic animals respond to. Locals often ask you for help handling skittish or aggressive beasts.",
+    nicknames: ["Buck", "Wrangler", "Whistle", "Critter", "Hoof"]
+  },
+  {
+    name: "Chandler",
+    skillProficiencies: ["Persuasion", "Investigation"],
+    languages: [],
+    equipment: [
+      "A small block of wax",
+      "A candle mould and a tinderbox",
+      "A ledger tracking your sales",
+      "A set of plain but neat clothes",
+      "Belt pouch containing 7 gp"
+    ],
+    feature: "Keeper of Light",
+    featureDesc: "You know how to create serviceable candles and have a knack for sourcing cheap tallow or beeswax. Townsfolk trust you not to leave them in the dark.",
+    nicknames: ["Candle", "Wax", "Wick", "Tallow", "Glow"]
+  },
+  {
+    name: "Cooper",
+    skillProficiencies: ["History", "Sleight of Hand"], 
+    languages: [],
+    equipment: [
+      "A cooper’s hammer and a ring of iron hoops",
+      "A small cask you’ve crafted yourself",
+      "A set of serviceable working clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Well-Bound Containers",
+    featureDesc: "You know how to properly seal barrels and crates. Merchants who value secure shipping often appreciate your skills, and you can spot tampering at a glance.",
+    nicknames: ["Barrel", "Hoops", "Ring", "Crater", "Tapper"]
+  },
+  {
+    name: "Cartwright",
+    skillProficiencies: ["Carpenter’s Tools (use ‘Tool Proficiency’ in your system)", "History"],
+    languages: [],
+    equipment: [
+      "A small woodworking toolkit",
+      "A miniature model cart of your own design",
+      "A set of sturdy common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Roadwise",
+    featureDesc: "Having built and repaired carts, you understand travel and terrain intricately. You often prevent breakdowns or expedite journeys by advising on maintenance and routes.",
+    nicknames: ["Axle", "Spokes", "Wheel", "Lumber", "Waggon"]
+  },
+  {
+    name: "Scribe",
+    skillProficiencies: ["History", "Investigation"],
+    languages: ["One of your choice"], 
+    equipment: [
+      "A quill and a small jar of ink",
+      "A sheaf of parchment",
+      "A personal log of your scribblings",
+      "A set of simple but tidy clothes",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Academic Access",
+    featureDesc: "Your skills as a scribe grant you easier access to archives, libraries, and private collections. Scholars trust you to handle delicate documents.",
+    nicknames: ["Quill", "Ink", "Scroll", "Lexi", "Page"]
+  },
+  {
+    name: "Glassblower",
+    skillProficiencies: ["Arcana", "Perception"],
+    languages: [],
+    equipment: [
+      "A small glassblowing pipe",
+      "A carefully wrapped glass trinket of your own design",
+      "A sturdy pair of goggles",
+      "A set of common clothes",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Fragile Eye",
+    featureDesc: "Your keen eye discerns flaws and cracks in glass and crystalline materials. Artisans and collectors seek your expertise to judge delicate wares.",
+    nicknames: ["Fragile", "Pane", "Spark", "Torch", "Crystal"]
+  },
+  {
+    name: "Jeweller",
+    skillProficiencies: ["Insight", "Sleight of Hand"],
+    languages: [],
+    equipment: [
+      "A loupe or small magnifying lens",
+      "A pouch of assorted uncut gemstones (low value)",
+      "A set of smart but modest clothes",
+      "Belt pouch containing 15 gp"
+    ],
+    feature: "Stone Appraisal",
+    featureDesc: "You can swiftly gauge the authenticity and approximate value of gems or precious metals. Wealthy patrons may hire you to inspect prized possessions.",
+    nicknames: ["Shine", "Facet", "Gem", "Pearl", "Rocky"]
+  },
+  {
+    name: "Shipwright",
+    skillProficiencies: ["Athletics", "Carpenter’s Tools (use ‘Tool Proficiency’ in your system)"],
+    languages: [],
+    equipment: [
+      "A small mallet and chisel",
+      "A piece of driftwood with an etched diagram",
+      "A set of rugged clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Maritime Specialist",
+    featureDesc: "Ports and ship captains respect your experience. You can find work or passage aboard ships if you assist with repairs or related tasks. You can also often determine a vessel’s seaworthiness by sight.",
+    nicknames: ["Timbers", "Hull", "Dock", "Anchor", "Mast"]
+  },
+  {
+    name: "Bowyer/Fletcher",
+    skillProficiencies: ["Nature", "Perception"],
+    languages: [],
+    equipment: [
+      "A bundle of feathers and arrow shafts",
+      "A small bowyer’s toolkit",
+      "A set of workable common clothes",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Arrow Precision",
+    featureDesc: "You can craft serviceable arrows from natural materials and assess the quality of bows and arrows at a glance. Hunters might hire you for your craft and expertise.",
+    nicknames: ["Arrow", "Feather", "Quiver", "Bowstring", "Fletch"]
+  },
+  {
+    name: "Cobbler",
+    skillProficiencies: ["Sleight of Hand", "Insight"],
+    languages: [],
+    equipment: [
+      "A cobbler’s kit (awl, hammer, leather patches)",
+      "A well-worn pair of boots you’ve crafted",
+      "A set of common clothes",
+      "Belt pouch containing 8 gp"
+    ],
+    feature: "Sure-Footed",
+    featureDesc: "You excel at fitting boots and identifying footprints. Travellers appreciate your skill, and you can sometimes track individuals by their unique footwear.",
+    nicknames: ["Boots", "Soles", "Stitch", "Tap", "Tread"]
+  },
+  {
+    name: "Farmer",
+    skillProficiencies: ["Animal Handling", "Nature"],
+    languages: [],
+    equipment: [
+      "A hoe or sickle",
+      "A small pouch of seeds",
+      "A wide-brimmed straw hat",
+      "A set of sturdy clothes",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Local Harvest",
+    featureDesc: "You know how to grow and gather simple crops and can usually secure shelter or trade among rural folk who respect your honest labour.",
+    nicknames: ["Seed", "Haystack", "Plow", "Row", "Scythe"]
+  },
+  {
+    name: "Fisher",
+    skillProficiencies: ["Survival", "Perception"],
+    languages: [],
+    equipment: [
+      "A simple fishing rod or hand line",
+      "A small tackle box",
+      "A net",
+      "A set of waterproof boots",
+      "Belt pouch containing 5 gp"
+    ],
+    feature: "Waterside Hospitality",
+    featureDesc: "Those living near bodies of water recognise your knack for fishing. You can often secure a day’s rations for yourself and one or two companions, and fishers in other regions are friendly to you.",
+    nicknames: ["Fin", "Hook", "Line", "Nets", "Minnow"]
+  }
+];
+
+/* ==================================================
+   ========== PERSONALITY TRAITS (VAST) =============
+   ================================================== */
+const PERSONALITY_TRAITS = [
+  "I always see the best in people, even if they don’t deserve it.",
+  "I am suspicious of new faces and stick to familiar companions.",
+  "I laugh loudly and often, even at my own jokes.",
+  "I hum or sing quietly whenever I'm nervous.",
+  "I keep small trinkets from my travels and love to show them off.",
+  "I have a habit of forgetting names but remembering faces.",
+  "I firmly believe in fate and destiny, reading signs everywhere.",
+  "I can’t stand the sight of suffering and rush to help those in need.",
+  "I hoard secrets like gold and use them to my advantage.",
+  "I’m always tidying up, fussing over details even when it’s unnecessary.",
+  "I prefer the company of animals to people and often mimic their sounds.",
+  "I fixate on a single goal and can become oblivious to other issues.",
+  "I daydream about a grand future, sometimes missing important details.",
+  "I rarely speak, but when I do, it's usually cutting or direct.",
+  "I record everything I see in a small notebook—my memory is precious.",
+  "I have strong opinions on art and culture, ignoring practicalities.",
+  "I offer unsolicited advice to everyone, whether they ask or not.",
+  "I secretly enjoy meddling in other people's affairs to 'help' them.",
+  "I become giddy at the prospect of treasure or hidden knowledge.",
+  "I am extremely superstitious, performing little rituals constantly.",
+  "I avoid direct conflict if I can, preferring to talk my way out.",
+  "I try to turn every experience into a grand story or ballad.",
+  "I fuss about cleanliness, my gear must always be spotless.",
+  "I love discussing philosophy, even if others find it boring.",
+  "I feel most alive on the move, restless if I stay in one place long.",
+  "I never turn down a good gamble or game of chance.",
+  "I see omens in everyday happenings and trust them over logic.",
+  "I have an elaborate greeting ritual that I force upon new acquaintances.",
+  "I trust animals' judgement of people more than my own.",
+  "I keep a strict code of personal honour and won’t break it for anyone.",
+  "I love tall tales and exaggerate my own feats for dramatic effect.",
+  "I’m reluctant to share personal details, no matter how mundane.",
+  "I collect jokes and riddles, testing them on unsuspecting strangers.",
+  "I view cynicism as a shield, sarcasm as my chosen weapon.",
+  "I can't keep track of time unless I narrate my day out loud.",
+  "I have an intense personal rivalry with a close friend or sibling.",
+  "I’m fiercely protective of children and the weak, stepping in instantly.",
+  "I take minor slights personally and brood over them for days.",
+  "I’m fascinated by the arcane, even if I don’t fully understand it.",
+  "I can’t resist a friendly wager, even if it’s something I might lose.",
+  "I hold grudges far too long, plotting petty revenges.",
+  "I deeply admire heroes and strive to become like them someday.",
+  "I tease friends with gentle barbs and can’t resist a playful jab.",
+  "I am obsessed with collecting curiosities or random knick-knacks.",
+  "I hold my faith above all else, quietly praying in every spare moment.",
+  "I love performing in front of people—dancing, singing, or oratory.",
+  "I see potential threats everywhere and watch my back constantly.",
+  "I talk to inanimate objects when lonely, expecting no reply.",
+  "I share my food or drink with those less fortunate without hesitation.",
+  "I’m easily bored and seek constant stimulation or excitement.",
+  "I have a warm, hearty laugh that instantly sets others at ease.",
+  "I’ll do almost anything for a good story, even if it puts me at risk.",
+  "I rarely show emotion, keeping a stoic mask in all situations.",
+  "I can’t stand idleness, fidgeting or pacing if not kept busy.",
+  "I always look impeccably groomed, taking pride in my appearance.",
+  "I love mysteries and rumours, prying into others’ business for clues.",
+  "I speak in grandiose, flowery language that borders on ridiculous.",
+  "I resent authority, ignoring orders unless they serve my interest.",
+  "I have an odd collection of lucky charms that I never leave behind.",
+  "I become starstruck by famous warriors, nobles, or wizards.",
+  "I play with any fire source absentmindedly, enthralled by the flames.",
+  "I can’t resist a sob story, giving away resources I barely have.",
+  "I’m easily distracted by anything unusual or shiny, losing focus.",
+  "I brag about my modest accomplishments as if they’re legendary."
+];
+
+/* ==================================================
+   ========== PAGE INITIALISATION ==========
+   ================================================== */
+
+window.addEventListener("DOMContentLoaded", () => {
+  populateSelect("race-select", RACES.map(r => r.name));
+  populateSelect("background-select", BACKGROUNDS.map(b => b.name));
+});
+
+function populateSelect(selectId, optionsArray) {
+  const selectElem = document.getElementById(selectId);
+  optionsArray.forEach(opt => {
+    const optionEl = document.createElement("option");
+    optionEl.value = opt;
+    optionEl.innerText = opt;
+    selectElem.appendChild(optionEl);
+  });
+}
+
+/* ==================================================
+   ========== RANDOMISATION + HELPER FUNCTIONS =======
+   ================================================== */
+
+function pickRandom(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function pickMultipleDistinct(array, count) {
+  const copy = [...array];
+  const result = [];
+  if (count > copy.length) count = copy.length;
+  for (let i = 0; i < count; i++) {
+    const index = Math.floor(Math.random() * copy.length);
+    result.push(copy[index]);
+    copy.splice(index, 1);
+  }
+  return result;
+}
+
+function roll4d6DropLowest() {
+  let scores = [];
+  for (let i = 0; i < 6; i++) {
+    let rolls = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 6) + 1);
+    rolls.sort((a, b) => a - b);
+    rolls.shift(); // drop the lowest
+    const sum = rolls.reduce((acc, val) => acc + val, 0);
+    scores.push(sum);
+  }
+  return scores;
+}
+
+function getStandardArray() {
+  return [15, 14, 13, 12, 10, 8];
+}
+
+function abilityMod(score) {
+  return Math.floor((score - 10) / 2);
+}
+
+/* ==================================================
+   ========== NAME HANDLERS =========================
+   ================================================== */
+
+function randomName() {
+  if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
+    document.getElementById("name-input").value = "Nameless Soul";
+    return;
+  }
+  const first = pickRandom(FIRST_NAMES);
+  const last = pickRandom(LAST_NAMES);
+  document.getElementById("name-input").value = first + " " + last;
+}
+
+/* ==================================================
+   ========== RACE & BACKGROUND RANDOMISERS =========
+   ================================================== */
+
+function randomRace() {
+  const randomPick = pickRandom(RACES).name;
+  document.getElementById("race-select").value = randomPick;
+}
+
+function randomBackground() {
+  const randomPick = pickRandom(BACKGROUNDS).name;
+  document.getElementById("background-select").value = randomPick;
+}
+
+/* ==================================================
+   ========== ABILITY SCORE HANDLERS ================
+   ================================================== */
+let currentScores = [10,10,10,10,10,10]; // default
+
+function rollAbilityScores() {
+  currentScores = roll4d6DropLowest();
+  displayScores();
+}
+
+function standardArray() {
+  currentScores = getStandardArray();
+  displayScores();
+}
+
+function displayScores() {
+  const container = document.getElementById("abilities-display");
+  const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+  let html = "";
+  currentScores.forEach((sc, i) => {
+    const mod = abilityMod(sc);
+    const modPrefix = mod >= 0 ? "+" : "";
+    html += `${labels[i]}: <strong>${sc}</strong> (${modPrefix}${mod})<br/>`;
+  });
+  container.innerHTML = html;
+}
+
+/* ==================================================
+   ========== CHARACTER GENERATION ==================
+   ================================================== */
+
+function parseUserName(fullInput) {
+  const parts = fullInput.trim().split(/\s+/);
+  let firstName = "";
+  let lastName = "";
+  if (parts.length === 1) {
+    firstName = parts[0];
+  } else if (parts.length > 1) {
+    firstName = parts[0];
+    lastName = parts[parts.length - 1];
+  }
+  return { firstName, lastName };
+}
+
+function generateCharacter() {
+  // 1. Name: parse the user’s typed input
+  const rawName = document.getElementById("name-input").value.trim() || "Unnamed Hero";
+  let { firstName, lastName } = parseUserName(rawName);
+
+  // 2. Get race data
+  const raceSelected = document.getElementById("race-select").value;
+  const raceData = RACES.find(r => r.name === raceSelected);
+  if (!raceData) {
+    alert("Please select a race.");
+    return;
+  }
+
+  // 3. Get background data
+  const bgSelected = document.getElementById("background-select").value;
+  const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
+  if (!bgData) {
+    alert("Please select a background.");
+    return;
+  }
+
+  // 4. Possibly add a nickname (1/5 chance)
+  if (bgData.nicknames && bgData.nicknames.length > 0) {
+    if (Math.random() < 0.2) {
+      const nick = pickRandom(bgData.nicknames);
+      // Insert it in "quotes" after the first name
+      firstName += ` "${nick}"`;
+    }
+  }
+
+  // 5. Apply race ability score bonuses
+  let finalScores = [...currentScores];
+  const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+
+  for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
+    if (ability === "PLUS_TWO_OTHERS") {
+      // For Half-Elf, typically +1 to two abilities of choice
+      // We'll default to DEX & CON if no manual choice is provided
+      const dexIndex = ABIL_ORDER.indexOf("DEX");
+      const conIndex = ABIL_ORDER.indexOf("CON");
+      finalScores[dexIndex] += 1;
+      finalScores[conIndex] += 1;
+    } else {
+      const index = ABIL_ORDER.indexOf(ability);
+      if (index !== -1) {
+        finalScores[index] += bonus;
+      }
+    }
+  }
+
+  // 6. Personality Traits: pick exactly 2 from the big list
+  const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
+
+  // 7. Compile details
+  const fullName = lastName ? firstName + " " + lastName : firstName;
+
+  const featuresList = raceData.features.length
+    ? raceData.features.map(feat => `- ${feat}`).join("<br/>")
+    : "None";
+  const raceLangs = raceData.languages.join(", ");
+
+  const bgEquipment = bgData.equipment.map(eq => `- ${eq}`).join("<br/>");
+  const bgSkills = bgData.skillProficiencies
+    ? bgData.skillProficiencies.join(", ")
+    : "None";
+  let bgLangs = (bgData.languages && bgData.languages.length > 0)
+    ? bgData.languages.join(", ")
+    : "None";
+
+  // 8. Show final output
+  const outputDiv = document.getElementById("output");
+  outputDiv.style.display = "block";
+  outputDiv.classList.add("generated"); // triggers the print button to appear
+
+  document.getElementById("charName").innerHTML = `<h3>Name: ${fullName}</h3>`;
+  document.getElementById("charRace").innerHTML = `<strong>Race:</strong> ${raceData.name} 
+    <br/><em>Speed:</em> ${raceData.speed} ft 
+    <br/><em>Features:</em><br/> ${featuresList}`;
+  
+  // Display the short feature name plus the full explanation
+  document.getElementById("charBackground").innerHTML = `
+    <strong>Background:</strong> ${bgData.name}<br/>
+    <em>Skill Proficiencies:</em> ${bgSkills}<br/>
+    <em>Equipment:</em><br/>${bgEquipment}<br/>
+    <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
+    <small>${bgData.featureDesc}</small>
+  `;
+
+  document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
+  document.getElementById("charProficiencies").innerHTML = `<strong>Proficiencies (Level 0, from Race/Background only):</strong>
+    <br/>Background Skills: ${bgSkills}`;
+  document.getElementById("charLanguages").innerHTML = `<strong>Languages:</strong>
+    <br/>From Race: ${raceLangs}
+    <br/>From Background: ${bgLangs}`;
+  document.getElementById("charEquipment").innerHTML = `<strong>Starting Equipment (from Background):</strong><br/>${bgEquipment}`;
+
+  // Display the personality traits
+  const traitsHTML = `
+    <h3>Personality Traits</h3>
+    <ul>
+      <li>${chosenTraits[0]}</li>
+      <li>${chosenTraits[1]}</li>
+    </ul>
+  `;
+  document.getElementById("charTraits").innerHTML = traitsHTML;
+}
+
+function formatAbilityScores(scoresArr) {
+  const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+  let output = "<strong>Final Ability Scores (Level 0):</strong><br/>";
+  scoresArr.forEach((sc, i) => {
+    const mod = abilityMod(sc);
+    const modSign = mod >= 0 ? "+" : "";
+    output += `${labels[i]}: <strong>${sc}</strong> (${modSign}${mod})<br/>`;
+  });
+  return output;
+}
+
+/* ==================================================
+   ========== FULL RANDOM FUNCTION ==================
+   ================================================== */
+function fullRandom() {
+  randomName();
+  randomRace();
+  randomBackground();
+  rollAbilityScores();
+  generateCharacter();
+}
+</script>
 
 </body>
 </html>
