@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Berynian Calendar</title>
+  <title>Instance Generator</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
 
   <link 
@@ -13,12 +13,13 @@
   <style>
     body {
       margin: 0;
-      background: url('resources/calendar.png') no-repeat center center fixed;
+      background: url('resources/fletcher.png') no-repeat center center fixed;
       background-size: cover; /* Ensures the image covers the entire screen */
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
+
     .container {
       max-width: 800px;
       margin: 2rem auto;
@@ -29,12 +30,40 @@
     h1, h2 {
       font-family: 'Cinzel', serif;
     }
-    .calendar, .weather {
-      margin-top: 2rem;
-      padding: 2rem;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid #ddd;
-      text-align: left;
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin: 1rem;
+      border: 1px solid #8B0000;
+      border-radius: 5px;
+      background: #FAF4E0;
+      color: #8B0000;
+    }
+    button:hover {
+      background: #8B0000;
+      color: #FAF4E0;
+      cursor: pointer;
+    }
+    .home-button {
+      display: inline-block;
+      margin: 1rem 0;
+      padding: 0.5rem 1rem;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+      background: #8B0000;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #660000;
+      letter-spacing: 0.1rem;
+    }
+    .home-button:hover {
+      background: #660000;
+      border-color: #8B0000;
+    }
+    .results {
+      margin-top: 1rem;
+      text-align: center;
     }
     .divider {
       margin: 1rem auto;
@@ -45,225 +74,189 @@
       color: #8B0000;
       letter-spacing: 0.5rem;
     }
-    .button {
-      background-color: #8B0000;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-      font-family: 'Cinzel', serif;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .button:hover {
-      background-color: #6B0000;
-    }
-    footer {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #666;
-      font-family: 'Almendra', serif;
-    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Berynian Calendar & Weather</h1>
-  <div class="calendar">
-    <h2>Current Date</h2>
-    <p id="evershroud-date"></p>
-    <p id="evershroud-time"></p>
-  </div>
-
-  <div class="weather">
-    <h2>Current Weather</h2>
-    <p id="weather-pattern"></p>
-    <p id="weather-description"></p>
-    <p><strong>Sea lanes open:</strong> <span id="sea-lanes-status"></span></p>
-  </div>
+  <h1>Instance Generator</h1>
+  
+  <img src="resources/InGen.JPG" alt="..." style="max-width: 100%; height: auto;">
 
   <div class="divider"></div>
 
-  <!-- Buttons -->
-  <a href="index.html" class="button">Home</a>
-  <a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" 
-     class="button" target="_blank">
-    Shaniquáan Chronology and Meteorology
-  </a>
+  <!-- Generate Button -->
+  <button onclick="generateInstance()">Generate Instance</button>
+
+  <div class="results" id="results"></div>
 </div>
 
-<footer>
-  &copy; 2025 Caldwell. Providing accurate chronological and meteorological information for the Evershroud Isles.
-</footer>
+<div class="divider"></div>
+
+<!-- Home Button -->
+<a href="index.html" class="home-button">Home</a>
 
 <script>
-  // Constants for the calendar
-  const DAYS_PER_YEAR = 250;
-  const DAYS_PER_MONTH = 25;
-  const NAMED_MONTHS = [
-    "Frostmere", "Fellwind", "Vinetide", "Verdant", "Hammerhearth",
-    "Duskwane", "Alderen", "Ashveil", "Stonereach", "Starfall"
+  // Array of items
+  const items = [
+    { name: "The walls glow with shifting glyphs", description: "Players must match glyphs to corresponding symbols. Incorrect matches release bursts of magical energy." },
+    { name: "The room hums with an eerie melody", description: "Players must hum or play the correct notes. Incorrect notes intensify the hum and deal psychic damage." },
+    { name: "A massive mechanical wall looms ahead", description: "Players must fit smaller gears into the mechanism to align the symbols and unlock the door." },
+    { name: "The ground shifts beneath you", description: "Players must balance a tilting platform by placing weights correctly. Tilting too far triggers spikes below." },
+    { name: "A grid of stone blocks lies embedded in the floor", description: "Players must slide the blocks to recreate an emblem. Completing the pattern unlocks the door." },
+    { name: "A massive pendulum swings back and forth", description: "Players must time their movements to set tumblers in sequence. Creative solutions like jamming the pendulum can help." },
+    { name: "Four wheels marked with elemental symbols", description: "Players must rotate the wheels in the correct sequence to unlock the door. Incorrect turns trigger minor elemental effects." },
+    { name: "A beam of light shoots from a pedestal", description: "Players must arrange mirrors to direct the beam onto a sigil. Misaligned beams split and reset the puzzle." },
+    { name: "A mechanical knight stands motionless", description: "Players must find and insert a key to deactivate the knight. Damaging it increases its aggression." },
+    { name: "Five braziers surround the room", description: "Players must light the braziers in a specific sequence (Beryn, Nergál, Origen, Talia, Rael). Incorrect lighting extinguishes all flames." },
+    { name: "A massive hourglass dominates the room", description: "Players must solve three smaller puzzles before the timer runs out." },
+    { name: "The floor rumbles as large tiles begin to move", description: "Players must memorize shifting patterns and safely cross the room. Missteps cause tiles to collapse into pits." },
+    { name: "Steam hisses from pipes lining the walls", description: "Players must turn valves to balance pressure and unlock the door. Incorrect adjustments release scalding steam." },
+    { name: "The walls of the chamber creak ominously", description: "Players must solve a riddle or input the correct sequence to stop the walls. Incorrect answers accelerate the mechanism." },
+    { name: "Three large levers stand in the center", description: "Players must use teamwork to hold all levers simultaneously to unlock the exit." },
+    { name: "The hallway ahead is lined with tiles", description: "Players must step on tiles marked with the correct symbols. Wrong steps trigger darts or spikes." },
+    { name: "A low hum fills the air", description: "Players must deactivate magnetic walls by reducing carried metal or using a hidden control panel." },
+    { name: "A massive disk embedded in the floor rotates", description: "Players must align symbols by activating pressure plates around the room." },
+    { name: "A moving conveyor belt pulls toward spinning blades", description: "Players must deactivate switches to stop the belt or jam the blades." },
+    { name: "Platforms stretch across a chasm", description: "Players must identify stable platforms using symbols or patterns. Incorrect steps cause platforms to collapse." },
+    { name: "A platform hangs in a vertical shaft", description: "Players must crank an elevator manually or secure it with weights or magic." },
+    { name: "Narrow bridges stretch across a pit", description: "Players must balance their movements or stabilize the bridges to cross safely." },
+    { name: "An hourglass drains rapidly as you enter", description: "Players must complete tasks before time runs out." },
+    { name: "Chains dangle from the ceiling", description: "Players must pull chains in the correct order to align symbols." },
+    { name: "Gas pours from vents", description: "Players must press buttons in the correct sequence to vent the gas." },
+    { name: "The ceiling begins to lower", description: "Players must press a central plate and solve a puzzle before the ceiling crushes them." },
+    { name: "Dense fog fills the room", description: "Players must follow sound cues to navigate safely. Missteps trigger traps." },
+    { name: "The walls grind as they slide", description: "Players must push walls into specific positions to reveal an exit." },
+    { name: "Runes glow faintly on the walls", description: "Players must match glowing runes to floor symbols. Incorrect matches release radiant damage." },
+    { name: "Water begins to rise", description: "Players must solve a riddle or find switches before the room floods." },
+    { name: "Torches on the walls spin rapidly", description: "Players must light torches in the correct order to avoid triggering fire damage." },
+    { name: "A key dangles from the ceiling", description: "Players must retrieve the key without triggering traps." },
+    { name: "A large statue begins to crack", description: "Players must interpret inscriptions and remove pieces carefully." },
+    { name: "A labyrinth of levers stands before you", description: "Players must pull levers in the correct sequence to escape." },
+    { name: "Shadows rise from the floor", description: "Players must outwit or trap their doppelgangers." },
+    { name: "The air grows heavy", description: "Players must adjust valves to reduce pressure and avoid an explosion." },
+    { name: "The floor glows faintly", description: "Players must step on tiles in the correct sequence to avoid shocks." },
+    { name: "Heavy chains swing across a hallway", description: "Players must time their movements or dislodge the chains." },
+    { name: "The ceiling begins to drop", description: "Players must solve a riddle quickly or jam the mechanism." },
+    { name: "Magical glyphs pulse faintly", description: "Players must arrange glowing glyphs in the correct sequence." },
+    { name: "Hall of Eternal Flames", description: "A chamber where fire spews periodically from vents. Players must navigate carefully or extinguish the flames using clever methods." },
+{ name: "Frozen Obelisk Chamber", description: "A towering obelisk emits freezing mist, slowing movement and dealing cold damage. Players must disable the source to proceed." },
+{ name: "Clockwork Puzzle Room", description: "A series of gears and levers require precise timing and order to solve. Incorrect attempts reset the room." },
+{ name: "Chamber of Fractured Mirrors", description: "Mirrors reflect distorted versions of the players. Destroying or interacting with them might yield hidden paths or dangers." },
+{ name: "Hanging Chains Labyrinth", description: "Chains dangle from the ceiling, creating a complex maze. Players must swing or climb to find their way." },
+{ name: "Bloodlit Altar Room", description: "A sinister altar glows red, pulsing with power. Players must decide whether to destroy it or use its power at a cost." },
+{ name: "Rotting Garden", description: "Poisonous plants grow throughout the room, and only specific paths are safe. Players must discern the correct way forward." },
+{ name: "Phantom Archer Hall", description: "Ethereal archers shoot spectral arrows at intruders. Stealth or magical defense is key to surviving." },
+{ name: "Crimson Waterfall", description: "A waterfall of blood flows down one wall. Players must investigate to uncover its magical source and dispel its curse." },
+{ name: "Rune-Filled Cavern", description: "The walls glow with runes of power. Players must decode their meaning to avoid traps and open the exit." },
+{ name: "Webbed Chamber", description: "Massive webs block the room. A giant spider lurks nearby, forcing players to decide between battle or sneaking through." },
+{ name: "Chamber of Hollow Echoes", description: "Every sound is amplified to dangerous levels. Loud noises trigger deadly traps." },
+{ name: "The Golden Idol", description: "A treasure sits on a pedestal. Removing it triggers collapsing walls unless a counterweight is placed first." },
+{ name: "Flooded Passage", description: "The room begins to fill with water. Players must locate a hidden mechanism to drain the chamber." },
+{ name: "Spectral Forge", description: "A ghostly blacksmith offers to repair or enhance items—for a price that might be more than gold." },
+{ name: "Chamber of Shifting Walls", description: "The walls constantly move, altering the room’s layout. Players must navigate carefully to avoid being crushed." },
+{ name: "Lightning Node Room", description: "Orbs of electricity float throughout the room, shocking anything in their path. Players must deactivate the nodes to proceed." },
+{ name: "Frosted Mirror Maze", description: "Mirrors reflect false paths and illusions. Players must decipher reality from trickery to find the true exit." },
+{ name: "Void Gate Room", description: "A swirling black portal dominates the room. Players must decide whether to risk entering or find another way forward." },
+{ name: "Beast Pit", description: "The floor collapses, revealing a pit filled with ravenous beasts. Players must climb out or tame the creatures to survive." },
+{ name: "Chamber of Shattered Time", description: "Time flows irregularly, speeding up and slowing down at random. Players must adapt to these changes to solve the puzzle." },
+{ name: "Burning Glyph Corridor", description: "The floor is inscribed with glyphs that ignite when stepped on. Players must avoid the glyphs or use magic to deactivate them." },
+{ name: "Starlit Observatory", description: "A magical ceiling shows constellations. Players must align a telescope with the correct stars to reveal the next path." },
+{ name: "Collapsed Tunnel", description: "Rubble blocks the way forward. Players must dig through or find a side passage hidden in the debris." },
+{ name: "Chamber of Whispering Souls", description: "Faint voices tempt players with offers of power. Listening too long risks madness or possession." },
+{ name: "Glowing Crystal Room", description: "Large crystals hum with power. Players must touch them in the correct sequence to avoid triggering an explosion." },
+{ name: "Room of Shifting Reflections", description: "Reflections on the floor and walls show alternate versions of the room, hinting at hidden paths or dangers." },
+{ name: "Chamber of Endless Steps", description: "A staircase appears infinite until players solve a riddle or locate the hidden door." },
+{ name: "Pit of Shadows", description: "Dark tendrils rise from the pit, attempting to ensnare players. Light magic or agility is required to escape." },
+{ name: "Hall of Giant Statues", description: "Colossal statues line the room. Disturbing them may awaken guardians or reveal hidden treasures." },
+{ name: "Gilded Treasure Vault", description: "Gold and jewels glitter temptingly, but touching them triggers deadly traps unless disarmed." },
+{ name: "The Singing Chamber", description: "The room resonates with a haunting melody. Players must replicate the tune to unlock the door." },
+{ name: "Room of Elemental Chaos", description: "Fire, water, earth, and air clash violently. Players must balance the elements to calm the room." },
+{ name: "Obsidian Blade Shrine", description: "A dark altar offers a powerful weapon, but claiming it awakens a guardian spirit." },
+{ name: "Hall of Bone Chimes", description: "Bone wind chimes create an unsettling tune. Disrupting them triggers a skeletal ambush." },
+{ name: "Cracked Seal Room", description: "An ancient seal radiates power. Players must determine whether to reinforce or break it." },
+{ name: "Sinking Sand Hallway", description: "The floor is quicksand. Players must move quickly or use ropes to avoid sinking." },
+{ name: "Poisoned Fountain", description: "A fountain of green liquid bubbles ominously. Purifying it might grant a boon, but drinking without care leads to doom." },
+{ name: "The Whispering Door", description: "A locked door whispers riddles. Solving them unlocks the passage, but incorrect answers summon foes." },
+{ name: "Hall of the Silver Cage", description: "A magical cage traps the exit. Players must find its key or break its enchantment." },
+{ name: "Field of Illusory Arrows", description: "Arrows rain down but disappear on contact—except for a few real ones. Players must decipher the pattern to proceed." },
+{ name: "Frozen Waterfall", description: "A wall of ice blocks the way. Players must climb or melt it while avoiding collapsing chunks." },
+{ name: "Stone Guardian's Trial", description: "A gargoyle asks three questions. Answering incorrectly awakens it as an enemy." },
+{ name: "Hall of the Shattered Moon", description: "Moonlight filters through cracks in the ceiling. Aligning mirrors reveals the exit." },
+{ name: "Chamber of Lava Streams", description: "Molten rock flows in narrow streams. Players must leap or create bridges to cross safely." },
+{ name: "Living Armor Armory", description: "Suits of armor come to life, attacking intruders unless pacified or outwitted." },
+{ name: "Cursed Spiral Staircase", description: "Descending seems endless until a specific phrase is spoken aloud." },
+{ name: "Hanging Lantern Path", description: "Lanterns float mid-air, lighting a precarious path. Players must use them as guides while avoiding traps." },
+{ name: "Broken Chain Bridge", description: "A suspension bridge swings dangerously over a deep chasm. Players must repair or carefully cross it." },
+{ name: "Vault of Forgotten Names", description: "An inscription demands a forgotten name. Solving it grants access, but failure summons wrathful spirits." },
+{ name: "Geyser-Filled Cavern", description: "Steam vents erupt unpredictably, forcing players to time their movements carefully." },
+{ name: "Cavern of the Wailing Wind", description: "Strong gusts push players toward dangerous edges. Creativity and teamwork are essential to advance." },
+    { name: "The Frostbitten Hall", description: "The air is freezing, and the floor is coated with a thin layer of ice. Each step risks slipping, and sudden movements trigger freezing bursts from the walls." },
+{ name: "The Chamber of Echoes", description: "Every sound reverberates endlessly, growing louder and more distorted. Stepping too heavily risks activating sound-based traps hidden in the walls." },
+{ name: "The Living Obelisk", description: "A towering black obelisk hums faintly with energy. Its runes shift as players approach, demanding the correct sequence to unlock its secrets or unleash a guardian." },
+{ name: "The Altar of Forgotten Gods", description: "A crumbling altar sits surrounded by glowing symbols. Touching the wrong one triggers divine retribution, but the correct offering may grant a boon." },
+{ name: "The Abyssal Bridge", description: "A narrow stone bridge stretches over an endless void. Wind howls through the chasm, threatening to push players into the darkness with each misstep." },
+{ name: "The Clockwork Colossus", description: "A massive mechanical construct stands dormant. Tampering with its mechanisms risks activating it, forcing players to deactivate it under pressure." },
+{ name: "The Hall of Fading Light", description: "Lanterns flicker weakly along the walls, casting shifting shadows. Navigating safely requires solving the riddle of the dimming light." },
+{ name: "The Golden Cage", description: "A gleaming cage hangs from the ceiling, containing a glowing artifact. Touching the wrong lever triggers a series of magical traps." },
+{ name: "The Hall of Shifting Reflections", description: "Mirrors line the walls, reflecting warped versions of reality. Looking directly at your reflection risks being pulled into the mirror world." },
+{ name: "The Garden of Withered Dreams", description: "Dead plants fill the room, their brittle stems crackling underfoot. Some release poisonous spores when disturbed, while others reveal hidden clues." },
+{ name: "The Labyrinth of Glass", description: "Shards of glass coat the floor, glittering in faint light. Moving carelessly risks injury, while disturbing the shards might summon magical constructs." },
+{ name: "The Crimson Well", description: "A pool of glowing red liquid sits at the room’s center, radiating heat. Gazing into it offers cryptic visions but risks drawing the viewer into its depths." },
+{ name: "The Room of Silent Screams", description: "Distorted faces are carved into the walls, their mouths open in silent cries. Disturbing the wrong area triggers psychic backlash." },
+{ name: "The Webbed Alcove", description: "Thick spider webs block the passage ahead, vibrating with the slightest movement. Cutting them risks summoning their massive, venomous creator." },
+{ name: "The Hall of Splintered Time", description: "Dozens of clocks line the walls, each ticking at a different speed. Setting the clocks to align with real time unlocks the exit." },
+{ name: "The Whispering Archway", description: "A stone arch murmurs unintelligibly as players approach. Passing through without understanding its whispers might teleport them back to the beginning." },
+{ name: "The Chamber of Eternal Ash", description: "A fine layer of ash covers the floor, concealing pressure plates. Each step must be chosen carefully to avoid activating hidden traps." },
+{ name: "The Pool of Liquid Shadows", description: "A black pool ripples unnaturally, its surface reflecting nothing. Disturbing it summons shadowy figures that mimic the party’s movements." },
+{ name: "The Spiral of Thorns", description: "A twisting path lined with razor-sharp vines spirals upward. Touching the thorns causes painful cuts and releases a paralytic toxin." },
+{ name: "The Vault of Shifting Sands", description: "Golden sand shifts unpredictably beneath players’ feet, threatening to swallow them whole. Hidden objects in the sand might hold the key to escape." },
+    { name: "The Hall of Shattered Glass", description: "Glittering shards litter the floor, reflecting distorted versions of reality. Each step must be calculated to avoid injury and triggering illusory traps." },
+{ name: "The Frozen Bridge", description: "A brittle ice bridge stretches across a freezing chasm. Players must tread carefully to avoid plunging into the icy void below." },
+{ name: "The Whispers of Stone", description: "Carved faces in the walls emit faint whispers, tempting players with secrets. Listening too long risks madness or triggering stone traps." },
+{ name: "The Infernal Engine", description: "A massive mechanical device hums ominously. Incorrect attempts to power it up release bursts of searing heat." },
+{ name: "The Obsidian Spire", description: "A towering black spire pulsates with magical energy. Aligning its glowing runes unlocks its power, but failure risks a deadly backlash." },
+{ name: "The Echoing Hall", description: "Every sound is amplified and distorted. Loud noises might activate sonic traps hidden in the walls." },
+{ name: "The Garden of Glowing Fungi", description: "Bioluminescent mushrooms emit faint, eerie light. Some release hallucinogenic spores when disturbed, obscuring the way forward." },
+{ name: "The Hall of Chains", description: "Massive chains dangle from the ceiling, swinging ominously. Players must time their movements to avoid being struck." },
+{ name: "The Chamber of Silent Bells", description: "Golden bells hang from the ceiling, swaying slightly. The faintest touch causes them to chime, awakening magical guardians." },
+{ name: "The Abyssal Gate", description: "A swirling portal stands at the center of the room. Activating the wrong sigil risks unleashing something from the void." },
+{ name: "The Vault of Forgotten Relics", description: "Ancient artifacts rest on pedestals, glowing faintly. Removing an artifact triggers traps unless the correct offering is made in its place." },
+{ name: "The Riddle of the Four Flames", description: "Four braziers burn with differently colored flames. Solving their riddle unlocks the exit, but extinguishing the wrong flame triggers an elemental attack." },
+{ name: "The Spiral of Endless Steps", description: "A staircase winds upward, but each step feels like an eternity. Players must solve the spatial anomaly to escape." },
+{ name: "The Pool of Still Shadows", description: "A black, glassy pool reflects nothing of its surroundings. Disturbing its surface causes shadowy figures to emerge." },
+{ name: "The Chamber of Living Roots", description: "Thick, pulsating roots twist through the walls and floor, reacting to every step. Cutting them risks awakening the ancient tree they feed." },
+{ name: "The Veil of Shimmering Mist", description: "A thick mist obscures the room, creating illusory duplicates of players. Only by finding the source can the illusions be dispelled." },
+{ name: "The Room of Shifting Tiles", description: "The floor shifts beneath your feet, revealing glowing tiles. Stepping on the wrong sequence releases bursts of magical force." },
+{ name: "The Crimson Fangs", description: "Blood-red stalactites hang from the ceiling, dripping acidic liquid. The slightest vibration risks a deadly cascade." },
+{ name: "The Chamber of Frozen Time", description: "The air feels heavy, and time seems to slow. Solving the puzzle of the clock resets time to its normal flow." },
+{ name: "The Choir of Wailing Spirits", description: "Ethereal voices fill the air, growing louder as players move forward. Failing to appease them risks summoning vengeful ghosts." },
+{ name: "The Garden of Crystal Thorns", description: "Sharp crystalline thorns sprout from the walls, glowing faintly. Touching them risks activating dormant elemental traps." },
+{ name: "The Labyrinth of Whispering Shadows", description: "The walls seem alive, whispering secrets that twist the mind. Following the whispers might reveal the way—or lead to danger." },
+{ name: "The Chamber of Cracked Mirrors", description: "Fractured mirrors reflect distorted images. Touching the wrong one risks being pulled into a chaotic mirror realm." },
+{ name: "The Webbed Nexus", description: "Sticky webs block the path, and faint vibrations hint at movement. Cutting the webs risks awakening their monstrous creator." },
+{ name: "The Hall of Flickering Lanterns", description: "Lanterns hang at uneven intervals, casting shifting shadows. Some lanterns hold clues, while others conceal traps." },
+{ name: "The Stone Sentinel", description: "A massive stone guardian blocks the exit, its eyes glowing faintly. Solving the runes on its body unlocks the way forward—or activates its wrath." },
+{ name: "The Pool of Liquid Gold", description: "A shimmering pool of molten gold glows invitingly. Dipping an item in might enhance it—or destroy it entirely." },
+{ name: "The Chamber of Dancing Lights", description: "Colorful orbs of light float through the air, reacting to players’ movements. Guiding them to their proper places unlocks the exit." },
+{ name: "The Vault of Screaming Chains", description: "Chains rattle and groan as players move. Disturbing them too much risks awakening the spirits bound to them." },
+{ name: "The Hall of Eternal Flame", description: "A roaring fire burns in the center of the room, radiating intense heat. Crossing requires solving the puzzle of the flames or enduring the heat." },
+{ name: "The Chamber of Hollow Eyes", description: "Carved faces line the walls, their hollow eyes following players’ movements. Lingering too long risks awakening the spirits within." },
+{ name: "The Frozen Sanctuary", description: "Icicles hang precariously from the ceiling, and the floor is slick with ice. Sudden movements cause the icicles to fall." },
+{ name: "The Spiral of Enigmas", description: "Symbols line the walls of this spiraling passage. Deciphering the correct sequence reveals the exit, while failure activates magical wards." },
+{ name: "The Obsidian Well", description: "A deep well of black stone glows faintly at the center of the room. Peering inside reveals impossible visions, and falling risks eternal entrapment." },
+{ name: "The Cage of Forgotten Kings", description: "A gilded cage hangs from the ceiling, containing a glowing artifact. The cage is guarded by the vengeful spirits of ancient kings." },
+{ name: "The Chamber of Shifting Sands", description: "Golden sand flows unnaturally, forming shifting patterns. Stepping on the wrong section might trigger hidden traps or illusions." },
+{ name: "The Abyssal Vault", description: "A locked chest glows with an eerie light. Solving its runes is the only way to open it, but failure risks summoning a guardian from the abyss." },
+{ name: "The Hall of Living Statues", description: "Statues line the walls, their faces eerily lifelike. As players pass, some statues begin to move, blocking the path or attacking intruders." }
   ];
-  const NAMED_DAYS = ["Sunday", "Moonday", "Talsday", "Midweek", "Ralsday", "Felsday", "Berynsday"];
-  const SEASON_MAPPING = [
-    { months: ["Frostmere", "Fellwind"], season: "Mist's Rise", seaLanesClosedChance: 95 },
-    { months: ["Vinetide", "Verdant"], season: "Sea's Clarity", seaLanesClosedChance: 40 },
-    { months: ["Hammerhearth", "Duskwane"], season: "Clear Skies", seaLanesClosedChance: 10 },
-    { months: ["Alderen", "Ashveil", "Stonereach", "Starfall"], season: "Mist's Fall", seaLanesClosedChance: 50 }
-  ];
-  const START_DATE = new Date(2024, 10, 27); // 15th Verdant, 784 Y.S.
 
-  // Weather patterns data
-const WEATHER_PATTERNS = {
-    "Mist's Rise": [
-      { name: "Dense Ground Frost", description: "Thick layers of frost cover everything, glittering under weak sunlight." },
-      { name: "Freezing Fog", description: "A mist so cold it crystallizes on trees and clothing, creating a surreal landscape." },
-      { name: "Sleet Showers", description: "Intermittent sleet, making roads slippery and dangerous." },
-      { name: "Heavy Snowfall", description: "Blankets the highlands, cutting off remote settlements." },
-      { name: "Biting Coastal Winds", description: "Whipping gusts along the shore, bringing icy sprays of saltwater." },
-      { name: "Overcast with Ice Pellets", description: "Ominous gray skies with sudden bursts of ice rain." },
-      { name: "Snow-Clogged Mists", description: "Snow and fog merge into a whiteout, obscuring visibility." },
-      { name: "Sudden Freezing Rain", description: "Creates treacherous layers of ice on roads and roofs." },
-      { name: "Storm-Driven Tides", description: "Rough seas driven by winter squalls, forcing sailors to dock." },
-      { name: "Frost-Covered Drizzle", description: "Persistent light rain that freezes on contact with the ground." },
-      { name: "Windless Chill", description: "Still, bone-chilling air; frost thickens on stationary objects." },
-      { name: "Dawn Hoarfrost", description: "Crystals cling to branches and grass, glimmering in pale light." },
-      { name: "Snow-Dappled Fog", description: "Snowflakes drift in fog that seems to glow faintly." },
-      { name: "Thunderous Ice Storms", description: "Rare but terrifying, lightning illuminates snow-heavy clouds." },
-      { name: "Starry Winter Nights", description: "Clear, cold nights with stunning star visibility, accompanied by extreme frost." }
-    ],
-    "Sea's Clarity": [
-      { name: "Morning Dew", description: "Heavy dew on fields and grass, promising clear skies ahead." },
-      { name: "Light Spring Rain", description: "Gentle showers feed the awakening land, accompanied by a cool breeze." },
-      { name: "Warm Coastal Breezes", description: "Fresh winds from the sea, carrying the scent of salt and kelp." },
-      { name: "Clear, Mild Days", description: "Perfect planting weather, with temperate conditions and high visibility." },
-      { name: "Patches of Fog", description: "Low mists cling to riverbanks and wetlands before burning off by midday." },
-      { name: "Short Sunbursts", description: "Sunshine breaks through thin clouds in short, golden bursts." },
-      { name: "Gentle Drizzles", description: "Intermittent rain with soft, nurturing droplets." },
-      { name: "Crisp Dawn Air", description: "Chilly mornings that warm steadily under bright skies." },
-      { name: "Rolling Thunderstorms", description: "Sudden storms roll through the plains, their rain refreshing the soil." },
-      { name: "Blooming Rainbows", description: "Frequent rainbows stretch across valleys after spring showers." },
-      { name: "Cool, Windy Evenings", description: "Gentle breezes turn brisk as the sun sets over rippling fields." },
-      { name: "Occasional Hailstorms", description: "Brief pelts of small hailstones amid cool rain." },
-      { name: "Fertile Mists", description: "Mist blankets the fields overnight, leaving moisture for crops." },
-      { name: "Scattered Sunlight", description: "Dappled light through thin, high-altitude clouds." },
-      { name: "Sprouting Heat", description: "A warm day signals the arrival of full spring as seeds germinate." }
-    ],
-    "Clear Skies": [
-      { name: "Dry, Sunny Days", description: "Bright skies with a hint of heat, ideal for outdoor work." },
-      { name: "Distant Thunderheads", description: "Storm clouds loom on the horizon but rarely reach inland." },
-      { name: "Golden Sunlight", description: "The sun bathes fields in its glow, with long, productive days." },
-      { name: "Warm, Breezy Afternoons", description: "Gentle winds cool the air, keeping laborers comfortable." },
-      { name: "Heat Haze", description: "A shimmering mirage-like effect above sunbaked fields." },
-      { name: "Light Cloud Cover", description: "Fluffy white clouds drift lazily across azure skies." },
-      { name: "Scattered Showers", description: "Rare rainfalls interrupt dry periods, refreshing parched land." },
-      { name: "Sudden Summer Storms", description: "Quick, heavy downpours followed by clear skies." },
-      { name: "Stagnant Heat", description: "Oppressive stillness with a palpable rise in temperature." },
-      { name: "Rolling Meadows Breeze", description: "Pleasant winds carry the scent of ripening grain." },
-      { name: "Golden Hour Haze", description: "Dust in the air creates warm, golden evening light." },
-      { name: "Sun-Dappled Forests", description: "Perfect hiking weather, with bright but mild sunshine." },
-      { name: "Nighttime Heat Lightning", description: "Flickers of lightning illuminate distant clouds on warm nights." },
-      { name: "Clear Night Skies", description: "Stars and constellations shine brightly with little atmospheric interference." },
-      { name: "Gentle, Cooling Rains", description: "A light, brief rain calms the warm earth in late summer." }
-    ],
-    "Mist's Fall": [
-      { name: "Cold Autumn Winds", description: "Gusts rustle through fallen leaves, carrying the scent of decay." },
-      { name: "Heavy Rainstorms", description: "Prolonged downpours turn roads muddy and treacherous." },
-      { name: "Thick, Creeping Mists", description: "Dense fog rolls inland, making familiar paths unfamiliar." },
-      { name: "Darkening Skies", description: "Low, gray clouds create an oppressive atmosphere." },
-      { name: "Misty Drizzle", description: "Fine, persistent rain soaks everything, chilling to the bone." },
-      { name: "Turbulent Coastal Storms", description: "Towering waves crash against cliffs as the seas grow angry." },
-      { name: "Frosted Mornings", description: "Early signs of winter as frost appears on rooftops and fields." },
-      { name: "Scattered Thunderstorms", description: "Unpredictable bursts of rain, lightning, and thunder." },
-      { name: "Chill Breezes", description: "Constant winds bite at exposed skin, heralding colder days ahead." },
-      { name: "Leaf-Carpeted Paths", description: "Crisp, dry leaves litter roads under a cooling sun." },
-      { name: "Twilight Gloom", description: "Overcast skies combine with shorter days to dim the landscape." },
-      { name: "Shimmering Mistlight", description: "A rare phenomenon where refracted sunlight turns mists luminous." },
-      { name: "Steady, Relentless Rain", description: "Weeks of uninterrupted rain fill rivers and flood lowlands." },
-      { name: "Morning Fog Lifting to Sunshine", description: "Brief moments of brightness before the mists return." },
-      { name: "Starry Chill Nights", description: "Clear, cold evenings with frost forming as stars blaze brightly overhead." }
-    ]
-  };
-
-  let cachedSeaLanesStatus = "";
-
-  // Calculate the Evershroud date
-  function calculateEvershroudDate() {
-    const now = new Date();
-    const daysElapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
-    const yearsPassed = Math.floor(daysElapsed / DAYS_PER_YEAR);
-    const remainingDays = daysElapsed % DAYS_PER_YEAR;
-
-    const year = 784 + yearsPassed;
-    const monthIndex = Math.floor(remainingDays / DAYS_PER_MONTH);
-    const dayOfMonth = (remainingDays % DAYS_PER_MONTH) + 1;
-
-    const realWorldDay = now.getDay();
-    const dayOfWeek = NAMED_DAYS[realWorldDay];
-
-    return {
-      year,
-      month: NAMED_MONTHS[monthIndex],
-      dayOfMonth,
-      dayOfWeek
-    };
+  function generateInstance() {
+    const randomIndex = Math.floor(Math.random() * items.length);
+    const selectedItem = items[randomIndex];
+    const results = document.getElementById("results");
+    results.innerHTML = `<h3>${selectedItem.name}</h3><p>${selectedItem.description}</p>`;
   }
-
-  // Deterministic weather logic
-let cachedWeather = {};
-let lastWeatherUpdateDate = "";
-
-function getDeterministicWeather(date) {
-    const { year, month, dayOfMonth } = date;
-    const season = SEASON_MAPPING.find(season => season.months.includes(month)).season;
-    const patterns = WEATHER_PATTERNS[season];
-
-    const currentDateKey = `${year}-${month}-${dayOfMonth}`;
-    if (lastWeatherUpdateDate !== currentDateKey) {
-        const dayOfYear = NAMED_MONTHS.indexOf(month) * DAYS_PER_MONTH + (dayOfMonth - 1);
-        const offset = (year * 7) % patterns.length;
-        const patternIndex = (dayOfYear + offset) % patterns.length;
-
-        // Add a 10% chance for randomness
-        cachedWeather = Math.random() < 0.1
-            ? patterns[Math.floor(Math.random() * patterns.length)]
-            : patterns[patternIndex];
-
-        lastWeatherUpdateDate = currentDateKey;
-    }
-
-    return cachedWeather;
-}
-
-  // Sea lanes status logic
-  function getSeaLanesStatus(month) {
-    if (!cachedSeaLanesStatus) {
-      const seasonData = SEASON_MAPPING.find(season => season.months.includes(month));
-      const isClosed = Math.random() * 100 < seasonData.seaLanesClosedChance;
-      cachedSeaLanesStatus = isClosed ? "No" : "Yes";
-    }
-    return cachedSeaLanesStatus;
-  }
-
-  // Update the calendar
-  function updateEvershroudCalendar() {
-    const date = calculateEvershroudDate();
-    const weather = getDeterministicWeather(date);
-    const seaLanesStatus = getSeaLanesStatus(date.month);
-
-    document.getElementById("evershroud-date").innerText = 
-        `${date.dayOfWeek}, ${date.dayOfMonth} ${date.month}, ${date.year} Y.S.`;
-    document.getElementById("evershroud-time").innerText = `Time: ${new Date().toLocaleTimeString()}`;
-    document.getElementById("weather-pattern").innerText = weather.name;
-    document.getElementById("weather-description").innerText = weather.description;
-    document.getElementById("sea-lanes-status").innerText = seaLanesStatus;
-  }
-
-  setInterval(updateEvershroudCalendar, 1000);
-  updateEvershroudCalendar();
 </script>
 
 </body>
