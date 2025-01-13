@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Origen's Forge</title>
+  <title>Evershroud Travel System</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
   >
   <style>
     body {
       margin: 0;
-      background: url('resources/forge.png') no-repeat center center fixed;
-      background-size: cover; /* Ensures the image covers the entire screen */
+      background: url('resources/index.png') no-repeat center center fixed;
+      background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
@@ -29,316 +28,138 @@
     h1, h2 {
       font-family: 'Cinzel', serif;
     }
-    select, button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      margin: 1rem;
-      border: 1px solid #8B0000;
-      border-radius: 5px;
-      background: #FAF4E0;
-      color: #8B0000;
-    }
-    button:hover {
-      background: #8B0000;
+    .button {
+      background-color: #8B0000;
       color: #FAF4E0;
+      border: none;
+      padding: 0.5rem 1rem;
       cursor: pointer;
-    }
-    .home-button {
-      display: inline-block;
-      margin: 1rem 0;
-      padding: 0.5rem 1rem;
-      font-size: 1.2rem;
+      font-size: 1rem;
+      margin: 0.5rem 0;
       font-family: 'Cinzel', serif;
-      color: #FAF4E0;
-      background: #8B0000;
       text-decoration: none;
+      display: inline-block;
       border-radius: 5px;
-      border: 2px solid #660000;
-      letter-spacing: 0.1rem;
+      transition: background-color 0.3s ease;
     }
-    .home-button:hover {
-      background: #660000;
-      border-color: #8B0000;
+    .button:hover {
+      background-color: #6B0000;
     }
-    .results {
+    select, input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      margin: 0.5rem;
+    }
+    .result {
       margin-top: 1rem;
-      text-align: left;
+      font-size: 1.2rem;
     }
-    .divider {
-      margin: 1rem auto;
-      font-size: 1.5rem;
-    }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Evershroud Travel System</h1>
+    <form id="travel-form">
+      <label for="departure">Departure:</label>
+      <select id="departure" required>
+        <!-- Options will be dynamically added -->
+      </select>
 
-<div class="container">
-  <h1>Origen's Forge</h1>
-  
-  <p>The Forge roars, ready to conjure forth a plethora of Whatnots, Doodads and perhaps even Thingemabobs!</p>
+      <label for="destination">Destination:</label>
+      <select id="destination" required>
+        <!-- Options will be dynamically added -->
+      </select>
 
-  <div class="divider"></div>
+      <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
+    </form>
 
- 
+    <div class="result" id="result"></div>
+  </div>
 
-  <!-- Dice Selection and Button -->
-  <label for="dice-select">Select Dice Type:</label>
-  <select id="dice-select">
-    <option value="4">d4</option>
-    <option value="6">d6</option>
-    <option value="8">d8</option>
-    <option value="10" selected>d10</option>
-    <option value="12">d12</option>
-    <option value="20">d20</option>
-    <option value="100">d100</option>
-  </select>
+  <footer>
+    &copy; 2025 Caldwell. Efficient travel for the Evershroud Isles.
+  </footer>
 
-  <button onclick="generateDiceRoll()">Roll Dice and Generate Loot</button>
+  <script>
+    const locations = [
+      { name: "Azure", distance: 0 },
+      { name: "Sylfaene", distance: 2 },
+      { name: "Holgren", distance: 7 },
+      { name: "Ryer", distance: 9 },
+      { name: "Waglynn Lighthouse", distance: 10 },
+      { name: "Mong Harrad", distance: 13 },
+      { name: "World's End", distance: 15 },
+      { name: "Fulcimer Lighthouse", distance: 25 },
+      { name: "Vigden", distance: 28 },
+      { name: "Virgil", distance: 30 },
+      { name: "Hermit Sanctum", distance: 33 },
+      { name: "Wren", distance: 35 },
+      { name: "Villegrom Estate", distance: 61 },
+      { name: "Silt", distance: 63 },
+      { name: "Freeport", distance: 80 },
+      { name: "Morgrin Lighthouse", distance: 18 },
+      { name: "Mong Vinaya", distance: 47 },
+      { name: "Meowygg", distance: 47 },
+      { name: "Devyth", distance: 14 },
+      { name: "Commorragh", distance: 10 },
+      { name: "Refuge", distance: 17 },
+      { name: "Giant's Head", distance: 3 }
+    ];
 
-  <div class="results" id="results"></div>
-</div>
+    const ratePerUnitDistance = 3; // Cost in GP per unit distance
 
+    function populateOptions() {
+      const departureSelect = document.getElementById("departure");
+      const destinationSelect = document.getElementById("destination");
 
-  <div class="divider"></div>
-<!-- Home Button -->
-  <a href="index.html" class="home-button">Home</a>
+      locations.forEach(location => {
+        const option = document.createElement("option");
+        option.value = location.name;
+        option.textContent = location.name;
 
-
-<script>
-  // Array of items
-  const items = [
-    { name: "Old Shoe", description: "Mud-caked and missing its pair." },
-  { name: "Fishbones", description: "A small pile, picked clean by time." },
-  { name: "Frayed Handkerchief", description: "Embroidered with the initials 'B.C.'" },
-  { name: "Broken Comb", description: "Missing most of its teeth." },
-  { name: "Rusty Nail", description: "Bent but potentially useful." },
-  { name: "Carved Soap Bar", description: "Whittled into the shape of a fish." },
-  { name: "Amulet of Salt’s Embrace", description: "Prevents dehydration for one day." },
-  { name: "Lantern Beetle Husk", description: "Emits a faint green glow for an hour." },
-  { name: "Tattered Flag", description: "Depicts a symbol no one recognizes anymore." },
-  { name: "Shard of Mistglass", description: "Reflects light eerily, almost as if alive." },
-  { name: "Broken Spectacles", description: "The lenses are hopelessly cracked." },
-  { name: "Rusty Horseshoe", description: "Likely discarded after years of use." },
-  { name: "Pebble with a Hole", description: "The kind children use to make necklaces." },
-  { name: "Torn Map Scrap", description: "An indecipherable piece of something larger." },
-  { name: "Wooden Button", description: "Smooth and carved with a flower motif." },
-  { name: "Bundle of Twigs", description: "Tied with a piece of faded ribbon." },
-  { name: "Petrified Rat Skull", description: "Smooth and oddly polished." },
-  { name: "Piece of Driftwood", description: "Smooth and shaped like a bird’s head." },
-  { name: "Frayed Rope Scrap", description: "Frayed at the edges, smells of saltwater." },
-  { name: "Torn Boot Strap", description: "The leather is cracked and stiff." },
-  { name: "Empty Jar", description: "Smells faintly of pickles." },
-  { name: "Driftwood Plank", description: "Carved with strange, childlike symbols." },
-  { name: "Threadbare Gloves", description: "With holes in every fingertip." },
-  { name: "Empty Spice Jar", description: "Smells faintly of cinnamon." },
-  { name: "Faded Painting Fragment", description: "Depicts a serene landscape." },
-  { name: "Carved Coral Dagger", description: "Too brittle for combat, but stunningly beautiful." },
-  { name: "Old Rag Doll", description: "Stuffed with straw, one button eye missing." },
-  { name: "Seashell Necklace", description: "Strung with twine, likely made by a child." },
-  { name: "Bundle of Moss", description: "Damp and spongy, smells earthy." },
-  { name: "Scrap of Netting", description: "Frayed and tangled with dried seaweed." },
-  { name: "Burned Candle Stub", description: "Just enough wax left for one more use." },
-  { name: "Glass Bead Necklace", description: "Broken, with beads scattered." },
-  { name: "Iron Meat Skewer", description: "Sturdy, with faint signs of use." },
-  { name: "Bundle of Herbs", description: "Smells of mint and rosemary." },
-  { name: "Fishing Float", description: "Carved from wood and painted red." },
-  { name: "Bone Needle", description: "Used for sewing heavy fabrics." },
-  { name: "Whetstone", description: "Worn but usable for sharpening tools." },
-  { name: "Small Bag of Rice", description: "Some grains have spilled out." },
-  { name: "Lantern Beetle Husk", description: "Glows faintly for an hour in darkness." },
-  { name: "Bone Dice of Fortune", description: "Whispers faint suggestions during rolls." },
-  { name: "Scrap of Cloth", description: "Torn from a noble's tunic, embroidered with golden thread." },
-  { name: "Miniature Barrel", description: "Smells faintly of stale ale." },
-  { name: "Crumpled Feather Hat", description: "Could pass as fashionable with effort." },
-  { name: "Fishing Hook", description: "Still sharp, tied to a length of line." },
-  { name: "Stone Arrowhead", description: "A primitive tool likely made by local tribes." },
-  { name: "Simple Walking Stick", description: "Worn smooth from use." },
-  { name: "Tattered Fishing Hat", description: "Stained and patched." },
-  { name: "Clay Pipe", description: "Chipped and unusable." },
-  { name: "Tin Lantern", description: "The glass is cracked, but it holds oil." },
-  { name: "Small Spool of Thread", description: "Good for mending clothes." },
-  { name: "Carved Dragon Figurine", description: "When warmed, emits a faint, comforting glow." },
-  { name: "Shattered Plate", description: "The pieces form a heart shape by accident." },
-  { name: "Empty Ink Bottle", description: "Dried residue clings to the inside." },
-  { name: "Bundle of Pinecones", description: "Strung together like a decoration." },
-  { name: "Iron Pot", description: "Dented but still functional for cooking." },
-  { name: "Rope Ladder", description: "Frayed but usable for small climbs." },
-  { name: "Flint and Steel", description: "Reliable for starting fires." },
-  { name: "Leather Belt", description: "The buckle is plain but serviceable." },
-  { name: "Piece of String", description: "Long enough to tie a small package." },
-  { name: "Tin Snuff Box", description: "Contains traces of blackleaf powder." },
-  { name: "Tack Hammer", description: "Perfect for small repairs." },
-  { name: "Bundle of Firewood", description: "Bound with twine, smells of pine." },
-  { name: "Soggy Book", description: "Pages are illegible, but it smells faintly of lavender." },
-  { name: "Torn Paper Hat", description: "Recognizable as a child’s plaything." },
-  { name: "Shard of Mistglass", description: "Reflects light eerily, almost as if alive." },
-  { name: "Salt-Crusted Medallion", description: "Engraved with the sigil of the Cult of Rael, encrusted with crystallized salt." },
-  { name: "Raellan Priest’s Rosary", description: "A string of bone beads used for daily prayers to the Lady of Justice." },
-  { name: "Sealed Bottle of Brine", description: "Contains water from the sacred springs beneath the Brine Alcazar." },
-  { name: "Red-Waxed Scroll", description: "Stamped with an unknown noble's crest and faintly scented of seawater." },
-  { name: "Rusty Fishhook", description: "Used by Siltan fishermen; faint traces of dried bait remain." },
-  { name: "Tidal Amber Pendant", description: "A chunk of amber washed ashore, set into a bronze frame." },
-  { name: "Rael's Prayer Token", description: "A small brass disk with etched prayers for strength and judgment." },
-  { name: "Shipwright's Mallet", description: "A worn hammer used in constructing Silt’s famous warships." },
-  { name: "Cracked Spyglass", description: "Once belonging to a Siltan merchant captain, the lens is chipped." },
-  { name: "Amber-Scented Candle", description: "Burns with a faint, pleasant aroma; a Siltan luxury." },
-  { name: "Crimson Tabard Scrap", description: "Torn from a soldier’s uniform, marked with the symbol of the Hegemony." },
-  { name: "Salt-Encrusted Blade", description: "A corroded short sword, its edge dulled by the sea air." },
-  { name: "Seafarer’s Compass", description: "Points reliably but smells of fish oil." },
-  { name: "Raellan Hymnal", description: "Contains songs praising the Lady of Justice; most pages are damaged by brine." },
-  { name: "Rusted Lantern", description: "A common tool among dockworkers in Silt." },
-  { name: "Ceremonial Chalice", description: "Used during Raellan rituals, tarnished and missing gemstones." },
-  { name: "Fisherman’s Gloves", description: "Worn and patched multiple times, with fraying fingers." },
-  { name: "Brine Alcazar Stone", description: "A fragment of the Alcazar’s salt-crusted walls." },
-  { name: "Raellan Justice Badge", description: "Awarded to loyal enforcers of Rael’s will." },
-  { name: "Scrap of Fishnet", description: "Still smells strongly of the sea." },
-  { name: "Azurean Merchant's Seal", description: "A stamped silver token used for official trade contracts." },
-  { name: "Elven Silk Scarf", description: "Dyed in vibrant blue and gold, a common Azurean luxury item." },
-  { name: "Halfling Pipe", description: "A wooden pipe carved with whimsical patterns, often used in Azure." },
-  { name: "Dried Herb Satchel", description: "Contains rosemary, mint, and thyme; widely used in Azurean cooking." },
-  { name: "Golden Feather Pendant", description: "Crafted by Azurean artisans to symbolize peace and unity." },
-  { name: "Copper-Forged Scale", description: "Used by merchants to weigh goods, marked with Azure’s crest." },
-  { name: "Polished Seashell", description: "Shimmers faintly in sunlight; found near Azure’s coastal markets." },
-  { name: "Decorative Wine Goblet", description: "Embellished with halfling-style engravings of vines." },
-  { name: "Map of Azure’s Ports", description: "Shows trade routes and key harbors in exquisite detail." },
-  { name: "Silver Coin Purse", description: "A finely crafted leather pouch with delicate stitching." },
-  { name: "Azurean Trade Ledger", description: "Lists sales and trades made over several months." },
-  { name: "Elven Harp String", description: "A single replacement string for an elegant harp." },
-  { name: "Tiny Inkpot", description: "Made from blue glass, commonly found on Azurean desks." },
-  { name: "Merchant’s Quill", description: "Crafted from a swan’s feather and dyed with Azurean pigments." },
-  { name: "Rolled Silk Banner", description: "Depicts the League’s symbol in golden thread." },
-  { name: "Halfling Baking Stone", description: "Used for making bread and pastries, prized in the League." },
-  { name: "Parchment of Trade Laws", description: "Details agreements between Azure and neighboring factions." },
-  { name: "Fishing Net Needle", description: "A small tool used to repair torn fishing nets." },
-  { name: "Bronze Lantern", description: "Elegant yet practical, designed for long nights at market stalls." },
-  { name: "Azurean Star Chart", description: "Shows constellations used by Azure’s sailors for navigation." },
-  { name: "Blackleaf Cigarettes", description: "A bundle of hand-rolled cigarettes from the Dominion's plantations." },
-  { name: "Overseer’s Whistle", description: "A brass whistle used to direct workers on plantations." },
-  { name: "Iron Shackles", description: "Rusty manacles once used in the Dominion’s fields." },
-  { name: "Rotroot Satchel", description: "Contains dried rotroot, used for pain relief or hallucinogenic purposes." },
-  { name: "Caldwell Family Crest Pin", description: "A small, tarnished brooch bearing the Caldwell family emblem." },
-  { name: "Velvet Ledger Cover", description: "Embroidered with golden thread, used to protect important documents." },
-  { name: "Slave Token", description: "A brass tag with a number stamped on it, a relic of the Dominion's dark past." },
-  { name: "Blackleaf Grinding Stone", description: "Used to process the plant into powder for recreational use." },
-  { name: "Rotroot-Infused Flask", description: "Smells faintly of earth and decay." },
-  { name: "Worn Plantation Ledger", description: "Lists crop yields and trade records from a Caldwell estate." },
-  { name: "Leather Crop", description: "Used for riding or discipline, well-worn and cracked." },
-  { name: "Dominion Silver Coin", description: "Stamped with the image of Lord Ozymandias Caldwell." },
-  { name: "Embossed Velvet Cloak", description: "Heavy and luxurious, but fraying at the edges." },
-  { name: "Broken Slave Collar", description: "The metal is bent, as if from a desperate escape attempt." },
-  { name: "Dominion Work Gloves", description: "Thick leather gloves with stains from years of use." },
-  { name: "Rotroot Paste Jar", description: "A small ceramic container with traces of its potent contents." },
-  { name: "Caldwell Ledger Key", description: "A small brass key for locking record books." },
-  { name: "Opulent Snuffbox", description: "Inlaid with mother-of-pearl, a sign of wealth." },
-  { name: "Gold-Trimmed Cigar Cutter", description: "Engraved with ornate patterns of curling vines." },
-  { name: "Empty Blackleaf Pouch", description: "A well-used pouch, the inside stained dark green." },
-  { name: "Bone Charm of Nergál", description: "A small bone carving used to ward off malevolent spirits." },
-  { name: "Black Pagoda Token", description: "A coin-like charm granting access to Duskhaven's necromantic archives." },
-  { name: "Duskhaven Burial Shroud", description: "A funerary cloth embroidered with Nergál’s sigil." },
-  { name: "Embalmer’s Toolkit", description: "Contains tools for preserving the dead." },
-  { name: "Ceremonial Ash Jar", description: "Used in rituals honoring the dead, sealed tightly." },
-  { name: "Obsidian Blade", description: "A ceremonial dagger, more symbolic than functional." },
-  { name: "Necromantic Focus", description: "A dark crystal that glows faintly with necrotic energy." },
-  { name: "Undead Servant’s Binding Ring", description: "A small silver ring used to command lesser undead." },
-  { name: "Scroll of Lesser Reanimation", description: "Contains instructions for raising simple undead minions." },
-  { name: "Duskhaven Locket", description: "Holds a portrait of a deceased loved one." },
-  { name: "Bone Needle", description: "Used for stitching burial garments or embalming." },
-  { name: "Necromancer’s Journal", description: "Filled with notes on the undead and their behaviors." },
-  { name: "Undead Tooth Necklace", description: "A grisly trinket worn by some Duskhaven residents." },
-  { name: "Funerary Candle", description: "Burns with a pale green flame for hours." },
-  { name: "Polished Skull Fragment", description: "Inscribed with faint runes of necromantic significance." },
-  { name: "Bone-Inlaid Comb", description: "Decorative yet eerie, made from the remains of unknown creatures." },
-  { name: "Jar of Preservative Salts", description: "Used in embalming rituals to slow decay." },
-  { name: "Duskhaven Mourning Cloak", description: "Worn during funerals, dark and heavy." },
-  { name: "Embalming Fluid Bottle", description: "Smells strongly of herbs and antiseptics." },
-  { name: "Necromantic Chalk", description: "Used to inscribe summoning circles and runes." },
-  { name: "Dried Bitterberry Wine Flask", description: "A strong, dark brew unique to Xondara, with a bitter yet satisfying flavor." },
-  { name: "Ivory Tusk Trinket", description: "Carved from Xondaran ivory, depicting a coiled serpent." },
-  { name: "Spiced Jerky Pouch", description: "A pouch of dried horsemeat heavily seasoned with Xondaran spices." },
-  { name: "Clay Spice Jar", description: "Filled with a mix of hot and aromatic spices, a staple in Xondaran cuisine." },
-  { name: "Sandstone Amulet", description: "Carved from local sandstone and shaped into a crescent moon." },
-  { name: "Xondaran Headdress", description: "A colorful piece of cloth adorned with feathers, worn by nomadic tribes." },
-  { name: "Bone Needle Set", description: "Crafted from animal bones, used for sewing thick hides." },
-  { name: "Coiled Rope of Dried Vines", description: "A strong but crude rope used by Xondaran herders." },
-  { name: "Nomad's Water Pouch", description: "A goatskin pouch designed to endure the desert heat." },
-  { name: "Carved Walking Stick", description: "A sturdy staff engraved with tribal patterns." },
-  { name: "Painted Sand Jar", description: "Layered sand in vibrant colors, sealed with a clay stopper." },
-  { name: "Spice Merchant’s Ledger", description: "Lists trades for spices and other rare goods." },
-  { name: "Xondaran Saddle Blanket", description: "A durable blanket woven from camel hair." },
-  { name: "Sun-Bleached Bone Comb", description: "A simple comb crafted from bleached animal bones." },
-  { name: "Tribal Mask Fragment", description: "A piece of a wooden mask, painted with red and white pigments." },
-  { name: "Dried Firethorn Pods", description: "Pods from the firethorn plant, used as a spice or medicine." },
-  { name: "Bitterberry Preserves Jar", description: "A tangy spread made from Xondaran bitterberries." },
-  { name: "Desert Rose Crystal", description: "A small cluster of sand and mineral shaped like a flower." },
-  { name: "Sand-Covered Fossil", description: "A piece of ancient life unearthed in Xondara’s deserts." },
-  { name: "Nomadic Prayer Beads", description: "A string of beads used for rituals by wandering tribes." },
-  { name: "Frosted Wolf Pelt", description: "A thick fur pelt, ideal for withstanding the icy winds of Gaar Vallon." },
-  { name: "Runed Ice Axe", description: "A weapon etched with runes, said to never lose its edge." },
-  { name: "Jarls’ Mead Flask", description: "A strong honey-based drink brewed in the northern wastes." },
-  { name: "Carved Bone Horn", description: "Used to signal across great distances in the icy wilderness." },
-  { name: "Whalebone Necklace", description: "A piece of jewelry made from whalebone, popular among seafaring Jarls." },
-  { name: "Sealhide Gloves", description: "Waterproof gloves crafted from the hide of northern seals." },
-  { name: "Frozen Driftwood Charm", description: "A piece of wood shaped by the cold seas and carved into a charm." },
-  { name: "Glacial Crystal", description: "A shard of ice said to contain the spirit of the north winds." },
-  { name: "Polar Bear Tooth Pendant", description: "A fierce trophy worn as a symbol of strength." },
-  { name: "Walrus Ivory Dice", description: "A pair of dice carved from walrus ivory, used in gambling." },
-  { name: "Snowy Owl Feather Quill", description: "A delicate quill, pure white and sharp as frost." },
-  { name: "Ice-Glazed Fishing Hook", description: "A metal hook coated in frost, ideal for icy waters." },
-  { name: "Seal Oil Lamp", description: "A small lamp fueled by the fat of northern seals." },
-  { name: "Frost-Weave Cloak", description: "A heavy woolen cloak, enchanted to resist the cold." },
-  { name: "Rune-Inscribed Helmet", description: "A warrior’s helm carved with protective runes." },
-  { name: "Shard of Jarlstone", description: "A piece of the mythical stone said to bless its holder with resilience." },
-  { name: "Preserved Arctic Berries", description: "Small, sour berries frozen to last for months." },
-  { name: "Frozen Fish Scale", description: "An iridescent scale that feels unnaturally cold to the touch." },
-  { name: "Killian Clan Sigil", description: "A badge marking allegiance to one of the northern clans." },
-  { name: "Snowmelt Flask", description: "A flask enchanted to melt snow into drinkable water." },
-  { name: "Dried Bitterberry Wine Flask", description: "A strong, dark brew unique to Xondara, with a bitter yet satisfying flavor." },
-  { name: "Ivory Tusk Trinket", description: "Carved from Xondaran ivory, depicting a coiled serpent." },
-  { name: "Spiced Jerky Pouch", description: "A pouch of dried horsemeat heavily seasoned with Xondaran spices." },
-  { name: "Clay Spice Jar", description: "Filled with a mix of hot and aromatic spices, a staple in Xondaran cuisine." },
-  { name: "Sandstone Amulet", description: "Carved from local sandstone and shaped into a crescent moon." },
-  { name: "Xondaran Headdress", description: "A colorful piece of cloth adorned with feathers, worn by nomadic tribes." },
-  { name: "Bone Needle Set", description: "Crafted from animal bones, used for sewing thick hides." },
-  { name: "Coiled Rope of Dried Vines", description: "A strong but crude rope used by Xondaran herders." },
-  { name: "Nomad's Water Pouch", description: "A goatskin pouch designed to endure the desert heat." },
-  { name: "Carved Walking Stick", description: "A sturdy staff engraved with tribal patterns." },
-  { name: "Painted Sand Jar", description: "Layered sand in vibrant colors, sealed with a clay stopper." },
-  { name: "Spice Merchant’s Ledger", description: "Lists trades for spices and other rare goods." },
-  { name: "Xondaran Saddle Blanket", description: "A durable blanket woven from camel hair." },
-  { name: "Sun-Bleached Bone Comb", description: "A simple comb crafted from bleached animal bones." },
-  { name: "Tribal Mask Fragment", description: "A piece of a wooden mask, painted with red and white pigments." },
-  { name: "Dried Firethorn Pods", description: "Pods from the firethorn plant, used as a spice or medicine." },
-  { name: "Bitterberry Preserves Jar", description: "A tangy spread made from Xondaran bitterberries." },
-  { name: "Desert Rose Crystal", description: "A small cluster of sand and mineral shaped like a flower." },
-  { name: "Sand-Covered Fossil", description: "A piece of ancient life unearthed in Xondara’s deserts." },
-  { name: "Nomadic Prayer Beads", description: "A string of beads used for rituals by wandering tribes." }
-    // Add more items here as needed
-  ];
-
-  function generateDiceRoll() {
-    const diceSelect = document.getElementById("dice-select").value;
-    const diceSides = parseInt(diceSelect);
-    const results = document.getElementById("results");
-    let rollResults = [];
-
-    // Roll the dice and select random items
-    for (let i = 0; i < diceSides; i++) {
-      const randomIndex = Math.floor(Math.random() * items.length);
-      rollResults.push(items[randomIndex]);
+        departureSelect.appendChild(option.cloneNode(true));
+        destinationSelect.appendChild(option);
+      });
     }
 
-    // Display the results
-    results.innerHTML = `<h3>You rolled a ${diceSelect}-sided dice!</h3><ul>` + 
-      rollResults.map((item, index) => 
-        `<li><strong>${index + 1}:</strong> ${item.name} - ${item.description}</li>`
-      ).join('') + `</ul>`;
-  }
-</script>
+    function calculateTravel() {
+      const departure = document.getElementById("departure").value;
+      const destination = document.getElementById("destination").value;
 
+      if (departure === destination) {
+        document.getElementById("result").textContent = "Departure and destination cannot be the same.";
+        return;
+      }
+
+      const departureIndex = locations.findIndex(loc => loc.name === departure);
+      const destinationIndex = locations.findIndex(loc => loc.name === destination);
+
+      const totalLocations = locations.length;
+      const forwardDistance = 
+        destinationIndex > departureIndex
+          ? locations.slice(departureIndex, destinationIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
+          : locations.slice(departureIndex).concat(locations.slice(0, destinationIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
+
+      const backwardDistance = 
+        departureIndex > destinationIndex
+          ? locations.slice(destinationIndex, departureIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
+          : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
+
+      const travelDistance = Math.min(forwardDistance, backwardDistance);
+      const travelCost = travelDistance * ratePerUnitDistance;
+
+      document.getElementById("result").textContent = `Travel Distance: ${travelDistance} units | Cost: ${travelCost.toFixed(2)} GP.`;
+    }
+
+    window.onload = populateOptions;
+  </script>
 </body>
 </html>
