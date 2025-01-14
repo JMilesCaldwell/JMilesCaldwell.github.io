@@ -91,38 +91,33 @@
   <script>
     const locations = [
       { name: "Azure", distance: 0 },
-      { name: "Sylfaene", distance: 2 },
-      { name: "Holgren", distance: 7 },
+      { name: "Sylfaene", distance: 5 },
+      { name: "Holgren", distance: 8 },
       { name: "Ryer", distance: 9 },
-      { name: "Waglynn Lighthouse", distance: 10 },
-      { name: "Mong Harrad", distance: 13 },
-      { name: "World's End", distance: 15 },
+      { name: "Waglynn Lighthouse", distance: 11 },
+      { name: "Mong Harrad", distance: 17 },
+      { name: "World's End", distance: 22 },
       { name: "Fulcimer Lighthouse", distance: 25 },
-      { name: "Vigden", distance: 28 },
-      { name: "Virgil", distance: 30 },
-      { name: "Hermit Sanctum", distance: 33 },
-      { name: "Wren", distance: 35 },
-      { name: "Villegrom Estate", distance: 61 },
+      { name: "Vigden", distance: 31 },
+      { name: "Virgil", distance: 39 },
+      { name: "Hermit Sanctum", distance: 40 },
+      { name: "Wren", distance: 48 },
+      { name: "Villegrom Estate", distance: 60 },
       { name: "Silt", distance: 63 },
-      { name: "Freeport", distance: 80 },
-      { name: "Morgrin Lighthouse", distance: 18 },
-      { name: "Mong Vinaya", distance: 47 },
+      { name: "Freeport", distance: 82 },
+      { name: "Morgrin Lighthouse", distance: 20 },
+      { name: "Mong Vinaya", distance: 46 },
       { name: "Meowygg", distance: 47 },
-      { name: "Devyth", distance: 14 },
-      { name: "Commorragh", distance: 10 },
-      { name: "Refuge", distance: 17 },
-      { name: "Giant's Head", distance: 3 }
+      { name: "Devyth", distance: 12 },
+      { name: "Commorragh", distance: 11 },
+      { name: "Refuge", distance: 19 },
+      { name: "Giant's Head", distance: 5 }
     ];
 
     const minCost = 15;
     const maxCost = 114;
     const minTravelTime = 1; // Minimum travel time in days
     const timePerUnitDistance = 0.1; // Additional travel time per unit distance
-
-    function calculateCost(distance) {
-      const cost = (distance / 80) * (maxCost - minCost) + minCost;
-      return Math.min(Math.max(cost, minCost), maxCost);
-    }
 
     function populateOptions() {
       const departureSelect = document.getElementById("departure");
@@ -162,7 +157,7 @@
           : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
 
       const travelDistance = Math.min(forwardDistance, backwardDistance);
-      const travelCost = calculateCost(travelDistance);
+      const travelCost = Math.min(maxCost, Math.max(minCost, (travelDistance / 82) * (maxCost - minCost) + minCost));
 
       const travelTime = Math.max(minTravelTime, travelDistance * timePerUnitDistance).toFixed(1);
 
