@@ -50,17 +50,25 @@
       border-radius: 10px;
     }
     .carousel button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
       background-color: #8B0000;
       color: #fff;
       border: none;
       padding: 0.5rem 1rem;
       cursor: pointer;
       font-size: 1rem;
-      margin: 0.5rem;
       font-family: 'Cinzel', serif;
     }
     .carousel button:hover {
       background-color: #6B0000;
+    }
+    .carousel #prev {
+      left: 0;
+    }
+    .carousel #next {
+      right: 0;
     }
     footer {
       margin-top: 2rem;
@@ -145,30 +153,29 @@ const constellations = [
   }
 ];
 
+let currentIndex = 0;
 
-  let currentIndex = 0;
+const imageElement = document.getElementById("constellation-image");
+const descriptionElement = document.getElementById("constellation-description");
 
-  const imageElement = document.getElementById("constellation-image");
-  const descriptionElement = document.getElementById("constellation-description");
+function updateCarousel() {
+  const { name, image, description } = constellations[currentIndex];
+  imageElement.src = image;
+  imageElement.alt = name;
+  descriptionElement.innerHTML = `<h2>${name}</h2><p>${description}</p>`;
+}
 
-  function updateCarousel() {
-    const { name, image, description } = constellations[currentIndex];
-    imageElement.src = image;
-    imageElement.alt = name;
-    descriptionElement.innerHTML = `<h2>${name}</h2><p>${description}</p>`;
-  }
-
-  document.getElementById("prev").addEventListener("click", () => {
-    currentIndex = (currentIndex - 1 + constellations.length) % constellations.length;
-    updateCarousel();
-  });
-
-  document.getElementById("next").addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % constellations.length;
-    updateCarousel();
-  });
-
+document.getElementById("prev").addEventListener("click", () => {
+  currentIndex = (currentIndex - 1 + constellations.length) % constellations.length;
   updateCarousel();
+});
+
+document.getElementById("next").addEventListener("click", () => {
+  currentIndex = (currentIndex + 1) % constellations.length;
+  updateCarousel();
+});
+
+updateCarousel();
 </script>
 
 </body>
