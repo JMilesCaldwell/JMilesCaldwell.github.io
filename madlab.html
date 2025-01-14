@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Travel System</title>
+  <title>Road Travel System</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <link
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
@@ -12,7 +12,7 @@
   <style>
     body {
       margin: 0;
-      background: url('resources/docks.png') no-repeat center center fixed;
+      background: url('resources/road.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
@@ -61,6 +61,7 @@
       margin-top: 1rem;
       font-size: 1.2rem;
       min-height: 2rem;
+      white-space: pre-line; /* So newlines in the result string appear as new lines */
     }
     footer {
       margin-top: 2rem;
@@ -72,17 +73,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>Evershroud Isles Travel System</h1>
+    <h1>Road Travel System</h1>
     <form id="travel-form">
       <label for="departure">Departure:</label>
-      <select id="departure" required>
-        <!-- Options will be dynamically added -->
-      </select>
+      <select id="departure" required></select>
 
       <label for="destination">Destination:</label>
-      <select id="destination" required>
-        <!-- Options will be dynamically added -->
-      </select>
+      <select id="destination" required></select>
 
       <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
     </form>
@@ -95,10 +92,11 @@
   </footer>
 
   <script>
-    // Here is our adjacency list for all known direct connections, with distances
-    // If A is connected to B at distance X, B should also appear as connected to A at distance X.
-    // (For simplicity, that’s already done for each location).
-    const graph = {
+    /*
+      BASE DISTANCES (already multiplied by 24 so min was ~120).
+      We’ll apply ±10% randomisation below.
+    */
+    const baseGraph = {
       "Azure": {
         "Sylfaene": 120,
         "Lyndell Estate": 192,
@@ -239,37 +237,49 @@
       }
     };
 
-    // A simple list of location names for the dropdown
+    // We’ll build the actual 'graph' by randomising each distance ±10%.
+    function randomiseDistances(baseGraph) {
+      const RANDOM_FACTOR_MIN = 0.9;  // -10%
+      const RANDOM_FACTOR_MAX = 1.1;  // +10%
+
+      const newGraph = {};
+
+      for (let location in baseGraph) {
+        newGraph[location] = {};
+        for (let neighbour in baseGraph[location]) {
+          const baseDist = baseGraph[location][neighbour];
+          // Generate a random factor between 0.9 and 1.1
+          const factor = Math.random() * (RANDOM_FACTOR_MAX - RANDOM_FACTOR_MIN) + RANDOM_FACTOR_MIN;
+          const randomDist = baseDist * factor;
+          // Round to an integer, or keep decimals if you wish
+          newGraph[location][neighbour] = Math.round(randomDist);
+        }
+      }
+      return newGraph;
+    }
+
+    // We'll store the randomised distances in 'graph'
+    const graph = randomiseDistances(baseGraph);
+    // For convenience, here’s our list of location names for the dropdown
     const locationNames = Object.keys(graph);
 
-    // Walking speed assumptions (you can tweak these):
-    // e.g. 5 km/h, or 3 mph, etc. We'll just do a simple formula:
-    // 1 "distance unit" = 1 km for the sake of argument,
-    // walking ~5 km/h => 1 distance unit takes ~0.2 hours => 0.0083 days
-    // We'll keep it simpler as 0.2 hours per distance or 0.0083 days.
-    // Let's just do hours:
-    const walkingHoursPerUnit = 0.2; // 1 distance = 0.2 hours on foot
+    // We'll keep the same walking speed, 0.2h per distance-unit
+    // (So if the actual distance is ~120, that yields ~24 hours, or 1 day.)
+    const walkingHoursPerUnit = 0.2;
 
-    // We'll implement a standard Dijkstra to find the shortest path in "graph".
-    // Returns an object { distance, path } where distance is the total distance
-    // and path is the array of location names in the route.
+    // Standard Dijkstra to find the shortest path using 'graph'
     function findShortestPath(start, end) {
-      // Distances table (location -> distance from start)
       const distances = {};
-      // A map to reconstruct the path (child -> parent)
       const previous = {};
-      // Set of unvisited nodes
       const unvisited = new Set(locationNames);
 
-      // Initial distance: 0 for start, Infinity for others
+      // Init distances
       locationNames.forEach(loc => {
         distances[loc] = Infinity;
       });
       distances[start] = 0;
 
-      // Main Dijkstra loop
       while (unvisited.size > 0) {
-        // Pick unvisited node with smallest distance
         let currentNode = null;
         let smallestDistance = Infinity;
 
@@ -280,19 +290,16 @@
           }
         });
 
-        // If we found no next node or if it's Infinity distance, we're done
         if (!currentNode || distances[currentNode] === Infinity) {
           break;
         }
 
         unvisited.delete(currentNode);
 
-        // If currentNode is end, we can stop early
         if (currentNode === end) {
           break;
         }
 
-        // Update distances to neighbours
         const neighbours = graph[currentNode];
         for (let neighbour in neighbours) {
           if (!unvisited.has(neighbour)) continue;
@@ -304,25 +311,20 @@
         }
       }
 
-      // Reconstruct the path from end to start
+      // Reconstruct path
       const path = [];
       let node = end;
       while (node !== undefined) {
         path.unshift(node);
         node = previous[node];
       }
-      // If the path does not start with "start", there's no valid route
+
       if (path[0] !== start) {
         return { distance: Infinity, path: [] };
       }
-
-      return {
-        distance: distances[end],
-        path
-      };
+      return { distance: distances[end], path };
     }
 
-    // Populate the dropdowns with location names
     function populateOptions() {
       const departureSelect = document.getElementById("departure");
       const destinationSelect = document.getElementById("destination");
@@ -341,7 +343,15 @@
       });
     }
 
-    // Handle the "Calculate" button
+    // Convert hours to days, hours, minutes
+    function hoursToDaysHoursMinutes(totalHours) {
+      const days = Math.floor(totalHours / 24);
+      const remainderHours = totalHours % 24;
+      const hours = Math.floor(remainderHours);
+      const minutes = Math.floor((remainderHours - hours) * 60);
+      return { days, hours, minutes };
+    }
+
     function calculateTravel() {
       const departure = document.getElementById("departure").value;
       const destination = document.getElementById("destination").value;
@@ -360,22 +370,22 @@
         return;
       }
 
-      // Calculate walking time (in hours, then we can convert to e.g. 'X hours' or 'X days, Y hours')
-      // We'll just display hours for clarity
-      const travelHours = distance * (walkingHoursPerUnit);
+      // Calculate travel time based on the actual randomised distance
+      const travelHours = distance * walkingHoursPerUnit;
+      const { days, hours, minutes } = hoursToDaysHoursMinutes(travelHours);
 
-      const hoursInteger = Math.floor(travelHours);
-      const minutes = Math.floor((travelHours - hoursInteger) * 60);
+      // But the displayed distance is only 1/5 of the actual random distance
+      // to make it "look" more realistic or less obviously scaled.
+      const displayedDistance = Math.round(distance / 5);
 
-      // Format route
       const routeString = path.join(" → ");
-
       document.getElementById("result").textContent =
-        `Shortest Path: ${routeString}
-         \nTotal Distance: ${distance} units
-         \nEstimated Walking Time: ~${hoursInteger}h ${minutes}m on foot.`;
+        `Shortest Path: ${routeString}\n` +
+        `Distance (approx.): ${displayedDistance} units\n` +
+        `Estimated Walking Time: ${days}d ${hours}h ${minutes}m on foot.`;
     }
 
+    // On page load, populate the dropdowns (they’ll reflect the randomised 'graph')
     window.onload = populateOptions;
   </script>
 </body>
