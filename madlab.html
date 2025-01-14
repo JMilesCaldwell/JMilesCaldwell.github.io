@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coastal Travel System</title>
+  <title>Travel System</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <link
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
@@ -62,31 +62,11 @@
       color: #666;
       font-family: 'Almendra', serif;
     }
-        .home-button {
-      display: inline-block;
-      margin: 2rem 0;
-      padding: 0.5rem 1rem;
-      font-size: 1.2rem;
-      font-family: 'Cinzel', serif;
-      color: #FAF4E0;
-      background: #8B0000;
-      text-decoration: none;
-      border-radius: 5px;
-      border: 2px solid #660000;
-      letter-spacing: 0.1rem;
-      transition: background 0.3s ease;
-    }
-
-    .home-button:hover {
-      background: #660000;
-      border-color: #8B0000;
-      color: #FAF4E0;
-    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Coastal Travel System</h1>
+    <h1>Evershroud Isles Travel System</h1>
     <form id="travel-form">
       <label for="departure">Departure:</label>
       <select id="departure" required>
@@ -131,11 +111,14 @@
       { name: "Devyth", distance: 12 },
       { name: "Commorragh", distance: 11 },
       { name: "Refuge", distance: 19 },
-      { name: "Giant's Head", distance: 5 }
+      { name: "Giant's Head", distance: 5 },
+      { name: "Kelton", distance: 62 },
+      { name: "Jornath", distance: 62 }
     ];
 
-    const minCost = 15;
-    const maxCost = 114;
+    const ratePerUnitDistance = 3; // Cost in GP per unit distance
+    const minTravelCost = 15; // Minimum travel cost in GP
+    const maxTravelCost = 114; // Maximum travel cost in GP
     const minTravelTime = 1; // Minimum travel time in days
     const timePerUnitDistance = 0.1; // Additional travel time per unit distance
 
@@ -165,7 +148,6 @@
       const departureIndex = locations.findIndex(loc => loc.name === departure);
       const destinationIndex = locations.findIndex(loc => loc.name === destination);
 
-      const totalLocations = locations.length;
       const forwardDistance = 
         destinationIndex > departureIndex
           ? locations.slice(departureIndex, destinationIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
@@ -177,7 +159,9 @@
           : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
 
       const travelDistance = Math.min(forwardDistance, backwardDistance);
-      const travelCost = Math.min(maxCost, Math.max(minCost, (travelDistance / 82) * (maxCost - minCost) + minCost));
+
+      // Scale cost to fit within the specified range
+      const travelCost = Math.max(minTravelCost, Math.min(maxTravelCost, travelDistance * ratePerUnitDistance));
 
       const travelTime = Math.max(minTravelTime, travelDistance * timePerUnitDistance).toFixed(1);
 
@@ -186,9 +170,5 @@
 
     window.onload = populateOptions;
   </script>
-
-<div style="text-align: center;">
-  <a href="index.html" class="home-button">Home</a>
-</div>  
 </body>
 </html>
