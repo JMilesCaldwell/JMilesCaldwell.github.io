@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evershroud Travel System</title>
+  <title>Fortune Teller</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
   >
   <style>
     body {
       margin: 0;
-      background: url('resources/index.png') no-repeat center center fixed;
+      background: url('resources/fortune_bg.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
@@ -27,6 +27,7 @@
     }
     h1, h2 {
       font-family: 'Cinzel', serif;
+      color: #FFD700;
     }
     .button {
       background-color: #8B0000;
@@ -55,6 +56,7 @@
     .result {
       margin-top: 1rem;
       font-size: 1.2rem;
+      color: #FFD700;
     }
     footer {
       margin-top: 2rem;
@@ -66,100 +68,66 @@
 </head>
 <body>
   <div class="container">
-    <h1>Evershroud Travel System</h1>
-    <form id="travel-form">
-      <label for="departure">Departure:</label>
-      <select id="departure" required>
-        <!-- Options will be dynamically added -->
+    <h1>Mystical Fortune Teller</h1>
+    <p>Seek your destiny. Ask a question and let the spirits guide you.</p>
+
+    <form id="fortune-form">
+      <label for="theme">Choose a theme:</label>
+      <select id="theme" required>
+        <option value="Love">Love</option>
+        <option value="Wealth">Wealth</option>
+        <option value="Adventure">Adventure</option>
+        <option value="Danger">Danger</option>
+        <option value="Mystery">Mystery</option>
       </select>
 
-      <label for="destination">Destination:</label>
-      <select id="destination" required>
-        <!-- Options will be dynamically added -->
-      </select>
-
-      <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
+      <button type="button" class="button" onclick="revealFortune()">Reveal My Fortune</button>
     </form>
 
     <div class="result" id="result"></div>
   </div>
 
   <footer>
-    &copy; 2025 Caldwell. Efficient travel for the Evershroud Isles.
+    &copy; 2025 Caldwell. Unveiling the mysteries of the Evershroud Isles.
   </footer>
 
   <script>
-    const locations = [
-      { name: "Azure", distance: 0 },
-      { name: "Sylfaene", distance: 2 },
-      { name: "Holgren", distance: 7 },
-      { name: "Ryer", distance: 9 },
-      { name: "Waglynn Lighthouse", distance: 10 },
-      { name: "Mong Harrad", distance: 13 },
-      { name: "World's End", distance: 15 },
-      { name: "Fulcimer Lighthouse", distance: 25 },
-      { name: "Vigden", distance: 28 },
-      { name: "Virgil", distance: 30 },
-      { name: "Hermit Sanctum", distance: 33 },
-      { name: "Wren", distance: 35 },
-      { name: "Villegrom Estate", distance: 61 },
-      { name: "Silt", distance: 63 },
-      { name: "Freeport", distance: 80 },
-      { name: "Morgrin Lighthouse", distance: 18 },
-      { name: "Mong Vinaya", distance: 47 },
-      { name: "Meowygg", distance: 47 },
-      { name: "Devyth", distance: 14 },
-      { name: "Commorragh", distance: 10 },
-      { name: "Refuge", distance: 17 },
-      { name: "Giant's Head", distance: 3 }
-    ];
+    const fortunes = {
+      Love: [
+        "A new connection will spark joy in your life.",
+        "A past love may resurface when least expected.",
+        "True love lies within your grasp, but patience is key."
+      ],
+      Wealth: [
+        "Riches come to those who take calculated risks.",
+        "Beware of greed; it may cost you dearly.",
+        "A hidden treasure awaits you on your next journey."
+      ],
+      Adventure: [
+        "A great journey beckons, filled with peril and glory.",
+        "Trust the stars to guide you to uncharted lands.",
+        "The path ahead is foggy, but a bold heart will prevail."
+      ],
+      Danger: [
+        "Beware the shadows; not all is as it seems.",
+        "An ally may turn into a foe when trust is misplaced.",
+        "Danger lurks where you least expect. Stay vigilant."
+      ],
+      Mystery: [
+        "A cryptic message will lead you to untold secrets.",
+        "The key to your question lies in an ancient tome.",
+        "What you seek is hidden in plain sight."
+      ]
+    };
 
-    const ratePerUnitDistance = 3; // Cost in GP per unit distance
+    function revealFortune() {
+      const theme = document.getElementById("theme").value;
+      const fortuneArray = fortunes[theme];
+      const randomIndex = Math.floor(Math.random() * fortuneArray.length);
+      const fortune = fortuneArray[randomIndex];
 
-    function populateOptions() {
-      const departureSelect = document.getElementById("departure");
-      const destinationSelect = document.getElementById("destination");
-
-      locations.forEach(location => {
-        const option = document.createElement("option");
-        option.value = location.name;
-        option.textContent = location.name;
-
-        departureSelect.appendChild(option.cloneNode(true));
-        destinationSelect.appendChild(option);
-      });
+      document.getElementById("result").textContent = `Your fortune: ${fortune}`;
     }
-
-    function calculateTravel() {
-      const departure = document.getElementById("departure").value;
-      const destination = document.getElementById("destination").value;
-
-      if (departure === destination) {
-        document.getElementById("result").textContent = "Departure and destination cannot be the same.";
-        return;
-      }
-
-      const departureIndex = locations.findIndex(loc => loc.name === departure);
-      const destinationIndex = locations.findIndex(loc => loc.name === destination);
-
-      const totalLocations = locations.length;
-      const forwardDistance = 
-        destinationIndex > departureIndex
-          ? locations.slice(departureIndex, destinationIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
-          : locations.slice(departureIndex).concat(locations.slice(0, destinationIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
-
-      const backwardDistance = 
-        departureIndex > destinationIndex
-          ? locations.slice(destinationIndex, departureIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
-          : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
-
-      const travelDistance = Math.min(forwardDistance, backwardDistance);
-      const travelCost = travelDistance * ratePerUnitDistance;
-
-      document.getElementById("result").textContent = `Travel Distance: ${travelDistance} units | Cost: ${travelCost.toFixed(2)} GP.`;
-    }
-
-    window.onload = populateOptions;
   </script>
 </body>
 </html>
