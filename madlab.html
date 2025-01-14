@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Travel System</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <link
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
-  >
+  />
   <style>
     body {
       margin: 0;
@@ -27,6 +27,7 @@
     }
     h1, h2 {
       font-family: 'Cinzel', serif;
+      margin-bottom: 1rem;
     }
     .button {
       background-color: #8B0000;
@@ -52,9 +53,14 @@
       border-radius: 5px;
       margin: 0.5rem;
     }
+    label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+    }
     .result {
       margin-top: 1rem;
       font-size: 1.2rem;
+      min-height: 2rem;
     }
     footer {
       margin-top: 2rem;
@@ -89,83 +95,286 @@
   </footer>
 
   <script>
-    const locations = [
-      { name: "Azure", distance: 0 },
-      { name: "Sylfaene", distance: 5 },
-      { name: "Holgren", distance: 8 },
-      { name: "Ryer", distance: 9 },
-      { name: "Waglynn Lighthouse", distance: 11 },
-      { name: "Mong Harrad", distance: 17 },
-      { name: "World's End", distance: 22 },
-      { name: "Fulcimer Lighthouse", distance: 25 },
-      { name: "Vigden", distance: 31 },
-      { name: "Virgil", distance: 39 },
-      { name: "Hermit Sanctum", distance: 40 },
-      { name: "Wren", distance: 48 },
-      { name: "Villegrom Estate", distance: 60 },
-      { name: "Silt", distance: 63 },
-      { name: "Freeport", distance: 82 },
-      { name: "Morgrin Lighthouse", distance: 20 },
-      { name: "Mong Vinaya", distance: 46 },
-      { name: "Meowygg", distance: 47 },
-      { name: "Devyth", distance: 12 },
-      { name: "Commorragh", distance: 11 },
-      { name: "Refuge", distance: 19 },
-      { name: "Giant's Head", distance: 5 },
-      { name: "Kelton", distance: 62 },
-      { name: "Jornath", distance: 62 }
-    ];
+    // Here is our adjacency list for all known direct connections, with distances
+    // If A is connected to B at distance X, B should also appear as connected to A at distance X.
+    // (For simplicity, that’s already done for each location).
+    const graph = {
+      "Azure": {
+        "Sylfaene": 5,
+        "Lyndell Estate": 8,
+        "Giant's Head": 5,
+        "Jornath": 12,
+        "Gunnar's Rest": 10
+      },
+      "Sylfaene": {
+        "Azure": 5,
+        "Ald Crayden": 20,
+        "Holgren": 7
+      },
+      "Holgren": {
+        "Sylfaene": 7,
+        "Verdant Acres": 13,
+        "Dusk": 15,
+        "Jornath": 8
+      },
+      "Ryer": {
+        "Verdant Acres": 10
+      },
+      "Mong Harrad": {
+        "Ald Margraeve": 15,
+        "Dusk": 10
+      },
+      "World's End": {
+        "Fulcimer Lighthouse": 15,
+        "Lamya": 16
+      },
+      "Fulcimer Lighthouse": {
+        "World's End": 15,
+        "Vigden": 25
+      },
+      "Vigden": {
+        "Lamya": 16,
+        "Fulcimer Lighthouse": 25,
+        "Ald Margraeve": 20,
+        "Virgil": 10
+      },
+      "Virgil": {
+        "Vigden": 10,
+        "Kelton": 20
+      },
+      "Wren": {
+        "Kelton": 15,
+        "Peyton": 20,
+        "Gunnar's Rest": 12
+      },
+      "Villegrom Estate": {
+        "Silt": 20,
+        "Peyton": 25
+      },
+      "Silt": {
+        "Villegrom Estate": 20
+      },
+      "Mong Vinaya": {
+        "Tripe": 18
+      },
+      "Devyth": {
+        "Providence": 25,
+        "Lyndell Estate": 12
+      },
+      "Kelton": {
+        "Jornath": 62,
+        "Virgil": 20,
+        "Wren": 15
+      },
+      "Jornath": {
+        "Kelton": 62,
+        "Azure": 12,
+        "Holgren": 8
+      },
+      "Providence": {
+        "Caldwell": 35,
+        "Devyth": 25
+      },
+      "Ald Margraeve": {
+        "Vigden": 20,
+        "Verdant Acres": 15,
+        "Mong Harrad": 15
+      },
+      "Dusk": {
+        "Verdant Acres": 10,
+        "Mong Harrad": 10,
+        "Holgren": 15
+      },
+      "Verdant Acres": {
+        "Dusk": 10,
+        "Ald Margraeve": 15,
+        "Ryer": 10
+      },
+      "Tripe": {
+        "Mong Vinaya": 18,
+        "Peyton": 12,
+        "Mortens": 8
+      },
+      "Caldwell": {
+        "Volkyr": 15,
+        "Tripe": 18,
+        "Ald Neloth": 22
+      },
+      "Volkyr": {
+        "Caldwell": 15,
+        "Mong Vinaya": 18
+      },
+      "Ald Neloth": {
+        "Caldwell": 22
+      },
+      "Lyndell Estate": {
+        "Azure": 8,
+        "Caldwell": 22,
+        "Devyth": 12
+      },
+      "Peyton": {
+        "Gunnar's Rest": 10,
+        "Tripe": 12,
+        "Villegrom Estate": 25
+      },
+      "Lamya": {
+        "World's End": 16,
+        "Vigden": 16
+      },
+      "Mortens": {
+        "Tripe": 8
+      },
+      "Gunnar's Rest": {
+        "Peyton": 10,
+        "Wren": 12,
+        "Fallow": 10,
+        "Azure": 10
+      },
+      "Giant's Head": {
+        "Azure": 5
+      },
+      // A few places appear only as references. If you have more data, place it here.
+      "Fallow": {}
+      // "Ald Crayden" also appears in some adjacency, but no distances back to it were given in the snippet.
+      // Add that if needed:
+      // "Ald Crayden": { "Sylfaene": 20 }
+    };
 
-    const ratePerUnitDistance = 3; // Cost in GP per unit distance
-    const minTravelCost = 15; // Minimum travel cost in GP
-    const maxTravelCost = 114; // Maximum travel cost in GP
-    const minTravelTime = 1; // Minimum travel time in days
-    const timePerUnitDistance = 0.1; // Additional travel time per unit distance
+    // A simple list of location names for the dropdown
+    const locationNames = Object.keys(graph);
 
+    // Walking speed assumptions (you can tweak these):
+    // e.g. 5 km/h, or 3 mph, etc. We'll just do a simple formula:
+    // 1 "distance unit" = 1 km for the sake of argument,
+    // walking ~5 km/h => 1 distance unit takes ~0.2 hours => 0.0083 days
+    // We'll keep it simpler as 0.2 hours per distance or 0.0083 days.
+    // Let's just do hours:
+    const walkingHoursPerUnit = 0.2; // 1 distance = 0.2 hours on foot
+
+    // We'll implement a standard Dijkstra to find the shortest path in "graph".
+    // Returns an object { distance, path } where distance is the total distance
+    // and path is the array of location names in the route.
+    function findShortestPath(start, end) {
+      // Distances table (location -> distance from start)
+      const distances = {};
+      // A map to reconstruct the path (child -> parent)
+      const previous = {};
+      // Set of unvisited nodes
+      const unvisited = new Set(locationNames);
+
+      // Initial distance: 0 for start, Infinity for others
+      locationNames.forEach(loc => {
+        distances[loc] = Infinity;
+      });
+      distances[start] = 0;
+
+      // Main Dijkstra loop
+      while (unvisited.size > 0) {
+        // Pick unvisited node with smallest distance
+        let currentNode = null;
+        let smallestDistance = Infinity;
+
+        unvisited.forEach(loc => {
+          if (distances[loc] < smallestDistance) {
+            smallestDistance = distances[loc];
+            currentNode = loc;
+          }
+        });
+
+        // If we found no next node or if it's Infinity distance, we're done
+        if (!currentNode || distances[currentNode] === Infinity) {
+          break;
+        }
+
+        unvisited.delete(currentNode);
+
+        // If currentNode is end, we can stop early
+        if (currentNode === end) {
+          break;
+        }
+
+        // Update distances to neighbours
+        const neighbours = graph[currentNode];
+        for (let neighbour in neighbours) {
+          if (!unvisited.has(neighbour)) continue;
+          const altDist = distances[currentNode] + neighbours[neighbour];
+          if (altDist < distances[neighbour]) {
+            distances[neighbour] = altDist;
+            previous[neighbour] = currentNode;
+          }
+        }
+      }
+
+      // Reconstruct the path from end to start
+      const path = [];
+      let node = end;
+      while (node !== undefined) {
+        path.unshift(node);
+        node = previous[node];
+      }
+      // If the path does not start with "start", there's no valid route
+      if (path[0] !== start) {
+        return { distance: Infinity, path: [] };
+      }
+
+      return {
+        distance: distances[end],
+        path
+      };
+    }
+
+    // Populate the dropdowns with location names
     function populateOptions() {
       const departureSelect = document.getElementById("departure");
       const destinationSelect = document.getElementById("destination");
 
-      locations.forEach(location => {
-        const option = document.createElement("option");
-        option.value = location.name;
-        option.textContent = location.name;
+      locationNames.forEach(locName => {
+        const optionA = document.createElement("option");
+        optionA.value = locName;
+        optionA.textContent = locName;
 
-        departureSelect.appendChild(option.cloneNode(true));
-        destinationSelect.appendChild(option);
+        const optionB = document.createElement("option");
+        optionB.value = locName;
+        optionB.textContent = locName;
+
+        departureSelect.appendChild(optionA);
+        destinationSelect.appendChild(optionB);
       });
     }
 
+    // Handle the "Calculate" button
     function calculateTravel() {
       const departure = document.getElementById("departure").value;
       const destination = document.getElementById("destination").value;
 
       if (departure === destination) {
-        document.getElementById("result").textContent = "Departure and destination cannot be the same.";
+        document.getElementById("result").textContent =
+          "Departure and destination cannot be the same.";
         return;
       }
 
-      const departureIndex = locations.findIndex(loc => loc.name === departure);
-      const destinationIndex = locations.findIndex(loc => loc.name === destination);
+      const { distance, path } = findShortestPath(departure, destination);
 
-      const forwardDistance = 
-        destinationIndex > departureIndex
-          ? locations.slice(departureIndex, destinationIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
-          : locations.slice(departureIndex).concat(locations.slice(0, destinationIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
+      if (!path.length || distance === Infinity) {
+        document.getElementById("result").textContent =
+          "No route could be found between these two points.";
+        return;
+      }
 
-      const backwardDistance = 
-        departureIndex > destinationIndex
-          ? locations.slice(destinationIndex, departureIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
-          : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
+      // Calculate walking time (in hours, then we can convert to e.g. 'X hours' or 'X days, Y hours')
+      // We'll just display hours for clarity
+      const travelHours = distance * (walkingHoursPerUnit);
 
-      const travelDistance = Math.min(forwardDistance, backwardDistance);
+      const hoursInteger = Math.floor(travelHours);
+      const minutes = Math.floor((travelHours - hoursInteger) * 60);
 
-      // Scale cost to fit within the specified range
-      const travelCost = Math.max(minTravelCost, Math.min(maxTravelCost, travelDistance * ratePerUnitDistance));
+      // Format route
+      const routeString = path.join(" → ");
 
-      const travelTime = Math.max(minTravelTime, travelDistance * timePerUnitDistance).toFixed(1);
-
-      document.getElementById("result").textContent = `Travel Distance: ${travelDistance} units | Cost: ${travelCost.toFixed(2)} GP | Travel Time: ${travelTime} days.`;
+      document.getElementById("result").textContent =
+        `Shortest Path: ${routeString}
+         \nTotal Distance: ${distance} units
+         \nEstimated Walking Time: ~${hoursInteger}h ${minutes}m on foot.`;
     }
 
     window.onload = populateOptions;
