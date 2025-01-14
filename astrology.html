@@ -76,12 +76,22 @@
       color: #666;
       font-family: 'Almendra', serif;
     }
+    .current-info {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h1>Shaniquáan Astrology</h1>
+  <div class="current-info">
+    <p id="current-zenith"></p>
+    <p id="current-absence"></p>
+  </div>
   <div class="carousel">
     <button id="prev">&lt;</button>
     <div id="carousel-content">
@@ -181,16 +191,48 @@ const constellations = [
   }
 ];
 
+const DAYS_PER_YEAR = 250;
+const START_DATE = new Date(2024, 10, 27); // Example start date
 let currentIndex = 0;
 
 const imageElement = document.getElementById("constellation-image");
 const descriptionElement = document.getElementById("constellation-description");
+const zenithElement = document.getElementById("current-zenith");
+const absenceElement = document.getElementById("current-absence");
+
+function calculateCurrentDay() {
+  const now = new Date();
+  const elapsed = Math.floor((now - START_DATE) / (1000 * 60 * 60 * 24));
+  return elapsed % DAYS_PER_YEAR;
+}
+
+function findCurrentConstellation(day) {
+  for (let i = 0; i < constellations.length; i++) {
+    const [startZenith, endZenith] = constellations[i].zenith.match(/\d+/g).map(Number);
+    if (day >= startZenith && day <= endZenith) {
+      return { zenith: constellations[i], absent: constellations[(i + 5) % constellations.length] };
+    }
+  }
+  return null;
+}
 
 function updateCarousel() {
   const { name, image, description, zenith, absence } = constellations[currentIndex];
   imageElement.src = image;
   imageElement.alt = name;
   descriptionElement.innerHTML = `<h2>${name}</h2><p>${description}</p><p><strong>Zenith:</strong> ${zenith}.<br><strong>Absence:</strong> ${absence}.</p>`;
+}
+
+function initializeCarousel() {
+  const currentDay = calculateCurrentDay();
+  const { zenith, absent } = findCurrentConstellation(currentDay);
+
+  currentIndex = constellations.indexOf(zenith);
+
+  zenithElement.innerHTML = `<strong>Current Zenith:</strong> ${zenith.name}`;
+  absenceElement.innerHTML = `<strong>Current Absence:</strong> ${absent.name}`;
+
+  updateCarousel();
 }
 
 document.getElementById("prev").addEventListener("click", () => {
@@ -203,7 +245,7 @@ document.getElementById("next").addEventListener("click", () => {
   updateCarousel();
 });
 
-updateCarousel();
+initializeCarousel();
 </script>
 
 </body>
