@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caldwell's Repository</title>
+  <title>Coastal Travel System</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
   >
   <style>
-  body {
+    body {
       margin: 0;
-      background: url('resources/index.png') no-repeat center center fixed;
+      background: url('resources/docks.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
@@ -28,29 +28,33 @@
     h1, h2 {
       font-family: 'Cinzel', serif;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
+    .button {
+      background-color: #8B0000;
+      color: #FAF4E0;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
       margin: 0.5rem 0;
-    }
-    a {
+      font-family: 'Cinzel', serif;
       text-decoration: none;
-      color: #FAF4E0; /* White for better readability */
-      transition: color 0.3s ease;
+      display: inline-block;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
     }
-    a:hover {
-      color: #8B0000; /* Red on hover */
+    .button:hover {
+      background-color: #6B0000;
     }
-    .divider {
-      margin: 1rem auto;
-      font-size: 1.5rem;
+    select, input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      margin: 0.5rem;
     }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
+    .result {
+      margin-top: 1rem;
+      font-size: 1.2rem;
     }
     footer {
       margin-top: 2rem;
@@ -61,99 +65,111 @@
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Coastal Travel System</h1>
+    <form id="travel-form">
+      <label for="departure">Departure:</label>
+      <select id="departure" required>
+        <!-- Options will be dynamically added -->
+      </select>
 
-<div class="container">
-  <h1>Caldwell's Repository</h1>
-  <img src="resources/Caldwell's%20Repository.jpg" alt="Caldwell's Repository Banner" style="max-width: 100%; height: auto;">
+      <label for="destination">Destination:</label>
+      <select id="destination" required>
+        <!-- Options will be dynamically added -->
+      </select>
 
-  <p>
-    Greetings, intrepid souls! You have taken your first steps into the fog-drenched realms of the Evershroud Isles, a place of unparalleled beauty, intrigue, and danger. Here, every tide carries secrets, every shadow holds a story, and the mists weave mysteries that only the bold dare to unravel.
-  </p>
+      <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
+    </form>
 
-  <div class="divider"></div>
+    <div class="result" id="result"></div>
+  </div>
 
-  <!-- The Caldwell Chronicles -->
-  <h2>The Caldwell Chronicles</h2>
-  <ul>
-    <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank">Common and Uncommon Lore of the Evershroud Isles, 3rd Edition</a></li>
-    <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank">The Caldwell Commentary, 4th Edition</a></li>
-    <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank">A Treatise on Shaniquáan Chronology and Meteorology, 1st Edition</a></li>
-  </ul>
+  <footer>
+    &copy; 2025 Caldwell. Efficient travel for the Evershroud Isles.
+  </footer>
 
-  <div class="divider"></div>
+  <script>
+    const locations = [
+      { name: "Azure", distance: 0 },
+      { name: "Sylfaene", distance: 2 },
+      { name: "Holgren", distance: 7 },
+      { name: "Ryer", distance: 9 },
+      { name: "Waglynn Lighthouse", distance: 10 },
+      { name: "Mong Harrad", distance: 13 },
+      { name: "World's End", distance: 15 },
+      { name: "Fulcimer Lighthouse", distance: 25 },
+      { name: "Vigden", distance: 28 },
+      { name: "Virgil", distance: 30 },
+      { name: "Hermit Sanctum", distance: 33 },
+      { name: "Wren", distance: 35 },
+      { name: "Villegrom Estate", distance: 61 },
+      { name: "Silt", distance: 63 },
+      { name: "Freeport", distance: 80 },
+      { name: "Morgrin Lighthouse", distance: 18 },
+      { name: "Mong Vinaya", distance: 47 },
+      { name: "Meowygg", distance: 47 },
+      { name: "Devyth", distance: 14 },
+      { name: "Commorragh", distance: 10 },
+      { name: "Refuge", distance: 17 },
+      { name: "Giant's Head", distance: 3 }
+    ];
 
-  <!-- The Evershroud Gazette -->
-  <h2>The Evershroud Gazette</h2>
-  <ul>
-    <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank">8th Fellwind, 725 Y.S.</a></li>
-  </ul>
+    const minCost = 15;
+    const maxCost = 114;
+    const minTravelTime = 1; // Minimum travel time in days
+    const timePerUnitDistance = 0.1; // Additional travel time per unit distance
 
-  <div class="divider"></div>
+    function calculateCost(distance) {
+      const cost = (distance / 80) * (maxCost - minCost) + minCost;
+      return Math.min(Math.max(cost, minCost), maxCost);
+    }
 
-  <!-- Maps -->
-  <h2>Maps</h2>
-  <ul>
-    <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank">A Comprehensive Map of the Evershroud Isles</a></li>
-    <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank">A Comprehensive Map of Silt</a></li>
-    <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank">An Approximate Map of the Evershroud Avernum</a></li>
-    <li><a href="resources/Azure.jpg" target="_blank">A Merchant's Map of Azure Proper</a></li>
-  </ul>
-  <div class="divider"></div>
+    function populateOptions() {
+      const departureSelect = document.getElementById("departure");
+      const destinationSelect = document.getElementById("destination");
 
-  <!-- Maps -->
-  <h2>Adventurers Guild</h2>
-  <ul>
-    <li><a href="resources/Recruitment%20poster.pdf" target="_blank">Recruitment Poster</a></li>
-    <li><a href="resources/Contract.pdf" target="_blank">Guild Contract</a></li>
-    <li><a href="noticeboard.html" target="_blank">Notice Board</a></li>
+      locations.forEach(location => {
+        const option = document.createElement("option");
+        option.value = location.name;
+        option.textContent = location.name;
 
-  </ul>
+        departureSelect.appendChild(option.cloneNode(true));
+        destinationSelect.appendChild(option);
+      });
+    }
 
-  <div class="divider"></div>
+    function calculateTravel() {
+      const departure = document.getElementById("departure").value;
+      const destination = document.getElementById("destination").value;
 
-  <!-- Merchant's Quarter -->
-  <h2>Merchant's Quarter</h2>
-  <ul>
-    <li><a href="exchange.html">The Evershroud Exchange</a></li>
-     <li><a href="shopdistrict.html">Shop District</a></li>
-    
+      if (departure === destination) {
+        document.getElementById("result").textContent = "Departure and destination cannot be the same.";
+        return;
+      }
 
-  </ul>
+      const departureIndex = locations.findIndex(loc => loc.name === departure);
+      const destinationIndex = locations.findIndex(loc => loc.name === destination);
 
-  <div class="divider"></div>
+      const totalLocations = locations.length;
+      const forwardDistance = 
+        destinationIndex > departureIndex
+          ? locations.slice(departureIndex, destinationIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
+          : locations.slice(departureIndex).concat(locations.slice(0, destinationIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
 
-  <!-- Utilities -->
-  <h2>Utilities</h2>
-  <ul>
-    <li><a href="commgen.html">Commoner Generator</a></li>
-    <li><a href="calendar.html">Berynian Calendar and Weather</a></li>
-    <li><a href="forge.html">Origen's Forge</a></li>
-    <li><a href="encgen.html">Encounter Generator (beta)</a></li>
-    <li><a href="ingen.html">Instance Generator (beta)</a></li>
-    <li><a href="harbour.html">Coastal Travel System (beta)</a></li>
+      const backwardDistance = 
+        departureIndex > destinationIndex
+          ? locations.slice(destinationIndex, departureIndex + 1).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0)
+          : locations.slice(destinationIndex).concat(locations.slice(0, departureIndex + 1)).reduce((sum, loc, i, arr) => i > 0 ? sum + Math.abs(loc.distance - arr[i - 1].distance) : sum, 0);
 
-    
-  </ul>
+      const travelDistance = Math.min(forwardDistance, backwardDistance);
+      const travelCost = calculateCost(travelDistance);
 
-  <div class="divider"></div>
+      const travelTime = Math.max(minTravelTime, travelDistance * timePerUnitDistance).toFixed(1);
 
-     <!-- Other -->
-  <h2>Other</h2>
-  <ul>
-       <li><a href="fortune.html">Fortune Teller</a></li>
-         <li><a href="harmony.html">Crystal Harmony By Brigitte</a></li>
+      document.getElementById("result").textContent = `Travel Distance: ${travelDistance} units | Cost: ${travelCost.toFixed(2)} GP | Travel Time: ${travelTime} days.`;
+    }
 
-  </ul>
-
-  <div class="divider"></div>
-  
-  </ul>
-  
-</div>
-
-<footer>
-  &copy; 2025 Caldwell. The repository for the Evershroud Isles.
-</footer>
-
+    window.onload = populateOptions;
+  </script>
 </body>
 </html>
