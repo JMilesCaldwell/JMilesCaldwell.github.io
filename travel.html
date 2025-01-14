@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Road Travel System</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      margin: 0;
+      background: url('resources/road.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 10px;
+    }
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+      margin-bottom: 1rem;
+    }
+    .button {
+      background-color: #8B0000;
+      color: #FAF4E0;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      font-family: 'Cinzel', serif;
+      text-decoration: none;
+      display: inline-block;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    .button:hover {
+      background-color: #6B0000;
+    }
+    select, input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      margin: 0.5rem;
+    }
+    label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+    }
+    .result {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      min-height: 2rem;
+      white-space: pre-line; /* So newlines in the result string appear as new lines */
+    }
+            /* Home Button Styling */
+    .home-button {
+      display: inline-block;
+      margin: 2rem 0;
+      padding: 0.5rem 1rem;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+      background: #8B0000;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #660000;
+      letter-spacing: 0.1rem;
+      transition: background 0.3s ease;
+    }
+
+    .home-button:hover {
+      background: #660000;
+      border-color: #8B0000;
+      color: #FAF4E0;
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Road Travel System</h1>
+    <form id="travel-form">
+      <label for="departure">Departure:</label>
+      <select id="departure" required></select>
+
+      <label for="destination">Destination:</label>
+      <select id="destination" required></select>
+
+      <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
+    </form>
+
+    <div class="result" id="result"></div>
+  </div>
+
+
+<div style="text-align: center;">
+  <a href="index.html" class="home-button">Home</a>
+</div>
+  
+  <footer>
+    &copy; 2025 Caldwell. Efficient travel for the Evershroud Isles.
+  </footer>
+
+  <script>
+    /*
+      BASE DISTANCES (already multiplied by 24 so min was ~120).
+      We’ll apply ±10% randomisation below.
+    */
+    const baseGraph = {
+      "Azure": {
+        "Sylfaene": 120,
+        "Lyndell Estate": 192,
+        "Giant's Head": 120,
+        "Jornath": 288,
+        "Gunnar's Rest": 240
+      },
+      "Sylfaene": {
+        "Azure": 120,
+        "Ald Crayden": 480,
+        "Holgren": 168
+      },
+      "Holgren": {
+        "Sylfaene": 168,
+        "Verdant Acres": 312,
+        "Dusk": 360,
+        "Jornath": 192
+      },
+      "Ryer": {
+        "Verdant Acres": 240
+      },
+      "Mong Harrad": {
+        "Ald Margraeve": 360,
+        "Dusk": 240
+      },
+      "World's End": {
+        "Fulcimer Lighthouse": 360,
+        "Lamya": 384
+      },
+      "Fulcimer Lighthouse": {
+        "World's End": 360,
+        "Vigden": 600
+      },
+      "Vigden": {
+        "Lamya": 384,
+        "Fulcimer Lighthouse": 600,
+        "Ald Margraeve": 480,
+        "Virgil": 240
+      },
+      "Virgil": {
+        "Vigden": 240,
+        "Kelton": 480
+      },
+      "Wren": {
+        "Kelton": 360,
+        "Peyton": 480,
+        "Gunnar's Rest": 288
+      },
+      "Villegrom Estate": {
+        "Silt": 480,
+        "Peyton": 600
+      },
+      "Silt": {
+        "Villegrom Estate": 480
+      },
+      "Mong Vinaya": {
+        "Tripe": 432
+      },
+      "Devyth": {
+        "Providence": 600,
+        "Lyndell Estate": 288
+      },
+      "Kelton": {
+        "Jornath": 1488,
+        "Virgil": 480,
+        "Wren": 360
+      },
+      "Jornath": {
+        "Kelton": 1488,
+        "Azure": 288,
+        "Holgren": 192
+      },
+      "Providence": {
+        "Caldwell": 840,
+        "Devyth": 600
+      },
+      "Ald Margraeve": {
+        "Vigden": 480,
+        "Verdant Acres": 360,
+        "Mong Harrad": 360
+      },
+      "Dusk": {
+        "Verdant Acres": 240,
+        "Mong Harrad": 240,
+        "Holgren": 360
+      },
+      "Verdant Acres": {
+        "Dusk": 240,
+        "Ald Margraeve": 360,
+        "Ryer": 240
+      },
+      "Tripe": {
+        "Mong Vinaya": 432,
+        "Peyton": 288,
+        "Mortens": 192
+      },
+      "Caldwell": {
+        "Volkyr": 360,
+        "Tripe": 432,
+        "Ald Neloth": 528
+      },
+      "Volkyr": {
+        "Caldwell": 360,
+        "Mong Vinaya": 432
+      },
+      "Ald Neloth": {
+        "Caldwell": 528
+      },
+      "Lyndell Estate": {
+        "Azure": 192,
+        "Caldwell": 528,
+        "Devyth": 288
+      },
+      "Peyton": {
+        "Gunnar's Rest": 240,
+        "Tripe": 288,
+        "Villegrom Estate": 600
+      },
+      "Lamya": {
+        "World's End": 384,
+        "Vigden": 384
+      },
+      "Mortens": {
+        "Tripe": 192
+      },
+      "Gunnar's Rest": {
+        "Peyton": 240,
+        "Wren": 288,
+        "Fallow": 240,
+        "Azure": 240
+      },
+      "Giant's Head": {
+        "Azure": 120
+      },
+      "Fallow": {},
+      "Ald Crayden": {
+        "Sylfaene": 480
+      }
+    };
+
+    // We’ll build the actual 'graph' by randomising each distance ±10%.
+    function randomiseDistances(baseGraph) {
+      const RANDOM_FACTOR_MIN = 0.9;  // -10%
+      const RANDOM_FACTOR_MAX = 1.1;  // +10%
+
+      const newGraph = {};
+
+      for (let location in baseGraph) {
+        newGraph[location] = {};
+        for (let neighbour in baseGraph[location]) {
+          const baseDist = baseGraph[location][neighbour];
+          // Generate a random factor between 0.9 and 1.1
+          const factor = Math.random() * (RANDOM_FACTOR_MAX - RANDOM_FACTOR_MIN) + RANDOM_FACTOR_MIN;
+          const randomDist = baseDist * factor;
+          // Round to an integer, or keep decimals if you wish
+          newGraph[location][neighbour] = Math.round(randomDist);
+        }
+      }
+      return newGraph;
+    }
+
+    // We'll store the randomised distances in 'graph'
+    const graph = randomiseDistances(baseGraph);
+    // For convenience, here’s our list of location names for the dropdown
+    const locationNames = Object.keys(graph);
+
+    // We'll keep the same walking speed, 0.2h per distance-unit
+    // (So if the actual distance is ~120, that yields ~24 hours, or 1 day.)
+    const walkingHoursPerUnit = 0.2;
+
+    // Standard Dijkstra to find the shortest path using 'graph'
+    function findShortestPath(start, end) {
+      const distances = {};
+      const previous = {};
+      const unvisited = new Set(locationNames);
+
+      // Init distances
+      locationNames.forEach(loc => {
+        distances[loc] = Infinity;
+      });
+      distances[start] = 0;
+
+      while (unvisited.size > 0) {
+        let currentNode = null;
+        let smallestDistance = Infinity;
+
+        unvisited.forEach(loc => {
+          if (distances[loc] < smallestDistance) {
+            smallestDistance = distances[loc];
+            currentNode = loc;
+          }
+        });
+
+        if (!currentNode || distances[currentNode] === Infinity) {
+          break;
+        }
+
+        unvisited.delete(currentNode);
+
+        if (currentNode === end) {
+          break;
+        }
+
+        const neighbours = graph[currentNode];
+        for (let neighbour in neighbours) {
+          if (!unvisited.has(neighbour)) continue;
+          const altDist = distances[currentNode] + neighbours[neighbour];
+          if (altDist < distances[neighbour]) {
+            distances[neighbour] = altDist;
+            previous[neighbour] = currentNode;
+          }
+        }
+      }
+
+      // Reconstruct path
+      const path = [];
+      let node = end;
+      while (node !== undefined) {
+        path.unshift(node);
+        node = previous[node];
+      }
+
+      if (path[0] !== start) {
+        return { distance: Infinity, path: [] };
+      }
+      return { distance: distances[end], path };
+    }
+
+    function populateOptions() {
+      const departureSelect = document.getElementById("departure");
+      const destinationSelect = document.getElementById("destination");
+
+      locationNames.forEach(locName => {
+        const optionA = document.createElement("option");
+        optionA.value = locName;
+        optionA.textContent = locName;
+
+        const optionB = document.createElement("option");
+        optionB.value = locName;
+        optionB.textContent = locName;
+
+        departureSelect.appendChild(optionA);
+        destinationSelect.appendChild(optionB);
+      });
+    }
+
+    // Convert hours to days, hours, minutes
+    function hoursToDaysHoursMinutes(totalHours) {
+      const days = Math.floor(totalHours / 24);
+      const remainderHours = totalHours % 24;
+      const hours = Math.floor(remainderHours);
+      const minutes = Math.floor((remainderHours - hours) * 60);
+      return { days, hours, minutes };
+    }
+
+    function calculateTravel() {
+      const departure = document.getElementById("departure").value;
+      const destination = document.getElementById("destination").value;
+
+      if (departure === destination) {
+        document.getElementById("result").textContent =
+          "Departure and destination cannot be the same.";
+        return;
+      }
+
+      const { distance, path } = findShortestPath(departure, destination);
+
+      if (!path.length || distance === Infinity) {
+        document.getElementById("result").textContent =
+          "No route could be found between these two points.";
+        return;
+      }
+
+      // Calculate travel time based on the actual randomised distance
+      const travelHours = distance * walkingHoursPerUnit;
+      const { days, hours, minutes } = hoursToDaysHoursMinutes(travelHours);
+
+      // But the displayed distance is only 1/5 of the actual random distance
+      // to make it "look" more realistic or less obviously scaled.
+      const displayedDistance = Math.round(distance / 5);
+
+      const routeString = path.join(" → ");
+      document.getElementById("result").textContent =
+        `Shortest Path: ${routeString}\n` +
+        `Distance (approx.): ${displayedDistance} units\n` +
+        `Estimated Walking Time: ${days}d ${hours}h ${minutes}m on foot.`;
+    }
+
+    // On page load, populate the dropdowns (they’ll reflect the randomised 'graph')
+    window.onload = populateOptions;
+  </script>
+</body>
+</html>
