@@ -191,6 +191,31 @@
       color: #666;
       font-family: 'Almendra', serif;
     }
+
+    /* Arrow links (left & right) */
+    .arrow-links {
+      position: fixed;
+      bottom: 1rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .arrow-link {
+      pointer-events: auto;
+      text-decoration: none;
+      font-size: 2rem;
+      color: #FAF4E0;
+      background: #8B0000;
+      padding: 0.3rem 0.8rem;
+      border: 2px solid #660000;
+      border-radius: 50%;
+      margin: 0 1rem;
+      transition: background 0.3s ease;
+    }
+    .arrow-link:hover {
+      background: #660000;
+    }
   </style>
 </head>
 <body>
@@ -245,64 +270,195 @@
   &copy; 2025 Caldwell. Showcasing the wonders of the Evershroud Isles.
 </footer>
 
+<!-- Arrow links -->
+<div class="arrow-links">
+  <a href="tower.html" class="arrow-link left-arrow">←</a>
+  <a href="catacombs.html" class="arrow-link right-arrow">→</a>
+</div>
+
 <!-- Modal for help/rules -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <button class="close-modal" id="close-modal">X</button>
-   <h2>Blessing Rules & Invocation</h2>
-<p><strong>Blessing Duration:</strong></p>
-<p><em>Immediate Use:</em> Blessings take effect immediately and last for 24 hours.</p>
-<p><em>Stored Invocation:</em> You can store the blessing for later use (one blessing stored at a time). It must be invoked within 7 days or it fades.</p>
-<p><strong>Invoking a Stored Blessing:</strong></p>
-<p>Requires a brief prayer or focus (one action or short pause). Roleplay the invocation by calling upon the granting god. E.g., “Beryn, grant me the strength of the winds!”</p>
+    <h2>Blessing Rules & Invocation</h2>
+    <p><strong>Blessing Duration:</strong></p>
+    <p><em>Immediate Use:</em> Blessings take effect immediately and last for 24 hours.</p>
+    <p><em>Stored Invocation:</em> You can store the blessing for later use (one blessing stored at a time). It must be invoked within 7 days or it fades.</p>
+    <p><strong>Invoking a Stored Blessing:</strong></p>
+    <p>Requires a brief prayer or focus (one action or short pause). Roleplay the invocation by calling upon the granting god. E.g., “Beryn, grant me the strength of the winds!”</p>
     <p>Remember: One must choose their blessings wisely, as divine favour is powerfull but fleeting.</p>
   </div>
 </div>
 
 <script>
 /* --------------------------------------------
-   Blessings Data 
+   Blessings Data - each tier has an array of 3 
+   possible blessings, chosen at random.
    -------------------------------------------- */
 const blessingsData = {
   "Talia": {
-    lesser:  "Heal 1d4 HP instantly, or invoke later to recover from a small wound.",
-    minor:   "Advantage on charisma checks (inspiring or calming) for a day, or invoke as needed.",
-    medium:  "Heal a group for 10 HP each immediately or via invocation.",
-    major:   "Radiate light dispelling darkness for an hour, or invoke in a dire situation.",
-    greater: "Cure all diseases, poisons, or exhaustion on one individual immediately or on invocation.",
-    miracle: "Fully restore an ally's health and remove any negative effects, invoked at the perfect moment."
+    lesser: [
+      "Heal 1d4 HP instantly, or invoke later to recover from a small wound.",
+      "A soothing aura grants advantage on one persuasion check, or invoke it to calm a tense situation.",
+      "A gentle light wards off minor ailments, or invoke to stave off a mild fatigue."
+    ],
+    minor: [
+      "Restore 2d4 HP at once, or invoke to remove one level of exhaustion.",
+      "A glowing aura grants advantage on your next Charisma-based skill check.",
+      "Immediate warmth boosting morale, or invoke to cure a minor ailment."
+    ],
+    medium: [
+      "Revitalising wave heals you and nearby allies for 5 HP, or invoke for a shared pick-me-up.",
+      "Grants advantage on the next two saving throws involving disease or poison, or invoke for a targeted cleanse.",
+      "Comforting light protects you from fear effects for a day, or invoke to dispel a single fear effect."
+    ],
+    major: [
+      "A burst of radiant energy banishes darkness for an hour, or invoke to dispel a moderate curse.",
+      "Instantly cure poison and disease in one ally, or invoke to grant them renewed vigour.",
+      "Bestow an aura of peace upon the party, or invoke to quell a violent confrontation."
+    ],
+    greater: [
+      "Restores you to full HP and removes negative conditions, or invoke to share some of that boon with an ally.",
+      "Radiant shield confers resistance to necrotic damage for 24 hours, or invoke to block one necrotic-based attack.",
+      "A holy surge recharges one spent resource, or invoke to gain advantage on your next crucial roll."
+    ],
+    miracle: [
+      "Resurrect a fallen ally with half HP, or invoke to fully restore an unconscious comrade once.",
+      "Bless you with unwavering courage for the day, or invoke it at a pinch to end all fear effects.",
+      "Undo the effects of a lethal blow once, or invoke for a dramatic, last-moment divine intervention."
+    ]
   },
+
   "Rael": {
-    lesser:  "Advantage on one attack or defence roll, invoked when needed.",
-    minor:   "A weapon deals 1d4 radiant damage for a day, or invoke it to add to a key attack.",
-    medium:  "Reroll a failed saving throw or attack roll once, either immediately or invoked later.",
-    major:   "Break free from magical restraints or compel an enemy to disengage, invoked as necessary.",
-    greater: "Nearby allies gain +2 AC or advantage against fear for one battle, invoked at a critical time.",
-    miracle: "Turn the tide of a crucial battle, invoked for a potent morale boost or to hinder the enemy force."
+    lesser: [
+      "Advantage on one attack or defence roll, or invoke it at a critical moment.",
+      "A martial surge adds +1 to your next damage roll, or invoke it later to bolster your strike.",
+      "Momentary divine shield grants +2 AC until your next turn, or invoke for a single tough defence."
+    ],
+    minor: [
+      "A weapon deals 1d4 radiant damage for a day, or invoke it for a single powerful attack.",
+      "Grant advantage on one Athletics or Intimidation check, or invoke it when needed most.",
+      "Small fervour letting you reroll a damage die once, or invoke to push past a close call."
+    ],
+    medium: [
+      "Reroll a failed saving throw or attack once, or invoke for a pivotal retest.",
+      "Force an enemy to briefly falter, granting you advantage on your next strike, or invoke it in a pinch.",
+      "Bolster an ally's resolve for one round (+2 to their AC), or invoke to help them withstand a blow."
+    ],
+    major: [
+      "Break free from magical restraints or invoke to compel an enemy to disengage.",
+      "Rally your party, granting each ally +1 on their next attack, or invoke for a sudden battle cry.",
+      "Shield your mind from fear or charm for an hour, or invoke it to shake off a mental effect."
+    ],
+    greater: [
+      "Grant nearby allies +2 AC for one battle, or invoke advantage against fear at a critical time.",
+      "A surge of holy might doubles your next damage roll, or invoke to cut through a tough foe's defences.",
+      "Command a small group of foes to lose morale, or invoke it to force them to withdraw briefly."
+    ],
+    miracle: [
+      "Turn the tide of a crucial battle, or invoke for a powerful morale boost that rallies all allies.",
+      "Stop a devastating blow in its tracks, or invoke to deliver a finishing strike of righteous force.",
+      "Force a mass retreat of lesser foes once, or invoke to break the will of a formidable enemy."
+    ]
   },
+
   "Beryn": {
-    lesser:  "Avoid slipping on difficult terrain for 24 hours, or invoke to bypass one natural hazard.",
-    minor:   "Plants flourish around you for a day, or invoke for advantage on a survival check.",
-    medium:  "Resist environmental effects (cold, heat, wind) for a day, or invoke for advantage on a navigation roll.",
-    major:   "Favourable winds for travel for a day, or invoke to negate a natural hazard.",
-    greater: "A natural hazard abates for the day, or invoke to restore a small patch of land to vitality.",
-    miracle: "Restore a blighted area immediately or invoke to cleanse environmental damage."
+    lesser: [
+      "Avoid slipping or stumbling for the day, or invoke to overcome one precarious obstacle.",
+      "A breeze of fortune grants advantage on your next Dexterity save, or invoke it later.",
+      "Minor surge of primal strength, or invoke to gain +2 on a single Strength-based roll."
+    ],
+    minor: [
+      "Call upon a swirl of mist to hide you briefly, or invoke to evade detection at a key moment.",
+      "Gain advantage on a single Nature or Survival check, or invoke to track an elusive target.",
+      "Draw upon tempestuous energy, dealing +1 lightning damage with your next strike, or invoke it later."
+    ],
+    medium: [
+      "Resist harsh weather or an elemental effect for 24 hours, or invoke for advantage on a weather-related save.",
+      "A surge of stormy force that knocks back a lesser foe, or invoke to clear a small hazard.",
+      "Wind-borne guidance grants +5 movement speed for an hour, or invoke it to dash at a crucial moment."
+    ],
+    major: [
+      "Favourable breezes speed your travel for a day, or invoke to instantly negate a small terrain danger.",
+      "Conjure a protective gale around you for a short time, or invoke it to disrupt ranged attacks.",
+      "Renew primal vigour in an ally, granting them advantage on Strength checks for an hour, or invoke for a single challenge."
+    ],
+    greater: [
+      "Invoke storm might for a thunderous strike that stuns a single foe, or invoke it to dispel mild illusions.",
+      "Swift tailwind grants an ally an extra action once, or invoke to grant them haste for a single round.",
+      "Shielded from the elements, you gain resistance to either cold or lightning for 24 hours, or invoke it on demand."
+    ],
+    miracle: [
+      "Revive a downed ally with a thunderclap, or invoke to instantly purge severe toxins from them.",
+      "Unleash a whirlwind that repels nearby foes once, or invoke to scatter them in a dire predicament.",
+      "Summon a cleansing storm to heal you fully, or invoke a flash of lightning to strike a threatening foe."
+    ]
   },
+
   "Nergal": {
-    lesser:  "Prevent a minor injury or poison from worsening for a day, or invoke to stabilise a dying ally.",
-    minor:   "Advantage on death saving throws for 24 hours, or invoke to reroll one death save.",
-    medium:  "Speak with a spirit once, immediately or via invocation.",
-    major:   "Halt decay on a recently deceased body for 48 hours or invoke later to do the same.",
-    greater: "Lift a curse affecting you or an ally, either immediately or via invocation.",
-    miracle: "Restore a deceased companion to life with 1 HP, invoked at a critical moment."
+    lesser: [
+      "Stave off the progression of a minor wound, or invoke to stabilise a dying ally.",
+      "Briefly commune with a lost soul for guidance, or invoke that communion at a later time.",
+      "Veil of shadows grants advantage on a single Stealth roll, or invoke it later in a pinch."
+    ],
+    minor: [
+      "Advantage on death saving throws for a day, or invoke to reroll one death save.",
+      "Sense the presence of undead briefly, or invoke to detect them within a short radius once.",
+      "A fleeting ward against necrotic energies, or invoke to gain 2 temporary HP in a dire moment."
+    ],
+    medium: [
+      "Speak with a spirit once, or invoke to question an apparition at your command.",
+      "Halt decay on a small corpse for 48 hours, or invoke that effect when needed.",
+      "Draw on grave power to silence a lesser undead, or invoke to paralyse it for a single round."
+    ],
+    major: [
+      "Lift a minor curse from yourself or an ally, or invoke to grant advantage on resisting a curse.",
+      "Grant safe passage through a charnel place, or invoke to remain undetected by lesser undead for an hour.",
+      "Commune with the spirits to glean hidden truths, or invoke for a cryptic but timely warning."
+    ],
+    greater: [
+      "Grant a cursed ally immediate relief, or invoke to banish a significant dark influence once.",
+      "Draw forth a wisp of spectral energy that can intercept an attack, or invoke to cancel a fatal blow.",
+      "Command a lesser undead to serve you for 24 hours, or invoke to turn it against its master."
+    ],
+    miracle: [
+      "Restore a deceased companion to life with 1 HP, or invoke it at a critical moment.",
+      "Temporarily ward a soul from reaping, allowing an ally to fight on at 0 HP once, or invoke that boon.",
+      "Open a gateway to the pale realm to banish a menacing undead, or invoke to end a grievous haunting."
+    ]
   },
+
   "Origen": {
-    lesser:  "Repair a tool or weapon instantly, or invoke within 7 days.",
-    minor:   "Advantage on crafting or problem-solving for a day, or invoke to solve a key challenge.",
-    medium:  "Enhance a weapon or armour (+1 bonus) for a day, or invoke it when needed.",
-    major:   "Gain insight into a crafting or engineering problem, either immediately or via invocation.",
-    greater: "Learn a crucial fact about a mystery or artifact, either immediately or on invocation.",
-    miracle: "Forge or mend a masterwork item on the spot, or invoke this ability during downtime."
+    lesser: [
+      "Repair a simple tool or weapon instantly, or invoke the repair within 7 days.",
+      "Spot a single structural weakness, or invoke to grant advantage on your next related check.",
+      "Briefly enchant a tool for a slight bonus, or invoke that bonus when you truly need it."
+    ],
+    minor: [
+      "Advantage on your next crafting or problem-solving check, or invoke it later.",
+      "A flash of insight into how to fix a mechanism, or invoke that inspiration when stuck.",
+      "Temporarily boost a weapon to deal +1 damage, or invoke that edge at a decisive moment."
+    ],
+    medium: [
+      "Enhance a weapon or armour (+1 bonus) for a day, or invoke it right before a critical encounter.",
+      "Learn a useful fact about an unfamiliar item, or invoke that knowledge at the perfect juncture.",
+      "Discover hidden compartments in a crafted object, or invoke that ability on a suspicious container."
+    ],
+    major: [
+      "Gain insight into a complex engineering problem, or invoke that genius to solve a puzzling trap.",
+      "Imbue an ally's gear with sturdiness, halving its chance to break, or invoke it to protect a key item.",
+      "Momentarily reshape metal in your hands, or invoke that effect to disarm a foe’s weapon."
+    ],
+    greater: [
+      "Learn a crucial fact about a rare artefact, or invoke that wisdom to identify its function instantly.",
+      "Grant a temporary +2 AC to a single piece of armour, or invoke it to withstand a powerful strike.",
+      "Reforge a damaged magical item, or invoke that power in a pinch to restore a broken relic."
+    ],
+    miracle: [
+      "Forge or mend a masterwork item on the spot, or invoke this ability during downtime.",
+      "Rewrite the properties of a mundane object briefly, or invoke to produce an alchemical marvel once.",
+      "Breathe true potential into a simple tool, permanently imbuing it with minor enchantment."
+    ]
   }
 };
 
@@ -316,6 +472,13 @@ function getTier(donation) {
   if (donation <= 100) return "major";
   if (donation <= 250) return "greater";
   return "miracle";
+}
+
+/* Randomly select one of the 3 blessings for the chosen tier */
+function getRandomBlessing(god, tier) {
+  const possibleBlessings = blessingsData[god][tier];
+  const randomIndex = Math.floor(Math.random() * possibleBlessings.length);
+  return possibleBlessings[randomIndex];
 }
 
 /* --------------------------------------------
@@ -353,7 +516,7 @@ donateButton.addEventListener("click", () => {
   }
 
   const tier = getTier(donation);
-  const blessingText = blessingsData[selectedGod][tier];
+  const blessingText = getRandomBlessing(selectedGod, tier);
 
   blessingResult.innerHTML = `
     <div>
