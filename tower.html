@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Temple of Kar'el</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png" />
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      margin: 0;
+      background: url('resources/tower.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 10px;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Cinzel', serif;
+      margin: 0.5rem 0;
+    }
+
+    .god-image {
+      display: block;
+      margin: 0 auto 1rem;
+      width: 150px;
+      border: 2px solid #8B0000;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Donation section */
+    .donation-section {
+      margin: 1.5rem 0;
+    }
+    .donation-section label {
+      margin-right: 0.5rem;
+    }
+    .donation-section input[type="number"] {
+      width: 6rem;
+      padding: 0.3rem;
+      font-family: 'Cinzel', serif;
+      text-align: center;
+    }
+    .donation-section button {
+      background-color: #8B0000;
+      color: #FAF4E0;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Cinzel', serif;
+      margin-left: 0.5rem;
+    }
+    .donation-section button:hover {
+      background-color: #660000;
+    }
+
+    /* Blessing display */
+    #blessing-result {
+      margin-top: 2rem;
+      min-height: 100px;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      border: 2px solid #8B0000;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: left;
+    }
+    #blessing-result h2 {
+      margin-bottom: 1rem;
+    }
+
+    /* Help button & modal */
+    .help-button {
+      display: inline-block;
+      margin: 1rem;
+      padding: 0.5rem 1rem;
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      background-color: #8B0000;
+      color: #FAF4E0;
+      border: 2px solid #660000;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .help-button:hover {
+      background-color: #660000;
+    }
+
+    .modal-overlay {
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal {
+      background: rgba(40, 40, 40, 0.95);
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h2 {
+      font-family: 'Cinzel', serif;
+      margin-bottom: 1rem;
+    }
+    .close-modal {
+      float: right;
+      background: #8B0000;
+      border: none;
+      color: #FAF4E0;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      margin-top: -1rem;
+      margin-right: -1rem;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+    }
+    .close-modal:hover {
+      background: #660000;
+    }
+
+    /* Home Button Styling */
+    .home-button {
+      display: inline-block;
+      margin: 2rem 0;
+      padding: 0.5rem 1rem;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+      background: #8B0000;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #660000;
+      letter-spacing: 0.1rem;
+      transition: background 0.3s ease;
+    }
+    .home-button:hover {
+      background: #660000;
+      border-color: #8B0000;
+      color: #FAF4E0;
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+
+    /* Arrow links (left & right) */
+    .arrow-links {
+      position: fixed;
+      bottom: 1rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .arrow-link {
+      pointer-events: auto;
+      text-decoration: none;
+      font-size: 2rem;
+      color: #FAF4E0;
+      background: #8B0000;
+      padding: 0.3rem 0.8rem;
+      border: 2px solid #660000;
+      border-radius: 50%;
+      margin: 0 1rem;
+      transition: background 0.3s ease;
+    }
+    .arrow-link:hover {
+      background: #660000;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Temple of Kar'el</h1>
+  <p>Towering above mortal ken, Kar’el is said to watch all from on high.</p>
+
+  <img class="god-image" src="resources/kar-el.png" alt="Kar'el">
+
+  <!-- Donation section -->
+  <div class="donation-section">
+    <label for="donation-input">Donate GP:</label>
+    <input type="number" id="donation-input" min="0" step="1" value="0">
+    <button id="donate-button">Make an Offering</button>
+    <button class="help-button" id="help-button">Help</button>
+  </div>
+
+  <!-- Blessing result -->
+  <div id="blessing-result">
+    <p><em>Present your offerings and stand in Kar’el’s shadow, waiting for divine favour...</em></p>
+  </div>
+</div>
+
+<div style="text-align: center;">
+  <a href="index.html" class="home-button">Home</a>
+</div>
+
+<footer>
+  &copy; 2025 Caldwell. Showcasing the wonders of the Evershroud Isles.
+</footer>
+
+<!-- Arrow links -->
+<div class="arrow-links">
+  <a href="catacombs.html" class="arrow-link left-arrow">←</a>
+  <a href="temple.html" class="arrow-link right-arrow">→</a>
+</div>
+
+<!-- Modal for help/rules -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="close-modal" id="close-modal">X</button>
+    <h2>Blessing Rules & Invocation</h2>
+    <p><strong>Blessing Duration:</strong></p>
+    <p><em>Immediate Use:</em> Blessings take effect immediately and last for 24 hours.</p>
+    <p><em>Stored Invocation:</em> You can store the blessing for later use (one blessing stored at a time). It must be invoked within 7 days or it fades.</p>
+    <p><strong>Invoking a Stored Blessing:</strong></p>
+    <p>Requires a brief prayer or focus (one action or short pause). Roleplay the invocation by calling upon the granting god. E.g., “Kar’el, grant me clarity beyond mortal sight!”</p>
+    <p>Remember: One must choose their blessings wisely, as divine favour is powerful but fleeting.</p>
+  </div>
+</div>
+
+<script>
+/* --------------------------------------------
+   Blessings Data - Kar'el 
+   3 random blessings per tier
+   -------------------------------------------- */
+const blessingsData = {
+  "Karel": {
+    lesser: [
+      "A fleeting glimpse of hidden truths, granting advantage on one Perception check, or invoke it later.",
+      "A subtle ward against illusions, or invoke to see through a minor trick.",
+      "A momentary mental clarity, granting +2 to a single Intelligence-based roll, or invoke that clarity at a crucial time."
+    ],
+    minor: [
+      "Unveil a nearby secret or hidden door, or invoke it to detect illusions once.",
+      "Briefly peer into another plane, granting advantage on the next Arcana check, or invoke to glean an otherworldly insight.",
+      "A surge of confidence in mental pursuits, or invoke to automatically succeed on a simple puzzle or riddle."
+    ],
+    medium: [
+      "Gain advantage on two Investigations involving magic, or invoke to dispel a minor illusory effect.",
+      "Shield your mind from mental intrusion for a day, or invoke that protection in a time of crisis.",
+      "Concentrate Kar’el’s focus to reroll a failed Intelligence save, or invoke it once for a mental edge."
+    ],
+    major: [
+      "Detect significant hidden magic in your vicinity, or invoke to reveal the source of an enchantment.",
+      "Wrap yourself in an aura that repels lesser illusions for 24 hours, or invoke to shatter one potent illusion.",
+      "Project a loud mental command that can startle a lesser foe, or invoke it to break their concentration."
+    ],
+    greater: [
+      "Gain momentary true sight for an hour, or invoke that effect when confronted by powerful illusions.",
+      "Command an apparition or bound spirit to reveal its nature, or invoke that power to sever its hold on reality.",
+      "Your intellect sharpens drastically, granting a +2 bonus on all Intelligence checks for a day, or invoke that surge in a critical moment."
+    ],
+    miracle: [
+      "Briefly open a window to a hidden realm, or invoke to banish a particularly devious illusion altogether.",
+      "Elevate your mind above mortal limitations for an hour, or invoke it to automatically succeed on a complex puzzle or magical riddle.",
+      "Nullify a powerful illusory spell in your presence once, or invoke to unravel reality-warping magic."
+    ]
+  }
+};
+
+/* --------------------------------------------
+   Utility Functions
+   -------------------------------------------- */
+function getTier(donation) {
+  if (donation < 5) return "lesser";
+  if (donation <= 25) return "minor";
+  if (donation <= 50) return "medium";
+  if (donation <= 100) return "major";
+  if (donation <= 250) return "greater";
+  return "miracle";
+}
+
+function getRandomBlessing(god, tier) {
+  const possibleBlessings = blessingsData[god][tier];
+  const randomIndex = Math.floor(Math.random() * possibleBlessings.length);
+  return possibleBlessings[randomIndex];
+}
+
+/* --------------------------------------------
+   DOM Elements
+   -------------------------------------------- */
+const donationInput = document.getElementById("donation-input");
+const donateButton = document.getElementById("donate-button");
+const blessingResult = document.getElementById("blessing-result");
+
+let selectedGod = "Karel"; // Only one deity here
+
+/* --------------------------------------------
+   Event Listeners
+   -------------------------------------------- */
+donateButton.addEventListener("click", () => {
+  const donation = parseInt(donationInput.value) || 0;
+
+  const tier = getTier(donation);
+  const blessingText = getRandomBlessing(selectedGod, tier);
+
+  blessingResult.innerHTML = `
+    <div>
+      <h2>Kar'el grants a <em>${tier}</em> blessing!</h2>
+      <p>${blessingText}</p>
+    </div>
+  `;
+});
+
+/* --------------------------------------------
+   Modal (Help) Functionality
+   -------------------------------------------- */
+const helpButton = document.getElementById("help-button");
+const modalOverlay = document.getElementById("modal-overlay");
+const closeModal = document.getElementById("close-modal");
+
+helpButton.addEventListener("click", () => {
+  modalOverlay.style.display = "flex";
+});
+
+closeModal.addEventListener("click", () => {
+  modalOverlay.style.display = "none";
+});
+</script>
+</body>
+</html>
