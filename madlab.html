@@ -1,68 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Road Travel System</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temple</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
-  />
+  >
   <style>
     body {
       margin: 0;
-      background: url('resources/road.png') no-repeat center center fixed;
+      background: url('resources/temple.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
+
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 2rem auto;
       background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
       border-radius: 10px;
     }
-    h1, h2 {
+
+    h1, h2, h3 {
       font-family: 'Cinzel', serif;
-      margin-bottom: 1rem;
+      margin: 0.5rem 0;
     }
-    .button {
+
+    /* Gods row styling */
+    .gods-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .god {
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      border: 2px solid #8B0000;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      max-width: 130px;
+    }
+    .god img {
+      width: 100%;
+      display: block;
+    }
+    .god:hover {
+      transform: scale(1.05);
+    }
+    .selected-god {
+      border-color: #FFD700 !important;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.7) !important;
+    }
+
+    /* Donation section */
+    .donation-section {
+      margin: 1.5rem 0;
+    }
+    .donation-section label {
+      margin-right: 0.5rem;
+    }
+    .donation-section input[type="number"] {
+      width: 6rem;
+      padding: 0.3rem;
+      font-family: 'Cinzel', serif;
+      text-align: center;
+    }
+    .donation-section button {
       background-color: #8B0000;
       color: #FAF4E0;
       border: none;
       padding: 0.5rem 1rem;
       cursor: pointer;
       font-size: 1rem;
-      margin: 0.5rem 0;
       font-family: 'Cinzel', serif;
-      text-decoration: none;
+      margin-left: 0.5rem;
+    }
+    .donation-section button:hover {
+      background-color: #660000;
+    }
+
+    /* Blessing display */
+    #blessing-result {
+      margin-top: 2rem;
+      min-height: 100px;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      border: 2px solid #8B0000;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: left;
+    }
+    #blessing-result h2 {
+      margin-bottom: 1rem;
+    }
+
+    /* Help button & modal */
+    .help-button {
       display: inline-block;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
-    }
-    .button:hover {
-      background-color: #6B0000;
-    }
-    select, input {
-      padding: 0.5rem;
+      margin: 1rem;
+      padding: 0.5rem 1rem;
+      font-family: 'Cinzel', serif;
       font-size: 1rem;
-      border: none;
+      background-color: #8B0000;
+      color: #FAF4E0;
+      border: 2px solid #660000;
       border-radius: 5px;
-      margin: 0.5rem;
+      cursor: pointer;
+      text-decoration: none;
     }
-    label {
-      display: block;
-      margin: 1rem 0 0.5rem;
+    .help-button:hover {
+      background-color: #660000;
     }
-    .result {
-      margin-top: 1rem;
+
+    .modal-overlay {
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal {
+      background: rgba(40, 40, 40, 0.95);
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h2 {
+      font-family: 'Cinzel', serif;
+      margin-bottom: 1rem;
+    }
+    .close-modal {
+      float: right;
+      background: #8B0000;
+      border: none;
+      color: #FAF4E0;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      margin-top: -1rem;
+      margin-right: -1rem;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+    }
+    .close-modal:hover {
+      background: #660000;
+    }
+
+    /* Home Button Styling */
+    .home-button {
+      display: inline-block;
+      margin: 2rem 0;
+      padding: 0.5rem 1rem;
       font-size: 1.2rem;
-      min-height: 2rem;
-      white-space: pre-line; /* So newlines in the result string appear as new lines */
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+      background: #8B0000;
+      text-decoration: none;
+      border-radius: 5px;
+      border: 2px solid #660000;
+      letter-spacing: 0.1rem;
+      transition: background 0.3s ease;
     }
+    .home-button:hover {
+      background: #660000;
+      border-color: #8B0000;
+      color: #FAF4E0;
+    }
+
     footer {
       margin-top: 2rem;
       font-size: 0.9rem;
@@ -72,321 +194,203 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Road Travel System</h1>
-    <form id="travel-form">
-      <label for="departure">Departure:</label>
-      <select id="departure" required></select>
 
-      <label for="destination">Destination:</label>
-      <select id="destination" required></select>
+<div class="container">
+  <h1>Temple of the Five</h1>
+  <p>Pentarchy's blessing upon you, stranger. Please, take a while to reflect upon the grace of the Five...</p>
 
-      <button type="button" class="button" onclick="calculateTravel()">Calculate</button>
-    </form>
-
-    <div class="result" id="result"></div>
+  <!-- Deific images row -->
+  <div class="gods-row">
+    <div class="god" id="Talia">
+      <img src="resources/talia.png" alt="Talia">
+      <h3>Talia</h3>
+    </div>
+    <div class="god" id="Rael">
+      <img src="resources/rael.png" alt="Rael">
+      <h3>Rael</h3>
+    </div>
+    <div class="god" id="Beryn">
+      <img src="resources/beryn.png" alt="Beryn">
+      <h3>Beryn</h3>
+    </div>
+    <div class="god" id="Nergal">
+      <img src="resources/nergal.png" alt="Nergál">
+      <h3>Nergál</h3>
+    </div>
+    <div class="god" id="Origen">
+      <img src="resources/origen.png" alt="Origen">
+      <h3>Origen</h3>
+    </div>
   </div>
 
-  <footer>
-    &copy; 2025 Caldwell. Efficient travel for the Evershroud Isles.
-  </footer>
+  <!-- Donation section -->
+  <div class="donation-section">
+    <label for="donation-input">Donate GP:</label>
+    <input type="number" id="donation-input" min="0" step="1" value="0">
+    <button id="donate-button">Make an Offering</button>
+    <button class="help-button" id="help-button">Help</button>
+  </div>
 
-  <script>
-    /*
-      BASE DISTANCES (already multiplied by 24 so min was ~120).
-      We’ll apply ±10% randomisation below.
-    */
-    const baseGraph = {
-      "Azure": {
-        "Sylfaene": 120,
-        "Lyndell Estate": 192,
-        "Giant's Head": 120,
-        "Jornath": 288,
-        "Gunnar's Rest": 240
-      },
-      "Sylfaene": {
-        "Azure": 120,
-        "Ald Crayden": 480,
-        "Holgren": 168
-      },
-      "Holgren": {
-        "Sylfaene": 168,
-        "Verdant Acres": 312,
-        "Dusk": 360,
-        "Jornath": 192
-      },
-      "Ryer": {
-        "Verdant Acres": 240
-      },
-      "Mong Harrad": {
-        "Ald Margraeve": 360,
-        "Dusk": 240
-      },
-      "World's End": {
-        "Fulcimer Lighthouse": 360,
-        "Lamya": 384
-      },
-      "Fulcimer Lighthouse": {
-        "World's End": 360,
-        "Vigden": 600
-      },
-      "Vigden": {
-        "Lamya": 384,
-        "Fulcimer Lighthouse": 600,
-        "Ald Margraeve": 480,
-        "Virgil": 240
-      },
-      "Virgil": {
-        "Vigden": 240,
-        "Kelton": 480
-      },
-      "Wren": {
-        "Kelton": 360,
-        "Peyton": 480,
-        "Gunnar's Rest": 288
-      },
-      "Villegrom Estate": {
-        "Silt": 480,
-        "Peyton": 600
-      },
-      "Silt": {
-        "Villegrom Estate": 480
-      },
-      "Mong Vinaya": {
-        "Tripe": 432
-      },
-      "Devyth": {
-        "Providence": 600,
-        "Lyndell Estate": 288
-      },
-      "Kelton": {
-        "Jornath": 1488,
-        "Virgil": 480,
-        "Wren": 360
-      },
-      "Jornath": {
-        "Kelton": 1488,
-        "Azure": 288,
-        "Holgren": 192
-      },
-      "Providence": {
-        "Caldwell": 840,
-        "Devyth": 600
-      },
-      "Ald Margraeve": {
-        "Vigden": 480,
-        "Verdant Acres": 360,
-        "Mong Harrad": 360
-      },
-      "Dusk": {
-        "Verdant Acres": 240,
-        "Mong Harrad": 240,
-        "Holgren": 360
-      },
-      "Verdant Acres": {
-        "Dusk": 240,
-        "Ald Margraeve": 360,
-        "Ryer": 240
-      },
-      "Tripe": {
-        "Mong Vinaya": 432,
-        "Peyton": 288,
-        "Mortens": 192
-      },
-      "Caldwell": {
-        "Volkyr": 360,
-        "Tripe": 432,
-        "Ald Neloth": 528
-      },
-      "Volkyr": {
-        "Caldwell": 360,
-        "Mong Vinaya": 432
-      },
-      "Ald Neloth": {
-        "Caldwell": 528
-      },
-      "Lyndell Estate": {
-        "Azure": 192,
-        "Caldwell": 528,
-        "Devyth": 288
-      },
-      "Peyton": {
-        "Gunnar's Rest": 240,
-        "Tripe": 288,
-        "Villegrom Estate": 600
-      },
-      "Lamya": {
-        "World's End": 384,
-        "Vigden": 384
-      },
-      "Mortens": {
-        "Tripe": 192
-      },
-      "Gunnar's Rest": {
-        "Peyton": 240,
-        "Wren": 288,
-        "Fallow": 240,
-        "Azure": 240
-      },
-      "Giant's Head": {
-        "Azure": 120
-      },
-      "Fallow": {},
-      "Ald Crayden": {
-        "Sylfaene": 480
-      }
-    };
+  <!-- Blessing result -->
+  <div id="blessing-result">
+    <p><em>Select a deity, enter your donation, and click "Make an Offering" to receive your blessing.</em></p>
+  </div>
+</div>
 
-    // We’ll build the actual 'graph' by randomising each distance ±10%.
-    function randomiseDistances(baseGraph) {
-      const RANDOM_FACTOR_MIN = 0.9;  // -10%
-      const RANDOM_FACTOR_MAX = 1.1;  // +10%
+<div style="text-align: center;">
+  <a href="index.html" class="home-button">Home</a>
+</div>
 
-      const newGraph = {};
+<footer>
+  &copy; 2025 Caldwell. Showcasing the wonders of the Evershroud Isles.
+</footer>
 
-      for (let location in baseGraph) {
-        newGraph[location] = {};
-        for (let neighbour in baseGraph[location]) {
-          const baseDist = baseGraph[location][neighbour];
-          // Generate a random factor between 0.9 and 1.1
-          const factor = Math.random() * (RANDOM_FACTOR_MAX - RANDOM_FACTOR_MIN) + RANDOM_FACTOR_MIN;
-          const randomDist = baseDist * factor;
-          // Round to an integer, or keep decimals if you wish
-          newGraph[location][neighbour] = Math.round(randomDist);
-        }
-      }
-      return newGraph;
-    }
+<!-- Modal for help/rules -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="close-modal" id="close-modal">X</button>
+    <h2>Blessing Rules & Invocation</h2>
+    <p><strong>Blessing Duration:</strong></p>
+    <ul>
+      <li><em>Immediate Use:</em> Blessings take effect immediately and last for 24 hours.</li>
+      <li><em>Stored Invocation:</em> You can store the blessing for later use (one blessing stored at a time). It must be invoked within 7 days or it fades.</li>
+    </ul>
+    <p><strong>Invoking a Stored Blessing:</strong></p>
+    <ul>
+      <li>Requires a brief prayer or focus (one action or short pause).</li>
+      <li>Roleplay the invocation by calling upon the granting god. E.g., “Beryn, grant me the strength of the winds!”</li>
+    </ul>
+    <p><strong>Blessing Tiers by Donation:</strong></p>
+    <ul>
+      <li>&lt;5 GP: lesser</li>
+      <li>5–25 GP: minor</li>
+      <li>25–50 GP: medium</li>
+      <li>50–100 GP: major</li>
+      <li>100–250 GP: greater</li>
+      <li>&gt;250 GP: miracle</li>
+    </ul>
+    <p>Remember: One must choose blessings wisely, as divine favour is fleeting yet powerful.</p>
+  </div>
+</div>
 
-    // We'll store the randomised distances in 'graph'
-    const graph = randomiseDistances(baseGraph);
-    // For convenience, here’s our list of location names for the dropdown
-    const locationNames = Object.keys(graph);
+<script>
+/* --------------------------------------------
+   Blessings Data 
+   -------------------------------------------- */
+const blessingsData = {
+  "Talia": {
+    lesser:  "Heal 1d4 HP instantly, or invoke later to recover from a small wound.",
+    minor:   "Advantage on charisma checks (inspiring or calming) for a day, or invoke as needed.",
+    medium:  "Heal a group for 10 HP each immediately or via invocation.",
+    major:   "Radiate light dispelling darkness for an hour, or invoke in a dire situation.",
+    greater: "Cure all diseases, poisons, or exhaustion on one individual immediately or on invocation.",
+    miracle: "Fully restore an ally's health and remove negative effects, invoked at the perfect moment."
+  },
+  "Rael": {
+    lesser:  "Advantage on one attack or defence roll, invoked when needed.",
+    minor:   "A weapon deals 1d4 radiant damage for a day, or invoke it to add to a key attack.",
+    medium:  "Reroll a failed saving throw or attack roll once, either immediately or invoked later.",
+    major:   "Break free from magical restraints or compel an enemy to disengage, invoked as necessary.",
+    greater: "Nearby allies gain +2 AC or advantage against fear for one battle, invoked at a critical time.",
+    miracle: "Turn the tide of a crucial battle, invoked for a potent morale boost or to hinder the enemy force."
+  },
+  "Beryn": {
+    lesser:  "Avoid slipping on difficult terrain for 24 hours, or invoke to bypass one natural hazard.",
+    minor:   "Plants flourish around you for a day, or invoke for advantage on a survival check.",
+    medium:  "Resist environmental effects (cold, heat, wind) for a day, or invoke for advantage on a navigation roll.",
+    major:   "Favourable winds for travel for a day, or invoke to negate a natural hazard.",
+    greater: "A natural hazard abates for the day, or invoke to restore a small patch of land to vitality.",
+    miracle: "Restore a blighted area immediately or invoke to cleanse environmental damage."
+  },
+  "Nergal": {
+    lesser:  "Prevent a minor injury or poison from worsening for a day, or invoke to stabilise a dying ally.",
+    minor:   "Advantage on death saving throws for 24 hours, or invoke to reroll one death save.",
+    medium:  "Speak with a spirit once, immediately or via invocation.",
+    major:   "Halt decay on a recently deceased body for 48 hours or invoke later to do the same.",
+    greater: "Lift a curse affecting you or an ally, either immediately or via invocation.",
+    miracle: "Restore a deceased companion to life with 1 HP, invoked at a critical moment."
+  },
+  "Origen": {
+    lesser:  "Repair a tool or weapon instantly, or invoke within 7 days.",
+    minor:   "Advantage on crafting or problem-solving for a day, or invoke to solve a key challenge.",
+    medium:  "Enhance a weapon or armour (+1 bonus) for a day, or invoke it when needed.",
+    major:   "Gain insight into a crafting or engineering problem, either immediately or via invocation.",
+    greater: "Learn a crucial fact about a mystery or artifact, either immediately or on invocation.",
+    miracle: "Forge or mend a masterwork item on the spot, or invoke this ability during downtime."
+  }
+};
 
-    // We'll keep the same walking speed, 0.2h per distance-unit
-    // (So if the actual distance is ~120, that yields ~24 hours, or 1 day.)
-    const walkingHoursPerUnit = 0.2;
+/* --------------------------------------------
+   Utility Functions
+   -------------------------------------------- */
+function getTier(donation) {
+  if (donation < 5) return "lesser";
+  if (donation <= 25) return "minor";
+  if (donation <= 50) return "medium";
+  if (donation <= 100) return "major";
+  if (donation <= 250) return "greater";
+  return "miracle";
+}
 
-    // Standard Dijkstra to find the shortest path using 'graph'
-    function findShortestPath(start, end) {
-      const distances = {};
-      const previous = {};
-      const unvisited = new Set(locationNames);
+/* --------------------------------------------
+   DOM Elements
+   -------------------------------------------- */
+const donationInput = document.getElementById("donation-input");
+const donateButton = document.getElementById("donate-button");
+const blessingResult = document.getElementById("blessing-result");
 
-      // Init distances
-      locationNames.forEach(loc => {
-        distances[loc] = Infinity;
-      });
-      distances[start] = 0;
+const gods = document.querySelectorAll(".god");
 
-      while (unvisited.size > 0) {
-        let currentNode = null;
-        let smallestDistance = Infinity;
+let selectedGod = null;
 
-        unvisited.forEach(loc => {
-          if (distances[loc] < smallestDistance) {
-            smallestDistance = distances[loc];
-            currentNode = loc;
-          }
-        });
+/* --------------------------------------------
+   Event Listeners
+   -------------------------------------------- */
+gods.forEach(god => {
+  god.addEventListener("click", () => {
+    // Clear any existing selection
+    gods.forEach(g => g.classList.remove("selected-god"));
+    // Mark this one as selected
+    god.classList.add("selected-god");
+    selectedGod = god.id; 
+    // Clear current blessing text
+    blessingResult.innerHTML = `<p><em>You have selected ${selectedGod}. Enter your donation and click "Make an Offering".</em></p>`;
+  });
+});
 
-        if (!currentNode || distances[currentNode] === Infinity) {
-          break;
-        }
+donateButton.addEventListener("click", () => {
+  const donation = parseInt(donationInput.value) || 0;
 
-        unvisited.delete(currentNode);
+  if (!selectedGod) {
+    blessingResult.innerHTML = `<p><em>Please select a god first!</em></p>`;
+    return;
+  }
 
-        if (currentNode === end) {
-          break;
-        }
+  const tier = getTier(donation);
+  const blessingText = blessingsData[selectedGod][tier];
 
-        const neighbours = graph[currentNode];
-        for (let neighbour in neighbours) {
-          if (!unvisited.has(neighbour)) continue;
-          const altDist = distances[currentNode] + neighbours[neighbour];
-          if (altDist < distances[neighbour]) {
-            distances[neighbour] = altDist;
-            previous[neighbour] = currentNode;
-          }
-        }
-      }
+  blessingResult.innerHTML = `
+    <div>
+      <h2>${selectedGod} grants a <em>${tier}</em> blessing!</h2>
+      <p>${blessingText}</p>
+    </div>
+  `;
+});
 
-      // Reconstruct path
-      const path = [];
-      let node = end;
-      while (node !== undefined) {
-        path.unshift(node);
-        node = previous[node];
-      }
+/* --------------------------------------------
+   Modal (Help) Functionality
+   -------------------------------------------- */
+const helpButton = document.getElementById("help-button");
+const modalOverlay = document.getElementById("modal-overlay");
+const closeModal = document.getElementById("close-modal");
 
-      if (path[0] !== start) {
-        return { distance: Infinity, path: [] };
-      }
-      return { distance: distances[end], path };
-    }
+helpButton.addEventListener("click", () => {
+  modalOverlay.style.display = "flex";
+});
 
-    function populateOptions() {
-      const departureSelect = document.getElementById("departure");
-      const destinationSelect = document.getElementById("destination");
-
-      locationNames.forEach(locName => {
-        const optionA = document.createElement("option");
-        optionA.value = locName;
-        optionA.textContent = locName;
-
-        const optionB = document.createElement("option");
-        optionB.value = locName;
-        optionB.textContent = locName;
-
-        departureSelect.appendChild(optionA);
-        destinationSelect.appendChild(optionB);
-      });
-    }
-
-    // Convert hours to days, hours, minutes
-    function hoursToDaysHoursMinutes(totalHours) {
-      const days = Math.floor(totalHours / 24);
-      const remainderHours = totalHours % 24;
-      const hours = Math.floor(remainderHours);
-      const minutes = Math.floor((remainderHours - hours) * 60);
-      return { days, hours, minutes };
-    }
-
-    function calculateTravel() {
-      const departure = document.getElementById("departure").value;
-      const destination = document.getElementById("destination").value;
-
-      if (departure === destination) {
-        document.getElementById("result").textContent =
-          "Departure and destination cannot be the same.";
-        return;
-      }
-
-      const { distance, path } = findShortestPath(departure, destination);
-
-      if (!path.length || distance === Infinity) {
-        document.getElementById("result").textContent =
-          "No route could be found between these two points.";
-        return;
-      }
-
-      // Calculate travel time based on the actual randomised distance
-      const travelHours = distance * walkingHoursPerUnit;
-      const { days, hours, minutes } = hoursToDaysHoursMinutes(travelHours);
-
-      // But the displayed distance is only 1/5 of the actual random distance
-      // to make it "look" more realistic or less obviously scaled.
-      const displayedDistance = Math.round(distance / 5);
-
-      const routeString = path.join(" → ");
-      document.getElementById("result").textContent =
-        `Shortest Path: ${routeString}\n` +
-        `Distance (approx.): ${displayedDistance} units\n` +
-        `Estimated Walking Time: ${days}d ${hours}h ${minutes}m on foot.`;
-    }
-
-    // On page load, populate the dropdowns (they’ll reflect the randomised 'graph')
-    window.onload = populateOptions;
-  </script>
+closeModal.addEventListener("click", () => {
+  modalOverlay.style.display = "none";
+});
+</script>
 </body>
 </html>
