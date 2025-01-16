@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Lucky Serpent Tavern</title>
+  <title>The Pickled Piglet</title>
   <link 
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
@@ -12,7 +12,7 @@
     /* General Page Styling */
     body {
       margin: 0;
-      background: url('resources/clothier.png') no-repeat center center fixed;
+      background: url('resources/tavern.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
@@ -55,12 +55,7 @@
       margin-bottom: 1rem;
     }
 
-    .faction-portrait {
-      max-width: 150px;
-      border: 2px solid #8B0000;
-      border-radius: 8px;
-      margin: 0.5rem;
-    }
+    /* Removed the faction-portrait images per your request */
 
     .faction-content {
       text-align: left;
@@ -199,14 +194,9 @@
     <div class="faction-section">
       <div class="faction-header">
         <img 
-          src="resources/zhilan_triads_banner.png" 
+          src="resources/zhilantriadsbanner.png" 
           alt="Zhilan Triads Banner" 
           class="faction-banner"
-        >
-        <img 
-          src="resources/zhilan_triads_portrait.png" 
-          alt="Zhilan Triads Portrait" 
-          class="faction-portrait"
         >
         <h2>Zhilan Triads</h2>
       </div>
@@ -250,14 +240,9 @@
     <div class="faction-section">
       <div class="faction-header">
         <img 
-          src="resources/xondaran_syndicate_banner.png" 
+          src="resources/xondaransyndicate.png" 
           alt="Xondaran Syndicate Banner" 
           class="faction-banner"
-        >
-        <img 
-          src="resources/xondaran_syndicate_portrait.png" 
-          alt="Xondaran Syndicate Portrait" 
-          class="faction-portrait"
         >
         <h2>Xondaran Syndicate</h2>
       </div>
@@ -301,14 +286,9 @@
     <div class="faction-section">
       <div class="faction-header">
         <img 
-          src="resources/blackjacks_banner.png" 
+          src="resources/blackjacks.png" 
           alt="Blackjacks Banner" 
           class="faction-banner"
-        >
-        <img 
-          src="resources/blackjacks_portrait.png" 
-          alt="Blackjacks Portrait" 
-          class="faction-portrait"
         >
         <h2>The Blackjacks</h2>
       </div>
@@ -337,7 +317,7 @@
           </tr>
           <tr>
             <td>Rosette Quickstep</td>
-            <td>Street Boss</td>
+            <td>Henchwoman</td>
             <td>
               <button class="action-button" onclick="buyDrink('rosette')">Buy Drink</button>
               <button class="action-button" onclick="openBribeModal('rosette')">Bribe</button>
@@ -352,14 +332,9 @@
     <div class="faction-section">
       <div class="faction-header">
         <img 
-          src="resources/scarlet_swallows_banner.png" 
+          src="resources/scarletswallowsbanner.png" 
           alt="Scarlet Swallows Banner" 
           class="faction-banner"
-        >
-        <img 
-          src="resources/scarlet_swallows_portrait.png" 
-          alt="Scarlet Swallows Portrait" 
-          class="faction-portrait"
         >
         <h2>The Scarlet Swallows</h2>
       </div>
@@ -405,7 +380,7 @@
     <button class="action-button" onclick="endDay()">Call it a Night (Reset Day)</button>
     <br>
     <!-- HOME BUTTON AT THE BOTTOM -->
-    <a href="#" class="home-button">Home</a>
+    <a href="index.html" class="home-button">Home</a>
   </div>
 
   <!-- Modal Overlay -->
@@ -435,8 +410,10 @@
       - favorLines: random lines on bribe success
       - drinkLines: random lines on "Buy Drink"
       - like: how much they like you (resets each day)
-         -> For each point of "like", we reduce the threshold by some fraction, e.g. 10% off base threshold per like.
+      - drinksCount: how many drinks have been bought for them (resets each day)
+      - drinksToLeave: random threshold that triggers them leaving after being plied with enough booze
     */
+
     const REP_DATA = {
       jinHua: {
         name: "Jin Hua",
@@ -453,7 +430,9 @@
           `"Ah, a gesture of respect? Very well. I shall drink to our mutual benefit."`,
           `"Your generosity is noted. Perhaps you are wiser than the others who come seeking favours."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       hanMei: {
         name: "Han Mei",
@@ -470,7 +449,9 @@
           `"Hmph. You must be braver than most to buy me a drink. Fine. I'll hear you out."`,
           `"You’ve found the quick route to my heart: good spirits and no questions."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       sayyidKashim: {
         name: "Sayyid Kashim",
@@ -487,7 +468,9 @@
           `"A thousand blessings upon you for this kind offering. We shall drink to prosperity."`,
           `"You know the ways of hospitality, friend. In Xondar, generosity is always repaid—somehow."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       basiraAzzam: {
         name: "Basira Azzam",
@@ -504,7 +487,9 @@
           `"So you know how to loosen tongues with a drink? Clever. Let us talk, friend."`,
           `"I rarely accept freebies, but you seem sincere enough. Cheers to that."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       theJack: {
         name: "The Jack",
@@ -521,7 +506,9 @@
           `"Ha! Another fool who thinks I'll dance for a drop of ale? Well, I'm listening..."`,
           `"A free drink is the best kind. Keep 'em coming and I might start liking your face."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       rosette: {
         name: "Rosette Quickstep",
@@ -538,7 +525,9 @@
           `"You trying to butter me up, sugar? Fine, I'll sip to that."`,
           `"A drink? I'd be a fool to say no. Let’s see how interesting you can be."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       theMadame: {
         name: "The Madame",
@@ -555,7 +544,9 @@
           `"How bold, buying a drink for the likes of me. Take care you don't overstep, dear."`,
           `"A calculated risk on your part, no doubt. Well, indulge me, and I might indulge you."`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       },
       karma: {
         name: "Karma Nightingale",
@@ -572,7 +563,9 @@
           `"A sweet gesture. My Mistress will be pleased to see us get along."`,
           `"You’ve piqued my curiosity. Let’s make this drink worth our time, shall we?"`
         ],
-        like: 0
+        like: 0,
+        drinksCount: 0,
+        drinksToLeave: getRandomInt(10, 20)
       }
     };
 
@@ -580,15 +573,46 @@
     let currentRepKey = null;
     let currentModalType = null;
 
+    // A small array of random items patrons can leave behind when they stagger away drunk
+    const RANDOM_ITEMS = [
+      "a tarnished locket",
+      "a ring with a curious crest",
+      "a mysterious key",
+      "a small pouch of curious herbs",
+      "a rolled-up, half-burnt map",
+      "an ornate quill pen with swirling etchings",
+      "a faded love letter"
+    ];
+
     /*************************************
      *  BUY DRINK LOGIC
      *************************************/
     function buyDrink(repKey) {
+      // First, check for the 5% fight chance
+      if (checkForFight(repKey)) {
+        return; // If a fight breaks out, we skip everything else
+      }
+
       currentRepKey = repKey;
       currentModalType = 'drink';
       openModal("Drink Offer", getDrinkDialogue(repKey));
+
       // Increase the person's "like" by 1
       REP_DATA[repKey].like += 1;
+      // Increase drinksCount
+      REP_DATA[repKey].drinksCount += 1;
+
+      // If they've met or exceeded their drinksToLeave threshold, they leave and drop an item
+      if (REP_DATA[repKey].drinksCount >= REP_DATA[repKey].drinksToLeave) {
+        const randomItem = pickRandomLine(RANDOM_ITEMS);
+        setTimeout(() => {
+          alert(`${REP_DATA[repKey].name} is too drunk to carry on. They stagger out, leaving behind ${randomItem}!`);
+        }, 500);
+        // You might want to reset their drinksCount or otherwise note that they've left
+        // For now, let's just reset to 0 and set drinksToLeave very high so they won't leave again
+        REP_DATA[repKey].drinksCount = 0;
+        REP_DATA[repKey].drinksToLeave = 9999; 
+      }
     }
 
     function getDrinkDialogue(repKey) {
@@ -602,6 +626,11 @@
      *  BRIBE LOGIC
      *************************************/
     function openBribeModal(repKey) {
+      // First, check for the 5% fight chance
+      if (checkForFight(repKey)) {
+        return; // If a fight breaks out, do not open the bribe modal
+      }
+
       currentRepKey = repKey;
       currentModalType = 'bribe';
       openModal(`Bribe Attempt for ${REP_DATA[repKey].name}`, `"What is it you wish to offer?"`);
@@ -618,10 +647,8 @@
       // Calculate a random threshold in [minBribe, maxBribe]
       let threshold = getRandomInt(rep.minBribe, rep.maxBribe);
 
-      // If the person 'likes' you (each "like" reduces threshold by 10% of its *base range*).
-      // For example, if threshold was 80 and they have 1 'like', threshold is 72 (10% discount).
-      let discount = 0.1 * rep.like; // 10% per like
-      // apply discount to threshold
+      // Each "like" reduces threshold by 10% of its base range
+      let discount = 0.1 * rep.like; 
       threshold = Math.floor(threshold * (1 - discount));
 
       if (bribeValue < threshold) {
@@ -648,7 +675,6 @@
       const rep = REP_DATA[repKey];
       const roll = Math.random();
       // People who like you more might be more likely to grant an audience
-      // Let's say each point of 'like' increases base audienceChance by +0.05 (5%), max 0.95 total
       let adjustedAudienceChance = rep.audienceChance + (0.05 * rep.like);
       if (adjustedAudienceChance > 0.95) {
         adjustedAudienceChance = 0.95; 
@@ -659,6 +685,18 @@
       } else {
         alert(`${rep.name} denies your request. No audience today.`);
       }
+    }
+
+    /*************************************
+     *  CHECK FOR FIGHT
+     *************************************/
+    function checkForFight(repKey) {
+      // 5% chance a fight breaks out
+      if (Math.random() < 0.05) {
+        alert(`A fight breaks out with ${REP_DATA[repKey].name}! Your approach ends in chaos!`);
+        return true;
+      }
+      return false;
     }
 
     /*************************************
@@ -693,11 +731,13 @@
     }
 
     /*************************************
-     *  END OF DAY (RESET LIKES)
+     *  END OF DAY (RESET LIKES & DRINKS)
      *************************************/
     function endDay() {
       for (const key in REP_DATA) {
         REP_DATA[key].like = 0;
+        REP_DATA[key].drinksCount = 0;
+        REP_DATA[key].drinksToLeave = getRandomInt(10, 20);
       }
       alert("A new day dawns at the Lucky Serpent. All drink-based goodwill is forgotten!");
     }
