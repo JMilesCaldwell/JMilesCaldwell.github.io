@@ -20,7 +20,7 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 2rem auto;
       background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
@@ -29,6 +29,7 @@
 
     h1, h2 {
       font-family: 'Cinzel', serif;
+      margin: 0.5rem 0;
     }
 
     .faction-section {
@@ -46,20 +47,13 @@
       margin-bottom: 1rem;
     }
 
-    /* Vertical Banner (fixed width or fixed height, pick your preference) */
-    .faction-banner {
-      width: 120px;  /* example fixed width */
-      height: auto;  /* banner remains vertical */
-      border: 2px solid #8B0000;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-    }
-
-    .faction-portrait {
-      max-width: 150px;
+    .faction-img {
+      width: 150px;  /* square faction image */
+      height: 150px;
       border: 2px solid #8B0000;
       border-radius: 8px;
-      margin: 0.5rem;
+      object-fit: cover;
+      margin-bottom: 0.5rem;
     }
 
     .faction-content {
@@ -79,6 +73,7 @@
       border: 1px solid #8B0000;
       padding: 0.5rem;
       text-align: center;
+      vertical-align: middle;
     }
 
     th {
@@ -87,43 +82,42 @@
       font-family: 'Cinzel', serif;
     }
 
-    .divider {
-      margin: 1rem auto;
-      font-size: 1.5rem;
-    }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
+    .rep-portrait {
+      width: 80px;  /* representative portrait size */
+      height: 80px;
+      border: 2px solid #660000;
+      border-radius: 8px;
+      object-fit: cover;
     }
 
-    /* Button Styling */
-    .bribe-button, .audience-button, .home-button {
+    /* Buttons */
+    .action-button, .home-button {
       background: #8B0000;
       color: #FAF4E0;
       border: 1px solid #660000;
-      padding: 0.3rem 0.6rem;
+      padding: 0.4rem 0.8rem;
       border-radius: 4px;
       cursor: pointer;
       font-family: 'Cinzel', serif;
       margin: 0.2rem;
+      text-decoration: none;
     }
-    .bribe-button:hover, .audience-button:hover, .home-button:hover {
+    .action-button:hover, .home-button:hover {
       background: #660000;
     }
 
-    /* Modal Styling */
-    #bribeModal {
-      display: none; /* hidden by default */
-      position: fixed; 
+    /* Modal Overlay */
+    #modalOverlay {
+      display: none;
+      position: fixed;
       z-index: 999;
-      left: 0;
+      left: 0; 
       top: 0;
       width: 100%;
       height: 100%;
-      overflow: auto;
       background-color: rgba(0,0,0,0.8); /* black overlay */
     }
+
     .modal-content {
       background-color: #2a2a2a;
       margin: 10% auto;
@@ -149,303 +143,459 @@
     .close-button:hover {
       background: #660000;
     }
-    .modal-content label {
+
+    label {
       display: block;
       margin-bottom: 0.5rem;
       font-family: 'Cinzel', serif;
     }
-    .modal-content input {
+
+    input {
       width: 100%;
       padding: 0.4rem;
       margin-bottom: 0.8rem;
       box-sizing: border-box;
       font-family: 'Almendra', serif;
     }
-    .submit-bribe-button {
-      display: inline-block;
-      margin-top: 0.5rem;
+
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
     }
 
-    @media (max-width: 600px) {
-      table {
-        font-size: 0.9rem;
-      }
-      th, td {
-        padding: 0.3rem;
-      }
-    }
   </style>
 </head>
 <body>
 
   <div class="container">
     <h1>Council Hall</h1>
-    <p>Whether you’re seeking to propose visionary projects, support pivotal decisions, or navigate the intricate dance of diplomacy, this portal is your key to connecting with the decision-makers who guide our community.<br>
-<br>
-Note: The Council Hall respects all contributions and forms of civic support, valuing mutual understanding, cooperation, and... discretionary generosity...</p>
+    <p>Welcome to the political heart of the Isles. Here, the leading powers convene… or conspire.</p>
 
     <div class="divider"></div>
+
+    <!-- Azurean League -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/azure.png" alt="Azurean League" class="faction-img">
+        <h2>The Azurean League</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          A loose federation of city-states bound by diplomatic finesse and the leadership 
+          of its princely ruler. Prosperous through maritime trade and cultural exchange, 
+          the League seeks alliances as much as it harbours deep rivalries within.
+        </p>
+      </div>
+
+      <!-- Representatives -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Leader -->
+          <tr>
+            <td>
+              <img src="resources/artemise_laurent.png" alt="Artemise Laurent Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Artemise Laurent</strong><br>
+              Prince d'Azure
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('artemise')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('artemise')">Request Audience</button>
+            </td>
+          </tr>
+          <!-- Additional Rep -->
+          <tr>
+            <td>
+              <img src="resources/lady_aurelia.png" alt="Lady Aurelia Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Lady Aurelia Montague</strong><br>
+              Envoy of the League
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('aurelia')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('aurelia')">Request Audience</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Hegemony of Silt -->
     <div class="faction-section">
       <div class="faction-header">
-        <!-- Vertical Banner -->
-        <img 
-          src="resources/silt.png" 
-          alt="Hegemony of Silt Banner Placeholder" 
-          class="faction-banner"
-        >
-        <!-- Portrait -->
-        <img 
-          src="resources/hegemony_of_silt_portrait.png" 
-          alt="Hegemony of Silt Portrait Placeholder" 
-          class="faction-portrait"
-        >
-        <h2>Hegemony of Silt</h2>
+        <img src="resources/silt.png" alt="Hegemony of Silt" class="faction-img">
+        <h2>The Hegemony of Silt</h2>
       </div>
       <div class="faction-content">
-        <p><strong>Government & Power:</strong> Theocratic-oligarchic regime under the Cult of Rael.</p>
-        <p><strong>Economy:</strong> Claims self-sufficiency; supports costly mercenary armies.</p>
-        <p><strong>Culture & Religion:</strong> Rael’s doctrine of justice and war underpins all civic life.</p>
+        <p>
+          A theocratic-oligarchic power tightly controlled by the Cult of Rael. Renowned for 
+          its self-sufficiency and formidable mercenary forces, Silt brooks no dissent and 
+          enforces strict religious adherence throughout its domain.
+        </p>
       </div>
 
-      <h3>Key Representatives</h3>
+      <!-- Representatives -->
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Role</th>
+            <th>Portrait</th>
+            <th>Name & Title</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
+          <!-- Leader -->
           <tr>
-            <td>High Pentarch Ravella</td>
-            <td>Religious Leader</td>
             <td>
-              <button class="bribe-button" onclick="openBribeModal('siltRavella')">Bribe</button>
-              <button class="audience-button" onclick="attemptAudience('siltRavella')">Request Audience</button>
+              <img src="resources/ulrich_zaufer.png" alt="Ulrich Zaufer Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Ulrich Zaufer III</strong><br>
+              Baron Villegrom
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('ulrich')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('ulrich')">Request Audience</button>
             </td>
           </tr>
+          <!-- Additional Rep -->
           <tr>
-            <td>Chairman Harren of Silt</td>
-            <td>Mercantile Head</td>
             <td>
-              <button class="bribe-button" onclick="openBribeModal('siltHarren')">Bribe</button>
-              <button class="audience-button" onclick="attemptAudience('siltHarren')">Request Audience</button>
+              <img src="resources/high_pentarch_ravella.png" alt="High Pentarch Ravella Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>High Pentarch Ravella</strong><br>
+              Voice of Rael
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('ravella')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('ravella')">Request Audience</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Example Additional Faction: Azurean League (repeat pattern) -->
+    <!-- Margraeve-Duskhaven -->
     <div class="faction-section">
       <div class="faction-header">
-        <img 
-          src="resources/azure.png" 
-          alt="Azurean League Banner Placeholder" 
-          class="faction-banner"
-        >
-        <img 
-          src="resources/azurean_league_portrait.png" 
-          alt="Azurean League Portrait Placeholder" 
-          class="faction-portrait"
-        >
-        <h2>The Azurean League</h2>
+        <img src="resources/margraeve.png" alt="Margraeve-Duskhaven" class="faction-img">
+        <h2>Margraeve-Duskhaven</h2>
       </div>
       <div class="faction-content">
-        <p><strong>Government & Power:</strong> Loose federation of lords; led by the Prince of Azure.</p>
-        <p><strong>Economy:</strong> Notable maritime trade hub; mines and craftsmanship flourish.</p>
-        <p><strong>Culture & Religion:</strong> Diverse traditions; Origen Brotherhood highly respected.</p>
+        <p>
+          A realm of the undead, ruled by ancient aristocracy and bound by the dark rites of 
+          Nergal’s Path. Its citizens, though shunned elsewhere, are surprisingly joyful, 
+          viewing undeath as a sacred cycle rather than a curse.
+        </p>
       </div>
 
-      <h3>Key Representatives</h3>
+      <!-- Representatives -->
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Role</th>
+            <th>Portrait</th>
+            <th>Name & Title</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
+          <!-- Leader -->
           <tr>
-            <td>Prince Helias of Azure</td>
-            <td>Federation Leader</td>
             <td>
-              <button class="bribe-button" onclick="openBribeModal('azureHelias')">Bribe</button>
-              <button class="audience-button" onclick="attemptAudience('azureHelias')">Request Audience</button>
+              <img src="resources/ezekiel_margraeve.png" alt="Archduke Ezekiel Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Archduke Ezekiel Margraeve</strong><br>
+              Undead Sovereign
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('ezekiel')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('ezekiel')">Request Audience</button>
             </td>
           </tr>
+          <!-- Additional Rep -->
           <tr>
-            <td>Lord Elandor Silversong</td>
-            <td>Trade Counsellor</td>
             <td>
-              <button class="bribe-button" onclick="openBribeModal('azureElandor')">Bribe</button>
-              <button class="audience-button" onclick="attemptAudience('azureElandor')">Request Audience</button>
+              <img src="resources/countess_seraphine.png" alt="Countess Seraphine Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Countess Seraphine Duskhaven</strong><br>
+              Diplomatic Envoy
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('seraphine')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('seraphine')">Request Audience</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Repeat for other factions as needed... -->
+    <!-- Caldwell People's Republic -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/caldwell.png" alt="Caldwell People's Republic" class="faction-img">
+        <h2>Caldwell People's Republic</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          A nominal democracy deeply under the thumb of Silt. Though it once thrived as the 
+          Isles’ breadbasket, political turmoil and failing fortunes have left its people wary 
+          and resentful of external control.
+        </p>
+      </div>
+
+      <!-- Representatives -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Leader -->
+          <tr>
+            <td>
+              <img src="resources/chancellor_paxton.png" alt="Chancellor Paxton Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Chancellor Paxton</strong><br>
+              Head of State
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('paxton')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('paxton')">Request Audience</button>
+            </td>
+          </tr>
+          <!-- Additional Rep -->
+          <tr>
+            <td>
+              <img src="resources/avelia_greenshire.png" alt="Avelia Greenshire Portrait" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Minister Avelia Greenshire</strong><br>
+              Overseer of Agriculture
+            </td>
+            <td>
+              <button class="action-button" onclick="openBribeModal('avelia')">Bribe</button>
+              <button class="action-button" onclick="attemptAudience('avelia')">Request Audience</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- HOME BUTTON AT THE BOTTOM -->
     <a href="#" class="home-button">Home</a>
   </div>
 
-  <!-- Bribe Modal -->
-  <div id="bribeModal">
+  <!-- Modal Overlay -->
+  <div id="modalOverlay">
     <div class="modal-content">
-      <button class="close-button" onclick="closeBribeModal()">Close</button>
-      <h2 id="bribeTitle"></h2>
-      <p id="bribeDialogue">"What is it you wish to offer?"</p>
+      <button class="close-button" onclick="closeModal()">Close</button>
+      <h2 id="modalTitle"></h2>
+      <p id="modalDialogue"></p>
 
-      <label for="bribeAmount">Bribe Amount (GP):</label>
-      <input type="number" id="bribeAmount" min="0" value="0" />
-      <button class="submit-bribe-button" onclick="submitBribe()">Offer Bribe</button>
-      
-      <p id="bribeResult"></p>
+      <!-- Bribe input only shown if bribe mode -->
+      <div id="bribeSection" style="display:none;">
+        <label for="bribeAmount">Bribe Amount (GP):</label>
+        <input type="number" id="bribeAmount" min="0" value="0" />
+        <p id="bribeResult"></p>
+        <button class="action-button" onclick="submitBribe()">Offer Bribe</button>
+      </div>
     </div>
   </div>
 
   <script>
-    /************************
-     *   REPRESENTATIVE DATA
-     ************************/
-    /*
-      For each representative, define:
-      - name: Display name
-      - minBribe & maxBribe: random threshold range
-      - bribeSuccessChance: If the player's bribe >= randomThreshold,
-         there is still a chance to fail (0.0 -> 1.0).
-      - audienceChance: chance to grant an audience if requested
-      - favorLines: array of random "favours" if the bribe is successful
-    */
-    const REP_DATA = {
-      siltRavella: {
-        name: "High Pentarch Ravella",
-        minBribe: 50,
-        maxBribe: 200,
-        bribeSuccessChance: 0.75,   // 75% success if above threshold
-        audienceChance: 0.25,       // 25% chance for an audience
+    /*******************************************************************
+     *   REPRESENTATIVE DATA & SIMPLE BRIBE/AUDIENCE DEMO FUNCTIONALITY
+     *******************************************************************/
+    const REPS = {
+      // Azure
+      artemise: {
+        name: "Artemise Laurent, Prince d'Azure",
+        minBribe: 60,
+        maxBribe: 180,
+        bribeSuccessChance: 0.75,
+        audienceChance: 0.25,
         favorLines: [
-          "A subtle blessing to conceal your deeds from Rael’s most watchful inquisitors.",
-          "An indulgence that absolves you of minor heresies—until next time.",
-          "Some quiet instructions to the temple guard to look the other way."
+          "Granting you passage through Azure’s busiest port tariff-free.",
+          "Inviting you to a private soirée to meet influential lords and ladies.",
+          "Vouching for your honour in a sensitive boundary dispute."
         ]
       },
-      siltHarren: {
-        name: "Chairman Harren of Silt",
+      aurelia: {
+        name: "Lady Aurelia Montague",
         minBribe: 30,
-        maxBribe: 150,
+        maxBribe: 90,
         bribeSuccessChance: 0.80,
         audienceChance: 0.33,
         favorLines: [
-          "A sweet tariff reduction on your next shipment of questionable goods.",
-          "A discreet trade licence that bypasses local port authorities.",
-          "Renegotiating a minor contract to divert mercenaries in your favour."
+          "Pulling strings to expedite your shipments at the harbour.",
+          "Whispering your name favourably among the Origen Brotherhood.",
+          "Brokerage of a small but lucrative trade contract with an elven city."
         ]
       },
-      azureHelias: {
-        name: "Prince Helias of Azure",
-        minBribe: 60,
-        maxBribe: 180,
+      // Silt
+      ulrich: {
+        name: "Ulrich Zaufer III, Baron Villegrom",
+        minBribe: 50,
+        maxBribe: 120,
         bribeSuccessChance: 0.70,
-        audienceChance: 0.40,
+        audienceChance: 0.25,
         favorLines: [
-          "Diplomatic immunity for a fortnight in Azure’s harbours.",
-          "Introductions to Azure’s most influential lords at the next court gala.",
-          "A short, very private audience with one of the Prince’s top advisors."
+          "Allowing your caravan safe passage through heavily patrolled roads.",
+          "Having the Cult of Rael turn a blind eye to certain irregularities.",
+          "Reducing mercenary interference with your business—temporarily."
         ]
       },
-      azureElandor: {
-        name: "Lord Elandor Silversong",
-        minBribe: 20,
+      ravella: {
+        name: "High Pentarch Ravella, Voice of Rael",
+        minBribe: 80,
+        maxBribe: 200,
+        bribeSuccessChance: 0.65,
+        audienceChance: 0.20,
+        favorLines: [
+          "Blessing your next venture with Rael’s righteous aura—fears of heresy aside.",
+          "Filing away evidence of minor transgressions from the watchful eyes of the Citadel.",
+          "Dispatching a small retinue of knights to deter local bandits, no questions asked."
+        ]
+      },
+      // Margraeve
+      ezekiel: {
+        name: "Archduke Ezekiel Margraeve",
+        minBribe: 70,
+        maxBribe: 150,
+        bribeSuccessChance: 0.75,
+        audienceChance: 0.20,
+        favorLines: [
+          "Granting you cryptic boons from the necropolis for 'extended services.'",
+          "Issuing an edict that hushes any mortal dissent in your presence.",
+          "Allowing you an exclusive audience with the upper echelons of Duskhaven’s vampiric court."
+        ]
+      },
+      seraphine: {
+        name: "Countess Seraphine Duskhaven",
+        minBribe: 40,
         maxBribe: 100,
-        bribeSuccessChance: 0.85,
+        bribeSuccessChance: 0.80,
         audienceChance: 0.33,
         favorLines: [
-          "A hush-hush inclusion in the next major copper trade deal.",
-          "Permitting some 'accounting errors' in your cargo logs—no questions asked.",
-          "A promise to handle those 'export taxes' in a more creative manner."
+          "Arranging for undead couriers to deliver your parcels in record time.",
+          "Extending the 'night’s protection' to your allies traveling after dusk.",
+          "Securing a curious Nergal relic that wards off lesser undead—at a cost."
+        ]
+      },
+      // Caldwell
+      paxton: {
+        name: "Chancellor Paxton, Head of State",
+        minBribe: 25,
+        maxBribe: 80,
+        bribeSuccessChance: 0.80,
+        audienceChance: 0.33,
+        favorLines: [
+          "Reducing your local tax burden for a quarter’s harvest.",
+          "Diverting city guards to quell a protest that threatened your warehouse.",
+          "Issuing a lukewarm condemnation of your rivals, dampening their popularity."
+        ]
+      },
+      avelia: {
+        name: "Minister Avelia Greenshire, Overseer of Agriculture",
+        minBribe: 20,
+        maxBribe: 60,
+        bribeSuccessChance: 0.85,
+        audienceChance: 0.40,
+        favorLines: [
+          "Allocating extra farmland for your use—albeit quietly.",
+          "Hastily approving a seed grant you 'qualified for.'",
+          "Arranging a harvest festival endorsement to boost your local standing."
         ]
       }
-      // Add additional entries for each representative across all factions
     };
 
-    /************************
-     *   BRIBE MODAL LOGIC
-     ************************/
-    let currentRepKey = null; // Track which rep's modal is open
+    let currentRepKey = null;
+    let modalType = null;
 
+    /* Open the bribe modal */
     function openBribeModal(repKey) {
       currentRepKey = repKey;
-      const repInfo = REP_DATA[repKey];
-      document.getElementById("bribeTitle").textContent = repInfo.name;
-      document.getElementById("bribeResult").textContent = "";
+      modalType = 'bribe';
+      document.getElementById("modalTitle").textContent = `Bribe Attempt: ${REPS[repKey].name}`;
+      document.getElementById("modalDialogue").textContent = "What sum would you offer?";
+      document.getElementById("bribeSection").style.display = "block";
       document.getElementById("bribeAmount").value = 0;
-      document.getElementById("bribeModal").style.display = "block";
+      document.getElementById("bribeResult").textContent = "";
+      document.getElementById("modalOverlay").style.display = "block";
     }
 
-    function closeBribeModal() {
-      document.getElementById("bribeModal").style.display = "none";
-    }
-
-    // Submit the bribe, check thresholds
+    /* Attempt to submit a bribe */
     function submitBribe() {
-      const repInfo = REP_DATA[currentRepKey];
+      const rep = REPS[currentRepKey];
       const bribeValue = parseInt(document.getElementById("bribeAmount").value, 10) || 0;
       const bribeResult = document.getElementById("bribeResult");
 
-      // Random threshold in [minBribe, maxBribe]
-      const threshold = getRandomInt(repInfo.minBribe, repInfo.maxBribe);
-
+      // Random threshold
+      const threshold = getRandomInt(rep.minBribe, rep.maxBribe);
       if (bribeValue < threshold) {
-        bribeResult.textContent = `Your offer is too low. ${repInfo.name} scoffs and dismisses you. (Threshold was somewhere between ${repInfo.minBribe} & ${repInfo.maxBribe}.)`;
+        bribeResult.textContent = `Your bribe is too low. ${rep.name} declines. (Secret threshold: ~${threshold} GP.)`;
         return;
       }
 
-      // We made the threshold; now there's a chance to succeed
-      const randomRoll = Math.random(); // 0 to 1
-      if (randomRoll <= repInfo.bribeSuccessChance) {
-        // success
-        const randomFavor = pickRandomLine(repInfo.favorLines);
-        bribeResult.textContent = `Success! ${repInfo.name} accepts your bribe. Favour granted: ${randomFavor}`;
+      // We made the threshold; now chance to succeed
+      const roll = Math.random();
+      if (roll <= rep.bribeSuccessChance) {
+        const favor = pickRandomLine(rep.favorLines);
+        bribeResult.textContent = `Success! ${rep.name} is swayed and grants a favour: ${favor}`;
       } else {
-        // fail
-        bribeResult.textContent = `${repInfo.name} pockets your coin but offers only an icy stare. No favours for you.`;
+        bribeResult.textContent = `${rep.name} pockets your gold but does nothing in return. How unfortunate!`;
       }
     }
 
-    /************************
-     *   AUDIENCE LOGIC
-     ************************/
+    /* Attempt an audience */
     function attemptAudience(repKey) {
-      const repInfo = REP_DATA[repKey];
-      const randomRoll = Math.random(); // 0 to 1
-      if (randomRoll <= repInfo.audienceChance) {
-        alert(`${repInfo.name} grants you an audience!`);
+      const rep = REPS[repKey];
+      const roll = Math.random();
+      if (roll <= rep.audienceChance) {
+        alert(`${rep.name} grants you a brief audience. Speak wisely.`);
       } else {
-        alert(`${repInfo.name} denies your request. No audience today.`);
+        alert(`${rep.name} denies your request. They seem unimpressed.`);
       }
     }
 
-    /************************
-     *   UTILITY FUNCTIONS
-     ************************/
+    /* Close Modal */
+    function closeModal() {
+      document.getElementById("modalOverlay").style.display = "none";
+      document.getElementById("bribeSection").style.display = "none";
+    }
+
+    /* Utility for random in [min, max] */
     function getRandomInt(min, max) {
-      // inclusive of both min and max
       min = Math.ceil(min);
       max = Math.floor(max);
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function pickRandomLine(array) {
-      const idx = Math.floor(Math.random() * array.length);
-      return array[idx];
+    /* Utility pick random line from array */
+    function pickRandomLine(arr) {
+      const idx = Math.floor(Math.random() * arr.length);
+      return arr[idx];
     }
   </script>
 </body>
