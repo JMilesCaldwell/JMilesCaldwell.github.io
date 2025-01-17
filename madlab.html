@@ -1,387 +1,621 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <!-- A viewport meta to make things more pleasant on mobile. -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, 
-    minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Evershroud Chronicles: A Little Strategy Romp</title>
-
-  <!-- Fonts as used in your existing code -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  />
-
-  <!-- Simple styling that borrows from your existing aesthetic. -->
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blackleaf & Bootstraps (Fantasy Dope Wars)</title>
   <style>
     body {
       margin: 0;
-      background: url("resources/index.png") no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', serif;
-      text-align: center;
+      font-family: sans-serif;
+      background: #312f2f url('resources/docks.png') center/cover no-repeat;
+      color: #eee;
+    }
+    .wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1rem;
     }
     h1, h2, h3 {
-      font-family: 'Cinzel', serif;
-      margin: 0.5rem 0;
+      margin-bottom: 0.5rem;
+      font-family: serif;
+      text-shadow: 1px 1px 2px #000;
     }
-    .container {
-      max-width: 600px;
-      margin: 1rem auto;
-      background: rgba(0, 0, 0, 0.7);
+    .section {
+      background: rgba(0,0,0,0.7);
       padding: 1rem;
-      border-radius: 10px;
-      text-align: left;
+      border-radius: 8px;
+      margin-bottom: 1rem;
     }
-    .btn {
-      background: #8B0000;
-      color: #FAF4E0;
-      padding: 0.5rem 1rem;
-      border: 2px solid #660000;
-      border-radius: 5px;
-      cursor: pointer;
-      font-family: 'Cinzel', serif;
-      margin: 0.3rem;
-      text-decoration: none;
-    }
-    .btn:hover {
-      background: #660000;
-    }
-    .flex-row {
+    .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      justify-content: center;
+      margin-bottom: 1rem;
     }
-    .faction-card {
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid #660000;
-      border-radius: 8px;
-      width: 140px;
-      padding: 0.5rem;
-      text-align: center;
+    .button {
+      background: #750000;
+      color: #eee;
+      border: 1px solid #400000;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
       cursor: pointer;
-      transition: transform 0.2s;
+      font-weight: bold;
+      text-shadow: 1px 1px 1px #000;
     }
-    .faction-card:hover {
-      transform: scale(1.05);
+    .button:hover {
+      background: #600000;
     }
-    .faction-card img {
-      max-width: 100%;
-      border: 2px solid #8B0000;
+    select, input {
+      padding: 0.3rem;
+      border: 1px solid #555;
       border-radius: 4px;
     }
-    .selected {
-      border-color: #FFD700 !important;
-      box-shadow: 0 0 10px #FFD700;
-    }
-    .game-section {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid #660000;
-      border-radius: 8px;
-    }
-    .resource-display {
+    .inventory-table, .market-table {
+      width: 100%;
+      border-collapse: collapse;
       margin-bottom: 1rem;
-      padding: 0.5rem;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid #8B0000;
-      border-radius: 5px;
     }
-    .location-card {
+    .inventory-table th, .inventory-table td,
+    .market-table th, .market-table td {
+      border: 1px solid #444;
+      padding: 0.4rem;
+      text-align: center;
       background: rgba(255,255,255,0.1);
-      border: 1px solid #660000;
-      border-radius: 5px;
-      margin: 0.5rem 0;
+    }
+    .inventory-table th, .market-table th {
+      background: #550000;
+      text-shadow: 1px 1px 1px #000;
+    }
+    .log-area {
+      white-space: pre-line;
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.2);
       padding: 0.5rem;
+      border: 1px solid #444;
+      border-radius: 5px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
-    .location-card:hover {
-      background: rgba(255,255,255,0.15);
+    .alert {
+      color: #ffadad;
+      font-weight: bold;
     }
-    .hidden {
-      display: none;
-    }
-    /* Mobile adaptation: ensure things scale nicely. */
-    @media (max-width: 600px) {
-      .faction-card {
-        width: 120px;
-      }
+    @media(max-width: 600px) {
+      .controls {flex-direction: column;}
+      .section {padding: 0.5rem;}
     }
   </style>
 </head>
 <body>
-
-<div class="container" id="introContainer">
-  <h1>Evershroud Chronicles</h1>
-  <p>
-    Well met, traveller. You stand poised to carve your legacy among the swirling mists 
-    of the Isles—ally with cunning factions, gather resources, and survive curious 
-    encounters. <em>Choose your affiliation</em>, if you dare...
+<div class="wrapper">
+  <h1>Blackleaf & Bootstraps</h1>
+  <p style="font-style: italic;">
+    A Fantasy “Dope Wars” – Buy, Sell, Evade Guards, & Pay Off Your Shady Debt Before Time Runs Out
   </p>
 
-  <!-- Faction selection row -->
-  <div class="flex-row" id="factionRow">
-    <!-- We will populate these from JS for convenience -->
+  <!-- Setup Section -->
+  <div class="section" id="setupSection">
+    <h2>Setup</h2>
+    <label for="gameLength">Length of Game (days):</label>
+    <select id="gameLength">
+      <option value="15">Short (15 days)</option>
+      <option value="30" selected>Standard (30 days)</option>
+      <option value="60">Long (60 days)</option>
+    </select>
+
+    <br><br>
+    <label for="startGold">Starting Gold:</label>
+    <input type="number" id="startGold" value="100" style="width:100px;" />
+
+    <label for="startDebt">Starting Debt:</label>
+    <input type="number" id="startDebt" value="500" style="width:100px;" />
+
+    <label for="cargoCap">Cargo Capacity:</label>
+    <input type="number" id="cargoCap" value="50" style="width:80px;" />
+
+    <br><br>
+    <button class="button" onclick="startGame()">Begin</button>
   </div>
 
-  <button class="btn" id="startGameBtn">Begin Your Journey</button>
-</div>
+  <!-- Main Game Section -->
+  <div id="mainGame" style="display:none;">
+    <!-- Summary / Status -->
+    <div class="section">
+      <h2>Status</h2>
+      <p><strong>Day:</strong> <span id="dayCount"></span> / <span id="maxDays"></span> 
+      &nbsp; | &nbsp; 
+      <strong>Gold:</strong> <span id="goldCount"></span> 
+      &nbsp; | &nbsp;
+      <strong>Debt:</strong> <span id="debtCount"></span> 
+      &nbsp; | &nbsp; 
+      <strong>Cargo Used:</strong> <span id="cargoUsed"></span> / <span id="cargoMax"></span>
+      </p>
+      <p>
+        <button class="button" onclick="payDebtPrompt()">Pay Debt</button>
+      </p>
+    </div>
 
-<div class="container hidden" id="gameContainer">
-  <h2 id="factionTitle"></h2>
-  <div class="resource-display">
-    <strong>Resources:</strong> <span id="resourceGold"></span> gold, 
-    <span id="resourceInfluence"></span> influence
-  </div>
+    <!-- Travel + City Info -->
+    <div class="section">
+      <h2>Travel & Markets</h2>
+      <div class="controls">
+        <div>
+          <label for="citySelect">Current City:</label>
+          <select id="citySelect" onchange="refreshMarket()"></select>
+        </div>
+        <button class="button" onclick="travel()">Travel (Ends Day)</button>
+      </div>
 
-  <div class="game-section">
-    <h3>Available Locations</h3>
-    <div id="locationList"></div>
-  </div>
+      <table class="market-table" id="marketTable">
+        <thead>
+          <tr>
+            <th>Commodity</th>
+            <th>Price (GP)</th>
+            <th>Buy / Sell</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <div class="game-section">
-    <h3>Random Encounter</h3>
-    <p>Whenever you travel or dabble in mischief, something curious may unfold.</p>
-    <button class="btn" id="encounterBtn">Test Your Luck</button>
-    <div id="encounterResult" style="margin-top: 0.5rem;"></div>
+    <!-- Inventory -->
+    <div class="section">
+      <h2>Inventory</h2>
+      <table class="inventory-table" id="inventoryTable">
+        <thead>
+          <tr>
+            <th>Commodity</th>
+            <th>Qty</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Log/Events -->
+    <div class="section">
+      <h2>Log & Random Events</h2>
+      <div class="log-area" id="logArea"></div>
+    </div>
   </div>
 </div>
 
 <script>
-/* 
-   ================   SIMPLE DATA   ================
-   We'll define a handful of factions, referencing some 
-   names from your world. We'll also define a few locations 
-   (like the Temple District or Alchemist Shop) that we can 
-   “travel” to, purely for flavour. 
-*/
-const factions = [
-  {
-    id: "azure",
-    name: "Azurean League",
-    image: "resources/azure.png",
-    desc: "A loose federation of city-states with princely rule—prosperous in maritime trade."
-  },
-  {
-    id: "silt",
-    name: "Hegemony of Silt",
-    image: "resources/silt.png",
-    desc: "A theocratic domain under the Cult of Rael, known for its mercenary forces."
-  },
-  {
-    id: "margraeve",
-    name: "Margraeve-Duskhaven",
-    image: "resources/margraeve.png",
-    desc: "A realm of undead aristocracy, bound by dark rites but ironically joyful citizens."
-  },
-  {
-    id: "caldwell",
-    name: "Caldwell Republic",
-    image: "resources/caldwell.png",
-    desc: "Nominal democracy overshadowed by Silt, once the breadbasket of the Isles."
-  }
+/*************************************************************************
+ * 1) Basic Game Variables
+ *************************************************************************/
+let day = 1;
+let maxDay = 30;
+let gold = 100;
+let debt = 500;
+let cargoCapacity = 50;
+let usedCargo = 0;
+let currentCity = "Azure"; // default
+let ended = false;
+
+// Towns
+// Each has a 'risk' of encountering guards/trouble, and an intangible “distance” 
+// that helps shape random event difficulty. 
+// (We’ll keep it simpler: traveling from one city to another always ends the day.)
+const cities = [
+  { name: "Azure", risk: 3 },
+  { name: "Silt", risk: 5 },
+  { name: "Margraeve", risk: 4 },
+  { name: "Freeport", risk: 2 },
+  { name: "Giant's Head", risk: 1 },
+  { name: "Caldwell", risk: 3 },
+  { name: "Wren", risk: 4 },
+  { name: "Villegrom", risk: 5 },
+  { name: "Holgren", risk: 4 },
+  { name: "Refuge", risk: 2 },
 ];
 
-const locations = [
-  {
-    name: "Alchemist’s Shop",
-    desc: "A pungent den of potions and concoctions. Possibly dangerous, definitely expensive.",
-    effect: () => {
-      // Example effect on resources
-      const cost = getRandomInt(10, 50);
-      if (player.gold >= cost) {
-        player.gold -= cost;
-        player.influence += 1;
-        return `You spent ${cost} gold on arcane goo, gaining a whiff of influence (+1).`;
-      } else {
-        return `You cannot afford these splendidly bizarre potions. The alchemist sneers.`;
-      }
-    }
-  },
-  {
-    name: "Temple District",
-    desc: "Seek the blessings of the Five—if your gold can appease them.",
-    effect: () => {
-      const donation = getRandomInt(2, 20);
-      if (player.gold >= donation) {
-        player.gold -= donation;
-        player.influence += 2;
-        return `You donate ${donation} gold, receiving a minor divine favour (+2 influence).`;
-      } else {
-        return `You approach the altars empty-handed. The priests politely show you the door.`;
-      }
-    }
-  },
-  {
-    name: "Council Hall",
-    desc: "A seat of intrigue where deals are struck in hushed tones.",
-    effect: () => {
-      // If influence is high, maybe gain gold.
-      if (player.influence >= 5) {
-        const gain = getRandomInt(10, 30);
-        player.gold += gain;
-        player.influence -= 2; 
-        return `Leveraging your clout, you broker a small deal: +${gain} gold, -2 influence.`;
-      } else {
-        return `The council politely notes your lack of status. No deals for you.`;
-      }
-    }
-  },
-  {
-    name: "The Pickled Piglet",
-    desc: "A notorious tavern where rogues, ruffians, and potential allies lurk.",
-    effect: () => {
-      // Maybe random effect
-      const roll = Math.random();
-      if (roll < 0.5) {
-        player.gold -= 5;
-        player.influence += 1;
-        return `You buy a round for the ruffians (-5 gold), forging a new connection (+1 influence).`;
-      } else {
-        const stolen = Math.min(player.gold, getRandomInt(5, 15));
-        player.gold -= stolen;
-        return `A cunning pickpocket lightens your purse by ${stolen} gold while you’re tipsy.`;
-      }
-    }
-  }
+// Commodities – A fantasy contraband lineup reminiscent of dope wars
+// Each has a base price range, and random daily multiplier in each city.
+const commodities = [
+  { name: "Blackleaf", minPrice: 12, maxPrice: 30 },
+  { name: "Troll’s Blood", minPrice: 20, maxPrice: 60 },
+  { name: "Demon’s Dust", minPrice: 50, maxPrice: 150 },
+  { name: "Phoenix Tears", minPrice: 80, maxPrice: 250 },
+  { name: "Faelight Spores", minPrice: 5, maxPrice: 12 },
+  { name: "Grave Lotus", minPrice: 18, maxPrice: 50 },
+  { name: "Moonwine", minPrice: 10, maxPrice: 25 },
+  { name: "Witch’s Bloom", minPrice: 4, maxPrice: 10 },
 ];
 
-/* Some random encounters for the “Test Your Luck” button. */
-const encounters = [
-  "A passing merchant drops a pouch in haste. Gain 10 gold!",
-  "A swarm of gulls descends upon your rations. Lose 5 gold for a replacement meal.",
-  "A robed figure extols the virtues of another realm; gain 2 influence for your open-mindedness.",
-  "Caught in an alley scuffle—lose 2 influence as your reputation gets tarnished.",
-  "A spontaneous festival enthralls you; you spend 8 gold but gain 1 influence dancing with the locals.",
-  "You unearth a hidden trinket—sellable for 15 gold!",
-  "You help an old fisherman mend his net; in gratitude, he discreetly slips you 5 gold.",
-  "You offend a minor noble by stepping on their toe—lose 1 influence.",
-  "A shadowy contact offers you hush money: +7 gold, but you feel slightly compromised…",
-  "A petty guard fines you for a trumped-up violation—lose 5 gold."
-];
+// Inventory structure: { 'Blackleaf': 0, 'Troll’s Blood': 0, ... } 
+let inventory = {};
+commodities.forEach(c => inventory[c.name] = 0);
 
-/* 
-   ================   GAME STATE   ================
-   We'll store the player's chosen faction, resources, etc.
-*/
-let chosenFaction = null;
-let player = {
-  gold: 50,
-  influence: 0
-};
+// Daily city prices: { cityName: { commodityName: price } }
+let cityPrices = {};
 
-/* 
-   ================   UTILITY   ================
-*/
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-/* 
-   ================   DOM MANIPULATION   ================
-*/
-
-// Step 1: Render faction cards
-const factionRow = document.getElementById("factionRow");
-factions.forEach(f => {
-  const card = document.createElement("div");
-  card.className = "faction-card";
-  card.innerHTML = `
-    <img src="${f.image}" alt="${f.name}">
-    <h3>${f.name}</h3>
-    <p style="font-size:0.8rem;">${f.desc}</p>
-  `;
-  card.onclick = () => {
-    // Mark as selected
-    document.querySelectorAll(".faction-card").forEach(c => c.classList.remove("selected"));
-    card.classList.add("selected");
-    chosenFaction = f;
-  };
-  factionRow.appendChild(card);
-});
-
-// Step 2: Begin game
-const startGameBtn = document.getElementById("startGameBtn");
-startGameBtn.onclick = () => {
-  if (!chosenFaction) {
-    alert("Pray choose a faction before plunging in, dear sir.");
-    return;
-  }
-  document.getElementById("introContainer").classList.add("hidden");
-  document.getElementById("gameContainer").classList.remove("hidden");
-  document.getElementById("factionTitle").textContent = chosenFaction.name;
-  updateResources();
-  renderLocations();
-};
-
-// Step 3: Update resource display
-function updateResources() {
-  document.getElementById("resourceGold").textContent = player.gold;
-  document.getElementById("resourceInfluence").textContent = player.influence;
-}
-
-// Step 4: Render location list
-function renderLocations() {
-  const locationList = document.getElementById("locationList");
-  locationList.innerHTML = ""; // clear out old
-  locations.forEach(loc => {
-    const locDiv = document.createElement("div");
-    locDiv.className = "location-card";
-    locDiv.innerHTML = `
-      <strong>${loc.name}</strong><br/>
-      <em>${loc.desc}</em><br/>
-      <button class="btn" style="margin-top:0.5rem;">Visit</button>
-    `;
-    locDiv.querySelector("button").onclick = () => {
-      const result = loc.effect();
-      alert(result);
-      updateResources();
-    };
-    locationList.appendChild(locDiv);
+// We’ll randomise them once each day
+function randomisePrices() {
+  cities.forEach(city => {
+    cityPrices[city.name] = {};
+    commodities.forEach(comm => {
+      const base = randInt(comm.minPrice, comm.maxPrice);
+      // Add mild city-based random factor
+      const cityFactor = 1 + (Math.random() * 0.4 - 0.2); // +/- 20%
+      const finalPrice = Math.max(1, Math.floor(base * cityFactor));
+      cityPrices[city.name][comm.name] = finalPrice;
+    });
   });
 }
 
-// Step 5: Encounters
-document.getElementById("encounterBtn").onclick = () => {
-  const e = encounters[Math.floor(Math.random() * encounters.length)];
-  let resultMsg = e;
+/*************************************************************************
+ * 2) Game Setup
+ *************************************************************************/
+function startGame() {
+  maxDay = parseInt(document.getElementById("gameLength").value, 10);
+  gold = parseInt(document.getElementById("startGold").value, 10);
+  debt = parseInt(document.getElementById("startDebt").value, 10);
+  cargoCapacity = parseInt(document.getElementById("cargoCap").value, 10);
 
-  // We can parse certain known patterns for quick resource changes:
-  if (e.includes("Gain 10 gold")) {
-    player.gold += 10;
-  } else if (e.includes("Lose 5 gold")) {
-    player.gold = Math.max(0, player.gold - 5);
-  } else if (e.includes("gain 2 influence")) {
-    player.influence += 2;
-  } else if (e.includes("lose 2 influence")) {
-    player.influence = Math.max(0, player.influence - 2);
-  } else if (e.includes("spend 8 gold")) {
-    player.gold = Math.max(0, player.gold - 8);
-    player.influence += 1;
-  } else if (e.includes("15 gold")) {
-    player.gold += 15;
-  } else if (e.includes("5 gold")) {
-    // multiple references—just pick one
-    if (e.includes("help an old fisherman")) {
-      player.gold += 5;
-    } else if (e.includes("guard fines")) {
-      player.gold = Math.max(0, player.gold - 5);
-    }
-  } else if (e.includes("lose 1 influence")) {
-    player.influence = Math.max(0, player.influence - 1);
-  } else if (e.includes("+7 gold")) {
-    player.gold += 7;
+  // Initialize day, city, inventory
+  day = 1;
+  currentCity = cities[0].name; // default pick
+  usedCargo = 0;
+  ended = false;
+
+  // Zero out inventory
+  commodities.forEach(c => inventory[c.name] = 0);
+
+  // Populate city dropdown
+  const citySelect = document.getElementById("citySelect");
+  citySelect.innerHTML = "";
+  cities.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.name;
+    opt.textContent = c.name;
+    citySelect.appendChild(opt);
+  });
+  citySelect.value = currentCity;
+
+  // Show main game UI
+  document.getElementById("setupSection").style.display = "none";
+  document.getElementById("mainGame").style.display = "block";
+
+  randomisePrices();
+  refreshUI();
+  log(`Welcome! You have ${maxDay} days to pay your debt of ${debt} GP. Good luck!`);
+}
+
+/*************************************************************************
+ * 3) Traveling & Passing Days
+ *************************************************************************/
+function travel() {
+  if (ended) return;
+  if (day >= maxDay) {
+    log(`<span class="alert">You have no days left to travel!</span>`);
+    return;
+  }
+  // Let’s pick the new city from the dropdown
+  const citySelect = document.getElementById("citySelect");
+  const newCity = citySelect.value;
+
+  if (newCity === currentCity) {
+    log(`<span class="alert">You're already in ${currentCity}!</span>`);
+    return;
+  }
+  
+  // Move city
+  currentCity = newCity;
+  day += 1;
+
+  log(`You travel to <strong>${currentCity}</strong>. Day ends. It is now Day ${day}.`);
+
+  // Random events
+  doRandomEvent();
+
+  // Refresh everything
+  randomisePrices(); // new day => new prices
+  refreshUI();
+
+  if (day >= maxDay) {
+    log(`<span class="alert">Your final day is upon you. The loan shark wants his money soon!</span>`);
+  }
+}
+
+function doRandomEvent() {
+  // There's a chance of a random event each time you travel
+  // Weighted by city risk?
+  const cityObj = cities.find(c => c.name === currentCity);
+  const risk = cityObj ? cityObj.risk : 3;
+  const chance = Math.random() * 10;
+  if (chance < risk) {
+    // Some event triggers
+    const event = pickRandom(events);
+    event.effect();
+  }
+}
+
+/*************************************************************************
+ * 4) Buying / Selling
+ *************************************************************************/
+function buy(commodityName) {
+  if (ended) return;
+  const price = cityPrices[currentCity][commodityName];
+  let maxCanBuy = Math.floor(gold / price);
+  // Also limited by cargo capacity
+  maxCanBuy = Math.min(maxCanBuy, cargoCapacity - usedCargo);
+
+  if (maxCanBuy <= 0) {
+    log(`<span class="alert">You cannot buy any ${commodityName} here, not enough gold or cargo space!</span>`);
+    return;
+  }
+  const qty = prompt(`How many units of ${commodityName} to buy? (Max: ${maxCanBuy})`, "1");
+  if (!qty) return;
+  const num = parseInt(qty, 10);
+  if (isNaN(num) || num <= 0) return;
+  if (num > maxCanBuy) {
+    log(`<span class="alert">You can't buy more than ${maxCanBuy} units!</span>`);
+    return;
   }
 
-  updateResources();
-  document.getElementById("encounterResult").textContent = resultMsg;
-};
+  const cost = num * price;
+  gold -= cost;
+  inventory[commodityName] += num;
+  usedCargo += num;
+
+  log(`Bought ${num} ${commodityName} @ ${price} GP each, total ${cost} GP.`);
+  refreshUI();
+}
+
+function sell(commodityName) {
+  if (ended) return;
+  const price = cityPrices[currentCity][commodityName];
+  const qtyOwned = inventory[commodityName];
+  if (qtyOwned <= 0) {
+    log(`<span class="alert">You have no ${commodityName} to sell!</span>`);
+    return;
+  }
+  const qty = prompt(`How many units of ${commodityName} to sell? (Max: ${qtyOwned})`, "1");
+  if (!qty) return;
+  const num = parseInt(qty, 10);
+  if (isNaN(num) || num <= 0) return;
+  if (num > qtyOwned) {
+    log(`<span class="alert">You only have ${qtyOwned} units!</span>`);
+    return;
+  }
+  const income = num * price;
+  gold += income;
+  inventory[commodityName] -= num;
+  usedCargo -= num;
+  log(`Sold ${num} ${commodityName} @ ${price} GP each, total ${income} GP.`);
+  refreshUI();
+}
+
+/*************************************************************************
+ * 5) Paying Debt & Ending the Game
+ *************************************************************************/
+function payDebtPrompt() {
+  if (ended) return;
+  if (debt <= 0) {
+    log(`Your debt is already cleared!`);
+    return;
+  }
+  const amount = prompt(`How much to pay toward your ${debt} GP debt?`, "0");
+  if (!amount) return;
+  const num = parseInt(amount, 10);
+  if (isNaN(num) || num <= 0) return;
+  if (num > gold) {
+    log(`<span class="alert">You don't have that much gold!</span>`);
+    return;
+  }
+
+  gold -= num;
+  debt -= num;
+  log(`You pay ${num} GP. Debt is now ${debt} GP.`);
+
+  if (debt <= 0) {
+    // End game - success
+    debt = 0;
+    endGame(true);
+  }
+  refreshUI();
+}
+
+function endGame(success) {
+  ended = true;
+  let finalMsg;
+  const netWorth = gold + getInventoryValue();
+  if (success) {
+    finalMsg = `Huzzah! You've paid off your debt on Day ${day}, with ${gold} GP left plus cargo worth ~${getInventoryValue()} GP. Final net: ~${netWorth} GP. Well done!`;
+  } else {
+    finalMsg = `Alas, Day ${day} has ended and your debt remains ${debt} GP. The moneylender’s enforcers come for you... Final net worth: ~${netWorth} GP. Better luck next time.`;
+  }
+  log(`<span class="alert">${finalMsg}</span>`);
+}
+
+function getInventoryValue() {
+  let total = 0;
+  // Use current city prices as an approximation (or pick the average city?)
+  // We'll pick the average across all city prices to be fair:
+  let sumPrices = 0;
+  let cityCount = 0;
+  for (let c of cities) {
+    for (let co of commodities) {
+      sumPrices += cityPrices[c.name][co.name];
+    }
+    cityCount++;
+  }
+  const avgPriceScale = sumPrices / (cityCount * commodities.length);
+
+  // Evaluate total
+  for (let c of commodities) {
+    const avgPrice = (c.minPrice + c.maxPrice)/2;
+    // We can do a ratio: cityAverage: (c’s base average)
+    // But let's keep it simple:
+    const approximateValue = Math.floor((avgPrice + avgPriceScale) / 2);
+    total += approximateValue * inventory[c.name];
+  }
+  return total;
+}
+
+/*************************************************************************
+ * 6) UI Refresh
+ *************************************************************************/
+function refreshUI() {
+  // Status
+  document.getElementById("dayCount").textContent = day;
+  document.getElementById("maxDays").textContent = maxDay;
+  document.getElementById("goldCount").textContent = gold;
+  document.getElementById("debtCount").textContent = debt;
+  document.getElementById("cargoUsed").textContent = usedCargo;
+  document.getElementById("cargoMax").textContent = cargoCapacity;
+
+  // If we've run out of days and haven't paid the debt, game ends
+  if (day > maxDay && !ended) {
+    endGame(false);
+  }
+
+  refreshMarket();
+  refreshInventory();
+}
+
+function refreshMarket() {
+  const tbody = document.getElementById("marketTable").querySelector("tbody");
+  tbody.innerHTML = "";
+  commodities.forEach(comm => {
+    const price = cityPrices[currentCity][comm.name];
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${comm.name}</td>
+      <td>${price} GP</td>
+      <td>
+        <button class="button" onclick="buy('${comm.name}')">Buy</button>
+        <button class="button" onclick="sell('${comm.name}')">Sell</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function refreshInventory() {
+  const tbody = document.getElementById("inventoryTable").querySelector("tbody");
+  tbody.innerHTML = "";
+  for (let c of commodities) {
+    const qty = inventory[c.name];
+    if (qty > 0) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${c.name}</td>
+        <td>${qty}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+}
+
+/*************************************************************************
+ * 7) Random Events
+ *************************************************************************/
+// We'll have a set of event objects, each has a .text or a function
+// We'll define them with small effect() methods. 
+const events = [
+  {
+    name: "Guard Intercept",
+    effect: function() {
+      // Possibly lose some contraband or pay a small fine
+      let seized = 0;
+      for (let c of commodities) {
+        if (inventory[c.name] > 0 && Math.random() < 0.3) {
+          // seizing some portion
+          const portion = randInt(1, inventory[c.name]);
+          inventory[c.name] -= portion;
+          usedCargo -= portion;
+          seized += portion;
+        }
+      }
+      if (seized > 0) {
+        log(`<span class="alert">Guards intercept you in ${currentCity} and seize ${seized} units of contraband!</span>`);
+      } else {
+        // maybe a fine?
+        const fine = Math.min(gold, randInt(20, 50));
+        gold -= fine;
+        log(`<span class="alert">Guards harass you but find no contraband. You pay a "fine" of ${fine} GP.</span>`);
+      }
+    }
+  },
+  {
+    name: "Suspicious Alley",
+    effect: function() {
+      // Maybe lose some gold to a mugging or find a stash
+      const roll = Math.random();
+      if (roll < 0.5) {
+        // robbed
+        const stolen = Math.min(gold, randInt(10, 40));
+        gold -= stolen;
+        log(`<span class="alert">You’re mugged in a dark alley, losing ${stolen} GP!</span>`);
+      } else {
+        // found stash
+        const foundItem = pickRandom(commodities);
+        const quantity = randInt(1, 5);
+        if (usedCargo + quantity <= cargoCapacity) {
+          inventory[foundItem.name] += quantity;
+          usedCargo += quantity;
+          log(`Lucky find! You stumble upon ${quantity} units of ${foundItem.name} in a hidden stash.`);
+        } else {
+          log(`You discover a stash of ${foundItem.name}, but can’t carry any more cargo!`);
+        }
+      }
+    }
+  },
+  {
+    name: "Tip-Off",
+    effect: function() {
+      // A tip about next city’s price for a certain commodity?
+      // We'll just log a message that something might be cheaper somewhere else 
+      const nextCity = pickRandom(cities).name;
+      const comm = pickRandom(commodities);
+      log(`A shady tip: <em>"${comm.name}</em> is rumoured cheap in <strong>${nextCity}</strong>..."`);
+    }
+  },
+  {
+    name: "Favourable Exchange",
+    effect: function() {
+      // Earn a bit of gold out of nowhere
+      const gain = randInt(10, 60);
+      gold += gain;
+      log(`A sly trader owes you a favour in ${currentCity}. You gain ${gain} GP from a quick side-deal.`);
+    }
+  },
+  {
+    name: "Loan Shark's Threat",
+    effect: function() {
+      // If debt is big, maybe it grows or you get a 'warning'
+      if (debt > 0) {
+        const penalty = randInt(10, 40);
+        debt += penalty;
+        log(`<span class="alert">The loan shark's goons rough you up. Your debt increases by ${penalty} GP!</span>`);
+      } else {
+        log(`You sense the loan shark’s goons are still watching, but your debt is cleared.`);
+      }
+    }
+  }
+];
+
+// Utility to pick random from array
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/*************************************************************************
+ * 8) Logging
+ *************************************************************************/
+function log(msg) {
+  const logArea = document.getElementById("logArea");
+  logArea.innerHTML = msg + "\n" + logArea.innerHTML;
+}
 
 </script>
-
 </body>
 </html>
