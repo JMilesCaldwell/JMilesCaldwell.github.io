@@ -1,620 +1,606 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Blackleaf & Bootstraps (Fantasy Dope Wars)</title>
+  <meta charset="UTF-8" />
+  <!-- Ensure mobile responsiveness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fantasy Dope Wars: Evershroud Edition</title>
   <style>
+    /* Basic Reset & Sizing */
+    * {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+    }
     body {
-      margin: 0;
+      background: #333 url('resources/docks.png') no-repeat center center fixed;
+      background-size: cover;
       font-family: sans-serif;
-      background: #312f2f url('resources/docks.png') center/cover no-repeat;
       color: #eee;
     }
-    .wrapper {
+    .container {
       max-width: 900px;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    h1, h2, h3 {
-      margin-bottom: 0.5rem;
-      font-family: serif;
-      text-shadow: 1px 1px 2px #000;
-    }
-    .section {
+      margin: 1rem auto;
       background: rgba(0,0,0,0.7);
       padding: 1rem;
       border-radius: 8px;
-      margin-bottom: 1rem;
     }
-    .controls {
+    h1, h2, h3, h4 {
+      margin-bottom: 0.5rem;
+      font-family: serif;
+    }
+    label, select, input {
+      margin: 0.3rem 0;
+    }
+    .button {
+      background: #650000;
+      color: #eee;
+      border: 1px solid #300000;
+      padding: 0.4rem 0.8rem;
+      margin: 0.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .button:hover {
+      background: #500000;
+    }
+    .flex-row {
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      margin-bottom: 1rem;
+      align-items: center;
     }
-    .button {
-      background: #750000;
-      color: #eee;
-      border: 1px solid #400000;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      text-shadow: 1px 1px 1px #000;
+    .flex-col {
+      display: flex;
+      flex-direction: column;
     }
-    .button:hover {
-      background: #600000;
+    .hidden {
+      display: none;
     }
-    select, input {
-      padding: 0.3rem;
-      border: 1px solid #555;
-      border-radius: 4px;
-    }
-    .inventory-table, .market-table {
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 1rem;
+      margin: 0.5rem 0;
     }
-    .inventory-table th, .inventory-table td,
-    .market-table th, .market-table td {
+    th, td {
       border: 1px solid #444;
       padding: 0.4rem;
       text-align: center;
       background: rgba(255,255,255,0.1);
     }
-    .inventory-table th, .market-table th {
+    th {
       background: #550000;
-      text-shadow: 1px 1px 1px #000;
     }
-    .log-area {
-      white-space: pre-line;
-      max-height: 200px;
+    .log {
+      max-height: 180px;
       overflow-y: auto;
-      background: rgba(0,0,0,0.2);
-      padding: 0.5rem;
+      background: rgba(0,0,0,0.3);
       border: 1px solid #444;
+      padding: 0.5rem;
       border-radius: 5px;
-      margin-bottom: 1rem;
+      margin: 0.5rem 0;
       font-size: 0.9rem;
       line-height: 1.4;
     }
-    .alert {
-      color: #ffadad;
-      font-weight: bold;
-    }
-    @media(max-width: 600px) {
-      .controls {flex-direction: column;}
-      .section {padding: 0.5rem;}
+    .alert { color: #ffaaaa; font-weight: bold; }
+    @media (max-width:600px){
+      .flex-row {flex-direction: column;}
+      .log {max-height: 120px;}
     }
   </style>
 </head>
 <body>
-<div class="wrapper">
-  <h1>Blackleaf & Bootstraps</h1>
-  <p style="font-style: italic;">
-    A Fantasy “Dope Wars” – Buy, Sell, Evade Guards, & Pay Off Your Shady Debt Before Time Runs Out
+<div class="container" id="setupContainer">
+  <h1>Fantasy Dope Wars: Evershroud Edition</h1>
+  <p>
+    Buy and sell goods, travel between the Evershroud coastal locations, avoid (or fight) 
+    ruffians, and pay off your debt before time’s up—or meet your fate. Good luck!
   </p>
-
-  <!-- Setup Section -->
-  <div class="section" id="setupSection">
-    <h2>Setup</h2>
-    <label for="gameLength">Length of Game (days):</label>
-    <select id="gameLength">
-      <option value="15">Short (15 days)</option>
-      <option value="30" selected>Standard (30 days)</option>
-      <option value="60">Long (60 days)</option>
+  <label>Game Length (Days): 
+    <select id="gameDays">
+      <option value="15">15 (Short)</option>
+      <option value="30" selected>30 (Standard)</option>
+      <option value="60">60 (Long)</option>
     </select>
+  </label>
+  <br>
+  <label>Starting Gold: 
+    <input type="number" id="startGold" value="100" style="width:80px;">
+  </label>
+  <br>
+  <label>Starting Debt: 
+    <input type="number" id="startDebt" value="500" style="width:80px;">
+  </label>
+  <br>
+  <label>Cargo Capacity:
+    <input type="number" id="startCargo" value="50" style="width:80px;">
+  </label>
+  <br>
+  <label>Starting HP:
+    <input type="number" id="startHP" value="100" style="width:80px;">
+  </label>
+  <br><br>
+  <button class="button" onclick="startGame()">Begin</button>
+</div>
 
-    <br><br>
-    <label for="startGold">Starting Gold:</label>
-    <input type="number" id="startGold" value="100" style="width:100px;" />
-
-    <label for="startDebt">Starting Debt:</label>
-    <input type="number" id="startDebt" value="500" style="width:100px;" />
-
-    <label for="cargoCap">Cargo Capacity:</label>
-    <input type="number" id="cargoCap" value="50" style="width:80px;" />
-
-    <br><br>
-    <button class="button" onclick="startGame()">Begin</button>
+<div class="container hidden" id="gameContainer">
+  <h2>Status</h2>
+  <p id="statusLine"></p>
+  <div class="flex-row">
+    <div>
+      <label for="locationSelect">Location:</label>
+      <select id="locationSelect"></select>
+    </div>
+    <button class="button" onclick="travel()">Travel (Ends Day)</button>
+    <button class="button" onclick="payDebtPrompt()">Pay Debt</button>
   </div>
 
-  <!-- Main Game Section -->
-  <div id="mainGame" style="display:none;">
-    <!-- Summary / Status -->
-    <div class="section">
-      <h2>Status</h2>
-      <p><strong>Day:</strong> <span id="dayCount"></span> / <span id="maxDays"></span> 
-      &nbsp; | &nbsp; 
-      <strong>Gold:</strong> <span id="goldCount"></span> 
-      &nbsp; | &nbsp;
-      <strong>Debt:</strong> <span id="debtCount"></span> 
-      &nbsp; | &nbsp; 
-      <strong>Cargo Used:</strong> <span id="cargoUsed"></span> / <span id="cargoMax"></span>
-      </p>
-      <p>
-        <button class="button" onclick="payDebtPrompt()">Pay Debt</button>
-      </p>
-    </div>
-
-    <!-- Travel + City Info -->
-    <div class="section">
-      <h2>Travel & Markets</h2>
-      <div class="controls">
-        <div>
-          <label for="citySelect">Current City:</label>
-          <select id="citySelect" onchange="refreshMarket()"></select>
-        </div>
-        <button class="button" onclick="travel()">Travel (Ends Day)</button>
-      </div>
-
-      <table class="market-table" id="marketTable">
+  <div class="flex-row" style="justify-content: space-between;">
+    <div>
+      <h3>Market</h3>
+      <table id="marketTable">
         <thead>
           <tr>
-            <th>Commodity</th>
+            <th>Good</th>
             <th>Price (GP)</th>
-            <th>Buy / Sell</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
-
-    <!-- Inventory -->
-    <div class="section">
-      <h2>Inventory</h2>
-      <table class="inventory-table" id="inventoryTable">
+    <div>
+      <h3>Inventory</h3>
+      <table id="inventoryTable">
         <thead>
           <tr>
-            <th>Commodity</th>
+            <th>Good</th>
             <th>Qty</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+  </div>
+  <h3>Log</h3>
+  <div class="log" id="logArea"></div>
 
-    <!-- Log/Events -->
-    <div class="section">
-      <h2>Log & Random Events</h2>
-      <div class="log-area" id="logArea"></div>
-    </div>
+  <div id="fightContainer" class="hidden">
+    <h4>Ruffians Attack!</h4>
+    <p id="fightText"></p>
+    <button class="button" onclick="attemptRun()">Run</button>
+    <button class="button" onclick="attemptFight()">Fight</button>
   </div>
 </div>
 
+<!-- Game Over Screen -->
+<div class="container hidden" id="gameOverContainer">
+  <h2 id="gameOverTitle">Game Over</h2>
+  <p id="gameOverMessage"></p>
+  <button class="button" onclick="backToMainMenu()">Back to Main Menu</button>
+</div>
+
 <script>
-/*************************************************************************
- * 1) Basic Game Variables
- *************************************************************************/
-let day = 1;
-let maxDay = 30;
-let gold = 100;
-let debt = 500;
-let cargoCapacity = 50;
-let usedCargo = 0;
-let currentCity = "Azure"; // default
+/*******************************************************
+ * 1) Data: Goods & Travel Locations (from your snippets)
+ *******************************************************/
+// The user’s goods:
+const goodsList = [
+  { name: "Amber", minPrice: 5, maxPrice: 20 },
+  { name: "Salt", minPrice: 1, maxPrice: 5 },
+  { name: "Tin", minPrice: 4, maxPrice: 10 },
+  { name: "Wool", minPrice: 3, maxPrice: 8 },
+  { name: "Timber", minPrice: 6, maxPrice: 12 },
+  { name: "Salted Fish", minPrice: 2, maxPrice: 7 },
+  { name: "Copper", minPrice: 8, maxPrice: 20 },
+  { name: "Blackleaf", minPrice: 15, maxPrice: 35 },
+  { name: "Botanical Specimens", minPrice: 10, maxPrice: 28 },
+  { name: "Fungus", minPrice: 2, maxPrice: 6 },
+  { name: "Artifacts", minPrice: 25, maxPrice: 60 },
+  { name: "Luxury Goods", minPrice: 40, maxPrice: 100 },
+  { name: "Weapons/Armor", minPrice: 25, maxPrice: 70 },
+  { name: "Bronze", minPrice: 20, maxPrice: 45 },
+  { name: "Incense", minPrice: 15, maxPrice: 30 },
+  { name: "Wine", minPrice: 3, maxPrice: 9 },
+  { name: "Ale", minPrice: 1, maxPrice: 4 },
+  { name: "Iron", minPrice: 30, maxPrice: 60 },
+  { name: "Grain", minPrice: 1, maxPrice: 3 },
+];
+
+// The user’s travel locations (from Coastal Travel System):
+const travelLocations = [
+  { name: "Azure", risk: 2 },
+  { name: "Sylfaene", risk: 3 },
+  { name: "Holgren", risk: 4 },
+  { name: "Ryer", risk: 2 },
+  { name: "Waglynn Lighthouse", risk: 4 },
+  { name: "Mong Harrad", risk: 4 },
+  { name: "World's End", risk: 5 },
+  { name: "Fulcimer Lighthouse", risk: 3 },
+  { name: "Vigden", risk: 3 },
+  { name: "Virgil", risk: 2 },
+  { name: "Hermit Sanctum", risk: 2 },
+  { name: "Wren", risk: 4 },
+  { name: "Villegrom Estate", risk: 5 },
+  { name: "Silt", risk: 5 },
+  { name: "Freeport", risk: 1 },
+  { name: "Morgrin Lighthouse", risk: 3 },
+  { name: "Mong Vinaya", risk: 4 },
+  { name: "Meowygg", risk: 2 },
+  { name: "Devyth", risk: 2 },
+  { name: "Commorragh", risk: 5 },
+  { name: "Refuge", risk: 1 },
+  { name: "Giant's Head", risk: 1 }
+];
+
+// We’ll store randomized daily prices as an object: { cityName: { goodName: price } }
+let dailyPrices = {};
+
+// Game state
+let day = 1, maxDays = 30;
+let gold = 100, debt = 500;
+let cargoMax = 50, cargoUsed = 0;
+let playerHP = 100;
+let currentLocation = "Azure";
 let ended = false;
 
-// Towns
-// Each has a 'risk' of encountering guards/trouble, and an intangible “distance” 
-// that helps shape random event difficulty. 
-// (We’ll keep it simpler: traveling from one city to another always ends the day.)
-const cities = [
-  { name: "Azure", risk: 3 },
-  { name: "Silt", risk: 5 },
-  { name: "Margraeve", risk: 4 },
-  { name: "Freeport", risk: 2 },
-  { name: "Giant's Head", risk: 1 },
-  { name: "Caldwell", risk: 3 },
-  { name: "Wren", risk: 4 },
-  { name: "Villegrom", risk: 5 },
-  { name: "Holgren", risk: 4 },
-  { name: "Refuge", risk: 2 },
-];
-
-// Commodities – A fantasy contraband lineup reminiscent of dope wars
-// Each has a base price range, and random daily multiplier in each city.
-const commodities = [
-  { name: "Blackleaf", minPrice: 12, maxPrice: 30 },
-  { name: "Troll’s Blood", minPrice: 20, maxPrice: 60 },
-  { name: "Demon’s Dust", minPrice: 50, maxPrice: 150 },
-  { name: "Phoenix Tears", minPrice: 80, maxPrice: 250 },
-  { name: "Faelight Spores", minPrice: 5, maxPrice: 12 },
-  { name: "Grave Lotus", minPrice: 18, maxPrice: 50 },
-  { name: "Moonwine", minPrice: 10, maxPrice: 25 },
-  { name: "Witch’s Bloom", minPrice: 4, maxPrice: 10 },
-];
-
-// Inventory structure: { 'Blackleaf': 0, 'Troll’s Blood': 0, ... } 
+// Inventory object: { 'Amber': 0, 'Salt': 0, ... }
 let inventory = {};
-commodities.forEach(c => inventory[c.name] = 0);
 
-// Daily city prices: { cityName: { commodityName: price } }
-let cityPrices = {};
+/*******************************************************
+ * 2) Setup / Start
+ *******************************************************/
+function startGame() {
+  day = 1;
+  maxDays = parseInt(document.getElementById("gameDays").value, 10);
+  gold = parseInt(document.getElementById("startGold").value, 10);
+  debt = parseInt(document.getElementById("startDebt").value, 10);
+  cargoMax = parseInt(document.getElementById("startCargo").value, 10);
+  playerHP = parseInt(document.getElementById("startHP").value, 10);
+  ended = false;
+  cargoUsed = 0;
+  currentLocation = travelLocations[0].name;
 
-// We’ll randomise them once each day
-function randomisePrices() {
-  cities.forEach(city => {
-    cityPrices[city.name] = {};
-    commodities.forEach(comm => {
-      const base = randInt(comm.minPrice, comm.maxPrice);
-      // Add mild city-based random factor
-      const cityFactor = 1 + (Math.random() * 0.4 - 0.2); // +/- 20%
-      const finalPrice = Math.max(1, Math.floor(base * cityFactor));
-      cityPrices[city.name][comm.name] = finalPrice;
+  // Clear inventory
+  inventory = {};
+  goodsList.forEach(g => inventory[g.name] = 0);
+
+  // Populate locationSelect
+  const locSelect = document.getElementById("locationSelect");
+  locSelect.innerHTML = "";
+  travelLocations.forEach(loc => {
+    const opt = document.createElement("option");
+    opt.value = loc.name;
+    opt.textContent = loc.name;
+    locSelect.appendChild(opt);
+  });
+  locSelect.value = currentLocation;
+
+  // Hide setup, show game
+  document.getElementById("setupContainer").classList.add("hidden");
+  document.getElementById("gameContainer").classList.remove("hidden");
+  document.getElementById("gameOverContainer").classList.add("hidden");
+
+  // Make initial random prices
+  randomizePrices();
+  refreshUI();
+  log(`Welcome! You have ${maxDays} days to pay off your debt of ${debt} GP. Stay alive and prosper!`);
+}
+
+function randomizePrices() {
+  dailyPrices = {};
+  travelLocations.forEach(loc => {
+    dailyPrices[loc.name] = {};
+    goodsList.forEach(g => {
+      const base = randInt(g.minPrice, g.maxPrice);
+      const variance = 1 + (Math.random() * 0.4 - 0.2); // +/- 20%
+      dailyPrices[loc.name][g.name] = Math.max(1, Math.floor(base * variance));
     });
   });
 }
 
-/*************************************************************************
- * 2) Game Setup
- *************************************************************************/
-function startGame() {
-  maxDay = parseInt(document.getElementById("gameLength").value, 10);
-  gold = parseInt(document.getElementById("startGold").value, 10);
-  debt = parseInt(document.getElementById("startDebt").value, 10);
-  cargoCapacity = parseInt(document.getElementById("cargoCap").value, 10);
-
-  // Initialize day, city, inventory
-  day = 1;
-  currentCity = cities[0].name; // default pick
-  usedCargo = 0;
-  ended = false;
-
-  // Zero out inventory
-  commodities.forEach(c => inventory[c.name] = 0);
-
-  // Populate city dropdown
-  const citySelect = document.getElementById("citySelect");
-  citySelect.innerHTML = "";
-  cities.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c.name;
-    opt.textContent = c.name;
-    citySelect.appendChild(opt);
-  });
-  citySelect.value = currentCity;
-
-  // Show main game UI
-  document.getElementById("setupSection").style.display = "none";
-  document.getElementById("mainGame").style.display = "block";
-
-  randomisePrices();
-  refreshUI();
-  log(`Welcome! You have ${maxDay} days to pay your debt of ${debt} GP. Good luck!`);
-}
-
-/*************************************************************************
- * 3) Traveling & Passing Days
- *************************************************************************/
-function travel() {
-  if (ended) return;
-  if (day >= maxDay) {
-    log(`<span class="alert">You have no days left to travel!</span>`);
-    return;
-  }
-  // Let’s pick the new city from the dropdown
-  const citySelect = document.getElementById("citySelect");
-  const newCity = citySelect.value;
-
-  if (newCity === currentCity) {
-    log(`<span class="alert">You're already in ${currentCity}!</span>`);
-    return;
-  }
-  
-  // Move city
-  currentCity = newCity;
-  day += 1;
-
-  log(`You travel to <strong>${currentCity}</strong>. Day ends. It is now Day ${day}.`);
-
-  // Random events
-  doRandomEvent();
-
-  // Refresh everything
-  randomisePrices(); // new day => new prices
-  refreshUI();
-
-  if (day >= maxDay) {
-    log(`<span class="alert">Your final day is upon you. The loan shark wants his money soon!</span>`);
-  }
-}
-
-function doRandomEvent() {
-  // There's a chance of a random event each time you travel
-  // Weighted by city risk?
-  const cityObj = cities.find(c => c.name === currentCity);
-  const risk = cityObj ? cityObj.risk : 3;
-  const chance = Math.random() * 10;
-  if (chance < risk) {
-    // Some event triggers
-    const event = pickRandom(events);
-    event.effect();
-  }
-}
-
-/*************************************************************************
- * 4) Buying / Selling
- *************************************************************************/
-function buy(commodityName) {
-  if (ended) return;
-  const price = cityPrices[currentCity][commodityName];
-  let maxCanBuy = Math.floor(gold / price);
-  // Also limited by cargo capacity
-  maxCanBuy = Math.min(maxCanBuy, cargoCapacity - usedCargo);
-
-  if (maxCanBuy <= 0) {
-    log(`<span class="alert">You cannot buy any ${commodityName} here, not enough gold or cargo space!</span>`);
-    return;
-  }
-  const qty = prompt(`How many units of ${commodityName} to buy? (Max: ${maxCanBuy})`, "1");
-  if (!qty) return;
-  const num = parseInt(qty, 10);
-  if (isNaN(num) || num <= 0) return;
-  if (num > maxCanBuy) {
-    log(`<span class="alert">You can't buy more than ${maxCanBuy} units!</span>`);
-    return;
-  }
-
-  const cost = num * price;
-  gold -= cost;
-  inventory[commodityName] += num;
-  usedCargo += num;
-
-  log(`Bought ${num} ${commodityName} @ ${price} GP each, total ${cost} GP.`);
-  refreshUI();
-}
-
-function sell(commodityName) {
-  if (ended) return;
-  const price = cityPrices[currentCity][commodityName];
-  const qtyOwned = inventory[commodityName];
-  if (qtyOwned <= 0) {
-    log(`<span class="alert">You have no ${commodityName} to sell!</span>`);
-    return;
-  }
-  const qty = prompt(`How many units of ${commodityName} to sell? (Max: ${qtyOwned})`, "1");
-  if (!qty) return;
-  const num = parseInt(qty, 10);
-  if (isNaN(num) || num <= 0) return;
-  if (num > qtyOwned) {
-    log(`<span class="alert">You only have ${qtyOwned} units!</span>`);
-    return;
-  }
-  const income = num * price;
-  gold += income;
-  inventory[commodityName] -= num;
-  usedCargo -= num;
-  log(`Sold ${num} ${commodityName} @ ${price} GP each, total ${income} GP.`);
-  refreshUI();
-}
-
-/*************************************************************************
- * 5) Paying Debt & Ending the Game
- *************************************************************************/
-function payDebtPrompt() {
-  if (ended) return;
-  if (debt <= 0) {
-    log(`Your debt is already cleared!`);
-    return;
-  }
-  const amount = prompt(`How much to pay toward your ${debt} GP debt?`, "0");
-  if (!amount) return;
-  const num = parseInt(amount, 10);
-  if (isNaN(num) || num <= 0) return;
-  if (num > gold) {
-    log(`<span class="alert">You don't have that much gold!</span>`);
-    return;
-  }
-
-  gold -= num;
-  debt -= num;
-  log(`You pay ${num} GP. Debt is now ${debt} GP.`);
-
-  if (debt <= 0) {
-    // End game - success
-    debt = 0;
-    endGame(true);
-  }
-  refreshUI();
-}
-
-function endGame(success) {
-  ended = true;
-  let finalMsg;
-  const netWorth = gold + getInventoryValue();
-  if (success) {
-    finalMsg = `Huzzah! You've paid off your debt on Day ${day}, with ${gold} GP left plus cargo worth ~${getInventoryValue()} GP. Final net: ~${netWorth} GP. Well done!`;
-  } else {
-    finalMsg = `Alas, Day ${day} has ended and your debt remains ${debt} GP. The moneylender’s enforcers come for you... Final net worth: ~${netWorth} GP. Better luck next time.`;
-  }
-  log(`<span class="alert">${finalMsg}</span>`);
-}
-
-function getInventoryValue() {
-  let total = 0;
-  // Use current city prices as an approximation (or pick the average city?)
-  // We'll pick the average across all city prices to be fair:
-  let sumPrices = 0;
-  let cityCount = 0;
-  for (let c of cities) {
-    for (let co of commodities) {
-      sumPrices += cityPrices[c.name][co.name];
-    }
-    cityCount++;
-  }
-  const avgPriceScale = sumPrices / (cityCount * commodities.length);
-
-  // Evaluate total
-  for (let c of commodities) {
-    const avgPrice = (c.minPrice + c.maxPrice)/2;
-    // We can do a ratio: cityAverage: (c’s base average)
-    // But let's keep it simple:
-    const approximateValue = Math.floor((avgPrice + avgPriceScale) / 2);
-    total += approximateValue * inventory[c.name];
-  }
-  return total;
-}
-
-/*************************************************************************
- * 6) UI Refresh
- *************************************************************************/
+/*******************************************************
+ * 3) UI & Helpers
+ *******************************************************/
 function refreshUI() {
-  // Status
-  document.getElementById("dayCount").textContent = day;
-  document.getElementById("maxDays").textContent = maxDay;
-  document.getElementById("goldCount").textContent = gold;
-  document.getElementById("debtCount").textContent = debt;
-  document.getElementById("cargoUsed").textContent = usedCargo;
-  document.getElementById("cargoMax").textContent = cargoCapacity;
+  // Status line
+  const statusText = 
+    `Day ${day}/${maxDays}, Location: ${currentLocation}, ` +
+    `Gold: ${gold}, Debt: ${debt}, HP: ${playerHP}, ` +
+    `Cargo: ${cargoUsed}/${cargoMax}`;
+  document.getElementById("statusLine").textContent = statusText;
 
-  // If we've run out of days and haven't paid the debt, game ends
-  if (day > maxDay && !ended) {
-    endGame(false);
-  }
-
-  refreshMarket();
-  refreshInventory();
-}
-
-function refreshMarket() {
-  const tbody = document.getElementById("marketTable").querySelector("tbody");
-  tbody.innerHTML = "";
-  commodities.forEach(comm => {
-    const price = cityPrices[currentCity][comm.name];
+  // Market table
+  const marketBody = document.getElementById("marketTable").querySelector("tbody");
+  marketBody.innerHTML = "";
+  goodsList.forEach(g => {
+    const price = dailyPrices[currentLocation][g.name];
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${comm.name}</td>
+      <td>${g.name}</td>
       <td>${price} GP</td>
       <td>
-        <button class="button" onclick="buy('${comm.name}')">Buy</button>
-        <button class="button" onclick="sell('${comm.name}')">Sell</button>
+        <button class="button" onclick="buyPrompt('${g.name}')">Buy</button>
+        <button class="button" onclick="sellPrompt('${g.name}')">Sell</button>
       </td>
     `;
-    tbody.appendChild(tr);
+    marketBody.appendChild(tr);
+  });
+
+  // Inventory table
+  const invBody = document.getElementById("inventoryTable").querySelector("tbody");
+  invBody.innerHTML = "";
+  goodsList.forEach(g => {
+    const qty = inventory[g.name];
+    if (qty > 0) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${g.name}</td><td>${qty}</td>`;
+      invBody.appendChild(tr);
+    }
   });
 }
 
-function refreshInventory() {
-  const tbody = document.getElementById("inventoryTable").querySelector("tbody");
-  tbody.innerHTML = "";
-  for (let c of commodities) {
-    const qty = inventory[c.name];
-    if (qty > 0) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${c.name}</td>
-        <td>${qty}</td>
-      `;
-      tbody.appendChild(tr);
-    }
-  }
-}
-
-/*************************************************************************
- * 7) Random Events
- *************************************************************************/
-// We'll have a set of event objects, each has a .text or a function
-// We'll define them with small effect() methods. 
-const events = [
-  {
-    name: "Guard Intercept",
-    effect: function() {
-      // Possibly lose some contraband or pay a small fine
-      let seized = 0;
-      for (let c of commodities) {
-        if (inventory[c.name] > 0 && Math.random() < 0.3) {
-          // seizing some portion
-          const portion = randInt(1, inventory[c.name]);
-          inventory[c.name] -= portion;
-          usedCargo -= portion;
-          seized += portion;
-        }
-      }
-      if (seized > 0) {
-        log(`<span class="alert">Guards intercept you in ${currentCity} and seize ${seized} units of contraband!</span>`);
-      } else {
-        // maybe a fine?
-        const fine = Math.min(gold, randInt(20, 50));
-        gold -= fine;
-        log(`<span class="alert">Guards harass you but find no contraband. You pay a "fine" of ${fine} GP.</span>`);
-      }
-    }
-  },
-  {
-    name: "Suspicious Alley",
-    effect: function() {
-      // Maybe lose some gold to a mugging or find a stash
-      const roll = Math.random();
-      if (roll < 0.5) {
-        // robbed
-        const stolen = Math.min(gold, randInt(10, 40));
-        gold -= stolen;
-        log(`<span class="alert">You’re mugged in a dark alley, losing ${stolen} GP!</span>`);
-      } else {
-        // found stash
-        const foundItem = pickRandom(commodities);
-        const quantity = randInt(1, 5);
-        if (usedCargo + quantity <= cargoCapacity) {
-          inventory[foundItem.name] += quantity;
-          usedCargo += quantity;
-          log(`Lucky find! You stumble upon ${quantity} units of ${foundItem.name} in a hidden stash.`);
-        } else {
-          log(`You discover a stash of ${foundItem.name}, but can’t carry any more cargo!`);
-        }
-      }
-    }
-  },
-  {
-    name: "Tip-Off",
-    effect: function() {
-      // A tip about next city’s price for a certain commodity?
-      // We'll just log a message that something might be cheaper somewhere else 
-      const nextCity = pickRandom(cities).name;
-      const comm = pickRandom(commodities);
-      log(`A shady tip: <em>"${comm.name}</em> is rumoured cheap in <strong>${nextCity}</strong>..."`);
-    }
-  },
-  {
-    name: "Favourable Exchange",
-    effect: function() {
-      // Earn a bit of gold out of nowhere
-      const gain = randInt(10, 60);
-      gold += gain;
-      log(`A sly trader owes you a favour in ${currentCity}. You gain ${gain} GP from a quick side-deal.`);
-    }
-  },
-  {
-    name: "Loan Shark's Threat",
-    effect: function() {
-      // If debt is big, maybe it grows or you get a 'warning'
-      if (debt > 0) {
-        const penalty = randInt(10, 40);
-        debt += penalty;
-        log(`<span class="alert">The loan shark's goons rough you up. Your debt increases by ${penalty} GP!</span>`);
-      } else {
-        log(`You sense the loan shark’s goons are still watching, but your debt is cleared.`);
-      }
-    }
-  }
-];
-
-// Utility to pick random from array
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-/*************************************************************************
- * 8) Logging
- *************************************************************************/
 function log(msg) {
   const logArea = document.getElementById("logArea");
   logArea.innerHTML = msg + "\n" + logArea.innerHTML;
 }
+function randInt(min, max) {
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+function getLocationObj(name) {
+  return travelLocations.find(l => l.name===name);
+}
+
+/*******************************************************
+ * 4) Buying / Selling
+ *******************************************************/
+function buyPrompt(goodName) {
+  if (ended) return;
+  const price = dailyPrices[currentLocation][goodName];
+  const maxAfford = Math.floor(gold / price);
+  const maxSpace = cargoMax - cargoUsed;
+  const maxCanBuy = Math.min(maxAfford, maxSpace);
+  if (maxCanBuy<=0) {
+    log(`<span class="alert">Not enough gold or cargo space to buy ${goodName}!</span>`);
+    return;
+  }
+  const qtyStr = prompt(`Buy how many units of ${goodName}? (Up to ${maxCanBuy})`);
+  if (!qtyStr) return;
+  const qty = parseInt(qtyStr, 10);
+  if (!qty || qty<1) return;
+  if (qty>maxCanBuy) {
+    log(`<span class="alert">You can only buy up to ${maxCanBuy} units!</span>`);
+    return;
+  }
+  const cost = qty*price;
+  gold -= cost;
+  inventory[goodName]+=qty;
+  cargoUsed+=qty;
+  log(`Bought ${qty} x ${goodName} @ ${price} GP = ${cost} GP total.`);
+  refreshUI();
+}
+function sellPrompt(goodName) {
+  if (ended) return;
+  const have = inventory[goodName];
+  if (have<=0) {
+    log(`<span class="alert">You have no ${goodName} to sell!</span>`);
+    return;
+  }
+  const price = dailyPrices[currentLocation][goodName];
+  const qtyStr = prompt(`Sell how many units of ${goodName}? (You have ${have})`);
+  if (!qtyStr) return;
+  const qty = parseInt(qtyStr, 10);
+  if (!qty || qty<1) return;
+  if (qty>have) {
+    log(`<span class="alert">You only have ${have} units!</span>`);
+    return;
+  }
+  const income = qty*price;
+  gold+=income;
+  inventory[goodName]-=qty;
+  cargoUsed-=qty;
+  log(`Sold ${qty} x ${goodName} @ ${price} GP = ${income} GP total.`);
+  refreshUI();
+}
+
+/*******************************************************
+ * 5) Travel (ends day, triggers random events)
+ *******************************************************/
+function travel() {
+  if (ended) return;
+  if (day>=maxDays) {
+    log(`<span class="alert">No more days left to travel!</span>`);
+    return;
+  }
+  const locSelect = document.getElementById("locationSelect");
+  const newLoc = locSelect.value;
+  if (newLoc===currentLocation) {
+    log(`<span class="alert">You're already in ${currentLocation}!</span>`);
+    return;
+  }
+  currentLocation = newLoc;
+  day++;
+  log(`Travelled to <strong>${currentLocation}</strong>. Day ${day} of ${maxDays}.`);
+  doRandomEvent();
+  randomizePrices();
+  refreshUI();
+  checkGameEnd();
+}
+
+/*******************************************************
+ * 6) Pay Debt
+ *******************************************************/
+function payDebtPrompt() {
+  if (ended) return;
+  if (debt<=0) {
+    log(`Debt already cleared!`);
+    return;
+  }
+  const amountStr = prompt(`How much to pay? (Debt: ${debt}, Gold: ${gold})`);
+  if (!amountStr) return;
+  const amt = parseInt(amountStr, 10);
+  if (!amt || amt<1) return;
+  if (amt>gold) {
+    log(`<span class="alert">You don't have that much gold!</span>`);
+    return;
+  }
+  gold-=amt;
+  debt-=amt;
+  if (debt<0) debt=0;
+  log(`Paid ${amt} GP towards debt. Remaining debt: ${debt}.`);
+  if (debt<=0) {
+    log(`<span class="alert">Congratulations! You cleared your debt!</span>`);
+  }
+  refreshUI();
+  checkGameEnd();
+}
+
+/*******************************************************
+ * 7) Random Events on Travel
+ *******************************************************/
+function doRandomEvent() {
+  const locObj = getLocationObj(currentLocation);
+  const risk = locObj?.risk || 3;
+  const roll = Math.random()*10;
+  if (roll<risk) {
+    // Attack occurs
+    showFightPrompt();
+  } else {
+    // maybe something beneficial or neutral
+    const chance = Math.random();
+    if (chance<0.3) {
+      // find some goods
+      const foundGood = pickRandom(goodsList);
+      const foundQty = randInt(1,3);
+      if (cargoUsed+foundQty<=cargoMax) {
+        inventory[foundGood.name]+=foundQty;
+        cargoUsed+=foundQty;
+        log(`Lucky break! You found ${foundQty} x ${foundGood.name} abandoned along the road.`);
+      } else {
+        log(`You found some ${foundGood.name}, but have no cargo space to take it.`);
+      }
+    } else {
+      log(`A quiet day... nothing special happens.`);
+    }
+  }
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+/*******************************************************
+ * 8) Fighting / Running from Ruffians
+ *******************************************************/
+function showFightPrompt() {
+  document.getElementById("fightContainer").classList.remove("hidden");
+  document.getElementById("fightText").textContent = 
+    `Ruffians ambush you near ${currentLocation}! Will you run or fight?`;
+}
+
+function hideFightPrompt() {
+  document.getElementById("fightContainer").classList.add("hidden");
+  document.getElementById("fightText").textContent = "";
+}
+
+// Attempt to flee
+function attemptRun() {
+  hideFightPrompt();
+  const roll = Math.random();
+  if (roll<0.4) {
+    // fail to run => forced fight
+    log(`<span class="alert">You try to run, but the ruffians catch you!</span>`);
+    doFight();
+  } else {
+    // success
+    log(`You sprint away, narrowly escaping the ruffians!`);
+  }
+}
+
+// Attempt to fight
+function attemptFight() {
+  hideFightPrompt();
+  doFight();
+}
+
+function doFight() {
+  // We'll do a simple formula:
+  // ruffians have "attack power" ~ 20-60
+  // player has "HP"
+  // if player's HP < ruffians' power => player might die
+  const ruffianPower = randInt(20,60);
+  const playerPower = randInt(15,70);
+  
+  if (playerPower>=ruffianPower) {
+    // player wins
+    log(`You fought the ruffians! Their power: ${ruffianPower}, yours: ${playerPower}. You win!`);
+    // maybe some gold or items?
+    const loot = randInt(10,50);
+    gold+=loot;
+    log(`You loot ${loot} GP off their bodies.`);
+  } else {
+    // player suffers damage
+    const damage = randInt(10,30);
+    playerHP -= damage;
+    log(`<span class="alert">Fierce fight! Their power: ${ruffianPower}, yours: ${playerPower}. You take ${damage} damage!</span>`);
+    if (playerHP<=0) {
+      playerHP=0;
+      log(`<span class="alert">You have been slain by the ruffians!</span>`);
+      endGame(false, "Killed in battle...");
+    }
+  }
+  refreshUI();
+}
+
+/*******************************************************
+ * 9) Check End Conditions
+ *******************************************************/
+function checkGameEnd() {
+  if (day>maxDays && debt>0 && !ended) {
+    endGame(false, "Time’s up and your debt remains unpaid.");
+  }
+  // If debt <= 0, the user can continue playing or effectively "won." 
+  // We'll let them keep going until day > maxDays or they wish to do so.
+}
+
+// forced end
+function endGame(victory, reason) {
+  ended=true;
+  document.getElementById("gameContainer").classList.add("hidden");
+  document.getElementById("gameOverContainer").classList.remove("hidden");
+  
+  const netWorth = gold + approximateInventoryValue();
+  if(!victory) {
+    document.getElementById("gameOverTitle").textContent="Game Over (Failure)";
+    document.getElementById("gameOverMessage").innerHTML =
+      reason + "<br>Your net worth was ~" + netWorth + " GP.";
+  } else {
+    document.getElementById("gameOverTitle").textContent="Game Over (Success)";
+    document.getElementById("gameOverMessage").innerHTML =
+      reason + "<br>Your final net worth: ~" + netWorth + " GP.";
+  }
+}
+
+function approximateInventoryValue() {
+  // Just approximate by average prices
+  let total=0;
+  goodsList.forEach(g=>{
+    const avgPrice=(g.minPrice+g.maxPrice)/2;
+    total+=avgPrice*inventory[g.name];
+  });
+  return Math.floor(total);
+}
+
+function backToMainMenu() {
+  // hide gameOver, show setup
+  document.getElementById("setupContainer").classList.remove("hidden");
+  document.getElementById("gameContainer").classList.add("hidden");
+  document.getElementById("gameOverContainer").classList.add("hidden");
+}
+
+/*******************************************************
+ * Done.
+ *******************************************************/
 
 </script>
 </body>
