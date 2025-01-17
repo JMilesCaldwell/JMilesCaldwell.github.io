@@ -4,30 +4,17 @@
   <meta charset="UTF-8" />
   <!-- Mobile Responsive Meta -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fantasy Dope Wars: Evershroud Edition</title>
+  <title>Fantasy Dope Wars: Evershroud Sea Edition + High Scores</title>
   <style>
-    /* Reset & Basics */
-    * {
-      margin: 0; padding: 0; box-sizing: border-box;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Trebuchet MS', sans-serif;
       background: linear-gradient(135deg, #232526 0%, #414345 100%), 
                   url('resources/docks.png') center/cover no-repeat;
+      font-family: sans-serif;
       color: #EEE;
       min-height: 100vh;
-      overflow-x: hidden;
     }
-    /* Fade in containers on load */
-    .fade-in {
-      animation: fadeIn 0.8s ease forwards;
-      opacity: 0;
-    }
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-
-    /* The container for each screen */
+    .hidden { display: none; }
     .container {
       max-width: 920px;
       margin: 1rem auto;
@@ -36,179 +23,116 @@
       border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.5);
     }
-    h1, h2, h3, h4 {
-      font-family: serif;
-      margin-bottom: 0.4rem;
-    }
-    p, label, select, input, button {
-      margin: 0.2rem 0;
-    }
-
-    /* Buttons */
+    h1, h2, h3, h4 { margin-bottom: 0.5rem; font-family: serif; }
+    p, label, select, input, button { margin: 0.2rem 0; }
     .button {
-      background: #750000;
-      color: #EEE;
-      border: 1px solid #300000;
-      padding: 0.5rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-block;
-      text-decoration: none;
-      margin: 0.2rem;
-      font-weight: bold;
+      background: #750000; color: #EEE;
+      border: 1px solid #300000; 
+      padding: 0.5rem 0.8rem; border-radius: 6px;
+      cursor: pointer; transition: all 0.2s ease;
+      margin: 0.2rem; font-weight: bold; text-decoration: none;
     }
     .button:hover {
       background: #900000;
       box-shadow: 0 0 10px rgba(255,0,0,0.3);
     }
-
-    /* Table Stylings */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 0.5rem 0;
-    }
+    table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
     th, td {
-      border: 1px solid #444;
-      padding: 0.4rem;
-      text-align: center;
-      background: rgba(255,255,255,0.1);
+      border: 1px solid #444; padding: 0.4rem; 
+      text-align: center; background: rgba(255,255,255,0.1);
       transition: background 0.2s ease;
     }
-    th {
-      background: rgba(170,0,0,0.8);
-      color: #EEE;
+    th { background: rgba(170,0,0,0.8); color: #EEE; }
+    tr:hover td { background: rgba(255,255,255,0.15); }
+    .log {
+      max-height: 200px; overflow-y: auto;
+      background: rgba(0,0,0,0.3); border: 1px solid #444;
+      padding: 0.5rem; border-radius: 6px; margin: 0.5rem 0;
+      font-size: 0.9rem; line-height: 1.4;
     }
-    tr:hover td {
-      background: rgba(255,255,255,0.15);
+    .log-line { opacity: 0; animation: fadeIn 0.5s forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .alert { color: #FFAAAA; font-weight: bold; }
+    #fightContainer {
+      margin-top: 1rem; background: rgba(120,0,0,0.5);
+      padding: 1rem; border-radius: 8px;
+      transition: max-height 0.5s ease, opacity 0.5s ease;
+      max-height: 0; overflow: hidden; opacity: 0;
     }
-
-    /* Day progress bar */
+    #fightContainer.show { max-height: 300px; opacity: 1; }
     .progress-bar {
-      width: 100%;
-      background: #444;
-      height: 10px;
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 0.5rem 0;
+      width: 100%; background: #444; height: 10px;
+      border-radius: 4px; overflow: hidden; margin: 0.5rem 0;
     }
     .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #a00, #f00);
-      width: 0%;
-      transition: width 0.4s ease;
+      height: 100%; background: linear-gradient(90deg, #a00, #f00);
+      width: 0%; transition: width 0.4s ease;
     }
-
-    /* Log area & fade-in lines */
-    .log {
-      max-height: 200px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid #444;
-      padding: 0.5rem;
-      border-radius: 6px;
-      margin: 0.5rem 0;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-    .log-line {
-      animation: fadeInLog 0.5s ease forwards;
-      opacity: 0;
-    }
-    @keyframes fadeInLog {
-      to { opacity: 1; }
-    }
-
-    /* Fight container animation */
-    #fightContainer {
-      margin-top: 1rem;
-      background: rgba(120,0,0,0.5);
-      padding: 1rem;
-      border-radius: 8px;
-      transition: max-height 0.5s ease, opacity 0.5s ease;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-    }
-    #fightContainer.show {
-      max-height: 300px; /* enough to show text & buttons */
-      opacity: 1;
-    }
-
-    /* Responsive */
     @media (max-width:600px) {
-      .container {
-        margin: 0.5rem;
-        padding: 0.8rem;
-      }
-      .log {
-        max-height: 120px;
-      }
+      .log { max-height: 120px; }
     }
-    .hidden { display: none; }
-    .flex-row { display: flex; flex-wrap: wrap; gap: 1rem; }
-
-    .alert { color: #FFAAAA; font-weight: bold; }
   </style>
 </head>
 <body>
-<!-- Setup Container -->
-<div class="container fade-in" id="setupContainer">
-  <h1>Fantasy Dope Wars: Evershroud Edition</h1>
+
+<!-- Setup Screen -->
+<div class="container" id="setupContainer">
+  <h1>Fantasy Dope Wars: Evershroud Sea Edition</h1>
   <p>
-    Buy & Sell goods at coastal towns, avoid or fight ruffians, and repay your debt 
-    before time’s up. Survive, and thrive!
+    Buy & sell contraband along the coast, evade or fight pirates, 
+    and pay off your debt in time.  
+    <br>Upgrading your ship can increase cargo capacity. 
   </p>
-  <div>
-    <label>Game Length (Days):</label>
-    <select id="gameDays">
-      <option value="15">15 (Short)</option>
-      <option value="30" selected>30 (Standard)</option>
-      <option value="60">60 (Long)</option>
-    </select>
-  </div>
-  <div>
-    <label>Starting Gold:</label>
-    <input type="number" id="startGold" value="100" style="width:80px;">
-  </div>
-  <div>
-    <label>Starting Debt:</label>
-    <input type="number" id="startDebt" value="500" style="width:80px;">
-  </div>
-  <div>
-    <label>Cargo Capacity:</label>
-    <input type="number" id="startCargo" value="50" style="width:80px;">
-  </div>
-  <div>
-    <label>Starting HP:</label>
-    <input type="number" id="startHP" value="100" style="width:80px;">
-  </div>
+  <label for="playerName">Captain’s Name:</label>
+  <input type="text" id="playerName" placeholder="Anon Captain" value="Anon Captain" style="width:140px;">
   <br>
+  <label>Game Length (Days):</label>
+  <select id="gameDays">
+    <option value="15">15 (Short)</option>
+    <option value="30" selected>30 (Standard)</option>
+    <option value="60">60 (Long)</option>
+  </select>
+  <br>
+  <label>Starting Gold:</label>
+  <input type="number" id="startGold" value="100" style="width:80px;">
+  <br>
+  <label>Starting Debt:</label>
+  <input type="number" id="startDebt" value="500" style="width:80px;">
+  <br>
+  <label>Starting Cargo:</label>
+  <input type="number" id="startCargo" value="50" style="width:80px;">
+  <br>
+  <label>Starting HP:</label>
+  <input type="number" id="startHP" value="100" style="width:80px;">
+  <br><br>
   <button class="button" onclick="startGame()">Begin</button>
+
+  <h3>High Scores</h3>
+  <div id="scoreboardContainer"></div>
+  <button class="button" onclick="clearScores()">Clear Scores</button>
 </div>
 
 <!-- Main Game Container -->
-<div class="container fade-in hidden" id="gameContainer">
-  <h2>Evershroud: On the Move</h2>
+<div class="container hidden" id="gameContainer">
+  <h2>Sea Trading</h2>
   <div id="statusLine" style="margin-bottom:0.5rem; font-weight:bold;"></div>
   <div class="progress-bar">
     <div class="progress-fill" id="dayProgress"></div>
   </div>
 
-  <div class="flex-row" style="align-items: center; margin-bottom:0.5rem;">
+  <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; margin-bottom:1rem;">
     <div>
       <label>Location:</label>
       <select id="locationSelect"></select>
     </div>
     <div>
-      <button class="button" onclick="travel()">Travel (Ends Day)</button>
+      <button class="button" onclick="travel()">Sail (Ends Day)</button>
       <button class="button" onclick="payDebtPrompt()">Pay Debt</button>
     </div>
   </div>
 
-  <!-- Market & Inventory -->
-  <div class="flex-row" style="justify-content: space-between;">
+  <div style="display:flex; flex-wrap:wrap; justify-content: space-between;">
+    <!-- Market -->
     <div style="flex:1; min-width:280px; margin-right:1rem;">
       <h3>Market</h3>
       <table id="marketTable">
@@ -222,6 +146,7 @@
         <tbody></tbody>
       </table>
     </div>
+    <!-- Inventory -->
     <div style="flex:1; min-width:200px;">
       <h3>Inventory</h3>
       <table id="inventoryTable">
@@ -238,7 +163,7 @@
 
   <!-- Fight Section -->
   <div id="fightContainer">
-    <h4>Ruffians Attack!</h4>
+    <h4>Pirates Attack!</h4>
     <p id="fightText"></p>
     <button class="button" onclick="attemptRun()">Run</button>
     <button class="button" onclick="attemptFight()">Fight</button>
@@ -250,7 +175,7 @@
 </div>
 
 <!-- Game Over Screen -->
-<div class="container fade-in hidden" id="gameOverContainer">
+<div class="container hidden" id="gameOverContainer">
   <h2 id="gameOverTitle">Game Over</h2>
   <p id="gameOverMessage"></p>
   <button class="button" onclick="backToMainMenu()">Back to Main Menu</button>
@@ -258,7 +183,41 @@
 
 <script>
 /*************************************************************************
- * 1) Game Data
+ * 1) Sea Travel Locations
+ *************************************************************************/
+const seaLocationsData = [
+  { name: "Azure", distance: 0 },
+  { name: "Sylfaene", distance: 5 },
+  { name: "Holgren", distance: 8 },
+  { name: "Ryer", distance: 9 },
+  { name: "Waglynn Lighthouse", distance: 11 },
+  { name: "Commorragh", distance: 11 },
+  { name: "Devyth", distance: 12 },
+  { name: "Mong Harrad", distance: 17 },
+  { name: "Refuge", distance: 19 },
+  { name: "Morgrin Lighthouse", distance: 20 },
+  { name: "World's End", distance: 22 },
+  { name: "Fulcimer Lighthouse", distance: 25 },
+  { name: "Vigden", distance: 31 },
+  { name: "Meowygg", distance: 47 },
+  { name: "Mong Vinaya", distance: 46 },
+  { name: "Virgil", distance: 39 },
+  { name: "Hermit Sanctum", distance: 40 },
+  { name: "Wren", distance: 48 },
+  { name: "Villegrom Estate", distance: 60 },
+  { name: "Silt", distance: 63 },
+  { name: "Freeport", distance: 82 },
+  { name: "Giant's Head", distance: 5 }
+];
+function computeRisk(dist) {
+  if(dist<10) return 2;
+  if(dist<30) return 3;
+  if(dist<60) return 4;
+  return 5;
+}
+
+/*************************************************************************
+ * 2) Goods
  *************************************************************************/
 const goodsList = [
   { name: "Amber", minPrice: 5, maxPrice: 20 },
@@ -282,68 +241,59 @@ const goodsList = [
   { name: "Grain", minPrice: 1, maxPrice: 3 },
 ];
 
-const travelLocations = [
-  { name: "Azure", risk: 2 },
-  { name: "Sylfaene", risk: 3 },
-  { name: "Holgren", risk: 4 },
-  { name: "Ryer", risk: 2 },
-  { name: "Waglynn Lighthouse", risk: 4 },
-  { name: "Mong Harrad", risk: 4 },
-  { name: "World's End", risk: 5 },
-  { name: "Fulcimer Lighthouse", risk: 3 },
-  { name: "Vigden", risk: 3 },
-  { name: "Virgil", risk: 2 },
-  { name: "Hermit Sanctum", risk: 2 },
-  { name: "Wren", risk: 4 },
-  { name: "Villegrom Estate", risk: 5 },
-  { name: "Silt", risk: 5 },
-  { name: "Freeport", risk: 1 },
-  { name: "Morgrin Lighthouse", risk: 3 },
-  { name: "Mong Vinaya", risk: 4 },
-  { name: "Meowygg", risk: 2 },
-  { name: "Devyth", risk: 2 },
-  { name: "Commorragh", risk: 5 },
-  { name: "Refuge", risk: 1 },
-  { name: "Giant's Head", risk: 1 },
-];
-
-let dailyPrices = {};
-let day = 1, maxDays=30;
+/*************************************************************************
+ * 3) Game State
+ *************************************************************************/
+let day=1, maxDays=30;
 let gold=100, debt=500;
 let cargoMax=50, cargoUsed=0;
 let playerHP=100;
-let currentLocation="Azure";
 let ended=false;
-
-// Inventory
+let currentLocation="";
+let dailyPrices={};
 let inventory={};
 
+let playerName="";
+
+/* We'll store the seaLocations with a 'risk' property. */
+let seaLocations = [];
+
 /*************************************************************************
- * 2) Setup / Start
+ * 4) Setup
  *************************************************************************/
 function startGame() {
-  // Pull user settings
+  playerName = document.getElementById("playerName").value || "Anon Captain";
   day=1;
   maxDays = parseInt(document.getElementById("gameDays").value, 10);
   gold = parseInt(document.getElementById("startGold").value, 10);
   debt = parseInt(document.getElementById("startDebt").value, 10);
   cargoMax = parseInt(document.getElementById("startCargo").value, 10);
   playerHP = parseInt(document.getElementById("startHP").value, 10);
-  cargoUsed=0;
   ended=false;
-  currentLocation=travelLocations[0].name;
+  cargoUsed=0;
 
-  // Reset inventory
-  inventory={};
-  goodsList.forEach(g=> inventory[g.name]=0);
+  // Build seaLocations array with risk
+  seaLocations = seaLocationsData.map(obj => {
+    return {
+      name: obj.name,
+      distance: obj.distance,
+      risk: computeRisk(obj.distance)
+    };
+  });
+  currentLocation = seaLocations[0].name;
 
-  // Populate locations
+  // Inventory reset
+  inventory = {};
+  goodsList.forEach(g => inventory[g.name] = 0);
+
+  // Populate locationSelect
   const locSel = document.getElementById("locationSelect");
-  locSel.innerHTML="";
-  travelLocations.forEach(loc=>{
-    const op = document.createElement("option");
-    op.value=loc.name; op.textContent=loc.name;
-    locSel.appendChild(op);
+  locSel.innerHTML = "";
+  seaLocations.forEach(loc => {
+    const opt = document.createElement("option");
+    opt.value=loc.name;
+    opt.textContent=loc.name;
+    locSel.appendChild(opt);
   });
   locSel.value=currentLocation;
 
@@ -354,45 +304,45 @@ function startGame() {
 
   randomizePrices();
   refreshUI();
-  log(`Welcome! You have ${maxDays} days to pay off your debt of ${debt} GP.`);
+  log(`Captain ${playerName}, you have ${maxDays} days to settle your debt of ${debt} GP.`);
 }
 
 /*************************************************************************
- * 3) Random Price Generation
+ * 5) Random Price Generation
  *************************************************************************/
 function randomizePrices() {
   dailyPrices={};
-  travelLocations.forEach(loc=>{
+  seaLocations.forEach(loc=>{
     dailyPrices[loc.name]={};
     goodsList.forEach(g=>{
-      const base=randInt(g.minPrice, g.maxPrice);
-      const variance = 1 + (Math.random()*0.4-0.2); // +/-20%
+      const base = randInt(g.minPrice, g.maxPrice);
+      const variance = 1 + (Math.random()*0.4 - 0.2); // +/-20%
       dailyPrices[loc.name][g.name] = Math.max(1, Math.floor(base*variance));
     });
   });
 }
 
 /*************************************************************************
- * 4) UI Refresh
+ * 6) UI Refresh
  *************************************************************************/
-function refreshUI() {
-  // Update status
+function refreshUI(){
+  // Status line
   const statusLine = `Day ${day}/${maxDays} | Location: ${currentLocation} | ` +
                      `Gold: ${gold} | Debt: ${debt} | HP: ${playerHP} | ` +
-                     `Cargo: ${cargoUsed}/${cargoMax}`;
+                     `Ship Cargo: ${cargoUsed}/${cargoMax}`;
   document.getElementById("statusLine").textContent = statusLine;
 
-  // Day progress bar
-  const dayFraction = ((day-1)/maxDays)*100;
-  document.getElementById("dayProgress").style.width = dayFraction + "%";
+  // Day progress
+  const fraction = Math.min((day-1)/maxDays, 1)*100;
+  document.getElementById("dayProgress").style.width= fraction+"%";
 
-  // Market Table
+  // Market
   const marketBody=document.getElementById("marketTable").querySelector("tbody");
   marketBody.innerHTML="";
   goodsList.forEach(g=>{
     const price=dailyPrices[currentLocation][g.name];
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
+    const row=document.createElement("tr");
+    row.innerHTML=`
       <td>${g.name}</td>
       <td>${price} GP</td>
       <td>
@@ -400,25 +350,26 @@ function refreshUI() {
         <button class="button" onclick="sellPrompt('${g.name}')">Sell</button>
       </td>
     `;
-    marketBody.appendChild(tr);
+    marketBody.appendChild(row);
   });
 
-  // Inventory table
+  // Inventory
   const invBody=document.getElementById("inventoryTable").querySelector("tbody");
   invBody.innerHTML="";
   goodsList.forEach(g=>{
     if(inventory[g.name]>0){
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${g.name}</td><td>${inventory[g.name]}</td>`;
-      invBody.appendChild(tr);
+      const row=document.createElement("tr");
+      row.innerHTML=`<td>${g.name}</td><td>${inventory[g.name]}</td>`;
+      invBody.appendChild(row);
     }
   });
-  // Hide fight container if needed
+
+  // Hide fight container
   document.getElementById("fightContainer").classList.remove("show");
 }
 
 /*************************************************************************
- * 5) Logging with fade-in lines
+ * 7) Logging
  *************************************************************************/
 function log(msg){
   const logArea=document.getElementById("logArea");
@@ -429,22 +380,23 @@ function log(msg){
 }
 
 /*************************************************************************
- * 6) Travel
+ * 8) Travel
  *************************************************************************/
 function travel(){
-  if(ended) return;
+  if(ended)return;
   if(day>=maxDays){
     log(`<span class="alert">No more days left!</span>`);
     return;
   }
   const newLoc=document.getElementById("locationSelect").value;
   if(newLoc===currentLocation){
-    log(`<span class="alert">You're already in ${currentLocation}!</span>`);
+    log(`<span class="alert">You're already docked at ${currentLocation}!</span>`);
     return;
   }
   currentLocation=newLoc;
   day++;
-  log(`You travel to <strong>${currentLocation}</strong>. (Day ${day}/${maxDays})`);
+  log(`You sail to <strong>${currentLocation}</strong>. Now Day ${day}/${maxDays}.`);
+
   doRandomEvent();
   randomizePrices();
   refreshUI();
@@ -452,44 +404,45 @@ function travel(){
 }
 
 /*************************************************************************
- * 7) Buying / Selling
+ * 9) Buying / Selling
  *************************************************************************/
 function buyPrompt(goodName){
   if(ended) return;
-  const price=dailyPrices[currentLocation][goodName];
-  const maxAfford=Math.floor(gold/price);
-  const maxSpace=cargoMax-cargoUsed;
-  const maxCanBuy=Math.min(maxAfford, maxSpace);
+  const price = dailyPrices[currentLocation][goodName];
+  const maxAfford = Math.floor(gold / price);
+  const maxSpace = cargoMax - cargoUsed;
+  const maxCanBuy = Math.min(maxAfford, maxSpace);
   if(maxCanBuy<=0){
-    log(`<span class="alert">Can't buy ${goodName}, no cargo space or gold!</span>`);
+    log(`<span class="alert">No room or not enough gold to buy ${goodName}!</span>`);
     return;
   }
-  const qStr=prompt(`Buy how many ${goodName}? (Up to ${maxCanBuy})`);
-  if(!qStr)return;
-  const qty=parseInt(qStr,10);
+  const qtyStr=prompt(`Buy how many units of ${goodName}? (Max ${maxCanBuy})`);
+  if(!qtyStr)return;
+  const qty=parseInt(qtyStr,10);
   if(!qty||qty<1)return;
   if(qty>maxCanBuy){
-    log(`<span class="alert">Max you can buy is ${maxCanBuy}!</span>`);
+    log(`<span class="alert">You can only buy up to ${maxCanBuy}!</span>`);
     return;
   }
   const cost=qty*price;
   gold-=cost;
-  inventory[goodName]+=qty;
   cargoUsed+=qty;
-  log(`Bought ${qty} x ${goodName} @ ${price} GP = ${cost} total.`);
+  inventory[goodName]+=qty;
+  log(`Bought ${qty} x ${goodName} @ ${price} GP => ${cost} GP total.`);
   refreshUI();
 }
+
 function sellPrompt(goodName){
-  if(ended) return;
+  if(ended)return;
   const have=inventory[goodName];
   if(!have||have<1){
-    log(`<span class="alert">No ${goodName} to sell!</span>`);
+    log(`<span class="alert">You have no ${goodName} to sell!</span>`);
     return;
   }
   const price=dailyPrices[currentLocation][goodName];
-  const qStr=prompt(`Sell how many ${goodName}? (You have ${have})`);
-  if(!qStr)return;
-  const qty=parseInt(qStr,10);
+  const qtyStr=prompt(`Sell how many units of ${goodName}? (You have ${have})`);
+  if(!qtyStr)return;
+  const qty=parseInt(qtyStr,10);
   if(!qty||qty<1)return;
   if(qty>have){
     log(`<span class="alert">You only have ${have}!</span>`);
@@ -499,159 +452,242 @@ function sellPrompt(goodName){
   gold+=income;
   inventory[goodName]-=qty;
   cargoUsed-=qty;
-  log(`Sold ${qty} x ${goodName} @ ${price} GP = ${income} total.`);
+  log(`Sold ${qty} x ${goodName} @ ${price} GP => ${income} GP total.`);
   refreshUI();
 }
 
 /*************************************************************************
- * 8) Paying Debt
+ * 10) Pay Debt
  *************************************************************************/
 function payDebtPrompt(){
   if(ended)return;
   if(debt<=0){
-    log(`Debt already cleared!`);
+    log(`Your debt is already cleared!`);
     return;
   }
-  const amtStr=prompt(`Pay how much? (Debt: ${debt}, Gold: ${gold})`);
+  const amtStr=prompt(`How much to pay toward ${debt} GP debt?`);
   if(!amtStr)return;
   const amt=parseInt(amtStr,10);
   if(!amt||amt<1)return;
   if(amt>gold){
-    log(`<span class="alert">You don't have enough gold!</span>`);
+    log(`<span class="alert">You don't have that much gold!</span>`);
     return;
   }
-  gold-=amt; debt-=amt;
+  gold-=amt;
+  debt-=amt;
   if(debt<0) debt=0;
   log(`Paid ${amt} GP. Debt now: ${debt}.`);
   if(debt<=0){
-    log(`<span class="alert">Debt cleared! Congratulations!</span>`);
+    log(`<span class="alert">Debt fully paid off! Congratulations!</span>`);
   }
   refreshUI();
   checkGameEnd();
 }
 
 /*************************************************************************
- * 9) Random Events
+ * 11) Random Events on Travel
  *************************************************************************/
 function doRandomEvent(){
-  const locObj=travelLocations.find(l=>l.name===currentLocation);
-  const risk= locObj?.risk||3;
-  const chance=Math.random()*10;
-  if(chance<risk){
-    // Attack
+  const locObj = seaLocations.find(l => l.name===currentLocation);
+  const risk= locObj ? locObj.risk : 3;
+  const roll=Math.random()*10;
+
+  if(roll<risk){
+    // Pirate Attack
     showFightPrompt();
   } else {
-    // maybe find goods or nothing
-    const c2=Math.random();
-    if(c2<0.3){
-      // found goods
+    // Possibly flotsam, ship for sale (11% chance), or nothing
+    const subRoll=Math.random();
+    if(subRoll<0.3){
+      // Found cargo
       const found=pickRandom(goodsList);
-      const q=randInt(1,3);
-      if(cargoUsed+q<=cargoMax){
-        inventory[found.name]+=q;
-        cargoUsed+=q;
-        log(`Lucky find: ${q} x ${found.name} on the roadside!`);
+      const qty=randInt(1,3);
+      if(cargoUsed+qty<=cargoMax){
+        inventory[found.name]+=qty;
+        cargoUsed+=qty;
+        log(`Lucky find! ${qty} x ${found.name} afloat in a drifting crate.`);
       } else {
-        log(`You spot some ${found.name}, but no cargo space to take it.`);
+        log(`You spot a crate of ${found.name}, but no cargo space left!`);
       }
+    } else if(subRoll<0.41){
+      // 11% chance
+      attemptShipUpgrade();
     } else {
-      log(`A quiet day—no incidents.`);
+      log(`A calm day at sea—nothing of note happens.`);
     }
   }
 }
-function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
-function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+function attemptShipUpgrade(){
+  // Random cost & capacity boost
+  const cost=randInt(200,600);
+  const extraCap=randInt(20,40);
+  log(`A local shipwright in ${currentLocation} offers a bigger vessel: +${extraCap} cargo for ${cost} GP.`);
+  if(gold<cost){
+    log(`<span class="alert">You cannot afford the new ship right now!</span>`);
+    return;
+  }
+  const buyIt=confirm(`Buy new ship for ${cost} GP (this will raise cargo capacity by ${extraCap})?`);
+  if(buyIt){
+    gold-=cost;
+    cargoMax+=extraCap;
+    log(`<span class="alert">You bought a new ship! Cargo capacity is now ${cargoMax}.</span>`);
+    refreshUI();
+  } else {
+    log(`You decline the shipwright's offer.`);
+  }
+}
 
 /*************************************************************************
- * 10) Fighting / Running
+ * 12) Fighting Pirates
  *************************************************************************/
 function showFightPrompt(){
   const fc=document.getElementById("fightContainer");
   fc.classList.add("show");
   document.getElementById("fightText").textContent=
-    `Ruffians ambush you at ${currentLocation}! Will you run or fight?`;
+    `Pirates blockade your route near ${currentLocation}! Run or fight?`;
 }
-
 function attemptRun(){
   document.getElementById("fightContainer").classList.remove("show");
-  // 40% chance fail
+  // 40% fail chance
   if(Math.random()<0.4){
-    log(`<span class="alert">You try to run, but they catch you!</span>`);
+    log(`<span class="alert">You tried to flee but the pirates caught you!</span>`);
     doFight();
   } else {
-    log(`You escape, panting heavily!`);
+    log(`You successfully outrun the pirate ship!`);
   }
 }
-
 function attemptFight(){
   document.getElementById("fightContainer").classList.remove("show");
   doFight();
 }
-
 function doFight(){
-  const enemyPower=randInt(20,60);
+  const piratePower=randInt(20,60);
   const yourPower=randInt(15,70);
-  if(yourPower>=enemyPower){
-    // victory
-    log(`You fought bravely! (Enemy: ${enemyPower}, You: ${yourPower}) You win!`);
+  if(yourPower>=piratePower){
+    log(`You repel the pirates! (Enemy:${piratePower}, You:${yourPower})`);
     const loot=randInt(10,50);
     gold+=loot;
-    log(`Looted ${loot} GP from the ruffians.`);
+    log(`You loot ${loot} GP from the pirate’s vessel.`);
   } else {
-    // damage
     const dmg=randInt(10,30);
     playerHP-=dmg;
-    log(`<span class="alert">Battle lost! (Enemy:${enemyPower} vs Your:${yourPower}), you take ${dmg} damage!</span>`);
+    log(`<span class="alert">You lose the skirmish! (Enemy:${piratePower} vs You:${yourPower}), took ${dmg} damage!</span>`);
     if(playerHP<=0){
       playerHP=0;
-      log(`<span class="alert">You were slain by the ruffians!</span>`);
-      endGame(false,"Killed in battle.");
+      log(`<span class="alert">You have been slain by pirates!</span>`);
+      endGame(false,"Killed in pirate battle.");
     }
   }
   refreshUI();
 }
 
 /*************************************************************************
- * 11) Check End
+ * 13) End Condition + High Score
  *************************************************************************/
 function checkGameEnd(){
   if(day>maxDays && debt>0 && !ended){
-    endGame(false, "Time’s up with debt unpaid!");
+    endGame(false, "Time’s up and your debt remains unpaid!");
   }
 }
 function endGame(success, reason){
   ended=true;
   document.getElementById("gameContainer").classList.add("hidden");
   document.getElementById("gameOverContainer").classList.remove("hidden");
-  const netWorth=gold+approxInventoryValue();
-  if(!success){
-    document.getElementById("gameOverTitle").textContent="Game Over (Failure)";
-    document.getElementById("gameOverMessage").innerHTML=
-      reason+`<br>Your net worth: ~${netWorth} GP.`;
-  } else {
+
+  const netWorth=gold+calcInventoryValue();
+  let finalMsg = reason + `<br>Your net worth is ~${netWorth} GP.`;
+
+  if(success){
     document.getElementById("gameOverTitle").textContent="Game Over (Success)";
-    document.getElementById("gameOverMessage").innerHTML=
-      reason+`<br>Your net worth: ~${netWorth} GP.`;
+  } else {
+    document.getElementById("gameOverTitle").textContent="Game Over (Failure)";
   }
+  document.getElementById("gameOverMessage").innerHTML=finalMsg;
+
+  // Save high score
+  saveScore(playerName, netWorth);
 }
-function approxInventoryValue(){
+
+/*************************************************************************
+ * 14) Score Calculation + Storage
+ *************************************************************************/
+function calcInventoryValue(){
   let sum=0;
   goodsList.forEach(g=>{
     const avg=(g.minPrice+g.maxPrice)/2;
-    sum+=avg*inventory[g.name];
+    sum += avg*inventory[g.name];
   });
   return Math.floor(sum);
 }
 
+// We'll store an array of { name, netWorth, date } in localStorage
+function saveScore(name, netWorth){
+  let scores = JSON.parse(localStorage.getItem("seaEditionScores")) || [];
+  scores.push({
+    name,
+    netWorth,
+    date: new Date().toLocaleString()
+  });
+  // Sort descending by netWorth
+  scores.sort((a,b)=> b.netWorth - a.netWorth);
+  // Keep top 10
+  if(scores.length>10) scores = scores.slice(0,10);
+  localStorage.setItem("seaEditionScores", JSON.stringify(scores));
+}
+
 /*************************************************************************
- * 12) Back to Main
+ * 15) Scoreboard: Shown in Setup Screen
+ *************************************************************************/
+function updateScoreboard(){
+  let container = document.getElementById("scoreboardContainer");
+  let scores = JSON.parse(localStorage.getItem("seaEditionScores")) || [];
+  if(scores.length===0){
+    container.innerHTML = "<p>No high scores yet.</p>";
+    return;
+  }
+  let html = `
+    <table>
+      <thead><tr><th>Rank</th><th>Captain</th><th>Net Worth</th><th>Date</th></tr></thead>
+      <tbody>
+  `;
+  scores.forEach((s, i)=>{
+    html += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${s.name}</td>
+        <td>${s.netWorth}</td>
+        <td>${s.date}</td>
+      </tr>
+    `;
+  });
+  html += `</tbody></table>`;
+  container.innerHTML=html;
+}
+function clearScores(){
+  localStorage.setItem("seaEditionScores","[]");
+  updateScoreboard();
+}
+
+/*************************************************************************
+ * 16) Return to Setup
  *************************************************************************/
 function backToMainMenu(){
-  // hide gameOver, show setup
   document.getElementById("setupContainer").classList.remove("hidden");
   document.getElementById("gameContainer").classList.add("hidden");
   document.getElementById("gameOverContainer").classList.add("hidden");
+
+  updateScoreboard(); // Refresh scoreboard if we want to see new highscore
 }
+
+/*************************************************************************
+ * Utilities
+ *************************************************************************/
+function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+// On page load, update scoreboard
+window.addEventListener("load", updateScoreboard);
 </script>
 </body>
 </html>
