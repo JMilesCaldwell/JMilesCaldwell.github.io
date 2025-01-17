@@ -2,745 +2,386 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Pickled Piglet</title>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+  <!-- A viewport meta to make things more pleasant on mobile. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, 
+    minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Evershroud Chronicles: A Little Strategy Romp</title>
+
+  <!-- Fonts as used in your existing code -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
-  >
+  />
+
+  <!-- Simple styling that borrows from your existing aesthetic. -->
   <style>
-    /* General Page Styling */
     body {
       margin: 0;
-      background: url('resources/tavern.png') no-repeat center center fixed;
+      background: url("resources/index.png") no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
-
+    h1, h2, h3 {
+      font-family: 'Cinzel', serif;
+      margin: 0.5rem 0;
+    }
     .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-
-    h1, h2 {
-      font-family: 'Cinzel', serif;
-    }
-
-    .faction-section {
-      margin-bottom: 2rem;
-      border: 2px solid #660000;
-      border-radius: 8px;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .faction-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    /* Vertical Banner */
-    .faction-banner {
-      width: 120px; /* vertical banner style */
-      height: auto;
-      border: 2px solid #8B0000;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-    }
-
-    /* Removed the faction-portrait images per your request */
-
-    .faction-content {
-      text-align: left;
-      margin: 0.5rem 1rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-    }
-
-    th, td {
-      border: 1px solid #8B0000;
-      padding: 0.5rem;
-      text-align: center;
-    }
-
-    th {
-      background: #8B0000;
-      color: #FAF4E0;
-      font-family: 'Cinzel', serif;
-    }
-
-    .divider {
+      max-width: 600px;
       margin: 1rem auto;
-      font-size: 1.5rem;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: left;
     }
-
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
-    }
-
-    /* Buttons */
-    .action-button {
+    .btn {
       background: #8B0000;
       color: #FAF4E0;
-      border: 1px solid #660000;
-      padding: 0.3rem 0.6rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Cinzel', serif;
-      margin: 0.2rem;
-    }
-    .action-button:hover {
-      background: #660000;
-    }
-    .home-button {
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
       padding: 0.5rem 1rem;
+      border: 2px solid #660000;
       border-radius: 5px;
       cursor: pointer;
       font-family: 'Cinzel', serif;
-      display: inline-block;
-      margin-top: 1rem;
+      margin: 0.3rem;
       text-decoration: none;
     }
-    .home-button:hover {
+    .btn:hover {
       background: #660000;
     }
-
-    /* Modal Styling */
-    #modalOverlay {
-      display: none;
-      position: fixed; 
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.8); /* black overlay */
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
     }
-    .modal-content {
-      background-color: #2a2a2a;
-      margin: 10% auto;
-      padding: 1rem;
+    .faction-card {
+      background: rgba(255, 255, 255, 0.1);
       border: 2px solid #660000;
-      max-width: 500px;
-      border-radius: 10px;
-      position: relative;
-      text-align: left;
-    }
-    .close-button {
-      background: #8B0000;
-      border: 1px solid #660000;
-      color: #FAF4E0;
-      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      width: 140px;
+      padding: 0.5rem;
+      text-align: center;
       cursor: pointer;
-      font-family: 'Cinzel', serif;
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
+      transition: transform 0.2s;
+    }
+    .faction-card:hover {
+      transform: scale(1.05);
+    }
+    .faction-card img {
+      max-width: 100%;
+      border: 2px solid #8B0000;
       border-radius: 4px;
     }
-    .close-button:hover {
-      background: #660000;
+    .selected {
+      border-color: #FFD700 !important;
+      box-shadow: 0 0 10px #FFD700;
     }
-    .modal-content label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-family: 'Cinzel', serif;
+    .game-section {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #660000;
+      border-radius: 8px;
     }
-    .modal-content input {
-      width: 100%;
-      padding: 0.4rem;
-      margin-bottom: 0.8rem;
-      box-sizing: border-box;
-      font-family: 'Almendra', serif;
+    .resource-display {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid #8B0000;
+      border-radius: 5px;
     }
-
+    .location-card {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #660000;
+      border-radius: 5px;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+    }
+    .location-card:hover {
+      background: rgba(255,255,255,0.15);
+    }
+    .hidden {
+      display: none;
+    }
+    /* Mobile adaptation: ensure things scale nicely. */
     @media (max-width: 600px) {
-      table {
-        font-size: 0.9rem;
-      }
-      th, td {
-        padding: 0.3rem;
+      .faction-card {
+        width: 120px;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>The Lucky Serpent Tavern</h1>
-    <p>Order a drink, chat up fellow patrons, or attempt more… discreet dealings.</p>
+<div class="container" id="introContainer">
+  <h1>Evershroud Chronicles</h1>
+  <p>
+    Well met, traveller. You stand poised to carve your legacy among the swirling mists 
+    of the Isles—ally with cunning factions, gather resources, and survive curious 
+    encounters. <em>Choose your affiliation</em>, if you dare...
+  </p>
 
-    <div class="divider"></div>
-
-    <!-- Zhilan Triads -->
-    <div class="faction-section">
-      <div class="faction-header">
-        <img 
-          src="resources/zhilantriadsbanner.png" 
-          alt="Zhilan Triads Banner" 
-          class="faction-banner"
-        >
-        <h2>Zhilan Triads</h2>
-      </div>
-      <div class="faction-content">
-        <p><strong>Notes:</strong> Mysterious, tradition-bound criminals from Little Zhi-La in Azure.</p>
-      </div>
-
-      <h3>Notable Patrons</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Jin Hua</td>
-            <td>Matriarch of the Triads</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('jinHua')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('jinHua')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('jinHua')">Request Audience</button>
-            </td>
-          </tr>
-          <tr>
-            <td>Han Mei</td>
-            <td>Crimson Lantern Enforcer</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('hanMei')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('hanMei')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('hanMei')">Request Audience</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Xondaran Syndicate -->
-    <div class="faction-section">
-      <div class="faction-header">
-        <img 
-          src="resources/xondaransyndicate.png" 
-          alt="Xondaran Syndicate Banner" 
-          class="faction-banner"
-        >
-        <h2>Xondaran Syndicate</h2>
-      </div>
-      <div class="faction-content">
-        <p><strong>Notes:</strong> Wealthy and influential Xondaran council members controlling Azure’s docks.</p>
-      </div>
-
-      <h3>Notable Patrons</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Sayyid Kashim</td>
-            <td>Majlis Councilman</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('sayyidKashim')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('sayyidKashim')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('sayyidKashim')">Request Audience</button>
-            </td>
-          </tr>
-          <tr>
-            <td>Basira Azzam</td>
-            <td>Rahib Overseer</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('basiraAzzam')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('basiraAzzam')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('basiraAzzam')">Request Audience</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Blackjacks -->
-    <div class="faction-section">
-      <div class="faction-header">
-        <img 
-          src="resources/blackjacks.png" 
-          alt="Blackjacks Banner" 
-          class="faction-banner"
-        >
-        <h2>The Blackjacks</h2>
-      </div>
-      <div class="faction-content">
-        <p><strong>Notes:</strong> Ragtag gang of ruffians and hustlers who rule the lower districts through swagger and intimidation.</p>
-      </div>
-
-      <h3>Notable Patrons</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>The Jack</td>
-            <td>Leader of the Blackjacks</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('theJack')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('theJack')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('theJack')">Request Audience</button>
-            </td>
-          </tr>
-          <tr>
-            <td>Rosette Quickstep</td>
-            <td>Henchwoman</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('rosette')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('rosette')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('rosette')">Request Audience</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Scarlet Swallows -->
-    <div class="faction-section">
-      <div class="faction-header">
-        <img 
-          src="resources/scarletswallowsbanner.png" 
-          alt="Scarlet Swallows Banner" 
-          class="faction-banner"
-        >
-        <h2>The Scarlet Swallows</h2>
-      </div>
-      <div class="faction-content">
-        <p><strong>Notes:</strong> A tightly-run network of pleasure houses and intelligence gathering, ruled by the enigmatic Madame.</p>
-      </div>
-
-      <h3>Notable Patrons</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>The Madame</td>
-            <td>Leader of the Scarlet Swallows</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('theMadame')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('theMadame')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('theMadame')">Request Audience</button>
-            </td>
-          </tr>
-          <tr>
-            <td>Karma Nightingale</td>
-            <td>Swallow Operative</td>
-            <td>
-              <button class="action-button" onclick="buyDrink('karma')">Buy Drink</button>
-              <button class="action-button" onclick="openBribeModal('karma')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('karma')">Request Audience</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- End of Factions -->
-
-    <!-- "End Day" button resets all drink-likes -->
-    <button class="action-button" onclick="endDay()">Call it a Night (Reset Day)</button>
-    <br>
-    <!-- HOME BUTTON AT THE BOTTOM -->
-    <a href="index.html" class="home-button">Home</a>
+  <!-- Faction selection row -->
+  <div class="flex-row" id="factionRow">
+    <!-- We will populate these from JS for convenience -->
   </div>
 
-  <!-- Modal Overlay -->
-  <div id="modalOverlay">
-    <div class="modal-content">
-      <button class="close-button" onclick="closeModal()">Close</button>
-      <h2 id="modalTitle"></h2>
-      <p id="modalDialogue"></p>
+  <button class="btn" id="startGameBtn">Begin Your Journey</button>
+</div>
 
-      <!-- Bribe input only shows up if type === 'bribe' -->
-      <div id="bribeSection" style="display:none;">
-        <label for="bribeAmount">Bribe Amount (GP):</label>
-        <input type="number" id="bribeAmount" min="0" value="0" />
-        <p id="bribeResult"></p>
-        <button class="action-button" onclick="submitBribe()">Offer Bribe</button>
-      </div>
-    </div>
+<div class="container hidden" id="gameContainer">
+  <h2 id="factionTitle"></h2>
+  <div class="resource-display">
+    <strong>Resources:</strong> <span id="resourceGold"></span> gold, 
+    <span id="resourceInfluence"></span> influence
   </div>
 
-  <script>
-    /*
-      Each representative has:
-      - name: Display name
-      - minBribe, maxBribe: random threshold range
-      - bribeSuccessChance: chance of success after crossing threshold
-      - audienceChance: chance the user gets an audience
-      - favorLines: random lines on bribe success
-      - drinkLines: random lines on "Buy Drink"
-      - like: how much they like you (resets each day)
-      - drinksCount: how many drinks have been bought for them (resets each day)
-      - drinksToLeave: random threshold that triggers them leaving after being plied with enough booze
-    */
+  <div class="game-section">
+    <h3>Available Locations</h3>
+    <div id="locationList"></div>
+  </div>
 
-    const REP_DATA = {
-      jinHua: {
-        name: "Jin Hua",
-        minBribe: 50,
-        maxBribe: 150,
-        bribeSuccessChance: 0.70,
-        audienceChance: 0.20,
-        favorLines: [
-          "She grants you a quiet introduction to the Jade Council.",
-          "The Crimson Lanterns look the other way when you pass.",
-          "Her soft-spoken word ensures a silent trade route in Little Zhi-La."
-        ],
-        drinkLines: [
-          `"Ah, a gesture of respect? Very well. I shall drink to our mutual benefit."`,
-          `"Your generosity is noted. Perhaps you are wiser than the others who come seeking favours."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      hanMei: {
-        name: "Han Mei",
-        minBribe: 30,
-        maxBribe: 80,
-        bribeSuccessChance: 0.80,
-        audienceChance: 0.33,
-        favorLines: [
-          "Han Mei arranges a discreet escort through Little Zhi-La's back alleys.",
-          "Your rival’s debt suddenly doubles overnight, courtesy of the Crimson Lanterns.",
-          "The collector’s hand stays on your coin purse—for now."
-        ],
-        drinkLines: [
-          `"Hmph. You must be braver than most to buy me a drink. Fine. I'll hear you out."`,
-          `"You’ve found the quick route to my heart: good spirits and no questions."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      sayyidKashim: {
-        name: "Sayyid Kashim",
-        minBribe: 40,
-        maxBribe: 120,
-        bribeSuccessChance: 0.75,
-        audienceChance: 0.25,
-        favorLines: [
-          "He arranges for your goods to pass the harbour uninspected.",
-          "A swift 'recommendation' puts you on the Majlis’s good side—for now.",
-          "Your name is quietly added to a private guest list at a lavish Xondaran feast."
-        ],
-        drinkLines: [
-          `"A thousand blessings upon you for this kind offering. We shall drink to prosperity."`,
-          `"You know the ways of hospitality, friend. In Xondar, generosity is always repaid—somehow."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      basiraAzzam: {
-        name: "Basira Azzam",
-        minBribe: 25,
-        maxBribe: 90,
-        bribeSuccessChance: 0.80,
-        audienceChance: 0.33,
-        favorLines: [
-          "She ensures the Al-Adwa give you a wide berth on the docks.",
-          "A valuable 'accident' befalls a competitor’s ship, courtesy of her oversight.",
-          "She whispers a name to the Rahib, halting an inconvenient investigation into your affairs."
-        ],
-        drinkLines: [
-          `"So you know how to loosen tongues with a drink? Clever. Let us talk, friend."`,
-          `"I rarely accept freebies, but you seem sincere enough. Cheers to that."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      theJack: {
-        name: "The Jack",
-        minBribe: 30,
-        maxBribe: 100,
-        bribeSuccessChance: 0.65,
-        audienceChance: 0.40,
-        favorLines: [
-          "The Jack's gang keeps a respectful distance from your business for a week.",
-          "A 'friendly brawl' claims the valuables of your rival in the next alley over.",
-          "He organizes a lively diversion while you slip away with your loot."
-        ],
-        drinkLines: [
-          `"Ha! Another fool who thinks I'll dance for a drop of ale? Well, I'm listening..."`,
-          `"A free drink is the best kind. Keep 'em coming and I might start liking your face."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      rosette: {
-        name: "Rosette Quickstep",
-        minBribe: 20,
-        maxBribe: 70,
-        bribeSuccessChance: 0.85,
-        audienceChance: 0.33,
-        favorLines: [
-          "She arranges a small team of pickpockets to 'liberate' your target’s purse.",
-          "A local tavern-keeper 'forgets' your bar tab in gratitude—on her instruction.",
-          "She ensures the city guard chases a decoy while you slip away."
-        ],
-        drinkLines: [
-          `"You trying to butter me up, sugar? Fine, I'll sip to that."`,
-          `"A drink? I'd be a fool to say no. Let’s see how interesting you can be."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      theMadame: {
-        name: "The Madame",
-        minBribe: 60,
-        maxBribe: 150,
-        bribeSuccessChance: 0.75,
-        audienceChance: 0.25,
-        favorLines: [
-          "She grants you the ear of a high-profile client in her parlour—worth its weight in gold.",
-          "A single whisper from her sees an inconvenient witness vanish from the city.",
-          "She dispatches one of her most trusted Swallows to handle 'delicate negotiations.'"
-        ],
-        drinkLines: [
-          `"How bold, buying a drink for the likes of me. Take care you don't overstep, dear."`,
-          `"A calculated risk on your part, no doubt. Well, indulge me, and I might indulge you."`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
-      },
-      karma: {
-        name: "Karma Nightingale",
-        minBribe: 20,
-        maxBribe: 70,
-        bribeSuccessChance: 0.80,
-        audienceChance: 0.33,
-        favorLines: [
-          "Karma passes on a succulent rumour from a client’s pillow-talk.",
-          "Your rival’s private letters disappear, only to reappear in your hands.",
-          "She invites you to a Swallow soiree, where secrets flow as freely as wine."
-        ],
-        drinkLines: [
-          `"A sweet gesture. My Mistress will be pleased to see us get along."`,
-          `"You’ve piqued my curiosity. Let’s make this drink worth our time, shall we?"`
-        ],
-        like: 0,
-        drinksCount: 0,
-        drinksToLeave: getRandomInt(10, 20)
+  <div class="game-section">
+    <h3>Random Encounter</h3>
+    <p>Whenever you travel or dabble in mischief, something curious may unfold.</p>
+    <button class="btn" id="encounterBtn">Test Your Luck</button>
+    <div id="encounterResult" style="margin-top: 0.5rem;"></div>
+  </div>
+</div>
+
+<script>
+/* 
+   ================   SIMPLE DATA   ================
+   We'll define a handful of factions, referencing some 
+   names from your world. We'll also define a few locations 
+   (like the Temple District or Alchemist Shop) that we can 
+   “travel” to, purely for flavour. 
+*/
+const factions = [
+  {
+    id: "azure",
+    name: "Azurean League",
+    image: "resources/azure.png",
+    desc: "A loose federation of city-states with princely rule—prosperous in maritime trade."
+  },
+  {
+    id: "silt",
+    name: "Hegemony of Silt",
+    image: "resources/silt.png",
+    desc: "A theocratic domain under the Cult of Rael, known for its mercenary forces."
+  },
+  {
+    id: "margraeve",
+    name: "Margraeve-Duskhaven",
+    image: "resources/margraeve.png",
+    desc: "A realm of undead aristocracy, bound by dark rites but ironically joyful citizens."
+  },
+  {
+    id: "caldwell",
+    name: "Caldwell Republic",
+    image: "resources/caldwell.png",
+    desc: "Nominal democracy overshadowed by Silt, once the breadbasket of the Isles."
+  }
+];
+
+const locations = [
+  {
+    name: "Alchemist’s Shop",
+    desc: "A pungent den of potions and concoctions. Possibly dangerous, definitely expensive.",
+    effect: () => {
+      // Example effect on resources
+      const cost = getRandomInt(10, 50);
+      if (player.gold >= cost) {
+        player.gold -= cost;
+        player.influence += 1;
+        return `You spent ${cost} gold on arcane goo, gaining a whiff of influence (+1).`;
+      } else {
+        return `You cannot afford these splendidly bizarre potions. The alchemist sneers.`;
       }
+    }
+  },
+  {
+    name: "Temple District",
+    desc: "Seek the blessings of the Five—if your gold can appease them.",
+    effect: () => {
+      const donation = getRandomInt(2, 20);
+      if (player.gold >= donation) {
+        player.gold -= donation;
+        player.influence += 2;
+        return `You donate ${donation} gold, receiving a minor divine favour (+2 influence).`;
+      } else {
+        return `You approach the altars empty-handed. The priests politely show you the door.`;
+      }
+    }
+  },
+  {
+    name: "Council Hall",
+    desc: "A seat of intrigue where deals are struck in hushed tones.",
+    effect: () => {
+      // If influence is high, maybe gain gold.
+      if (player.influence >= 5) {
+        const gain = getRandomInt(10, 30);
+        player.gold += gain;
+        player.influence -= 2; 
+        return `Leveraging your clout, you broker a small deal: +${gain} gold, -2 influence.`;
+      } else {
+        return `The council politely notes your lack of status. No deals for you.`;
+      }
+    }
+  },
+  {
+    name: "The Pickled Piglet",
+    desc: "A notorious tavern where rogues, ruffians, and potential allies lurk.",
+    effect: () => {
+      // Maybe random effect
+      const roll = Math.random();
+      if (roll < 0.5) {
+        player.gold -= 5;
+        player.influence += 1;
+        return `You buy a round for the ruffians (-5 gold), forging a new connection (+1 influence).`;
+      } else {
+        const stolen = Math.min(player.gold, getRandomInt(5, 15));
+        player.gold -= stolen;
+        return `A cunning pickpocket lightens your purse by ${stolen} gold while you’re tipsy.`;
+      }
+    }
+  }
+];
+
+/* Some random encounters for the “Test Your Luck” button. */
+const encounters = [
+  "A passing merchant drops a pouch in haste. Gain 10 gold!",
+  "A swarm of gulls descends upon your rations. Lose 5 gold for a replacement meal.",
+  "A robed figure extols the virtues of another realm; gain 2 influence for your open-mindedness.",
+  "Caught in an alley scuffle—lose 2 influence as your reputation gets tarnished.",
+  "A spontaneous festival enthralls you; you spend 8 gold but gain 1 influence dancing with the locals.",
+  "You unearth a hidden trinket—sellable for 15 gold!",
+  "You help an old fisherman mend his net; in gratitude, he discreetly slips you 5 gold.",
+  "You offend a minor noble by stepping on their toe—lose 1 influence.",
+  "A shadowy contact offers you hush money: +7 gold, but you feel slightly compromised…",
+  "A petty guard fines you for a trumped-up violation—lose 5 gold."
+];
+
+/* 
+   ================   GAME STATE   ================
+   We'll store the player's chosen faction, resources, etc.
+*/
+let chosenFaction = null;
+let player = {
+  gold: 50,
+  influence: 0
+};
+
+/* 
+   ================   UTILITY   ================
+*/
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/* 
+   ================   DOM MANIPULATION   ================
+*/
+
+// Step 1: Render faction cards
+const factionRow = document.getElementById("factionRow");
+factions.forEach(f => {
+  const card = document.createElement("div");
+  card.className = "faction-card";
+  card.innerHTML = `
+    <img src="${f.image}" alt="${f.name}">
+    <h3>${f.name}</h3>
+    <p style="font-size:0.8rem;">${f.desc}</p>
+  `;
+  card.onclick = () => {
+    // Mark as selected
+    document.querySelectorAll(".faction-card").forEach(c => c.classList.remove("selected"));
+    card.classList.add("selected");
+    chosenFaction = f;
+  };
+  factionRow.appendChild(card);
+});
+
+// Step 2: Begin game
+const startGameBtn = document.getElementById("startGameBtn");
+startGameBtn.onclick = () => {
+  if (!chosenFaction) {
+    alert("Pray choose a faction before plunging in, dear sir.");
+    return;
+  }
+  document.getElementById("introContainer").classList.add("hidden");
+  document.getElementById("gameContainer").classList.remove("hidden");
+  document.getElementById("factionTitle").textContent = chosenFaction.name;
+  updateResources();
+  renderLocations();
+};
+
+// Step 3: Update resource display
+function updateResources() {
+  document.getElementById("resourceGold").textContent = player.gold;
+  document.getElementById("resourceInfluence").textContent = player.influence;
+}
+
+// Step 4: Render location list
+function renderLocations() {
+  const locationList = document.getElementById("locationList");
+  locationList.innerHTML = ""; // clear out old
+  locations.forEach(loc => {
+    const locDiv = document.createElement("div");
+    locDiv.className = "location-card";
+    locDiv.innerHTML = `
+      <strong>${loc.name}</strong><br/>
+      <em>${loc.desc}</em><br/>
+      <button class="btn" style="margin-top:0.5rem;">Visit</button>
+    `;
+    locDiv.querySelector("button").onclick = () => {
+      const result = loc.effect();
+      alert(result);
+      updateResources();
     };
+    locationList.appendChild(locDiv);
+  });
+}
 
-    // Track the current modal type: 'drink', 'bribe', or 'audience' – plus the current repKey.
-    let currentRepKey = null;
-    let currentModalType = null;
+// Step 5: Encounters
+document.getElementById("encounterBtn").onclick = () => {
+  const e = encounters[Math.floor(Math.random() * encounters.length)];
+  let resultMsg = e;
 
-    // A small array of random items patrons can leave behind when they stagger away drunk
-    const RANDOM_ITEMS = [
-      "a tarnished locket",
-      "a ring with a curious crest",
-      "a mysterious key",
-      "a small pouch of curious herbs",
-      "a rolled-up, half-burnt map",
-      "an ornate quill pen with swirling etchings",
-      "a faded love letter"
-    ];
-
-    /*************************************
-     *  BUY DRINK LOGIC
-     *************************************/
-    function buyDrink(repKey) {
-      // First, check for the 5% fight chance
-      if (checkForFight(repKey)) {
-        return; // If a fight breaks out, we skip everything else
-      }
-
-      currentRepKey = repKey;
-      currentModalType = 'drink';
-      openModal("Drink Offer", getDrinkDialogue(repKey));
-
-      // Increase the person's "like" by 1
-      REP_DATA[repKey].like += 1;
-      // Increase drinksCount
-      REP_DATA[repKey].drinksCount += 1;
-
-      // If they've met or exceeded their drinksToLeave threshold, they leave and drop an item
-      if (REP_DATA[repKey].drinksCount >= REP_DATA[repKey].drinksToLeave) {
-        const randomItem = pickRandomLine(RANDOM_ITEMS);
-        setTimeout(() => {
-          alert(`${REP_DATA[repKey].name} is too drunk to carry on. They stagger out, leaving behind ${randomItem}!`);
-        }, 500);
-        // You might want to reset their drinksCount or otherwise note that they've left
-        // For now, let's just reset to 0 and set drinksToLeave very high so they won't leave again
-        REP_DATA[repKey].drinksCount = 0;
-        REP_DATA[repKey].drinksToLeave = 9999; 
-      }
+  // We can parse certain known patterns for quick resource changes:
+  if (e.includes("Gain 10 gold")) {
+    player.gold += 10;
+  } else if (e.includes("Lose 5 gold")) {
+    player.gold = Math.max(0, player.gold - 5);
+  } else if (e.includes("gain 2 influence")) {
+    player.influence += 2;
+  } else if (e.includes("lose 2 influence")) {
+    player.influence = Math.max(0, player.influence - 2);
+  } else if (e.includes("spend 8 gold")) {
+    player.gold = Math.max(0, player.gold - 8);
+    player.influence += 1;
+  } else if (e.includes("15 gold")) {
+    player.gold += 15;
+  } else if (e.includes("5 gold")) {
+    // multiple references—just pick one
+    if (e.includes("help an old fisherman")) {
+      player.gold += 5;
+    } else if (e.includes("guard fines")) {
+      player.gold = Math.max(0, player.gold - 5);
     }
+  } else if (e.includes("lose 1 influence")) {
+    player.influence = Math.max(0, player.influence - 1);
+  } else if (e.includes("+7 gold")) {
+    player.gold += 7;
+  }
 
-    function getDrinkDialogue(repKey) {
-      const rep = REP_DATA[repKey];
-      const lines = rep.drinkLines;
-      const chosenLine = pickRandomLine(lines);
-      return `${rep.name} accepts your gesture. ${chosenLine}`;
-    }
+  updateResources();
+  document.getElementById("encounterResult").textContent = resultMsg;
+};
 
-    /*************************************
-     *  BRIBE LOGIC
-     *************************************/
-    function openBribeModal(repKey) {
-      // First, check for the 5% fight chance
-      if (checkForFight(repKey)) {
-        return; // If a fight breaks out, do not open the bribe modal
-      }
+</script>
 
-      currentRepKey = repKey;
-      currentModalType = 'bribe';
-      openModal(`Bribe Attempt for ${REP_DATA[repKey].name}`, `"What is it you wish to offer?"`);
-      document.getElementById("bribeSection").style.display = "block";
-      document.getElementById("bribeAmount").value = 0;
-      document.getElementById("bribeResult").textContent = "";
-    }
-
-    function submitBribe() {
-      const rep = REP_DATA[currentRepKey];
-      const bribeValue = parseInt(document.getElementById("bribeAmount").value, 10) || 0;
-      const bribeResult = document.getElementById("bribeResult");
-
-      // Calculate a random threshold in [minBribe, maxBribe]
-      let threshold = getRandomInt(rep.minBribe, rep.maxBribe);
-
-      // Each "like" reduces threshold by 10% of its base range
-      let discount = 0.1 * rep.like; 
-      threshold = Math.floor(threshold * (1 - discount));
-
-      if (bribeValue < threshold) {
-        bribeResult.textContent = `Your offer is too low. ${rep.name} scoffs at your meagre coin. (Secret threshold was ≥ ${threshold} GP.)`;
-        return;
-      }
-
-      // We made the threshold; there's still a chance to succeed
-      const roll = Math.random();
-      if (roll <= rep.bribeSuccessChance) {
-        // success
-        const randomFavor = pickRandomLine(rep.favorLines);
-        bribeResult.textContent = `Success! ${rep.name} accepts your bribe. Favour granted: ${randomFavor}`;
-      } else {
-        // fail
-        bribeResult.textContent = `${rep.name} pockets your coin but offers only a cold shoulder. No favours today.`;
-      }
-    }
-
-    /*************************************
-     *  AUDIENCE LOGIC
-     *************************************/
-    function attemptAudience(repKey) {
-      const rep = REP_DATA[repKey];
-      const roll = Math.random();
-      // People who like you more might be more likely to grant an audience
-      let adjustedAudienceChance = rep.audienceChance + (0.05 * rep.like);
-      if (adjustedAudienceChance > 0.95) {
-        adjustedAudienceChance = 0.95; 
-      }
-
-      if (roll <= adjustedAudienceChance) {
-        alert(`${rep.name} grants you an audience!`);
-      } else {
-        alert(`${rep.name} denies your request. No audience today.`);
-      }
-    }
-
-    /*************************************
-     *  CHECK FOR FIGHT
-     *************************************/
-    function checkForFight(repKey) {
-      // 5% chance a fight breaks out
-      if (Math.random() < 0.05) {
-        alert(`A fight breaks out with ${REP_DATA[repKey].name}! Your approach ends in chaos!`);
-        return true;
-      }
-      return false;
-    }
-
-    /*************************************
-     *  MODAL & GENERAL UTILITY
-     *************************************/
-    function openModal(title, dialogue) {
-      document.getElementById("modalTitle").textContent = title;
-      document.getElementById("modalDialogue").textContent = dialogue;
-
-      // Hide bribe section by default if not bribing
-      if (currentModalType !== 'bribe') {
-        document.getElementById("bribeSection").style.display = "none";
-      }
-
-      document.getElementById("modalOverlay").style.display = "block";
-    }
-
-    function closeModal() {
-      document.getElementById("modalOverlay").style.display = "none";
-    }
-
-    function pickRandomLine(arr) {
-      const idx = Math.floor(Math.random() * arr.length);
-      return arr[idx];
-    }
-
-    // Random int in [min, max]
-    function getRandomInt(min, max) {
-      min = Math.ceil(min);
-      max = Math.floor(max);
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    /*************************************
-     *  END OF DAY (RESET LIKES & DRINKS)
-     *************************************/
-    function endDay() {
-      for (const key in REP_DATA) {
-        REP_DATA[key].like = 0;
-        REP_DATA[key].drinksCount = 0;
-        REP_DATA[key].drinksToLeave = getRandomInt(10, 20);
-      }
-      alert("A new day dawns at the Lucky Serpent. All drink-based goodwill is forgotten!");
-    }
-  </script>
 </body>
 </html>
