@@ -2,22 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Mobile Responsive Meta -->
+  <!-- Ensure mobile responsiveness -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fantasy Dope Wars: Evershroud Sea Edition</title>
   <style>
     /* Reset & Basic Layout */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      margin: 0; 
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Trebuchet MS', sans-serif;
-      background: linear-gradient(135deg, #232526 0%, #414345 100%), 
+      background: linear-gradient(135deg, #232526 0%, #414345 100%),
                   url('resources/docks.png') center/cover no-repeat;
-      color: #EEE; min-height: 100vh; overflow-x: hidden;
+      color: #EEE;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    /* Fade In Animations */
-    .fade-in { animation: fadeIn 0.8s ease forwards; opacity: 0; }
-    @keyframes fadeIn { to { opacity: 1; } }
-    /* Main Container */
+    /* Container Fade-In */
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
     .container {
       max-width: 920px;
       margin: 1rem auto;
@@ -25,12 +35,15 @@
       padding: 1rem 1.5rem;
       border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+      position: relative;
     }
     h1, h2, h3, h4 {
-      margin-bottom: 0.4rem;
       font-family: serif;
+      margin-bottom: 0.4rem;
     }
-    p, label, select, input, button { margin: 0.2rem 0; }
+    p, label, select, input, button {
+      margin: 0.2rem 0;
+    }
     .hidden { display: none; }
     .button {
       background: #750000;
@@ -49,6 +62,8 @@
       background: #900000;
       box-shadow: 0 0 10px rgba(255,0,0,0.3);
     }
+
+    /* Table & Row Hover */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -65,7 +80,11 @@
       background: rgba(170,0,0,0.8);
       color: #EEE;
     }
-    tr:hover td { background: rgba(255,255,255,0.15); }
+    tr:hover td {
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* Log area & fade for lines */
     .log {
       max-height: 200px;
       overflow-y: auto;
@@ -81,9 +100,12 @@
       animation: fadeInLog 0.5s ease forwards;
       opacity: 0;
     }
-    @keyframes fadeInLog { to { opacity: 1; } }
+    @keyframes fadeInLog {
+      to { opacity: 1; }
+    }
     .alert { color: #FFAAAA; font-weight: bold; }
-    /* Fight Container */
+
+    /* Fight Container Slide-In */
     #fightContainer {
       margin-top: 1rem;
       background: rgba(120,0,0,0.5);
@@ -93,12 +115,14 @@
       max-height: 0;
       overflow: hidden;
       opacity: 0;
+      order: -1; /* so it can appear near top if we flex in mobile */
     }
     #fightContainer.show {
       max-height: 300px;
       opacity: 1;
     }
-    /* Progress Bar */
+
+    /* Day Progress Bar */
     .progress-bar {
       width: 100%;
       background: #444;
@@ -113,10 +137,26 @@
       width: 0%;
       transition: width 0.4s ease;
     }
-    @media (max-width:600px){
-      .log { max-height: 120px; }
+    /* Layout Wrappers for reorder on mobile */
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
-    .flex-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .top-panel {
+      display: flex; 
+      flex-direction: column;
+    }
+    /* Reorder on mobile: show fight/log at top, then market/inventory below */
+    @media (max-width: 600px) {
+      /* We'll reorder the log and fight container to appear first. */
+      #fightContainer, #logAreaParent {
+        order: -1; /* appear first in the flow. */
+      }
+      .log {
+        max-height: 150px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -125,9 +165,11 @@
 <div class="container fade-in" id="setupContainer">
   <h1>Fantasy Dope Wars: Evershroud Sea Edition</h1>
   <p>
-    Buy & sell contraband at sea, fight or flee pirates, watch your <strong>10% daily interest</strong> debt, 
-    and watch out for storms, crew demands, random bargains, and unexpected price booms or busts. 
+    Embark upon the seas with 10% daily interest on your debt. Fight or flee pirates, 
+    endure storms, find bargains, or get exploited by your crew. 
+    <br/>Pay off your debt or face the consequences!
   </p>
+  
   <label>Captain’s Name:</label>
   <input type="text" id="playerName" placeholder="Anon Captain" style="width:160px;" value="Anon Captain" />
   <br><br>
@@ -139,18 +181,23 @@
     <option value="60">60 (Long)</option>
   </select>
   <br>
+
   <label>Starting Gold:</label>
   <input type="number" id="startGold" value="2000" style="width:80px;">
   <br>
+
   <label>Starting Debt:</label>
   <input type="number" id="startDebt" value="5000" style="width:80px;">
   <br>
+
   <label>Starting Cargo Capacity:</label>
   <input type="number" id="startCargo" value="50" style="width:80px;">
   <br>
+
   <label>Starting HP:</label>
   <input type="number" id="startHP" value="100" style="width:80px;">
   <br><br>
+
   <button class="button" onclick="startGame()">Begin</button>
 
   <h3>High Scores</h3>
@@ -158,14 +205,32 @@
   <button class="button" onclick="clearScores()">Clear Scores</button>
 </div>
 
-<!-- Main Game -->
+<!-- Main Game Container -->
 <div class="container fade-in hidden" id="gameContainer">
   <h2>Sea Trading</h2>
+  
+  <!-- Status & Progress -->
   <div id="statusLine" style="margin-bottom:0.5rem; font-weight:bold;"></div>
   <div class="progress-bar">
     <div class="progress-fill" id="dayProgress"></div>
   </div>
 
+  <!-- The top panel: fight container & log (on mobile, we reorder them to top) -->
+  <div class="top-panel" id="topPanel">
+    <div id="fightContainer">
+      <h4>Pirates Attack!</h4>
+      <p id="fightText"></p>
+      <button class="button" onclick="attemptRun()">Run</button>
+      <button class="button" onclick="attemptFight()">Fight</button>
+    </div>
+
+    <h3>Log</h3>
+    <div class="log" id="logAreaParent">
+      <div id="logArea"></div>
+    </div>
+  </div>
+
+  <!-- Travel & Market/Inventory -->
   <div class="flex-row" style="align-items: center; margin-bottom:0.5rem;">
     <div>
       <label for="locationSelect">Location:</label>
@@ -178,6 +243,7 @@
   </div>
 
   <div class="flex-row" style="justify-content: space-between;">
+    <!-- Market -->
     <div style="flex:1; min-width:280px; margin-right:1rem;">
       <h3>Market</h3>
       <table id="marketTable">
@@ -185,12 +251,13 @@
           <tr>
             <th>Good</th>
             <th>Price (GP)</th>
-            <th>Actions</th>
+            <th colspan="3">Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+    <!-- Inventory -->
     <div style="flex:1; min-width:200px;">
       <h3>Inventory</h3>
       <table id="inventoryTable">
@@ -205,16 +272,6 @@
     </div>
   </div>
 
-  <!-- Fight Section -->
-  <div id="fightContainer">
-    <h4>Pirates Attack!</h4>
-    <p id="fightText"></p>
-    <button class="button" onclick="attemptRun()">Run</button>
-    <button class="button" onclick="attemptFight()">Fight</button>
-  </div>
-
-  <h3>Log</h3>
-  <div class="log" id="logArea"></div>
 </div>
 
 <!-- Game Over Screen -->
@@ -226,7 +283,7 @@
 
 <script>
 /*************************************************************************
- * 1) Data: Sea Travel & Risk
+ * 1) Sea Travel + Risk
  *************************************************************************/
 const seaLocationsData = [
   { name: "Azure", distance: 0 },
@@ -297,19 +354,21 @@ let dailyPrices={};
 let inventory={};
 let playerName="";
 
-// Daily interest rate
-const dailyInterestRate = 0.10;
-// We'll store the seaLocations with 'risk'
-let seaLocations = [];
+// 10% daily interest
+const dailyInterestRate=0.10;
+// 15% chance of ship upgrade
+const shipUpgradeChance=0.15;
+// We'll store the seaLocations with risk
+let seaLocations=[];
 
 /*************************************************************************
  * 4) Scoreboard
  *************************************************************************/
 function updateScoreboard(){
-  let container=document.getElementById("scoreboardContainer");
+  let cont=document.getElementById("scoreboardContainer");
   let scores=JSON.parse(localStorage.getItem("seaEditionScores"))||[];
-  if(scores.length===0){
-    container.innerHTML="<p>No high scores yet.</p>";
+  if(!scores.length){
+    cont.innerHTML="<p>No high scores yet.</p>";
     return;
   }
   let html=`
@@ -328,7 +387,7 @@ function updateScoreboard(){
     `;
   });
   html+="</tbody></table>";
-  container.innerHTML=html;
+  cont.innerHTML=html;
 }
 
 function clearScores(){
@@ -341,42 +400,40 @@ function saveScore(name, netWorth){
   scores.push({
     name,
     netWorth,
-    date: new Date().toLocaleString()
+    date:new Date().toLocaleString()
   });
-  scores.sort((a,b)=> b.netWorth - a.netWorth);
+  scores.sort((a,b)=>b.netWorth-a.netWorth);
   if(scores.length>10) scores=scores.slice(0,10);
-  localStorage.setItem("seaEditionScores", JSON.stringify(scores));
+  localStorage.setItem("seaEditionScores",JSON.stringify(scores));
 }
 
 /*************************************************************************
  * 5) Setup
  *************************************************************************/
 function startGame(){
-  playerName = document.getElementById("playerName").value || "Anon Captain";
+  playerName=(document.getElementById("playerName").value||"Anon Captain").trim();
   day=1;
   maxDays=parseInt(document.getElementById("gameDays").value,10);
   gold=parseInt(document.getElementById("startGold").value,10);
   debt=parseInt(document.getElementById("startDebt").value,10);
   cargoMax=parseInt(document.getElementById("startCargo").value,10);
   playerHP=parseInt(document.getElementById("startHP").value,10);
-  ended=false;
+  ended=false; 
   cargoUsed=0;
 
-  // Build seaLocations
-  seaLocations=seaLocationsData.map(obj=>{
+  seaLocations=seaLocationsData.map(l=>{
     return {
-      name: obj.name,
-      distance: obj.distance,
-      risk: computeRisk(obj.distance)
+      name: l.name,
+      distance: l.distance,
+      risk: computeRisk(l.distance)
     };
   });
   currentLocation=seaLocations[0].name;
 
-  // Reset inventory
+  // Zero out inventory
   inventory={};
   goodsList.forEach(g=>inventory[g.name]=0);
 
-  // Populate location dropdown
   const locSel=document.getElementById("locationSelect");
   locSel.innerHTML="";
   seaLocations.forEach(loc=>{
@@ -387,14 +444,13 @@ function startGame(){
   });
   locSel.value=currentLocation;
 
-  // Hide setup, show game
   document.getElementById("setupContainer").classList.add("hidden");
   document.getElementById("gameContainer").classList.remove("hidden");
   document.getElementById("gameOverContainer").classList.add("hidden");
 
   randomizePrices();
   refreshUI();
-  log(`Captain ${playerName}, you begin with ${gold} GP and a ${debt} GP debt (10% daily interest). You have ${maxDays} days!`);
+  log(`Welcome, Captain ${playerName}! You have ${gold} GP, owe ${debt} (10% daily interest), and ${maxDays} days!`);
 }
 
 /*************************************************************************
@@ -416,26 +472,38 @@ function randomizePrices(){
  * 7) Refresh UI
  *************************************************************************/
 function refreshUI(){
-  const statusText=`Day ${day}/${maxDays} | Location: ${currentLocation} | `+
-                   `Gold: ${gold} | Debt: ${debt} | HP: ${playerHP} | `+
-                   `Cargo: ${cargoUsed}/${cargoMax}`;
+  const statusText=`Day ${day}/${maxDays} | Location: ${currentLocation} | Gold: ${gold} | `+
+                   `Debt: ${debt} | HP: ${playerHP} | Cargo: ${cargoUsed}/${cargoMax}`;
   document.getElementById("statusLine").textContent=statusText;
 
-  const frac=(day-1)/maxDays*100;
-  document.getElementById("dayProgress").style.width=frac+"%";
+  const fraction=Math.min((day-1)/maxDays,1)*100;
+  document.getElementById("dayProgress").style.width=fraction+"%";
 
-  // Market
+  // Market table
   const marketBody=document.getElementById("marketTable").querySelector("tbody");
   marketBody.innerHTML="";
   goodsList.forEach(g=>{
     const price=dailyPrices[currentLocation][g.name];
     const tr=document.createElement("tr");
+    const buyMaxCost= Math.floor(gold / price);
+    const buyMaxSpace = cargoMax - cargoUsed;
+    const maxBuyable = Math.min(buyMaxCost,buyMaxSpace);
+
+    const have=inventory[g.name];
     tr.innerHTML=`
       <td>${g.name}</td>
       <td>${price} GP</td>
       <td>
         <button class="button" onclick="buyPrompt('${g.name}')">Buy</button>
+      </td>
+      <td>
+        <button class="button" onclick="buyMax('${g.name}')">Buy Max</button>
+      </td>
+      <td>
         <button class="button" onclick="sellPrompt('${g.name}')">Sell</button>
+      </td>
+      <td>
+        <button class="button" onclick="sellAll('${g.name}')">Sell All</button>
       </td>
     `;
     marketBody.appendChild(tr);
@@ -444,20 +512,20 @@ function refreshUI(){
   // Inventory
   const invBody=document.getElementById("inventoryTable").querySelector("tbody");
   invBody.innerHTML="";
-  goodsList.forEach(g=>{
+  for(let g of goodsList){
     const qty=inventory[g.name];
     if(qty>0){
-      const row=document.createElement("tr");
-      row.innerHTML=`<td>${g.name}</td><td>${qty}</td>`;
-      invBody.appendChild(row);
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${g.name}</td><td>${qty}</td>`;
+      invBody.appendChild(tr);
     }
-  });
+  }
 
   document.getElementById("fightContainer").classList.remove("show");
 }
 
 /*************************************************************************
- * 8) Log
+ * 8) Logging
  *************************************************************************/
 function log(msg){
   const logArea=document.getElementById("logArea");
@@ -468,7 +536,7 @@ function log(msg){
 }
 
 /*************************************************************************
- * 9) Travel (Ends Day)
+ * 9) Travel
  *************************************************************************/
 function travel(){
   if(ended)return;
@@ -483,61 +551,77 @@ function travel(){
   }
   currentLocation=newLoc;
   day++;
-  log(`Sailing to <strong>${currentLocation}</strong>. Day ${day}/${maxDays} now.`);
 
-  // daily interest
+  log(`Sailing to <strong>${currentLocation}</strong>. Day ${day}/${maxDays}.`);
+
+  // Daily interest
   if(debt>0){
     debt=Math.ceil(debt*(1+dailyInterestRate));
     log(`<span class="alert">Interest accrues! Debt is now ${debt} GP.</span>`);
   }
 
-  // random events
   doRandomEvent();
-
-  // maybe new random prices
   randomizePrices();
   refreshUI();
   checkGameEnd();
 }
 
 /*************************************************************************
- * 10) Buying / Selling
+ * 10) Buying & Selling + "Buy Max" / "Sell All"
  *************************************************************************/
-function buyPrompt(goodName){
+function buyPrompt(good){
   if(ended)return;
-  const price=dailyPrices[currentLocation][goodName];
-  const maxAfford=Math.floor(gold/price);
-  const maxSpace=cargoMax-cargoUsed;
-  const maxCanBuy=Math.min(maxAfford,maxSpace);
-  if(maxCanBuy<=0){
-    log(`<span class="alert">No cargo space or gold to buy ${goodName}!</span>`);
+  const price=dailyPrices[currentLocation][good];
+  const canAfford=Math.floor(gold/price);
+  const canSpace=(cargoMax-cargoUsed);
+  const maxBuy=Math.min(canAfford, canSpace);
+  if(maxBuy<=0){
+    log(`<span class="alert">Cannot buy ${good}; no space or not enough gold!</span>`);
     return;
   }
-  const qtyStr=prompt(`Buy how many ${goodName}? (Max: ${maxCanBuy})`);
+  const qtyStr=prompt(`Buy how many ${good}? (Up to ${maxBuy})`);
   if(!qtyStr)return;
   const qty=parseInt(qtyStr,10);
   if(!qty||qty<1)return;
-  if(qty>maxCanBuy){
-    log(`<span class="alert">You can only buy up to ${maxCanBuy}!</span>`);
+  if(qty>maxBuy){
+    log(`<span class="alert">You can only buy up to ${maxBuy}!</span>`);
     return;
   }
   const cost=qty*price;
   gold-=cost;
-  inventory[goodName]+=qty;
   cargoUsed+=qty;
-  log(`Bought ${qty} x ${goodName} @ ${price} GP => ${cost} GP total.`);
+  inventory[good]+=qty;
+  log(`Bought ${qty} x ${good} @ ${price} => ${cost} GP total.`);
   refreshUI();
 }
 
-function sellPrompt(goodName){
+function buyMax(good){
   if(ended)return;
-  const have=inventory[goodName];
-  if(!have||have<1){
-    log(`<span class="alert">You have no ${goodName} to sell!</span>`);
+  const price=dailyPrices[currentLocation][good];
+  const canAfford=Math.floor(gold/price);
+  const canSpace=(cargoMax-cargoUsed);
+  const qty=Math.min(canAfford,canSpace);
+  if(qty<=0){
+    log(`<span class="alert">Cannot buy ${good}; no space or not enough gold!</span>`);
     return;
   }
-  const price=dailyPrices[currentLocation][goodName];
-  const qtyStr=prompt(`Sell how many ${goodName}? (You have ${have})`);
+  const cost=qty*price;
+  gold-=cost;
+  cargoUsed+=qty;
+  inventory[good]+=qty;
+  log(`Bought MAX: ${qty} x ${good} @ ${price} => ${cost} GP total.`);
+  refreshUI();
+}
+
+function sellPrompt(good){
+  if(ended)return;
+  const have=inventory[good];
+  if(!have){
+    log(`<span class="alert">No ${good} to sell!</span>`);
+    return;
+  }
+  const price=dailyPrices[currentLocation][good];
+  const qtyStr=prompt(`Sell how many ${good}? (You have ${have})`);
   if(!qtyStr)return;
   const qty=parseInt(qtyStr,10);
   if(!qty||qty<1)return;
@@ -547,9 +631,25 @@ function sellPrompt(goodName){
   }
   const income=qty*price;
   gold+=income;
-  inventory[goodName]-=qty;
   cargoUsed-=qty;
-  log(`Sold ${qty} x ${goodName} @ ${price} GP => ${income} GP total.`);
+  inventory[good]-=qty;
+  log(`Sold ${qty} x ${good} @ ${price} => ${income} GP.`);
+  refreshUI();
+}
+
+function sellAll(good){
+  if(ended)return;
+  const have=inventory[good];
+  if(!have||have<1){
+    log(`<span class="alert">You have no ${good} to sell!</span>`);
+    return;
+  }
+  const price=dailyPrices[currentLocation][good];
+  const income=have*price;
+  gold+=income;
+  cargoUsed-=have;
+  inventory[good]=0;
+  log(`Sold ALL: ${have} x ${good} @ ${price} => ${income} GP.`);
   refreshUI();
 }
 
@@ -559,10 +659,10 @@ function sellPrompt(goodName){
 function payDebtPrompt(){
   if(ended)return;
   if(debt<=0){
-    log(`Debt is already cleared!`);
+    log(`Your debt is already cleared!`);
     return;
   }
-  const amtStr=prompt(`Pay how much? Debt: ${debt}, Gold: ${gold}`);
+  const amtStr=prompt(`How much to pay? (Debt: ${debt}, Gold: ${gold})`);
   if(!amtStr)return;
   const amt=parseInt(amtStr,10);
   if(!amt||amt<1)return;
@@ -573,10 +673,7 @@ function payDebtPrompt(){
   gold-=amt;
   debt-=amt;
   if(debt<0) debt=0;
-  log(`Paid ${amt} GP. Debt now: ${debt}.`);
-  if(debt<=0){
-    log(`<span class="alert">Debt fully paid!</span>`);
-  }
+  log(`Paid ${amt} GP. Debt is now ${debt}.`);
   refreshUI();
   checkGameEnd();
 }
@@ -585,23 +682,20 @@ function payDebtPrompt(){
  * 12) Extended Random Events
  *************************************************************************/
 function doRandomEvent(){
-  // chance of pirates
+  // Check pirates first
   const locObj=seaLocations.find(l=>l.name===currentLocation);
-  const risk= locObj?locObj.risk:3;
+  const risk= locObj? locObj.risk : 3;
   if(Math.random()*10<risk){
     showFightPrompt(); 
     return;
   }
-  // If no pirates, pick from additional events:
+  // If no pirates, we do the other events
   const subRoll=Math.random();
   if(subRoll<0.3){
-    // found cargo
     foundCargoEvent();
   } else if(subRoll<0.45){
-    // 15% chance => new ship
     attemptShipUpgrade();
   } else {
-    // Another random set for extra variety
     const subSubRoll=Math.random();
     if(subSubRoll<0.2){
       stormEvent();
@@ -617,7 +711,7 @@ function doRandomEvent(){
   }
 }
 
-// 1) Found cargo
+// found cargo
 function foundCargoEvent(){
   const found=pickRandom(goodsList);
   const qty=randInt(1,3);
@@ -626,153 +720,149 @@ function foundCargoEvent(){
     cargoUsed+=qty;
     log(`Lucky find! ${qty} x ${found.name} afloat in a drifting crate.`);
   } else {
-    log(`You spot a crate of ${found.name}, but have no cargo space!`);
+    log(`You spot a crate of ${found.name}, but no cargo space left!`);
   }
 }
 
-// 2) Offer to buy a bigger ship
+// ship upgrade (15%)
 function attemptShipUpgrade(){
   const cost=randInt(200,600);
   const extraCap=randInt(20,40);
-  log(`A local shipwright in ${currentLocation} offers a bigger vessel: +${extraCap} cargo for ${cost} GP.`);
+  log(`A local shipwright in ${currentLocation} offers +${extraCap} cargo for ${cost} GP.`);
   if(gold<cost){
-    log(`<span class="alert">You cannot afford the new ship (cost: ${cost} GP)!</span>`);
+    log(`<span class="alert">You cannot afford that new ship right now!</span>`);
     return;
   }
-  const buyIt=confirm(`Buy the new ship for ${cost} GP (Cargo +${extraCap})?`);
-  if(buyIt){
+  const buy=confirm(`Buy the bigger ship for ${cost} GP? (Cargo +${extraCap})`);
+  if(buy){
     gold-=cost;
     cargoMax+=extraCap;
-    log(`<span class="alert">You purchased a bigger ship! Cargo capacity is now ${cargoMax}.</span>`);
+    log(`<span class="alert">Bought the bigger ship! Cargo is now ${cargoMax}.</span>`);
     refreshUI();
   } else {
-    log(`You decline the shipwright's offer.`);
+    log(`You turn down the shipwright's offer.`);
   }
 }
 
-// 3) Storm event
+// storm
 function stormEvent(){
   const stormType=Math.random();
   if(stormType<0.5){
-    // damages cargo
+    // damage cargo
     if(cargoUsed>0){
-      const lost=randInt(1, Math.min(5,cargoUsed));
-      // randomly pick a good from inventory that has > 0
-      let possibleGoods=goodsList.filter(g=>inventory[g.name]>0);
-      if(possibleGoods.length===0){
-        log(`A wild storm hits, but you had no cargo to lose!`);
+      const lost=randInt(1,Math.min(5,cargoUsed));
+      // pick random good
+      const possible=goodsList.filter(g=>inventory[g.name]>0);
+      if(!possible.length){
+        log(`A fierce storm hits, but no cargo to lose!`);
         return;
       }
-      const chosen=pickRandom(possibleGoods);
-      const actuallyLost=Math.min(lost, inventory[chosen.name]);
-      inventory[chosen.name]-=actuallyLost;
-      cargoUsed-=actuallyLost;
-      log(`<span class="alert">A fierce storm damages ${actuallyLost} x ${chosen.name}!</span>`);
+      const chosen=pickRandom(possible);
+      const lostQty=Math.min(lost, inventory[chosen.name]);
+      inventory[chosen.name]-=lostQty;
+      cargoUsed-=lostQty;
+      log(`<span class="alert">A fierce storm damages ${lostQty} x ${chosen.name}!</span>`);
     } else {
-      log(`A wild storm hits, but you carry no cargo—no losses!`);
+      log(`A fierce storm hits, but you carry no cargo—no losses!`);
     }
   } else {
-    // you or your ship takes damage
+    // you take damage
     const dmg=randInt(5,20);
     playerHP-=dmg;
-    log(`<span class="alert">A violent storm batters your ship, dealing ${dmg} damage to you!</span>`);
+    log(`<span class="alert">A violent storm batters your ship, dealing ${dmg} damage!</span>`);
     if(playerHP<=0){
       playerHP=0;
-      log(`<span class="alert">You have perished in the tempest!</span>`);
-      endGame(false,"Lost at sea in a deadly storm.");
+      log(`<span class="alert">You have perished at sea!</span>`);
+      endGame(false,"Lost to the storm's fury.");
     }
   }
 }
 
-// 4) Crew wages
+// crew wages
 function crewWagesEvent(){
   const wage=randInt(50,150);
   if(gold>=wage){
     gold-=wage;
-    log(`Your crew demands wages of ${wage} GP— you pay them to keep morale stable.`);
+    log(`Your crew demands ${wage} GP in wages— you pay to maintain morale.`);
   } else {
-    // can't pay => might lose HP or cargo or random penalty
+    // can't pay => negative consequence
     const penalty=Math.random();
     if(penalty<0.5){
       const dmg=randInt(5,15);
       playerHP-=dmg;
-      log(`<span class="alert">You can't afford wages! The disgruntled crew scuffles with you, dealing ${dmg} damage!</span>`);
+      log(`<span class="alert">Crew is furious; a brawl ensues— you take ${dmg} damage!</span>`);
       if(playerHP<=0){
         playerHP=0;
-        log(`<span class="alert">You have been killed by mutinous crew!</span>`);
+        log(`<span class="alert">Crew mutiny! You are slain!</span>`);
         endGame(false,"Killed by your own crew for failing wages.");
       }
     } else {
-      // maybe they steal some cargo
       if(cargoUsed>0){
         const stolen=randInt(1,Math.min(5,cargoUsed));
-        // pick a random good to reduce
-        let possibleGoods=goodsList.filter(g=>inventory[g.name]>0);
-        if(possibleGoods.length===0) {
-          log(`No cargo for the angry crew to steal—but tensions are high!`);
+        const possible=goodsList.filter(g=>inventory[g.name]>0);
+        if(!possible.length){
+          log(`No cargo for the angry crew to steal. Tensions remain high!`);
           return;
         }
-        const chosen=pickRandom(possibleGoods);
-        const actuallyStolen=Math.min(stolen, inventory[chosen.name]);
-        inventory[chosen.name]-=actuallyStolen;
-        cargoUsed-=actuallyStolen;
-        log(`<span class="alert">Your crew steals ${actuallyStolen} x ${chosen.name} in lieu of wages!</span>`);
+        const chosen=pickRandom(possible);
+        const stolenQty=Math.min(stolen,inventory[chosen.name]);
+        inventory[chosen.name]-=stolenQty;
+        cargoUsed-=stolenQty;
+        log(`<span class="alert">Crew steals ${stolenQty} x ${chosen.name} in frustration!</span>`);
       } else {
-        log(`Crew is furious but there's nothing to steal. Morale is dire...`);
+        log(`Crew is furious but no cargo to steal— morale is dire.`);
       }
     }
   }
 }
 
-// 5) Benevolent merchant => buy random item at half price
+// benevolent merchant => half price up to 3
 function benevolentMerchantEvent(){
   const item=pickRandom(goodsList);
   const basePrice=dailyPrices[currentLocation][item.name];
-  const discountPrice=Math.max(1, Math.floor(basePrice*0.5));
-  log(`A benevolent local merchant offers to sell you up to 3 x ${item.name} at half price (${discountPrice} GP).`);
+  const discount=Math.max(1,Math.floor(basePrice*0.5));
+  log(`A kind merchant offers up to 3 x ${item.name} at half price: ${discount} GP each.`);
   const maxSpace=cargoMax-cargoUsed;
   if(maxSpace<=0){
-    log(`<span class="alert">You have no cargo space to take advantage of the offer!</span>`);
+    log(`<span class="alert">No cargo space to buy from the kind merchant!</span>`);
     return;
   }
-  let maxCanBuy=3;
-  if(Math.floor(gold/discountPrice)<maxCanBuy){
-    maxCanBuy=Math.floor(gold/discountPrice);
+  let maxBuy=3;
+  if(Math.floor(gold/discount)<maxBuy){
+    maxBuy=Math.floor(gold/discount);
   }
-  maxCanBuy=Math.min(maxCanBuy,maxSpace);
-
-  if(maxCanBuy<=0){
-    log(`<span class="alert">Not enough gold or cargo space to buy from the benevolent merchant.</span>`);
+  maxBuy=Math.min(maxBuy,maxSpace);
+  if(maxBuy<=0){
+    log(`<span class="alert">Not enough gold or space for the discount deal!</span>`);
     return;
   }
-  const qtyStr=prompt(`Buy how many ${item.name}? (Up to ${maxCanBuy} @ ${discountPrice} GP each)`);
+  const qtyStr=prompt(`Buy how many ${item.name}? (Up to ${maxBuy} @ ${discount} GP each)`);
   if(!qtyStr)return;
   const qty=parseInt(qtyStr,10);
   if(!qty||qty<1)return;
-  if(qty>maxCanBuy){
-    log(`<span class="alert">You can only buy up to ${maxCanBuy}!</span>`);
+  if(qty>maxBuy){
+    log(`<span class="alert">You can only buy up to ${maxBuy}!</span>`);
     return;
   }
-  const cost=qty*discountPrice;
+  const cost=qty*discount;
   gold-=cost;
   inventory[item.name]+=qty;
   cargoUsed+=qty;
-  log(`Bought ${qty} x ${item.name} @ ${discountPrice} GP => ${cost} GP total (great deal!).`);
+  log(`Bought ${qty} x ${item.name} @ ${discount} => ${cost} GP total. Great deal!`);
   refreshUI();
 }
 
-// 6) Rare Price Shift => big discount or markup for 1 good in current location
+// Rare price shift => half or double
 function rarePriceShiftEvent(){
   const chosen=pickRandom(goodsList);
-  // 50% chance super cheap, 50% chance super expensive
-  const cheap = (Math.random()<0.5);
-  let oldPrice = dailyPrices[currentLocation][chosen.name];
+  const oldPrice=dailyPrices[currentLocation][chosen.name];
+  const cheap=(Math.random()<0.5);
   if(cheap){
-    dailyPrices[currentLocation][chosen.name] = Math.max(1, Math.floor(oldPrice*0.5));
-    log(`<span class="alert">A sudden glut in ${chosen.name}! Price halves from ${oldPrice} to ${dailyPrices[currentLocation][chosen.name]} GP.</span>`);
+    dailyPrices[currentLocation][chosen.name]=Math.max(1,Math.floor(oldPrice*0.5));
+    log(`<span class="alert">A sudden surplus of ${chosen.name}! Price halves: was ${oldPrice}, now ${dailyPrices[currentLocation][chosen.name]}.`);
   } else {
-    dailyPrices[currentLocation][chosen.name] = Math.ceil(oldPrice*2);
-    log(`<span class="alert">${chosen.name} is in huge demand! Price doubles from ${oldPrice} to ${dailyPrices[currentLocation][chosen.name]} GP.</span>`);
+    dailyPrices[currentLocation][chosen.name]=Math.ceil(oldPrice*2);
+    log(`<span class="alert">Massive demand for ${chosen.name}! Price doubles: was ${oldPrice}, now ${dailyPrices[currentLocation][chosen.name]}.`);
   }
 }
 
@@ -785,19 +875,22 @@ function showFightPrompt(){
   document.getElementById("fightText").textContent=
     `Pirates blockade your route near ${currentLocation}! Run or fight?`;
 }
+
 function attemptRun(){
   document.getElementById("fightContainer").classList.remove("show");
   if(Math.random()<0.4){
-    log(`<span class="alert">You tried to flee, but they caught you!</span>`);
+    log(`<span class="alert">You tried to flee, but the pirates caught you!</span>`);
     doFight();
   } else {
     log(`You outrun the pirate ship!`);
   }
 }
+
 function attemptFight(){
   document.getElementById("fightContainer").classList.remove("show");
   doFight();
 }
+
 function doFight(){
   const piratePower=randInt(20,60);
   const yourPower=randInt(15,70);
@@ -809,10 +902,10 @@ function doFight(){
   } else {
     const dmg=randInt(10,30);
     playerHP-=dmg;
-    log(`<span class="alert">You lose the skirmish! (Enemy:${piratePower} vs You:${yourPower}), took ${dmg} damage!</span>`);
+    log(`<span class="alert">Lost the skirmish! (Enemy:${piratePower} vs You:${yourPower}), took ${dmg} damage!</span>`);
     if(playerHP<=0){
       playerHP=0;
-      log(`<span class="alert">You've been slain by pirates!</span>`);
+      log(`<span class="alert">You have been slain by pirates!</span>`);
       endGame(false,"Killed in pirate battle.");
     }
   }
@@ -820,29 +913,27 @@ function doFight(){
 }
 
 /*************************************************************************
- * 14) Check End & End Game
+ * 14) Check End & End
  *************************************************************************/
 function checkGameEnd(){
   if(day>maxDays && debt>0 && !ended){
     endGame(false, "Time’s up and your debt remains unpaid!");
   }
 }
+
 function endGame(success, reason){
   ended=true;
   document.getElementById("gameContainer").classList.add("hidden");
   document.getElementById("gameOverContainer").classList.remove("hidden");
 
   const netWorth=gold+calcInventoryValue();
-  const finalMsg=reason+`<br>Your net worth is ~${netWorth} GP.`;
-
+  const msg= reason+`<br>Your net worth is ~${netWorth} GP.`;
   if(success){
     document.getElementById("gameOverTitle").textContent="Game Over (Success)";
   } else {
     document.getElementById("gameOverTitle").textContent="Game Over (Failure)";
   }
-  document.getElementById("gameOverMessage").innerHTML=finalMsg;
-
-  // Save to scoreboard
+  document.getElementById("gameOverMessage").innerHTML=msg;
   saveScore(playerName, netWorth);
 }
 
@@ -869,12 +960,12 @@ function backToMainMenu(){
 }
 
 /*************************************************************************
- * Utility
+ * Utility 
  *************************************************************************/
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
 function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
 
-// On page load, update scoreboard
+// On load
 window.addEventListener("load", updateScoreboard);
 </script>
 </body>
