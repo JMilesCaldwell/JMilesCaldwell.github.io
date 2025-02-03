@@ -249,9 +249,10 @@
     return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2);
   }
 
-  // Generate new stock for a given list of items by assigning a random price
-  function generateStock(items) {
-    return items.map(item => ({ ...item, price: getRandomPrice(item.basePrice) }));
+  // Modified generateStock function to select a subset of items
+  function generateStock(items, count) {
+    const shuffled = items.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count).map(item => ({ ...item, price: getRandomPrice(item.basePrice) }));
   }
 
   // Display stock in the specified table
@@ -270,8 +271,9 @@
 
   // Refresh both weapons and armour stock, store in localStorage, and display them
   function refreshStore() {
-    const weaponStock = generateStock(weapons);
-    const armourStock = generateStock(armour);
+    // Select a subset: 8 weapons and 4 armour pieces
+    const weaponStock = generateStock(weapons, 8);
+    const armourStock = generateStock(armour, 4);
     localStorage.setItem(weaponsKey, JSON.stringify(weaponStock));
     localStorage.setItem(armourKey, JSON.stringify(armourStock));
     localStorage.setItem(lastRefreshKey, Date.now());
