@@ -78,7 +78,6 @@
       border-radius: 10px;
     }
 
-
     h1, h2 {
       font-family: 'Cinzel', serif;
     }
@@ -167,7 +166,8 @@
 </div>
 
 <script>
-   const items = [
+  // List of clothier items
+  const items = [
     // Everyday Clothing
     { name: "Traveller's Outfit", description: "Durable clothing for long journeys.", basePrice: 2, properties: ["Practical", "Weather-resistant"] },
     { name: "Fine Clothes", description: "Elegant clothing for nobles and events.", basePrice: 15, properties: ["Stylish", "Expensive-looking"] },
@@ -195,20 +195,23 @@
     { name: "Cloak of Shadows", description: "Blends into darkness when worn.", basePrice: 100, properties: ["Advantage on Stealth checks"] },
     { name: "Boots of Silence", description: "Muffle the wearer's steps.", basePrice: 150, properties: ["Stealth bonus"] },
     { name: "Hat of Disguise", description: "Allows the wearer to alter their appearance.", basePrice: 250, properties: ["Illusion magic"] },
-    { name: "Gloves of Dexterity", description: "Enhance manual dexterity.", basePrice: 300, properties: ["Grants +2 to Sleight of Hand"] },
+    { name: "Gloves of Dexterity", description: "Enhance manual dexterity.", basePrice: 300, properties: ["Grants +2 to Sleight of Hand"] }
   ];
-
 
   const storeRefreshTime = 60 * 60 * 1000; // 1 hour in milliseconds
   const storeKey = "clothier-store-stock";
+  const lastRefreshKey = "clothier-last-refresh";
 
+  // Helper: Calculate a random price between 80%-120% of the base price
   function getRandomPrice(basePrice) {
-    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2); // 80%-120% of base price
+    return (basePrice * (0.8 + Math.random() * 0.4)).toFixed(2);
   }
 
+  // Generate a new stock for the store
   function generateStock() {
     const stock = [];
     const shuffledItems = items.sort(() => 0.5 - Math.random());
+    // Generate 5 random items
     for (let i = 0; i < 5; i++) {
       const item = { ...shuffledItems[i] };
       item.price = getRandomPrice(item.basePrice);
@@ -217,12 +220,15 @@
     return stock;
   }
 
+  // Refresh the store's stock and record the refresh time
   function refreshStore() {
     const stock = generateStock();
     localStorage.setItem(storeKey, JSON.stringify(stock));
+    localStorage.setItem(lastRefreshKey, Date.now());
     displayStock(stock);
   }
 
+  // Display the store's stock in the table
   function displayStock(stock) {
     const storeItemsContainer = document.getElementById("store-items");
     storeItemsContainer.innerHTML = stock
@@ -239,12 +245,49 @@
       .join("");
   }
 
+  // Countdown Timer Logic
+  function updateCountdown() {
+    const countdownElement = document.getElementById("countdown");
+    let lastRefresh = localStorage.getItem(lastRefreshKey);
+    if (!lastRefresh) {
+      lastRefresh = Date.now();
+      localStorage.setItem(lastRefreshKey, lastRefresh);
+    }
+    const nextRefresh = parseInt(lastRefresh, 10) + storeRefreshTime;
+    const now = Date.now();
+    let timeLeft = nextRefresh - now;
+
+    if (timeLeft <= 0) {
+      // Time to refresh the store!
+      refreshStore();
+      const newRefresh = Date.now();
+      localStorage.setItem(lastRefreshKey, newRefresh);
+      timeLeft = storeRefreshTime;
+    }
+
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+    countdownElement.textContent = `Next update in: ${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  // Initialize store: display current stock or refresh if none exists
   const initialStock = localStorage.getItem(storeKey);
   if (initialStock) {
     displayStock(JSON.parse(initialStock));
   } else {
     refreshStore();
   }
+
+  // Ensure a last refresh timestamp exists
+  if (!localStorage.getItem(lastRefreshKey)) {
+    localStorage.setItem(lastRefreshKey, Date.now());
+  }
+
+  // Start the countdown timer, updating every second
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
 </script>
 
 <div style="text-align: center;">
