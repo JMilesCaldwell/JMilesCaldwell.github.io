@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Guildhall</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    /* General Page Styling */
+    body {
+      margin: 0;
+      background: url('resources/councilhall.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 10px;
+    }
+
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+      margin: 0.5rem 0;
+    }
+
+    .faction-section {
+      margin-bottom: 2rem;
+      border: 2px solid #660000;
+      border-radius: 8px;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .faction-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .faction-img {
+      width: 150px;  /* square guild image */
+      height: 150px;
+      border: 2px solid #8B0000;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-bottom: 0.5rem;
+    }
+
+    .faction-content {
+      text-align: left;
+      margin: 0.5rem 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    th, td {
+      border: 1px solid #8B0000;
+      padding: 0.5rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #8B0000;
+      color: #FAF4E0;
+      font-family: 'Cinzel', serif;
+    }
+
+    .rep-portrait {
+      width: 80px;  /* representative portrait size */
+      height: 80px;
+      border: 2px solid #660000;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    /* Buttons */
+    .action-button, .home-button {
+      background: #8B0000;
+      color: #FAF4E0;
+      border: 1px solid #660000;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      margin: 0.2rem;
+      text-decoration: none;
+    }
+    .action-button:hover, .home-button:hover {
+      background: #660000;
+    }
+
+    /* Modal Overlay */
+    #modalOverlay {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; 
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8); /* black overlay */
+    }
+
+    .modal-content {
+      background-color: #2a2a2a;
+      margin: 10% auto;
+      padding: 1rem;
+      border: 2px solid #660000;
+      max-width: 500px;
+      border-radius: 10px;
+      position: relative;
+      text-align: left;
+    }
+    .close-button {
+      background: #8B0000;
+      border: 1px solid #660000;
+      color: #FAF4E0;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      border-radius: 4px;
+    }
+    .close-button:hover {
+      background: #660000;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-family: 'Cinzel', serif;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.4rem;
+      margin-bottom: 0.8rem;
+      box-sizing: border-box;
+      font-family: 'Almendra', serif;
+    }
+
+    .divider {
+      margin: 1rem auto;
+      font-size: 1.5rem;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Guildhall</h1>
+    <p>Welcome to the Guildhall – a gathering place for the hardworking artisans and craftsmen of our fair city. Here, guilds such as the Blacksmith’s, Carpenter’s, Mason’s, Tanner’s, Potter’s, and Brickmaker’s offer both fellowship and practical benefits.</p>
+
+    <div class="divider"></div>
+
+    <!-- Blacksmith's Guild -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/blacksmith_guild.png" alt="Blacksmith's Guild" class="faction-img">
+        <h2>Blacksmith's Guild</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          The Blacksmith's Guild is the cornerstone of metalcraft in the city. Its roaring forges produce everything from sturdy tools to formidable weaponry.
+          Members gain practical training in Smith’s Tools and may even craft or repair equipment at a favourable rate.
+        </p>
+        <p>
+          <strong>D&D 5e Note:</strong> Gain proficiency with Smith's Tools and enjoy discounted forging services.
+        </p>
+      </div>
+
+      <!-- Representative -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="resources/buck_harding.png" alt="Buck Harding" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Buck Harding</strong><br>
+              Master Blacksmith
+            </td>
+            <td>
+              <button class="action-button" onclick="openJoinModal('blacksmith')">Join Guild</button>
+              <button class="action-button" onclick="requestService('blacksmith')">Request Service</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Carpenter's Guild -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/carpenter_guild.png" alt="Carpenter's Guild" class="faction-img">
+        <h2>Carpenter's Guild</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          The Carpenter's Guild provides skilled hands for all manner of woodwork—from the construction of fine furniture to the repair of civic structures.
+          Membership offers essential training and priority access to seasoned carpenters.
+        </p>
+        <p>
+          <strong>D&D 5e Note:</strong> Gain proficiency with Carpenter's Tools and benefit from reduced repair costs.
+        </p>
+      </div>
+
+      <!-- Representative -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="resources/clinton_dean.png" alt="Clinton Dean" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Clinton Dean</strong><br>
+              Master Carpenter
+            </td>
+            <td>
+              <button class="action-button" onclick="openJoinModal('carpenter')">Join Guild</button>
+              <button class="action-button" onclick="requestService('carpenter')">Request Service</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mason's Guild -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/mason_guild.png" alt="Mason's Guild" class="faction-img">
+        <h2>Mason's Guild</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          The Mason's Guild oversees the stonework and structural integrity of our city. Its members are adept at shaping stone and brick, ensuring that every building stands strong.
+        </p>
+        <p>
+          <strong>D&D 5e Note:</strong> Gain proficiency with Mason's Tools and receive discounts on construction and repairs.
+        </p>
+      </div>
+
+      <!-- Representative -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="resources/ferdinand_braun.png" alt="Ferdinand Braun" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Ferdinand Braun</strong><br>
+              Master Mason
+            </td>
+            <td>
+              <button class="action-button" onclick="openJoinModal('mason')">Join Guild</button>
+              <button class="action-button" onclick="requestService('mason')">Request Service</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tanner's Guild -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/tanner_guild.png" alt="Tanner's Guild" class="faction-img">
+        <h2>Tanner's Guild</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          Focused on the processing of hides and leathers, the Tanner's Guild ensures that raw skins are transformed into durable and versatile materials.
+          Its members perfect the art of tanning with secret techniques and quality dyes.
+        </p>
+        <p>
+          <strong>D&D 5e Note:</strong> Gain proficiency with Leatherworking (Tanning) Tools and enjoy access to rare dyes.
+        </p>
+      </div>
+
+      <!-- Representative -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="resources/dorothea_hauer.png" alt="Dorothea Hauer" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Dorothea Hauer</strong><br>
+              Master Tanner
+            </td>
+            <td>
+              <button class="action-button" onclick="openJoinModal('tanner')">Join Guild</button>
+              <button class="action-button" onclick="requestService('tanner')">Request Service</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Potter's Guild -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/potter_guild.png" alt="Potter's Guild" class="faction-img">
+        <h2>Potter's Guild</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          The Potter's Guild is dedicated to the craft of ceramics. From humble earthenware to exquisite decorative pieces,
+          its members transform clay into both utilitarian and beautiful objects.
+        </p>
+        <p>
+          <strong>D&D 5e Note:</strong> Gain proficiency with Potter's Tools and benefit from reduced costs on custom ceramics.
+        </p>
+      </div>
+
+      <!-- Representative -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="resources/tessa_rae.png" alt="Tessa Rae" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Tessa Rae</strong><br>
+              Master Potter
+            </td>
+            <td>
+              <button class="action-button" onclick="openJoinModal('potter')">Join Guild</button>
+              <button class="action-button" onclick="requestService('potter')">Request Service</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Brickmaker's Guild -->
+    <div class="faction-section">
+      <div class="faction-header">
+        <img src="resources/brickmaker_guild.png" alt="Brickmaker's Guild" class="faction-img">
+        <h2>Brickmaker's Guild</h2>
+      </div>
+      <div class="faction-content">
+        <p>
+          Brickmakers provide the very building blocks of our city. Through precise craftsmanship and secret recipes,
+          this guild ensures that bricks meet the highest standards of durability and beauty.
+        </p>
+        <p>
+          <strong>D&D 5e Note:</strong> Learn the art of bricklaying and receive discounts on construction materials.
+        </p>
+      </div>
+
+      <!-- Representative -->
+      <table>
+        <thead>
+          <tr>
+            <th>Portrait</th>
+            <th>Name & Title</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="resources/aleksi_heikkinen.png" alt="Aleksi Heikkinen" class="rep-portrait">
+            </td>
+            <td>
+              <strong>Aleksi Heikkinen</strong><br>
+              Master Brickmaker
+            </td>
+            <td>
+              <button class="action-button" onclick="openJoinModal('brickmaker')">Join Guild</button>
+              <button class="action-button" onclick="requestService('brickmaker')">Request Service</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- HOME BUTTON -->
+    <a href="index.html" class="home-button">Home</a>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="modalOverlay">
+    <div class="modal-content">
+      <button class="close-button" onclick="closeModal()">Close</button>
+      <h2 id="modalTitle"></h2>
+      <p id="modalDialogue"></p>
+
+      <!-- Membership fee input (shown in join mode) -->
+      <div id="joinSection" style="display:none;">
+        <label for="membershipFee">Membership Fee (GP):</label>
+        <input type="number" id="membershipFee" min="0" value="0" />
+        <p id="joinResult"></p>
+        <button class="action-button" onclick="submitMembership()">Apply for Membership</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*******************************************************************
+     *   GUILD DATA & DEMO FUNCTIONALITY FOR JOINING & SERVICES
+     *******************************************************************/
+    const GUILDS = {
+      blacksmith: {
+        name: "Blacksmith's Guild",
+        repName: "Buck Harding",
+        minFee: 25,
+        maxFee: 100,
+        joinSuccessChance: 0.75,
+        serviceChance: 0.50,
+        benefits: [
+          "Gain proficiency with Smith's Tools.",
+          "Access to the forge at reduced cost.",
+          "Discount on custom weapon forging."
+        ]
+      },
+      carpenter: {
+        name: "Carpenter's Guild",
+        repName: "Clinton Dean",
+        minFee: 20,
+        maxFee: 80,
+        joinSuccessChance: 0.80,
+        serviceChance: 0.55,
+        benefits: [
+          "Gain proficiency with Carpenter's Tools.",
+          "Reduced cost on custom furniture and repairs.",
+          "Priority access to skilled carpenters."
+        ]
+      },
+      mason: {
+        name: "Mason's Guild",
+        repName: "Ferdinand Braun",
+        minFee: 30,
+        maxFee: 90,
+        joinSuccessChance: 0.70,
+        serviceChance: 0.45,
+        benefits: [
+          "Gain proficiency with Mason's Tools.",
+          "Discount on stonework and building maintenance.",
+          "Access to ancient building techniques."
+        ]
+      },
+      tanner: {
+        name: "Tanner's Guild",
+        repName: "Dorothea Hauer",
+        minFee: 15,
+        maxFee: 60,
+        joinSuccessChance: 0.85,
+        serviceChance: 0.50,
+        benefits: [
+          "Gain proficiency with Leatherworking (Tanning) Tools.",
+          "Specialised treatment of hides and leathers.",
+          "Access to rare dyes and tanning methods."
+        ]
+      },
+      potter: {
+        name: "Potter's Guild",
+        repName: "Tessa Rae",
+        minFee: 10,
+        maxFee: 50,
+        joinSuccessChance: 0.90,
+        serviceChance: 0.60,
+        benefits: [
+          "Gain proficiency with Potter's Tools.",
+          "Discount on custom ceramics and earthenware.",
+          "Access to specialised kilns and clays."
+        ]
+      },
+      brickmaker: {
+        name: "Brickmaker's Guild",
+        repName: "Aleksi Heikkinen",
+        minFee: 20,
+        maxFee: 70,
+        joinSuccessChance: 0.80,
+        serviceChance: 0.50,
+        benefits: [
+          "Learn the craft of bricklaying and masonry.",
+          "Discount on construction materials.",
+          "Access to secret formulas for superior brick quality."
+        ]
+      }
+    };
+
+    let currentGuildKey = null;
+    let modalType = null;
+
+    // Open modal to join a guild
+    function openJoinModal(guildKey) {
+      currentGuildKey = guildKey;
+      modalType = 'join';
+      const guild = GUILDS[guildKey];
+      document.getElementById("modalTitle").textContent = `Join Attempt: ${guild.name}`;
+      document.getElementById("modalDialogue").textContent = `You approach ${guild.repName} to discuss membership.`;
+      document.getElementById("joinSection").style.display = "block";
+      document.getElementById("membershipFee").value = 0;
+      document.getElementById("joinResult").textContent = "";
+      document.getElementById("modalOverlay").style.display = "block";
+    }
+
+    // Submit membership fee and determine outcome
+    function submitMembership() {
+      const guild = GUILDS[currentGuildKey];
+      const feeValue = parseInt(document.getElementById("membershipFee").value, 10) || 0;
+      const joinResult = document.getElementById("joinResult");
+
+      // Random threshold between minFee and maxFee
+      const threshold = getRandomInt(guild.minFee, guild.maxFee);
+      if (feeValue < threshold) {
+        joinResult.textContent = `Your fee is too low. ${guild.repName} turns you away. (Estimated fee: ~${threshold} GP)`;
+        return;
+      }
+
+      // Check success chance
+      const roll = Math.random();
+      if (roll <= guild.joinSuccessChance) {
+        const benefit = pickRandomLine(guild.benefits);
+        joinResult.textContent = `Success! Membership accepted. You gain a benefit: ${benefit}`;
+      } else {
+        joinResult.textContent = `${guild.repName} accepts your fee, but the higher-ups deny your membership.`;
+      }
+    }
+
+    // Request a guild service
+    function requestService(guildKey) {
+      const guild = GUILDS[guildKey];
+      const roll = Math.random();
+      if (roll <= guild.serviceChance) {
+        alert(`${guild.repName} agrees to provide the guild's services. Discuss your needs.`);
+      } else {
+        alert(`${guild.repName} is currently unavailable. Please try again later.`);
+      }
+    }
+
+    // Close the modal
+    function closeModal() {
+      document.getElementById("modalOverlay").style.display = "none";
+      document.getElementById("joinSection").style.display = "none";
+    }
+
+    // Utility: get random integer between min and max (inclusive)
+    function getRandomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Utility: pick a random element from an array
+    function pickRandomLine(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+  </script>
+</body>
+</html>
