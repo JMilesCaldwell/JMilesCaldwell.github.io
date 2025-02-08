@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generic Fantasy Commoner Generator</title>
+  <link rel="icon" href="https://example.com/favicon.png" type="image/png">
+  <!-- Using generic web fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Georgia&family=Verdana:wght@400;700&display=swap" 
+    rel="stylesheet"
+  >
+  <style>
+    /* ============ BASIC STYLES ============ */
+    body {
+      margin: 0;
+      background: url('https://via.placeholder.com/800x600?text=Fantasy+Background') no-repeat center center fixed;
+      background-size: cover;
+      color: #222;
+      font-family: Georgia, serif;
+      text-align: center;
+    }
+    h1, h2, h3 {
+      font-family: Georgia, serif;
+      margin-bottom: 0.5rem;
+    }
+    .fancy-divider {
+      margin: 0.25rem 0 1rem;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .fancy-divider::after {
+      content: "♦ ♢ ♦";
+      color: #800000;
+      letter-spacing: 0.5rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    label {
+      display: inline-block;
+      width: 150px;
+      margin-right: 8px;
+      font-weight: bold;
+    }
+    select, input[type="text"], input[type="number"] {
+      margin-bottom: 1rem;
+      padding: 0.3rem;
+      font-size: 1rem;
+      background-color: #fdfdfd;
+      color: #333;
+      border: 1px solid #ccc;
+      font-family: Verdana, sans-serif;
+    }
+    .button {
+      background-color: #004080;  /* Navy blue */
+      color: #FFF;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      font-family: Verdana, sans-serif;
+      border-radius: 4px;
+    }
+    .button:hover {
+      background-color: #0059b3;
+    }
+    .output {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #999;
+      background-color: #f7f7f7;
+      color: #000;
+      text-align: left;
+    }
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.8rem;
+      color: #555;
+      font-family: Verdana, sans-serif;
+    }
+    /* Hide the print button until a character is generated */
+    #printButton {
+      display: none;
+    }
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #output,
+      #output * {
+        visibility: visible !important;
+      }
+      #output {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Generic Fantasy Commoner Generator</h1>
+  <div class="fancy-divider"></div>
+  
+  <!-- HOME BUTTON (optional link) -->
+  <button class="button" onclick="window.location.href='https://example.com'">
+    Home
+  </button>
+  
+  <p>
+    Generate a level 0 or level 0.5 commoner with a generic D&D flavor.
+  </p>
+  
+  <!-- CHARACTER CREATION FORM -->
+  <div id="creation-form">
+    <!-- Character Name -->
+    <div>
+      <label for="name-input">Name:</label>
+      <input type="text" id="name-input" placeholder="Enter or randomise" />
+      <button class="button" onclick="randomName()">Random</button>
+    </div>
+    <!-- Race Selection -->
+    <div>
+      <label for="race-select">Race:</label>
+      <select id="race-select">
+        <option value="">-- Choose --</option>
+      </select>
+      <button class="button" onclick="randomRace()">Random</button>
+    </div>
+    <!-- Background Selection -->
+    <div>
+      <label for="background-select">Background:</label>
+      <select id="background-select">
+        <option value="">-- Choose --</option>
+      </select>
+      <button class="button" onclick="randomBackground()">Random</button>
+    </div>
+    <!-- Level Selection -->
+    <div>
+      <label for="level-select">Level:</label>
+      <select id="level-select">
+        <option value="0">0 (Basic Commoner)</option>
+        <option value="0.5">0.5 (Slightly Skilled)</option>
+      </select>
+    </div>
+    <!-- Ability Scores -->
+    <div>
+      <label>Ability Scores:</label><br/>
+      <button class="button" onclick="rollAbilityScores()">Roll (4d6 drop lowest)</button>
+      <button class="button" onclick="standardArray()">Standard Array (15,14,13,12,10,8)</button>
+      <div id="abilities-display" style="margin-top:0.5rem;"></div>
+    </div>
+    <!-- Generate Character & Full Random -->
+    <div>
+      <button class="button" onclick="generateCharacter()">Generate Character</button>
+      <button class="button" onclick="fullRandom()">Full Random</button>
+    </div>
+  </div>
+  
+  <!-- OUTPUT -->
+  <div id="output" class="output" style="display: none;">
+    <!-- The character's name will be the heading -->
+    <h2 id="charName" style="margin-top: 0;"></h2>
+    <div class="fancy-divider"></div>
+    <div id="charRace"></div>
+    <div id="charBackground"></div>
+    <div id="charAbilityScores"></div>
+    <div id="charProficiencies"></div>
+    <div id="charLanguages"></div>
+    <div id="charEquipment"></div>
+    <hr/>
+    <div id="charTraits" style="margin-top:1rem;"></div>
+  </div>
+  
+  <!-- PRINT BUTTON -->
+  <button class="button" id="printButton" onclick="window.print()">Print</button>
+  
+  <!-- OGL NOTICE (single instance) -->
+  <div class="footer">
+    <h3>Open Game License</h3>
+    <p>
+      This work includes material from the 5e System Reference Document (SRD),
+      © 2016 Wizards of the Coast, Inc. and is covered by the
+      <strong>Open Game License, Version 1.0a</strong>.
+      <br/><br/>
+      <em>
+      OPEN GAME LICENSE Version 1.0a<br>
+      The following text is the property of Wizards of the Coast, Inc. and is Copyright 
+      2000 Wizards of the Coast, Inc ("Wizards"). All Rights Reserved.<br>
+      1. Definitions: (a)"Contributors" means the copyright...
+      <a href="https://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf" target="_blank">Read the full license</a>.
+      </em>
+    </p>
+  </div>
+</div>
+
+<script>
+  /* ============================================
+     ========== ASSET LIBRARIES (Generic) ==========
+     ============================================ */
+  
+  // --- Name Assets ---
+  let FIRST_NAMES = [];
+  let LAST_NAMES = [];
+  const RAW_NAMES = [
+    "Alaric Storm",
+    "Beren Swift",
+    "Cedric Ironwood",
+    "Dorian Black",
+    "Edric Dawn",
+    "Fendrel River",
+    "Gareth Oak",
+    "Hadrian Steel",
+    "Ivor Shadow",
+    "Jareth Moon",
+    "Kael Fire",
+    "Loric Green",
+    "Merrick Light",
+    "Nolan Frost",
+    "Orin Stone",
+    "Percival Gray",
+    "Quentin Ash",
+    "Rowan Wood",
+    "Soren Bright",
+    "Thaddeus Gale",
+    "Ulric Thorn",
+    "Vernon Lake",
+    "Wesley Storm",
+    "Xander Vale",
+    "Yorick Frost",
+    "Zane Wolf"
+  ];
+  
+  function parseName(fullName) {
+    const trimmed = fullName.trim();
+    if (!trimmed) return null;
+    const parts = trimmed.split(" ");
+    if (parts.length === 1) {
+      return { first: parts[0], last: "" };
+    } else {
+      return { first: parts[0], last: parts[parts.length - 1] };
+    }
+  }
+  
+  RAW_NAMES.forEach(entry => {
+    let parsed = parseName(entry);
+    if (parsed) {
+      FIRST_NAMES.push(parsed.first);
+      LAST_NAMES.push(parsed.last);
+    }
+  });
+  
+  // --- Races ---
+  const RACES = [
+    {
+      name: "Human",
+      abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
+      speed: 30,
+      features: ["Versatile", "Adaptive"],
+      languages: ["Common", "One extra language"]
+    },
+    {
+      name: "Elf",
+      abilityScoreBonuses: { DEX: 2 },
+      speed: 30,
+      features: ["Keen Senses", "Fey Ancestry", "Trance"],
+      languages: ["Common", "Elvish"]
+    },
+    {
+      name: "Dwarf",
+      abilityScoreBonuses: { CON: 2 },
+      speed: 25,
+      features: ["Darkvision", "Dwarven Resilience", "Stonecunning"],
+      languages: ["Common", "Dwarvish"]
+    },
+    {
+      name: "Halfling",
+      abilityScoreBonuses: { DEX: 2 },
+      speed: 25,
+      features: ["Lucky", "Brave", "Halfling Nimbleness"],
+      languages: ["Common", "Halfling"]
+    },
+    {
+      name: "Orc",
+      abilityScoreBonuses: { STR: 2, CHA: -1 },
+      speed: 30,
+      features: ["Aggressive", "Powerful Build"],
+      languages: ["Common", "Orcish"]
+    },
+    {
+      name: "Gnome",
+      abilityScoreBonuses: { INT: 2 },
+      speed: 25,
+      features: ["Gnome Cunning"],
+      languages: ["Common", "Gnomish"]
+    },
+    {
+      name: "Tiefling",
+      abilityScoreBonuses: { CHA: 2, INT: 1 },
+      speed: 30,
+      features: ["Hellish Resistance", "Infernal Legacy"],
+      languages: ["Common", "Infernal"]
+    }
+  ];
+  
+  // --- Backgrounds ---
+  const BACKGROUNDS = [
+    {
+      name: "Sage",
+      skillProficiencies: ["Arcana", "History"],
+      equipment: ["Old tome", "Quill", "Ink vial", "Simple robes", "Belt pouch with 5 gp"],
+      feature: "Scholar's Insight",
+      featureDesc: "You know where to find obscure knowledge in libraries and archives.",
+      nicknames: ["Scholar", "Bookworm", "Scribe"]
+    },
+    {
+      name: "Mage",
+      skillProficiencies: ["Arcana", "Investigation"],
+      equipment: ["Quarterstaff (arcane focus)", "Spell scroll", "Simple robes", "Belt pouch with 10 gp"],
+      feature: "Arcane Initiate",
+      featureDesc: "You can channel a magical bolt through your staff rather than attacking physically.",
+      nicknames: ["Mage", "Wizard", "Mystic"]
+    },
+    {
+      name: "Soldier",
+      skillProficiencies: ["Athletics", "Intimidation"],
+      equipment: ["Rustic uniform", "Old sword", "Shield", "Belt pouch with 10 gp"],
+      feature: "Military Discipline",
+      featureDesc: "You follow orders and maintain combat discipline on the field.",
+      nicknames: ["Grunt", "Vet", "Warrior"]
+    },
+    {
+      name: "Urchin",
+      skillProficiencies: ["Stealth", "Sleight of Hand"],
+      equipment: ["Tattered clothes", "Rusty dagger", "Small token", "Belt pouch with 5 gp"],
+      feature: "Streetwise",
+      featureDesc: "You know the back alleys and shortcuts of urban environments.",
+      nicknames: ["Street Rat", "Scamp", "Rascal"]
+    },
+    {
+      name: "Merchant",
+      skillProficiencies: ["Persuasion", "Insight"],
+      equipment: ["Ledger", "Fancy clothes", "Small purse with 15 gp"],
+      feature: "Trade Connections",
+      featureDesc: "You can negotiate better deals and find rare goods.",
+      nicknames: ["Trader", "Broker", "Haggler"]
+    },
+    {
+      name: "Outlander",
+      skillProficiencies: ["Survival", "Nature"],
+      equipment: ["Hunting trap", "Traveling cloak", "Basic tools", "Belt pouch with 10 gp"],
+      feature: "Wilderness Navigation",
+      featureDesc: "You can find food, water, and shelter in the wild.",
+      nicknames: ["Wanderer", "Tracker", "Scout"]
+    },
+    {
+      name: "Hermit",
+      skillProficiencies: ["Medicine", "Religion"],
+      equipment: ["Bundle of herbs", "Simple cloak", "Worn journal", "Belt pouch with 5 gp"],
+      feature: "Secluded Insight",
+      featureDesc: "Years in isolation have granted you clarity on life's mysteries.",
+      nicknames: ["Recluse", "Solitary"]
+    },
+    {
+      name: "Farmer",
+      skillProficiencies: ["Animal Handling", "Survival"],
+      equipment: ["Hand plow", "Straw hat", "Simple clothes", "Belt pouch with 5 gp"],
+      feature: "Hardy Labor",
+      featureDesc: "Your daily toil has made you resilient and resourceful.",
+      nicknames: ["Peasant", "Tillerman", "Farmer"]
+    }
+  ];
+  
+  // --- Personality Traits ---
+  const PERSONALITY_TRAITS = [
+    "I value hard work and resilience.",
+    "I am curious about the world and eager to learn.",
+    "I have a strong sense of duty.",
+    "I prefer a quiet life, away from conflict.",
+    "I am quick to help those in need.",
+    "I trust in the power of community.",
+    "I question authority and think for myself.",
+    "I am ambitious and always seek self-improvement.",
+    "I enjoy telling tales of my adventures.",
+    "I am humble and modest about my achievements.",
+    "I have a stubborn streak and rarely back down.",
+    "I often lose myself in thought.",
+    "I remain calm even under pressure.",
+    "I appreciate the simple pleasures in life.",
+    "I have a deep respect for nature."
+  ];
+  
+  // --- Weapons ---
+  // Define new generic weapons.
+  const SIMPLE_WEAPONS = ["Club", "Dagger", "Spear", "Shortsword", "Mace", "Bow", "Crossbow"];
+  const MARTIAL_WEAPONS = ["Longsword"];
+  const IMPROVISED_WEAPON = "Improvised (broken weapon)";
+  
+  // Weapon data (each weapon has a damage die, damage type, finesse flag, and whether it's ranged).
+  const WEAPON_DATA = {
+    "Shortsword": { damageDie: "1d6", damageType: "piercing", finesse: true, ranged: false },
+    "Longsword": { damageDie: "1d8", damageType: "slashing", finesse: false, ranged: false },
+    "Mace": { damageDie: "1d6", damageType: "bludgeoning", finesse: false, ranged: false },
+    "Spear": { damageDie: "1d6", damageType: "piercing", finesse: false, ranged: false },
+    "Dagger": { damageDie: "1d4", damageType: "piercing", finesse: true, ranged: false },
+    "Bow": { damageDie: "1d8", damageType: "piercing", finesse: false, ranged: true },
+    "Crossbow": { damageDie: "1d8", damageType: "piercing", finesse: false, ranged: true },
+    "Club": { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
+    // Special Mage weapon uses INT for attack and deals force damage.
+    "Quarterstaff (arcane focus)": {
+      damageDie: "1d6",
+      damageType: "force",
+      ranged: true,
+      finesse: false,
+      useInt: true
+    }
+  };
+  
+  // --- Armour ---
+  const ARMORS = [
+    { name: "Cloth", baseAC: 10, dexCap: null },
+    { name: "Leather", baseAC: 11, dexCap: null },
+    { name: "Studded Leather", baseAC: 12, dexCap: null },
+    { name: "Chain Shirt", baseAC: 13, dexCap: 2 }
+  ];
+  
+  // --- Background-to-Weapon Mapping ---
+  const BACKGROUND_WEAPONS = {
+    "Mage": ["Quarterstaff (arcane focus)"],
+    "Sage": ["Dagger", "Club"],
+    "Soldier": ["Shortsword", "Longsword", "Mace"],
+    "Urchin": ["Dagger", IMPROVISED_WEAPON],
+    "Merchant": ["Club", "Dagger"],
+    "Outlander": ["Spear", "Mace", "Club"],
+    "Hermit": ["Club", "Dagger"],
+    "Farmer": ["Spear", "Club", IMPROVISED_WEAPON]
+  };
+  
+  // --- Background Weapon Proficiencies ---
+  const BACKGROUND_PROFICIENCIES = {
+    "Soldier": "martial",
+    "Outlander": "simple",
+    "Urchin": "simple",
+    "Merchant": "simple",
+    "Sage": "simple",
+    "Mage": "simple",
+    "Hermit": "simple",
+    "Farmer": "simple"
+  };
+  
+  function isProficientInWeapon(weaponName, backgroundName) {
+    const cat = BACKGROUND_PROFICIENCIES[backgroundName];
+    if (!cat) return false;
+    if (weaponName === "Quarterstaff (arcane focus)" && backgroundName === "Mage") {
+      return true;
+    }
+    if (SIMPLE_WEAPONS.includes(weaponName)) {
+      return (cat === "simple" || cat === "martial");
+    }
+    if (MARTIAL_WEAPONS.includes(weaponName)) {
+      return (cat === "martial");
+    }
+    return false;
+  }
+  
+  function getRandomWeaponForBackground(bgName) {
+    let weaponsArray = BACKGROUND_WEAPONS[bgName];
+    if (!weaponsArray) {
+      weaponsArray = ["Club", "Dagger", IMPROVISED_WEAPON];
+    }
+    return pickRandom(weaponsArray);
+  }
+  
+  // --- Armour Class Calculation ---
+  function computeArmourClass(armour, dexMod) {
+    const effectiveDex = (armour.dexCap !== null) ? Math.min(dexMod, armour.dexCap) : dexMod;
+    return armour.baseAC + (effectiveDex > 0 ? effectiveDex : 0);
+  }
+  
+  // --- Weapon Stats Calculation ---
+  function computeWeaponStats(weaponName, scores, isProficient, profBonus) {
+    const data = WEAPON_DATA[weaponName];
+    if (!data) return null;
+    const strMod = abilityMod(scores[0]);
+    const dexMod = abilityMod(scores[1]);
+    const intMod = abilityMod(scores[3]); // INT is at index 3
+    let usedMod = strMod;
+    if (data.useInt) {
+      usedMod = intMod;
+    } else if (data.ranged) {
+      usedMod = dexMod;
+    } else if (data.finesse) {
+      usedMod = Math.max(strMod, dexMod);
+    }
+    const attackBonus = usedMod + (isProficient ? profBonus : 0);
+    return {
+      name: weaponName,
+      damageDie: data.damageDie,
+      damageType: data.damageType,
+      attackBonus: attackBonus,
+      abilityMod: usedMod
+    };
+  }
+  
+  /* ============================================
+     ========== UTILITY FUNCTIONS ==========
+     ============================================ */
+  function pickRandom(array) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+  
+  function pickMultipleDistinct(array, count) {
+    const copy = [...array];
+    const result = [];
+    if (count > copy.length) count = copy.length;
+    for (let i = 0; i < count; i++) {
+      const index = Math.floor(Math.random() * copy.length);
+      result.push(copy[index]);
+      copy.splice(index, 1);
+    }
+    return result;
+  }
+  
+  function roll4d6DropLowest() {
+    let scores = [];
+    for (let i = 0; i < 6; i++) {
+      let rolls = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 6) + 1);
+      rolls.sort((a, b) => a - b);
+      rolls.shift(); // drop lowest
+      const sum = rolls.reduce((acc, val) => acc + val, 0);
+      scores.push(sum);
+    }
+    return scores;
+  }
+  
+  function getStandardArray() {
+    return [15, 14, 13, 12, 10, 8];
+  }
+  
+  function abilityMod(score) {
+    return Math.floor((score - 10) / 2);
+  }
+  
+  /* ============================================
+     ========== NAME HANDLERS ==========
+     ============================================ */
+  function randomName() {
+    if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
+      document.getElementById("name-input").value = "Nameless Hero";
+      return;
+    }
+    const first = pickRandom(FIRST_NAMES);
+    const last = pickRandom(LAST_NAMES);
+    document.getElementById("name-input").value = first + " " + last;
+  }
+  
+  /* ============================================
+     ========== RACE & BACKGROUND RANDOMISERS ==========
+     ============================================ */
+  function randomRace() {
+    const randomPick = pickRandom(RACES).name;
+    document.getElementById("race-select").value = randomPick;
+  }
+  
+  function randomBackground() {
+    const randomPick = pickRandom(BACKGROUNDS).name;
+    document.getElementById("background-select").value = randomPick;
+  }
+  
+  /* ============================================
+     ========== ABILITY SCORE HANDLERS ==========
+     ============================================ */
+  let currentScores = [10, 10, 10, 10, 10, 10];
+  function rollAbilityScores() {
+    currentScores = roll4d6DropLowest();
+    displayScores();
+  }
+  
+  function standardArray() {
+    currentScores = getStandardArray();
+    displayScores();
+  }
+  
+  function displayScores() {
+    const container = document.getElementById("abilities-display");
+    const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    let html = "";
+    currentScores.forEach((sc, i) => {
+      const mod = abilityMod(sc);
+      const modPrefix = mod >= 0 ? "+" : "";
+      html += `${labels[i]}: <strong>${sc}</strong> (${modPrefix}${mod})<br/>`;
+    });
+    container.innerHTML = html;
+  }
+  
+  /* ============================================
+     ========== CHARACTER GENERATION ==========
+     ============================================ */
+  function parseUserName(fullInput) {
+    const parts = fullInput.trim().split(" ");
+    let firstName = "";
+    let lastName = "";
+    if (parts.length === 1) {
+      firstName = parts[0];
+    } else {
+      firstName = parts[0];
+      lastName = parts[parts.length - 1];
+    }
+    return { firstName, lastName };
+  }
+  
+  function generateCharacter() {
+    // 1. Read name
+    const rawName = document.getElementById("name-input").value.trim() || "Nameless Hero";
+    let { firstName, lastName } = parseUserName(rawName);
+    
+    // 2. Race & Background selection
+    const raceSelected = document.getElementById("race-select").value;
+    const raceData = RACES.find(r => r.name === raceSelected);
+    if (!raceData) {
+      alert("Please select a race.");
+      return;
+    }
+    const bgSelected = document.getElementById("background-select").value;
+    const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
+    if (!bgData) {
+      alert("Please select a background.");
+      return;
+    }
+    
+    // 3. Possibly add a nickname
+    if (bgData.nicknames && bgData.nicknames.length > 0) {
+      if (Math.random() < 0.2) {
+        const nick = pickRandom(bgData.nicknames);
+        firstName += ` "${nick}"`;
+      }
+    }
+    
+    // 4. Apply race ability score bonuses
+    const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    let finalScores = [...currentScores];
+    for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
+      if (ability === "PLUS_TWO_OTHERS") {
+        finalScores[1] += 1;
+        finalScores[2] += 1;
+      } else {
+        const idx = ABIL_ORDER.indexOf(ability);
+        if (idx !== -1) {
+          finalScores[idx] += bonus;
+        }
+      }
+    }
+    
+    // 5. Personality Traits
+    const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
+    
+    // 6. Determine level => proficiency bonus
+    const levelChoice = document.getElementById("level-select").value;
+    let profBonus = 0;
+    if (levelChoice === "0.5") {
+      profBonus = 1;
+    }
+    
+    // 7. Pick random weapon & armour
+    const chosenWeapon = getRandomWeaponForBackground(bgData.name);
+    const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
+    const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
+    
+    const chosenArmour = pickRandom(ARMORS);
+    const dexMod = abilityMod(finalScores[1]);
+    const computedAC = computeArmourClass(chosenArmour, dexMod);
+    
+    // 8. Compile final details
+    const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
+    const featuresList = raceData.features.length ? raceData.features.map(f => `- ${f}`).join("<br/>") : "None";
+    const raceLangs = raceData.languages.join(", ");
+    const bgEquipmentList = bgData.equipment.map(eq => `- ${eq}`).join("<br/>");
+    const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
+    let bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
+    
+    // 9. Output the generated character (heading becomes the character’s name)
+    const outputDiv = document.getElementById("output");
+    outputDiv.style.display = "block";
+    outputDiv.classList.add("generated");
+    document.getElementById("charName").innerHTML = fullNameFinal;
+    
+    document.getElementById("charRace").innerHTML = `
+      <strong>Race:</strong> ${raceData.name}<br/>
+      <em>Speed:</em> ${raceData.speed} ft<br/>
+      <em>Features:</em><br/> ${featuresList}
+    `;
+    document.getElementById("charBackground").innerHTML = `
+      <strong>Background:</strong> ${bgData.name}<br/>
+      <em>Skill Proficiencies:</em> ${bgSkills}<br/>
+      <em>Equipment:</em><br/>${bgEquipmentList}<br/>
+      <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
+      <small>${bgData.featureDesc}</small>
+    `;
+    document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
+    document.getElementById("charProficiencies").innerHTML = `
+      <strong>Proficiencies (From BG, at Level ${levelChoice}):</strong><br/>
+      Weapon Category: ${BACKGROUND_PROFICIENCIES[bgData.name] || "None"}<br/>
+      Background Skills: ${bgSkills}
+    `;
+    document.getElementById("charLanguages").innerHTML = `
+      <strong>Languages:</strong><br/>
+      From Race: ${raceLangs}<br/>
+      From Background: ${bgLangs}
+    `;
+    
+    let eqHTML = `<strong>Starting Equipment (from Background):</strong><br/>${bgEquipmentList}`;
+    if (weaponStats) {
+      const atkSign = weaponStats.attackBonus >= 0 ? "+" : "";
+      const dmgSign = weaponStats.abilityMod >= 0 ? "+" : "";
+      eqHTML += `
+        <br/><br/><strong>Weapon:</strong> ${weaponStats.name}<br/>
+        <em>Attack Bonus:</em> ${atkSign}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
+        <em>Damage:</em> ${weaponStats.damageDie} ${dmgSign}${weaponStats.abilityMod} (${weaponStats.damageType})
+      `;
+    }
+    eqHTML += `<br/><br/><strong>Armour:</strong> ${chosenArmour.name} (AC = ${computedAC})`;
+    document.getElementById("charEquipment").innerHTML = eqHTML;
+    
+    const traitsHTML = `
+      <h3>Personality Traits</h3>
+      <ul>
+        <li>${chosenTraits[0]}</li>
+        <li>${chosenTraits[1]}</li>
+      </ul>
+    `;
+    document.getElementById("charTraits").innerHTML = traitsHTML;
+    
+    // Show print button
+    document.getElementById("printButton").style.display = "inline-block";
+  }
+  
+  function formatAbilityScores(scoresArr) {
+    const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    let out = "<strong>Final Ability Scores:</strong><br/>";
+    scoresArr.forEach((sc, i) => {
+      const mod = abilityMod(sc);
+      const sign = mod >= 0 ? "+" : "";
+      out += `${labels[i]}: <strong>${sc}</strong> (${sign}${mod})<br/>`;
+    });
+    return out;
+  }
+  
+  /* ============================================
+     ========== FULL RANDOM FUNCTION ==========
+     ============================================ */
+  function fullRandom() {
+    randomName();
+    randomRace();
+    randomBackground();
+    rollAbilityScores();
+    generateCharacter();
+  }
+</script>
+</body>
+</html>
