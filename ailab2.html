@@ -6,28 +6,24 @@
   <title>Commoner Generator</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <!-- ========== GOOGLE FONTS ========== -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link 
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
   >
-
   <style>
     /* ============ BASIC STYLES ============ */
     body {
       margin: 0;
       background: url('resources/commoner.png') no-repeat center center fixed;
-      background-size: cover;
+      background-size: cover; /* Ensures the image covers the entire screen */
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
-
     h1, h2, h3 {
-      font-family: 'Cinzel', serif;
+      font-family: 'Cinzel', serif; /* Headings: Cinzel */
       margin-bottom: 0.5rem;
     }
-
     .fancy-divider {
       margin: 0.25rem 0 1rem;
       font-size: 1.2rem;
@@ -38,7 +34,6 @@
       color: #8B0000;
       letter-spacing: 0.5rem;
     }
-
     .container {
       max-width: 800px;
       margin: 2rem auto;
@@ -46,26 +41,23 @@
       padding: 2rem;
       border-radius: 10px;
     }
-
     label {
       display: inline-block;
       width: 150px;
       margin-right: 8px;
       font-weight: bold;
     }
-
     select, input[type="text"], input[type="number"] {
       margin-bottom: 1rem;
       padding: 0.2rem;
       font-size: 1rem;
-      background-color: #fff9ed;
+      background-color: #fff9ed; /* Slightly off-white for parchment vibe */
       color: #333;
       border: 1px solid #999;
       font-family: 'Almendra', serif;
     }
-
     .button {
-      background-color: #8B0000;
+      background-color: #8B0000; /* A deeper red */
       color: #fff;
       border: none;
       padding: 0.5rem 1rem;
@@ -74,44 +66,32 @@
       margin: 0.5rem 0;
       font-family: 'Cinzel', serif;
     }
-
     .button:hover {
-      background-color: #6B0000;
+      background-color: #6B0000; /* Darker red on hover */
     }
-
     .output {
       margin-top: 2rem;
       padding: 1rem;
       border: 1px solid #aaa;
-      background-color: #fff5e6;
+      background-color: #fff5e6; /* Slightly lighter than body background */
       color: #333;
-      text-align: left;
     }
-
-    .ability-scores, .background-info, .race-info {
-      margin-bottom: 1rem;
-    }
-
     .footer {
       margin-top: 3rem;
       font-size: 0.9rem;
       color: #666;
       font-family: 'Almendra', serif;
     }
-
-    /* Hide the print button if the output is not visible yet */
     #printButton {
       display: none;
     }
-
-    /* Print styles */
     @media print {
       body * {
-        visibility: hidden !important;
+        visibility: hidden !important; /* Hide everything by default */
       }
       #output,
       #output * {
-        visibility: visible !important;
+        visibility: visible !important; /* Show the output content */
       }
       #output {
         position: absolute;
@@ -127,17 +107,16 @@
 <div class="container">
   <h1>Commoner Generator</h1>
   <div class="fancy-divider"></div>
-
-  <!-- HOME BUTTON -->
   <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/index.html'">
     Home
   </button>
   
   <p>
-    Generate a “level 0” commoner with a chosen or random race, background, alignment, and additional details such as age and physical appearance. You will also get ability scores (rolled or standard) plus personality traits and a flaw.
+    Generate a “level 0” or “level 0.5” commoner with a chosen or random race and background, 
+    including ability scores, skill proficiencies, personality traits, and more.
   </p>
 
-  <!-- CHARACTER CREATION FORM -->
+  <!-- ============ CHARACTER CREATION FORM ============ -->
   <div id="creation-form">
 
     <!-- Character Name -->
@@ -165,27 +144,14 @@
       <button class="button" onclick="randomBackground()">Random</button>
     </div>
 
-    <!-- Alignment Selection -->
+    <!-- ============ LEVEL SELECTION (0 vs 0.5) ============ -->
+    <!-- ADDED/UPDATED CODE: Let user pick a “level” to set proficiency bonus. -->
     <div>
-      <label for="alignment-select">Alignment:</label>
-      <select id="alignment-select">
-        <option value="">-- Choose --</option>
+      <label for="level-select">Level:</label>
+      <select id="level-select">
+        <option value="0">0</option>
+        <option value="0.5">0.5</option>
       </select>
-      <button class="button" onclick="randomAlignment()">Random</button>
-    </div>
-
-    <!-- Age Generation -->
-    <div>
-      <label for="age-display">Age:</label>
-      <input type="number" id="age-display" readonly style="width: 100px;"/>
-      <button class="button" onclick="randomAge()">Random</button>
-    </div>
-
-    <!-- Physical Appearance -->
-    <div>
-      <label for="appearance-display">Appearance:</label>
-      <input type="text" id="appearance-display" readonly style="width: 300px;"/>
-      <button class="button" onclick="randomAppearance()">Random</button>
     </div>
 
     <!-- Ability Scores -->
@@ -200,11 +166,10 @@
     <div>
       <button class="button" onclick="generateCharacter()">Generate Commoner</button>
       <button class="button" onclick="fullRandom()">Full Random</button>
-      <button class="button" onclick="resetForm()">Reset</button>
     </div>
   </div>
 
-  <!-- OUTPUT -->
+  <!-- ============ OUTPUT ============ -->
   <div id="output" class="output" style="display: none;">
     <h2>Your Generated Commoner</h2>
     <div class="fancy-divider"></div>
@@ -212,22 +177,19 @@
     <div id="charName"></div>
     <div id="charRace"></div>
     <div id="charBackground"></div>
-    <div id="charAlignment"></div>
-    <div id="charAge"></div>
-    <div id="charAppearance"></div>
     <div id="charAbilityScores"></div>
     <div id="charProficiencies"></div>
     <div id="charLanguages"></div>
     <div id="charEquipment"></div>
+
     <hr/>
     <div id="charTraits" style="margin-top:1rem;"></div>
-    <div id="charFlaw" style="margin-top:1rem;"></div>
   </div>
 
-  <!-- PRINT BUTTON -->
+  <!-- PRINT BUTTON (will appear once there's a generated character) -->
   <button class="button" id="printButton" onclick="window.print()">Print Commoner</button>
 
-  <!-- OGL NOTICE -->
+  <!-- ============ OGL NOTICE (FULL) ============ -->
   <div class="footer">
     <h3>Open Game License</h3>
     <p>
@@ -245,401 +207,619 @@
   </div>
 </div>
 
+
 <script>
-  /* ==================================================
-     ========== DATA DEFINITIONS =======================
-     ================================================== */
+/* ==================================================
+   ========== LARGE NAME SYSTEM (FIRST + LAST) ======
+   ================================================== */
+const RAW_NAMES = [
+  // Some name data truncated for brevity
+  "Abby Sue",
+  "Alvin Lee",
+  "Annabeth Lou",
+  "Arlen James",
+  "Bea Mae",
+  "Beckett Mose",
+  // etc...
+  "Winifred Lane"
+];
 
-  // Raw name data (unchanged)
-  const RAW_NAMES = [ /* ... same list as before ... */ ];
-  // For brevity, assume RAW_NAMES is defined as before.
-  
-  let FIRST_NAMES = [];
-  let LAST_NAMES = [];
-  function parseName(fullName) {
-    const trimmed = fullName.trim();
-    if (!trimmed) return null;
-    const parts = trimmed.split(/\s+/);
-    if (parts.length === 1) {
-      return { first: parts[0].replace(/"/g, ""), last: "" };
+let FIRST_NAMES = [];
+let LAST_NAMES = [];
+
+function parseName(fullName) {
+  const trimmed = fullName.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) {
+    // single word => first name only
+    return { first: parts[0].replace(/"/g, ""), last: "" };
+  } else {
+    const first = parts[0].replace(/"/g, "");
+    const last = parts[parts.length - 1].replace(/"/g, "");
+    return { first, last };
+  }
+}
+
+RAW_NAMES.forEach(entry => {
+  const parsed = parseName(entry);
+  if (parsed) {
+    if (parsed.first) FIRST_NAMES.push(parsed.first);
+    if (parsed.last) LAST_NAMES.push(parsed.last);
+  }
+});
+
+/* ==================================================
+   ========== SRD-BASED RACES (SIMPLIFIED) ==========
+   ================================================== */
+const RACES = [
+  {
+    name: "Dwarf",
+    abilityScoreBonuses: { CON: 2 },
+    speed: 25,
+    features: [
+      "Darkvision (60 ft)",
+      "Dwarven Resilience (adv. on poison saves)",
+      "Dwarven Combat Training",
+      "Stonecunning"
+    ],
+    languages: ["Common", "Dwarvish"]
+  },
+  {
+    name: "Elf",
+    abilityScoreBonuses: { DEX: 2 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Keen Senses (proficiency in Perception)",
+      "Fey Ancestry (adv. on charm saves)",
+      "Trance"
+    ],
+    languages: ["Common", "Elvish"]
+  },
+  {
+    name: "Halfling",
+    abilityScoreBonuses: { DEX: 2 },
+    speed: 25,
+    features: [
+      "Lucky (reroll 1s on attack/ability/saving throws)",
+      "Brave (adv. on fear saves)",
+      "Halfling Nimbleness"
+    ],
+    languages: ["Common", "Halfling"]
+  },
+  {
+    name: "Human",
+    abilityScoreBonuses: {
+      STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1
+    },
+    speed: 30,
+    features: [],
+    languages: ["Common", "One Extra Language of your choice"]
+  },
+  {
+    name: "Dragonborn",
+    abilityScoreBonuses: { STR: 2, CHA: 1 },
+    speed: 30,
+    features: [
+      "Draconic Ancestry",
+      "Breath Weapon",
+      "Damage Resistance (based on ancestry)"
+    ],
+    languages: ["Common", "Draconic"]
+  },
+  {
+    name: "Gnome",
+    abilityScoreBonuses: { INT: 2 },
+    speed: 25,
+    features: [
+      "Darkvision (60 ft)",
+      "Gnome Cunning (adv. on mental saves vs. magic)"
+    ],
+    languages: ["Common", "Gnomish"]
+  },
+  {
+    name: "Half-Elf",
+    abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Fey Ancestry (adv. on charm saves)",
+      "Skill Versatility (proficiency in two skills)"
+    ],
+    languages: ["Common", "Elvish", "One Extra Language"]
+  },
+  {
+    name: "Half-Orc",
+    abilityScoreBonuses: { STR: 2, CON: 1 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Relentless Endurance (once per long rest)",
+      "Savage Attacks"
+    ],
+    languages: ["Common", "Orc"]
+  },
+  {
+    name: "Tiefling",
+    abilityScoreBonuses: { CHA: 2, INT: 1 },
+    speed: 30,
+    features: [
+      "Darkvision (60 ft)",
+      "Hellish Resistance (resist fire)",
+      "Infernal Legacy"
+    ],
+    languages: ["Common", "Infernal"]
+  }
+];
+
+/* ==================================================
+   ========== BACKGROUNDS (some truncated) ==========
+   ================================================== */
+const BACKGROUNDS = [
+  {
+    name: "Acolyte",
+    skillProficiencies: ["Insight", "Religion"],
+    languages: ["Two of your choice"],
+    equipment: [
+      "Holy symbol",
+      "Prayer book or prayer wheel",
+      "5 sticks of incense",
+      "Vestments",
+      "Set of common clothes",
+      "Belt pouch containing 15 gp"
+    ],
+    feature: "Shelter of the Faithful",
+    featureDesc: "You command the respect of those who share your faith ...",
+    nicknames: ["Chant", "Chapel", "Faith", "Lumen", "Reverie"]
+  },
+  {
+    name: "Criminal/Spy",
+    skillProficiencies: ["Deception", "Stealth"],
+    equipment: [
+      "Crowbar",
+      "Set of dark common clothes including hood",
+      "Belt pouch containing 15 gp"
+    ],
+    feature: "Criminal Contact",
+    featureDesc: "You have a reliable, trustworthy contact ...",
+    nicknames: ["Shade", "Slick", "Pockets", "Rook", "Whisper"]
+  },
+  {
+    name: "Folk Hero",
+    skillProficiencies: ["Animal Handling", "Survival"],
+    equipment: [
+      "Set of artisan's tools (one of your choice)",
+      "Shovel",
+      "Iron pot",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Rustic Hospitality",
+    featureDesc: "You fit in among common folk easily ...",
+    nicknames: ["Buck", "Rusty", "Spotts", "Sarge", "Oakie"]
+  },
+  {
+    name: "Outlander",
+    skillProficiencies: ["Athletics", "Survival"],
+    languages: ["One of your choice"],
+    equipment: [
+      "Staff",
+      "Hunting trap",
+      "Trophy from an animal you killed",
+      "Set of traveller's clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Wanderer",
+    featureDesc: "You have an excellent memory for geography ...",
+    nicknames: ["Tracks", "Wild", "Hawk", "Cairn", "Scout"]
+  },
+  {
+    name: "Soldier",
+    skillProficiencies: ["Athletics", "Intimidation"],
+    equipment: [
+      "Insignia of rank",
+      "Trophy taken from a fallen enemy",
+      "Set of bone dice or deck of cards",
+      "Set of common clothes",
+      "Belt pouch containing 10 gp"
+    ],
+    feature: "Military Rank",
+    featureDesc: "You have a military rank from your career as a soldier ...",
+    nicknames: ["Sarge", "Brass", "Boots", "Vets", "Gunner"]
+  },
+  // etc...
+];
+
+/* ==================================================
+   ========== PERSONALITY TRAITS (truncated) ========
+   ================================================== */
+const PERSONALITY_TRAITS = [
+  "I always see the best in people, even if they don’t deserve it.",
+  "I am suspicious of new faces and stick to familiar companions.",
+  "I laugh loudly and often, even at my own jokes.",
+  // etc...
+];
+
+/* ==================================================
+   ========== PAGE INITIALISATION ===================
+   ================================================== */
+window.addEventListener("DOMContentLoaded", () => {
+  populateSelect("race-select", RACES.map(r => r.name));
+  populateSelect("background-select", BACKGROUNDS.map(b => b.name));
+});
+
+function populateSelect(selectId, optionsArray) {
+  const selectElem = document.getElementById(selectId);
+  optionsArray.forEach(opt => {
+    const optionEl = document.createElement("option");
+    optionEl.value = opt;
+    optionEl.innerText = opt;
+    selectElem.appendChild(optionEl);
+  });
+}
+
+/* ==================================================
+   ========== UTILITY & RANDOMISATION ===============
+   ================================================== */
+function pickRandom(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+function pickMultipleDistinct(array, count) {
+  const copy = [...array];
+  const result = [];
+  if (count > copy.length) count = copy.length;
+  for (let i = 0; i < count; i++) {
+    const index = Math.floor(Math.random() * copy.length);
+    result.push(copy[index]);
+    copy.splice(index, 1);
+  }
+  return result;
+}
+function roll4d6DropLowest() {
+  let scores = [];
+  for (let i = 0; i < 6; i++) {
+    let rolls = [0,0,0,0].map(() => Math.floor(Math.random() * 6) + 1);
+    rolls.sort((a,b) => a - b);
+    rolls.shift(); 
+    const sum = rolls.reduce((acc,val) => acc+val, 0);
+    scores.push(sum);
+  }
+  return scores;
+}
+function getStandardArray() {
+  return [15,14,13,12,10,8];
+}
+function abilityMod(score) {
+  return Math.floor((score - 10) / 2);
+}
+
+/* ==================================================
+   ========== NAME HANDLERS =========================
+   ================================================== */
+function randomName() {
+  if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
+    document.getElementById("name-input").value = "Nameless Soul";
+    return;
+  }
+  const first = pickRandom(FIRST_NAMES);
+  const last = pickRandom(LAST_NAMES);
+  document.getElementById("name-input").value = first + " " + last;
+}
+
+/* ==================================================
+   ========== RACE & BACKGROUND RANDOMISERS =========
+   ================================================== */
+function randomRace() {
+  const randomPick = pickRandom(RACES).name;
+  document.getElementById("race-select").value = randomPick;
+}
+function randomBackground() {
+  const randomPick = pickRandom(BACKGROUNDS).name;
+  document.getElementById("background-select").value = randomPick;
+}
+
+/* ==================================================
+   ========== ABILITY SCORE HANDLERS ================
+   ================================================== */
+let currentScores = [10,10,10,10,10,10]; // default
+function rollAbilityScores() {
+  currentScores = roll4d6DropLowest();
+  displayScores();
+}
+function standardArray() {
+  currentScores = getStandardArray();
+  displayScores();
+}
+function displayScores() {
+  const container = document.getElementById("abilities-display");
+  const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+  let html = "";
+  currentScores.forEach((sc, i) => {
+    const mod = abilityMod(sc);
+    const modPrefix = mod >= 0 ? "+" : "";
+    html += `${labels[i]}: <strong>${sc}</strong> (${modPrefix}${mod})<br/>`;
+  });
+  container.innerHTML = html;
+}
+
+/* ==================================================
+   // ADDED/UPDATED CODE: Weapons, Armours, and Proficiencies
+   ================================================== */
+
+// Let’s define a small set of “simple weapons”, “martial weapons,” & “improvised”
+const SIMPLE_WEAPONS = ["Club", "Dagger", "Handaxe", "Spear", "Sickle", "Light Crossbow"];
+const MARTIAL_WEAPONS = ["Shortsword"];
+// We allow a chance for “improvised weapon”
+const IMPROVISED_WEAPON = "Improvised (like a club)";
+
+const WEAPON_DATA = {
+  "Club":             { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
+  "Dagger":           { damageDie: "1d4", damageType: "piercing",    finesse: true,  ranged: false },
+  "Handaxe":          { damageDie: "1d6", damageType: "slashing",    finesse: false, ranged: false },
+  "Spear":            { damageDie: "1d6", damageType: "piercing",    finesse: false, ranged: false },
+  "Sickle":           { damageDie: "1d4", damageType: "slashing",    finesse: false, ranged: false },
+  "Light Crossbow":   { damageDie: "1d8", damageType: "piercing",    finesse: false, ranged: true  },
+  "Shortsword":       { damageDie: "1d6", damageType: "piercing",    finesse: true,  ranged: false },
+  "Improvised (like a club)": { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false }
+};
+
+const ARMORS = [
+  { name: "No Armour", baseAC: 10, dexCap: null },
+  { name: "Padded Armour", baseAC: 11, dexCap: null },
+  { name: "Leather Armour", baseAC: 11, dexCap: null },
+  { name: "Hide Armour", baseAC: 12, dexCap: 2 }
+];
+
+// Simple mapping from background to typical weapons they might carry
+// (some have a small chance to get the improvised weapon).
+const BACKGROUND_WEAPONS = {
+  "Soldier":       ["Spear", "Shortsword", "Handaxe"],
+  "Criminal/Spy":  ["Dagger", "Shortsword", "Light Crossbow", IMPROVISED_WEAPON],
+  "Folk Hero":     ["Sickle", "Club", "Spear", IMPROVISED_WEAPON],
+  "Outlander":     ["Spear", "Handaxe", "Club"],
+  "Miner":         ["Handaxe", "Club", IMPROVISED_WEAPON],
+  // fallback for any other BG
+};
+
+// This dictionary says which backgrounds have proficiency in “simple” or “martial” weapons
+// If none listed, they have no weapon proficiency (level 0.5 bonus doesn’t apply).
+const BACKGROUND_PROFICIENCIES = {
+  "Soldier": "martial",       // means they can handle martial AND simple
+  "Outlander": "simple",
+  "Criminal/Spy": "simple",
+  "Folk Hero": "simple",
+  "Miner": "simple"
+  // etc...
+};
+
+// Are we proficient in a given weapon name, given the background's category?
+function isProficientInWeapon(weaponName, backgroundName) {
+  const cat = BACKGROUND_PROFICIENCIES[backgroundName];
+  if (!cat) return false; // no proficiency for that background
+
+  // If the weapon is in the “simple” array, then anyone with “simple” or “martial” is proficient.
+  if (SIMPLE_WEAPONS.includes(weaponName)) {
+    return (cat === "simple" || cat === "martial");
+  }
+  // If the weapon is martial, only those with “martial” are proficient.
+  if (MARTIAL_WEAPONS.includes(weaponName)) {
+    return (cat === "martial");
+  }
+  // “Improvised” typically no proficiency unless you house-rule otherwise
+  // We'll return false here.
+  return false;
+}
+
+function getRandomWeaponForBackground(bgName) {
+  let weaponsArray = BACKGROUND_WEAPONS[bgName];
+  if (!weaponsArray) {
+    // fallback
+    weaponsArray = ["Club", "Dagger", IMPROVISED_WEAPON];
+  }
+  return pickRandom(weaponsArray);
+}
+
+// Compute AC with potential Dex cap
+function computeArmourClass(armour, dexMod) {
+  const effectiveDex = (armour.dexCap !== null)
+    ? Math.min(dexMod, armour.dexCap)
+    : dexMod;
+  return armour.baseAC + (effectiveDex > 0 ? effectiveDex : 0);
+}
+
+// Return weapon stats, factoring in relevant ability mod
+function computeWeaponStats(weaponName, scores, isProficient, profBonus) {
+  const data = WEAPON_DATA[weaponName];
+  if (!data) return null;
+  const strMod = abilityMod(scores[0]); // STR is index 0
+  const dexMod = abilityMod(scores[1]); // DEX is index 1
+
+  let usedMod = strMod;
+  // If ranged or finesse, pick Dex, or the better mod for finesse
+  if (data.ranged) {
+    usedMod = dexMod;
+  } else if (data.finesse) {
+    usedMod = Math.max(strMod, dexMod);
+  }
+  const attackBonus = usedMod + (isProficient ? profBonus : 0);
+  return {
+    name: weaponName,
+    damageDie: data.damageDie,
+    damageType: data.damageType,
+    attackBonus: attackBonus,
+    abilityMod: usedMod
+  };
+}
+
+/* ==================================================
+   ========== CHARACTER GENERATION ==================
+   ================================================== */
+function parseUserName(fullInput) {
+  const parts = fullInput.trim().split(/\s+/);
+  let firstName = "";
+  let lastName = "";
+  if (parts.length === 1) {
+    firstName = parts[0];
+  } else if (parts.length > 1) {
+    firstName = parts[0];
+    lastName = parts[parts.length - 1];
+  }
+  return { firstName, lastName };
+}
+
+function generateCharacter() {
+  // 1. Read name
+  const rawName = document.getElementById("name-input").value.trim() || "Unnamed Hero";
+  let { firstName, lastName } = parseUserName(rawName);
+
+  // 2. Race & background selection
+  const raceSelected = document.getElementById("race-select").value;
+  const raceData = RACES.find(r => r.name === raceSelected);
+  if (!raceData) {
+    alert("Please select a race.");
+    return;
+  }
+  const bgSelected = document.getElementById("background-select").value;
+  const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
+  if (!bgData) {
+    alert("Please select a background.");
+    return;
+  }
+
+  // 3. Possibly add nickname
+  if (bgData.nicknames && bgData.nicknames.length > 0) {
+    if (Math.random() < 0.2) {
+      const nick = pickRandom(bgData.nicknames);
+      firstName += ` "${nick}"`;
+    }
+  }
+
+  // 4. Apply race ability bonuses
+  const ABIL_ORDER = ["STR","DEX","CON","INT","WIS","CHA"];
+  let finalScores = [...currentScores];
+  for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
+    if (ability === "PLUS_TWO_OTHERS") {
+      // for half-elf, default to DEX & CON
+      finalScores[1] += 1;
+      finalScores[2] += 1;
     } else {
-      const first = parts[0].replace(/"/g, "");
-      const last = parts[parts.length - 1].replace(/"/g, "");
-      return { first, last };
-    }
-  }
-  RAW_NAMES.forEach(entry => {
-    const parsed = parseName(entry);
-    if (parsed) {
-      if (parsed.first) FIRST_NAMES.push(parsed.first);
-      if (parsed.last) LAST_NAMES.push(parsed.last);
-    }
-  });
-
-  // SRD Race data
-  const RACES = [
-    { name: "Dwarf", abilityScoreBonuses: { CON: 2 }, speed: 25, features: ["Darkvision (60 ft)", "Dwarven Resilience (adv. on poison saves)", "Dwarven Combat Training", "Stonecunning"], languages: ["Common", "Dwarvish"] },
-    { name: "Elf", abilityScoreBonuses: { DEX: 2 }, speed: 30, features: ["Darkvision (60 ft)", "Keen Senses (proficiency in Perception)", "Fey Ancestry (adv. on charm saves)", "Trance"], languages: ["Common", "Elvish"] },
-    { name: "Halfling", abilityScoreBonuses: { DEX: 2 }, speed: 25, features: ["Lucky (reroll 1s on attack/ability/saving throws)", "Brave (adv. on fear saves)", "Halfling Nimbleness"], languages: ["Common", "Halfling"] },
-    { name: "Human", abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 }, speed: 30, features: [], languages: ["Common", "One Extra Language of your choice"] },
-    { name: "Dragonborn", abilityScoreBonuses: { STR: 2, CHA: 1 }, speed: 30, features: ["Draconic Ancestry", "Breath Weapon", "Damage Resistance (based on ancestry)"], languages: ["Common", "Draconic"] },
-    { name: "Gnome", abilityScoreBonuses: { INT: 2 }, speed: 25, features: ["Darkvision (60 ft)", "Gnome Cunning (adv. on mental saves vs. magic)"], languages: ["Common", "Gnomish"] },
-    { name: "Half-Elf", abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 }, speed: 30, features: ["Darkvision (60 ft)", "Fey Ancestry (adv. on charm saves)", "Skill Versatility (proficiency in two skills)"], languages: ["Common", "Elvish", "One Extra Language"] },
-    { name: "Half-Orc", abilityScoreBonuses: { STR: 2, CON: 1 }, speed: 30, features: ["Darkvision (60 ft)", "Relentless Endurance (once per long rest)", "Savage Attacks"], languages: ["Common", "Orc"] },
-    { name: "Tiefling", abilityScoreBonuses: { CHA: 2, INT: 1 }, speed: 30, features: ["Darkvision (60 ft)", "Hellish Resistance (resist fire)", "Infernal Legacy"], languages: ["Common", "Infernal"] }
-  ];
-
-  // Backgrounds data (as provided)
-  const BACKGROUNDS = [ 
-    /* ... same backgrounds as provided ... */
-  ];
-
-  // Alignment options
-  const ALIGNMENTS = [
-    "Lawful Good", "Neutral Good", "Chaotic Good",
-    "Lawful Neutral", "True Neutral", "Chaotic Neutral",
-    "Lawful Evil", "Neutral Evil", "Chaotic Evil"
-  ];
-
-  // Personality Traits and additional Personality Flaws
-  const PERSONALITY_TRAITS = [ 
-    /* ... same extensive list as provided ... */
-  ];
-  const PERSONALITY_FLAWS = [
-    "Impulsive and reckless",
-    "Stubborn and unyielding",
-    "Overly trusting to a fault",
-    "Pessimistic and cynical",
-    "Obsessively superstitious",
-    "Self-centered and greedy",
-    "Insecure and overly defensive"
-  ];
-
-  /* ==================================================
-     ========== RANDOMISATION FUNCTIONS ===============
-     ================================================== */
-  function pickRandom(array) {
-    return array[Math.floor(Math.random() * array.length)];
-  }
-
-  function pickMultipleDistinct(array, count) {
-    const copy = [...array];
-    const result = [];
-    if (count > copy.length) count = copy.length;
-    for (let i = 0; i < count; i++) {
-      const index = Math.floor(Math.random() * copy.length);
-      result.push(copy[index]);
-      copy.splice(index, 1);
-    }
-    return result;
-  }
-
-  /* ==================================================
-     ========== ABILITY SCORE FUNCTIONS ===============
-     ================================================== */
-  function roll4d6DropLowest() {
-    let scores = [];
-    for (let i = 0; i < 6; i++) {
-      let rolls = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 6) + 1);
-      rolls.sort((a, b) => a - b);
-      rolls.shift();
-      const sum = rolls.reduce((acc, val) => acc + val, 0);
-      scores.push(sum);
-    }
-    return scores;
-  }
-
-  function getStandardArray() {
-    return [15, 14, 13, 12, 10, 8];
-  }
-
-  function abilityMod(score) {
-    return Math.floor((score - 10) / 2);
-  }
-
-  /* ==================================================
-     ========== NAME HANDLERS =========================
-     ================================================== */
-  function randomName() {
-    if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
-      document.getElementById("name-input").value = "Nameless Soul";
-      return;
-    }
-    const first = pickRandom(FIRST_NAMES);
-    const last = pickRandom(LAST_NAMES);
-    document.getElementById("name-input").value = first + " " + last;
-  }
-
-  /* ==================================================
-     ========== RACE & BACKGROUND RANDOMISERS =========
-     ================================================== */
-  function randomRace() {
-    const randomPick = pickRandom(RACES).name;
-    document.getElementById("race-select").value = randomPick;
-  }
-
-  function randomBackground() {
-    const randomPick = pickRandom(BACKGROUNDS).name;
-    document.getElementById("background-select").value = randomPick;
-  }
-
-  /* ==================================================
-     ========== ALIGNMENT HANDLER =====================
-     ================================================== */
-  function populateAlignmentSelect() {
-    const alignSelect = document.getElementById("alignment-select");
-    ALIGNMENTS.forEach(align => {
-      const option = document.createElement("option");
-      option.value = align;
-      option.textContent = align;
-      alignSelect.appendChild(option);
-    });
-  }
-  function randomAlignment() {
-    const randomPick = pickRandom(ALIGNMENTS);
-    document.getElementById("alignment-select").value = randomPick;
-  }
-
-  /* ==================================================
-     ========== AGE GENERATION ========================
-     ================================================== */
-  function randomAge() {
-    const race = document.getElementById("race-select").value;
-    let minAge = 18, maxAge = 60; // default for Humans
-    switch(race) {
-      case "Dwarf": minAge = 50; maxAge = 350; break;
-      case "Elf": minAge = 100; maxAge = 750; break;
-      case "Halfling": minAge = 20; maxAge = 150; break;
-      case "Dragonborn": minAge = 15; maxAge = 80; break;
-      case "Gnome": minAge = 40; maxAge = 500; break;
-      case "Half-Elf": minAge = 20; maxAge = 180; break;
-      case "Half-Orc": minAge = 16; maxAge = 75; break;
-      case "Tiefling": minAge = 18; maxAge = 80; break;
-      default: break;
-    }
-    const age = Math.floor(Math.random() * (maxAge - minAge + 1)) + minAge;
-    document.getElementById("age-display").value = age;
-  }
-
-  /* ==================================================
-     ========== PHYSICAL APPEARANCE =====================
-     ================================================== */
-  const APPEARANCE_ADJECTIVES = [
-    "tall", "short", "slender", "stout", "weathered", "scruffy", "neat", "grizzled",
-    "sparkling-eyed", "dull-eyed", "smiling", "sullen", "burly", "lanky", "rosy-cheeked"
-  ];
-  function randomAppearance() {
-    // Pick 2 adjectives at random
-    const chosen = pickMultipleDistinct(APPEARANCE_ADJECTIVES, 2);
-    document.getElementById("appearance-display").value = chosen.join(" and ");
-  }
-
-  /* ==================================================
-     ========== ABILITY SCORE HANDLERS ================
-     ================================================== */
-  let currentScores = [10,10,10,10,10,10]; // default
-  function rollAbilityScores() {
-    currentScores = roll4d6DropLowest();
-    displayScores();
-  }
-  function standardArray() {
-    currentScores = getStandardArray();
-    displayScores();
-  }
-  function displayScores() {
-    const container = document.getElementById("abilities-display");
-    const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-    let html = "";
-    currentScores.forEach((sc, i) => {
-      const mod = abilityMod(sc);
-      const modPrefix = mod >= 0 ? "+" : "";
-      html += `${labels[i]}: <strong>${sc}</strong> (${modPrefix}${mod})<br/>`;
-    });
-    container.innerHTML = html;
-  }
-
-  /* ==================================================
-     ========== CHARACTER GENERATION ==================
-     ================================================== */
-  function parseUserName(fullInput) {
-    const parts = fullInput.trim().split(/\s+/);
-    let firstName = "";
-    let lastName = "";
-    if (parts.length === 1) {
-      firstName = parts[0];
-    } else if (parts.length > 1) {
-      firstName = parts[0];
-      lastName = parts[parts.length - 1];
-    }
-    return { firstName, lastName };
-  }
-
-  function generateCharacter() {
-    // 1. Name: parse the user’s typed input
-    const rawName = document.getElementById("name-input").value.trim() || "Unnamed Hero";
-    let { firstName, lastName } = parseUserName(rawName);
-
-    // 2. Get race data
-    const raceSelected = document.getElementById("race-select").value;
-    const raceData = RACES.find(r => r.name === raceSelected);
-    if (!raceData) {
-      alert("Please select a race.");
-      return;
-    }
-
-    // 3. Get background data
-    const bgSelected = document.getElementById("background-select").value;
-    const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
-    if (!bgData) {
-      alert("Please select a background.");
-      return;
-    }
-
-    // 4. Get alignment
-    const alignment = document.getElementById("alignment-select").value || "Unaligned";
-
-    // 5. Possibly add a nickname (1/5 chance)
-    if (bgData.nicknames && bgData.nicknames.length > 0) {
-      if (Math.random() < 0.2) {
-        const nick = pickRandom(bgData.nicknames);
-        firstName += ` "${nick}"`;
+      const idx = ABIL_ORDER.indexOf(ability);
+      if (idx !== -1) {
+        finalScores[idx] += bonus;
       }
     }
+  }
 
-    // 6. Apply race ability score bonuses
-    let finalScores = [...currentScores];
-    const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-    for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
-      if (ability === "PLUS_TWO_OTHERS") {
-        // Default to adding +1 to DEX and CON for Half-Elf
-        const dexIndex = ABIL_ORDER.indexOf("DEX");
-        const conIndex = ABIL_ORDER.indexOf("CON");
-        finalScores[dexIndex] += 1;
-        finalScores[conIndex] += 1;
-      } else {
-        const index = ABIL_ORDER.indexOf(ability);
-        if (index !== -1) {
-          finalScores[index] += bonus;
-        }
-      }
-    }
+  // 5. Personality Traits
+  const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
 
-    // 7. Personality Traits: pick exactly 2 from the big list
-    const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
-    // And pick one personality flaw
-    const chosenFlaw = pickRandom(PERSONALITY_FLAWS);
+  // 6. Determine “level” => get proficiency bonus
+  const levelChoice = document.getElementById("level-select").value; 
+  let profBonus = 0;
+  if (levelChoice === "0.5") {
+    profBonus = 1; 
+  }
 
-    // 8. Generate Age and Appearance if not already set
-    if (!document.getElementById("age-display").value) randomAge();
-    if (!document.getElementById("appearance-display").value) randomAppearance();
+  // 7. Pick random weapon & armour
+  const chosenWeapon = getRandomWeaponForBackground(bgData.name);
+  const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
+  const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
 
-    // 9. Compile final details
-    const fullName = lastName ? firstName + " " + lastName : firstName;
-    const featuresList = raceData.features.length
-      ? raceData.features.map(feat => `- ${feat}`).join("<br/>")
-      : "None";
-    const raceLangs = raceData.languages.join(", ");
+  const chosenArmour = pickRandom(ARMORS);
+  const dexMod = abilityMod(finalScores[1]);
+  const computedAC = computeArmourClass(chosenArmour, dexMod);
 
-    const bgEquipment = bgData.equipment.map(eq => `- ${eq}`).join("<br/>");
-    const bgSkills = bgData.skillProficiencies
-      ? bgData.skillProficiencies.join(", ")
-      : "None";
-    let bgLangs = (bgData.languages && bgData.languages.length > 0)
-      ? bgData.languages.join(", ")
-      : "None";
+  // 8. Compile text
+  const fullName = lastName ? firstName + " " + lastName : firstName;
+  const featuresList = raceData.features.map(f => `- ${f}`).join("<br/>") || "None";
+  const raceLangs = raceData.languages.join(", ");
+  const bgEquipmentList = bgData.equipment.map(eq => `- ${eq}`).join("<br/>");
+  const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
+  let bgLangs = (bgData.languages && bgData.languages.length>0)
+    ? bgData.languages.join(", ")
+    : "None";
 
-    // 10. Display final output
-    const outputDiv = document.getElementById("output");
-    outputDiv.style.display = "block";
-    document.getElementById("printButton").style.display = "inline-block";
+  // 9. Output
+  const outputDiv = document.getElementById("output");
+  outputDiv.style.display = "block";
+  outputDiv.classList.add("generated");
 
-    document.getElementById("charName").innerHTML = `<h3>Name: ${fullName}</h3>`;
-    document.getElementById("charRace").innerHTML = `<strong>Race:</strong> ${raceData.name} 
-      <br/><em>Speed:</em> ${raceData.speed} ft 
-      <br/><em>Features:</em><br/> ${featuresList}`;
-    
-    document.getElementById("charBackground").innerHTML = `
-      <strong>Background:</strong> ${bgData.name}<br/>
-      <em>Skill Proficiencies:</em> ${bgSkills}<br/>
-      <em>Equipment:</em><br/>${bgEquipment}<br/>
-      <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
-      <small>${bgData.featureDesc}</small>
+  document.getElementById("charName").innerHTML = `<h3>Name: ${fullName}</h3>`;
+  document.getElementById("charRace").innerHTML = `
+    <strong>Race:</strong> ${raceData.name} 
+    <br/><em>Speed:</em> ${raceData.speed} ft 
+    <br/><em>Features:</em><br/> ${featuresList}
+  `;
+  document.getElementById("charBackground").innerHTML = `
+    <strong>Background:</strong> ${bgData.name}<br/>
+    <em>Skill Proficiencies:</em> ${bgSkills}<br/>
+    <em>Equipment:</em><br/>${bgEquipmentList}<br/>
+    <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
+    <small>${bgData.featureDesc}</small>
+  `;
+  document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
+  document.getElementById("charProficiencies").innerHTML = `
+    <strong>Proficiencies (From BG, at Level ${levelChoice}):</strong><br/>
+    Weapon Category: ${BACKGROUND_PROFICIENCIES[bgData.name] || "None"}<br/>
+    Background Skills: ${bgSkills}
+  `;
+  document.getElementById("charLanguages").innerHTML = `
+    <strong>Languages:</strong>
+    <br/>From Race: ${raceLangs}
+    <br/>From Background: ${bgLangs}
+  `;
+
+  // Show final equipment including weapon & armour
+  let eqHTML = `<strong>Starting Equipment (from Background):</strong><br/>${bgEquipmentList}`;
+  if (weaponStats) {
+    const atkSign = weaponStats.attackBonus >= 0 ? "+" : "";
+    const dmgSign = weaponStats.abilityMod >= 0 ? "+" : "";
+    eqHTML += `
+      <br/><br/><strong>Weapon:</strong> ${weaponStats.name}<br/>
+      <em>Attack Bonus:</em> ${atkSign}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
+      <em>Damage:</em> ${weaponStats.damageDie} ${dmgSign}${weaponStats.abilityMod} (${weaponStats.damageType})
     `;
-    document.getElementById("charAlignment").innerHTML = `<strong>Alignment:</strong> ${alignment}`;
-    document.getElementById("charAge").innerHTML = `<strong>Age:</strong> ${document.getElementById("age-display").value} years`;
-    document.getElementById("charAppearance").innerHTML = `<strong>Appearance:</strong> ${document.getElementById("appearance-display").value}`;
-    document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
-    document.getElementById("charProficiencies").innerHTML = `<strong>Proficiencies (from Background):</strong>
-      <br/>${bgSkills}`;
-    document.getElementById("charLanguages").innerHTML = `<strong>Languages:</strong>
-      <br/>From Race: ${raceLangs}
-      <br/>From Background: ${bgLangs}`;
-    document.getElementById("charEquipment").innerHTML = `<strong>Starting Equipment (from Background):</strong><br/>${bgEquipment}`;
-
-    const traitsHTML = `
-      <h3>Personality Traits</h3>
-      <ul>
-        <li>${chosenTraits[0]}</li>
-        <li>${chosenTraits[1]}</li>
-      </ul>
-    `;
-    document.getElementById("charTraits").innerHTML = traitsHTML;
-    document.getElementById("charFlaw").innerHTML = `<strong>Personality Flaw:</strong> ${chosenFlaw}`;
   }
+  eqHTML += `<br/><br/><strong>Armour:</strong> ${chosenArmour.name} (AC = ${computedAC})`;
+  document.getElementById("charEquipment").innerHTML = eqHTML;
 
-  function formatAbilityScores(scoresArr) {
-    const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-    let output = "<strong>Final Ability Scores (Level 0):</strong><br/>";
-    scoresArr.forEach((sc, i) => {
-      const mod = abilityMod(sc);
-      const modSign = mod >= 0 ? "+" : "";
-      output += `${labels[i]}: <strong>${sc}</strong> (${modSign}${mod})<br/>`;
-    });
-    return output;
-  }
+  // Personality
+  const traitsHTML = `
+    <h3>Personality Traits</h3>
+    <ul>
+      <li>${chosenTraits[0]}</li>
+      <li>${chosenTraits[1]}</li>
+    </ul>
+  `;
+  document.getElementById("charTraits").innerHTML = traitsHTML;
 
-  function fullRandom() {
-    randomName();
-    randomRace();
-    randomBackground();
-    randomAlignment();
-    rollAbilityScores();
-    randomAge();
-    randomAppearance();
-    generateCharacter();
-  }
+  // Show print button
+  document.getElementById("printButton").style.display = "inline-block";
+}
 
-  function resetForm() {
-    document.getElementById("name-input").value = "";
-    document.getElementById("race-select").value = "";
-    document.getElementById("background-select").value = "";
-    document.getElementById("alignment-select").value = "";
-    document.getElementById("age-display").value = "";
-    document.getElementById("appearance-display").value = "";
-    document.getElementById("abilities-display").innerHTML = "";
-    document.getElementById("output").style.display = "none";
-    document.getElementById("printButton").style.display = "none";
-  }
-
-  /* ==================================================
-     ========== PAGE INITIALISATION ===================
-     ================================================== */
-  window.addEventListener("DOMContentLoaded", () => {
-    // Populate race and background selects
-    populateSelect("race-select", RACES.map(r => r.name));
-    populateSelect("background-select", BACKGROUNDS.map(b => b.name));
-    populateAlignmentSelect();
+function formatAbilityScores(scoresArr) {
+  const labels = ["STR","DEX","CON","INT","WIS","CHA"];
+  let out = "<strong>Final Ability Scores:</strong><br/>";
+  scoresArr.forEach((sc,i) => {
+    const mod = abilityMod(sc);
+    const sign = mod >= 0 ? "+" : "";
+    out += `${labels[i]}: <strong>${sc}</strong> (${sign}${mod})<br/>`;
   });
+  return out;
+}
 
-  function populateSelect(selectId, optionsArray) {
-    const selectElem = document.getElementById(selectId);
-    optionsArray.forEach(opt => {
-      const optionEl = document.createElement("option");
-      optionEl.value = opt;
-      optionEl.innerText = opt;
-      selectElem.appendChild(optionEl);
-    });
-  }
+/* ==================================================
+   ========== FULL RANDOM FUNCTION ==================
+   ================================================== */
+function fullRandom() {
+  randomName();
+  randomRace();
+  randomBackground();
+  rollAbilityScores();
+  // The user can choose or leave the level selection as is; we don't override that.
+  generateCharacter();
+}
 </script>
 
 </body>
