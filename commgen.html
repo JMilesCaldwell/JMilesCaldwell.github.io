@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Commoner Generator</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <!-- ========== GOOGLE FONTS ========== -->
+  <!-- GOOGLE FONTS -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link 
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
   >
   <style>
-    /* ============ BASIC STYLES ============ */
+    /* BASIC STYLES */
     body {
       margin: 0;
       background: url('resources/commoner.png') no-repeat center center fixed;
@@ -83,24 +83,14 @@
       color: #666;
       font-family: 'Almendra', serif;
     }
-    /* Hide the print button until a character is generated */
+    /* Hide print button until a character is generated */
     #printButton {
       display: none;
     }
     @media print {
-      body * {
-        visibility: hidden !important;
-      }
-      #output,
-      #output * {
-        visibility: visible !important;
-      }
-      #output {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
+      body * { visibility: hidden !important; }
+      #output, #output * { visibility: visible !important; }
+      #output { position: absolute; left: 0; top: 0; width: 100%; }
     }
   </style>
 </head>
@@ -118,7 +108,7 @@
     Generate a “level 0” or “level 0.5” commoner (including the new <em>Mage</em> background for a magical flavour).
   </p>
   
-  <!-- ============ CHARACTER CREATION FORM ============ -->
+  <!-- CHARACTER CREATION FORM -->
   <div id="creation-form">
     <!-- Character Name -->
     <div>
@@ -142,7 +132,7 @@
       </select>
       <button class="button" onclick="randomBackground()">Random</button>
     </div>
-    <!-- Level Selection (0 vs. 0.5) -->
+    <!-- Level Selection -->
     <div>
       <label for="level-select">Level:</label>
       <select id="level-select">
@@ -164,9 +154,8 @@
     </div>
   </div>
   
-  <!-- ============ OUTPUT ============ -->
+  <!-- OUTPUT -->
   <div id="output" class="output" style="display: none;">
-    <!-- The character’s name will be shown here as the heading -->
     <h2 id="charName" style="margin-top: 0;"></h2>
     <div class="fancy-divider"></div>
     <div id="charRace"></div>
@@ -182,7 +171,7 @@
   <!-- PRINT BUTTON -->
   <button class="button" id="printButton" onclick="window.print()">Print</button>
   
-  <!-- ============ OGL NOTICE (FULL) ============ -->
+  <!-- OGL NOTICE -->
   <div class="footer">
     <h3>Open Game License</h3>
     <p>
@@ -202,290 +191,99 @@
 </div>
 
 <script>
-  /* ==================================================
-     ========== NAME HANDLING: Declare and Populate ============
-     ================================================== */
-  // Declare the arrays first so they’re available to all functions.
+  // ---------- Global Arrays and Constants ----------
   let FIRST_NAMES = [];
   let LAST_NAMES = [];
   
-  // The full RAW_NAMES list (including Southern, Cajun/French, German, Finnish, and Misc. names)
   const RAW_NAMES = [
-    // --- Southern-Inspired Names ---
-    "Abby Sue",
-    "Adelaide Rae",
-    "Alvin Lee",
-    "Annabeth Lou",
-    "Arlen James",
-    "Bea Mae",
-    "Beckett Mose",
-    "Belle Jo",
-    "Bobby Ray",
-    "Bonnie Faye",
-    "Buck Harding",
-    "Clarabelle",
-    "Claudette Pearl",
-    "Clinton Dean",
-    "Cordelia Grace",
-    "Darcy Lynn",
-    "Darlene Rose",
-    "Delilah Kay",
-    "Duke Earle",
-    "Ella Beth",
-    "Etta Lou",
-    "Flannery Kate",
-    "Florence Jean",
-    "Forrest Wade",
-    "Franklin Dale",
-    "Freddie Sue",
-    "Grady Lance",
-    "Hannah Leigh",
-    "Harper June",
-    "Hollis Reed",
-    "Ida Mae",
-    "Iris Jeanine",
-    "Jebediah \"Jeb\"",
-    "Jessaline \"Jess\"",
-    "Jolene Pearl",
-    "Judd Carter",
-    "Kady Lynne",
-    "Kinley Grace",
-    "Kirby Wyatt",
-    "Lambert Clyde",
-    "Lavinia Belle",
-    "Leona Rae",
-    "Lester Hoyt",
-    "Lila Rose",
-    "Loretta Gale",
-    "Louis Hunter",
-    "Lucille Anne",
-    "Mack Travis",
-    "Marlena Jo",
-    "Maude Elaine",
-    "Memphis Dale",
-    "Merrilee Lou",
-    "Millie Joyce",
-    "Nola Paige",
-    "Orabelle Jane",
-    "Orin Mac",
-    "Patsy Lee",
-    "Peyton Vance",
-    "Presley Dawn",
-    "Reba Quinn",
-    "Reuben Clive",
-    "Rosalee Lynn",
-    "Sadie Beth",
-    "Sheridan Clay",
-    "Sonny Ralph",
-    "Stella Jean",
-    "Sully Dean",
-    "Susannah Ray",
-    "Tanner Royce",
-    "Tara Jo",
-    "Tate Abel",
-    "Tennessee Wells",
-    "Tessa Rae",
-    "Travis Wade",
-    "Trixie Lynn",
-    "Tyson Lee",
-    "Velma Kay",
-    "Vernon Todd",
-    "Violet June",
-    "Waylon Clark",
-    "Waverly Lane",
-    "Willodean \"Willie\"",
-    "Winnie Belle",
-    "Zelda Ruth",
-    // --- Cajun/French-Inspired Names ---
-    "Aimée-Noelle",
-    "Alphonsine",
-    "Amélie Colette",
-    "Antoine Reynaud",
-    "Armand Gautier",
-    "Beaufort \"Beau\"",
-    "Bernadette Delacroix",
-    "Camille Dupont",
-    "Cécile Marin",
-    "Chantal Boudreaux",
-    "Charlot Dupuis",
-    "Claudine Désirée",
-    "Corinne Lajoie",
-    "Delphine Robichaux",
-    "Édouard Babineaux",
-    "Eloise Broussard",
-    "Estelle LaFleur",
-    "Étienne Dubois",
-    "Evangeline Badeaux",
-    "Félix Morel",
-    "Florent Dupre",
-    "Gaëtan Renault",
-    "Gervais Bouchard",
-    "Honoré Lavigne",
-    "Jacques Landry",
-    "Jean-Baptiste Robillard",
-    "Jean-Luc Martine",
-    "Jolie Esmé",
-    "Leonie Arcenaux",
-    "Lisette Dauphin",
-    "Lucette Violette",
-    "Lucien Armand",
-    "Madelon Artois",
-    "Margot Pellerin",
-    "Marius Gaspard",
-    "Mathilde Perreault",
-    "Maurice LeClerc",
-    "Odette Marchand",
-    "Pierre Lafayette",
-    "Remy Roux",
-    "Sylvain Thibodeaux",
-    "Thierry Gaspard",
-    // --- German-Inspired Names ---
-    "Adelheid Roth",
-    "Albert Drechsler",
-    "Anneliese Becker",
-    "Bastian Jäger",
-    "Beate Vogel",
-    "Benedikt Kraus",
-    "Bernd Baumann",
-    "Brigitte Neumann",
-    "Carla Meier",
-    "Christa Zielke",
-    "Dieter Vogel",
-    "Dorothea Hauer",
-    "Eberhard Zeigler",
-    "Edith Schuster",
-    "Elias Drescher",
-    "Erika Sasse",
-    "Ernst Kaufmann",
-    "Ferdinand Braun",
-    "Frieda Hoffman",
-    "Friedrich Schaller",
-    "Gerda Mayer",
-    "Gerhard Weber",
-    "Gertrud Hauck",
-    "Giselher Bauer",
-    "Gudrun Fischer",
-    "Hans König",
-    "Heide Rösler",
-    "Heinrich Beck",
-    "Helga Möbius",
-    "Hilde Schaefer",
-    "Ingrid Pfaff",
-    "Johann Albrecht",
-    "Jörg Vogt",
-    "Karin Ziegler",
-    "Karl Kempf",
-    "Katharina Scholz",
-    "Konrad Schmitt",
-    "Liesel Engel",
-    "Marlene Wilke",
-    "Otto Kuhl",
-    "Sigmund Richter",
-    "Stefan Eberhardt",
-    "Ulrike Werner",
-    // --- Finnish-Inspired Names ---
-    "Aino Tuulikki",
-    "Aleksi Heikkinen",
-    "Alina Koivunen",
-    "Anja Saarinen",
-    "Arto Mikkonen",
-    "Eelis Pennanen",
-    "Eero Ranta",
-    "Elina Kaarina",
-    "Emilia Järvinen",
-    "Esko Niemi",
-    "Hanna Vartiainen",
-    "Heikki Pulkkinen",
-    "Henna Korhonen",
-    "Ilkka Pennanen",
-    "Johanna Heikkilä",
-    "Joonas Rantala",
-    "Juha Partanen",
-    "Juho Virtanen",
-    "Kaarina Salminen",
-    "Kaisa Kurki",
-    "Kalevi Mäkinen",
-    "Katja Peltonen",
-    "Kristiina Väisänen",
-    "Lasse Lehtonen",
-    "Liisa Erkkilä",
-    "Maarit Halonen",
-    "Matti Aalto",
-    "Miika Nurmi",
-    "Mikko Korpi",
-    "Niko Hautala",
-    "Noora Rinne",
-    "Olli Kukkonen",
-    "Orvokki Paananen",
-    "Paavo Kallio",
-    "Petri Vainio",
-    "Riikka Mustonen",
-    "Saara Piirainen",
-    "Sanna Koivu",
-    "Seppo Valtonen",
-    "Tapio Leppänen",
-    "Taru Korpela",
-    "Tiina Koski",
-    "Tuula Mäkelä",
-    "Vilma Pelkonen",
-    // --- Additional Mix & Misc. ---
-    "Alina Reznik",
-    "Beck Mullins",
-    "Bernard Lamar",
-    "Celestine Broussard",
-    "Darla Gros",
-    "Darrell Louviere",
-    "Donovan Lee",
-    "Ervin Halvari",
-    "Eulalie Chauvin",
-    "Felicia Merle",
-    "Finn Jääskeläinen",
-    "Gaston Lavigne",
-    "Gunther Ernst",
-    "Heike Näslund",
-    "Hilda Lamm",
-    "Inka Lampinen",
-    "Jaana Pihkala",
-    "Jesse-Mae Glover",
-    "Kasper Autio",
-    "Katrin Müller",
-    "Kylah Beth",
-    "Lafayette Boudreau",
-    "Lavinia Faye",
-    "Lola Mignon",
-    "Lorelei Stein",
-    "Louella Hicks",
-    "Luke Monroe",
-    "Maija Heiskanen",
-    "Manfred Erber",
-    "Marceline Arnaud",
-    "Marja-Leena Koivu",
-    "Mason Wyatt",
-    "Mireille Malveaux",
-    "Neville Fontenot",
-    "Odile Champoux",
-    "Oscar Wendel",
-    "Pearl Nettles",
-    "Priscilla Joplin",
-    "Reinhardt Faust",
-    "Risto Vaananen",
-    "Rudolf Meissner",
-    "Ruth Ellen",
-    "Sade Rantanen",
-    "Sallie June",
-    "Severin Vogel",
-    "Signe Ollila",
-    "Suzette Armond",
-    "Timo Harkonen",
-    "Toby Luther",
-    "Vera Gail",
-    "Viktoria Haas",
-    "Ville Rautio",
-    "Wilhelm Schuster",
-    "Winifred Lane"
+    // Southern-Inspired Names
+    "Abby Sue", "Adelaide Rae", "Alvin Lee", "Annabeth Lou", "Arlen James",
+    "Bea Mae", "Beckett Mose", "Belle Jo", "Bobby Ray", "Bonnie Faye",
+    "Buck Harding", "Clarabelle", "Claudette Pearl", "Clinton Dean", "Cordelia Grace",
+    "Darcy Lynn", "Darlene Rose", "Delilah Kay", "Duke Earle", "Ella Beth",
+    "Etta Lou", "Flannery Kate", "Florence Jean", "Forrest Wade", "Franklin Dale",
+    "Freddie Sue", "Grady Lance", "Hannah Leigh", "Harper June", "Hollis Reed",
+    "Ida Mae", "Iris Jeanine", "Jebediah Johnson", "Jessaline Hamilton", "Jolene Pearl",
+    "Judd Carter", "Kady Lynne", "Kinley Grace", "Kirby Wyatt", "Lambert Clyde",
+    "Lavinia Belle", "Leona Rae", "Lester Hoyt", "Lila Rose", "Loretta Gale",
+    "Louis Hunter", "Lucille Anne", "Mack Travis", "Marlena Jo", "Maude Elaine",
+    "Memphis Dale", "Merrilee Lou", "Millie Joyce", "Nola Paige", "Orabelle Jane",
+    "Orin Mac", "Patsy Lee", "Peyton Vance", "Presley Dawn", "Reba Quinn",
+    "Reuben Clive", "Rosalee Lynn", "Sadie Beth", "Sheridan Clay", "Sonny Ralph",
+    "Stella Jean", "Sully Dean", "Susannah Ray", "Tanner Royce", "Tara Jo",
+    "Tate Abel", "Tennessee Wells", "Tessa Rae", "Travis Wade", "Trixie Lynn",
+    "Tyson Lee", "Velma Kay", "Vernon Todd", "Violet June", "Waylon Clark",
+    "Waverly Lane", "Willodean Miller", "Winnie Belle", "Zelda Ruth",
+    // Cajun/French-Inspired Names
+    "Aimée-Noelle", "Alphonsine", "Amélie Colette", "Antoine Reynaud", "Armand Gautier",
+    "Beaufort \"Beau\"", "Bernadette Delacroix", "Camille Dupont", "Cécile Marin", "Chantal Boudreaux",
+    "Charlot Dupuis", "Claudine Désirée", "Corinne Lajoie", "Delphine Robichaux", "Édouard Babineaux",
+    "Eloise Broussard", "Estelle LaFleur", "Étienne Dubois", "Evangeline Badeaux", "Félix Morel",
+    "Florent Dupre", "Gaëtan Renault", "Gervais Bouchard", "Honoré Lavigne", "Jacques Landry",
+    "Jean-Baptiste Robillard", "Jean-Luc Martine", "Jolie Esmé", "Leonie Arcenaux", "Lisette Dauphin",
+    "Lucette Violette", "Lucien Armand", "Madelon Artois", "Margot Pellerin", "Marius Gaspard",
+    "Mathilde Perreault", "Maurice LeClerc", "Odette Marchand", "Pierre Lafayette", "Remy Roux",
+    "Sylvain Thibodeaux", "Thierry Gaspard",
+    // German-Inspired Names
+    "Adelheid Roth", "Albert Drechsler", "Anneliese Becker", "Bastian Jäger", "Beate Vogel",
+    "Benedikt Kraus", "Bernd Baumann", "Brigitte Neumann", "Carla Meier", "Christa Zielke",
+    "Dieter Vogel", "Dorothea Hauer", "Eberhard Zeigler", "Edith Schuster", "Elias Drescher",
+    "Erika Sasse", "Ernst Kaufmann", "Ferdinand Braun", "Frieda Hoffman", "Friedrich Schaller",
+    "Gerda Mayer", "Gerhard Weber", "Gertrud Hauck", "Giselher Bauer", "Gudrun Fischer",
+    "Hans König", "Heide Rösler", "Heinrich Beck", "Helga Möbius", "Hilde Schaefer",
+    "Ingrid Pfaff", "Johann Albrecht", "Jörg Vogt", "Karin Ziegler", "Karl Kempf",
+    "Katharina Scholz", "Konrad Schmitt", "Liesel Engel", "Marlene Wilke", "Otto Kuhl",
+    "Sigmund Richter", "Stefan Eberhardt", "Ulrike Werner",
+    // Finnish-Inspired Names
+    "Aino Tuulikki", "Aleksi Heikkinen", "Alina Koivunen", "Anja Saarinen", "Arto Mikkonen",
+    "Eelis Pennanen", "Eero Ranta", "Elina Kaarina", "Emilia Järvinen", "Esko Niemi",
+    "Hanna Vartiainen", "Heikki Pulkkinen", "Henna Korhonen", "Ilkka Pennanen", "Johanna Heikkilä",
+    "Joonas Rantala", "Juha Partanen", "Juho Virtanen", "Kaarina Salminen", "Kaisa Kurki",
+    "Kalevi Mäkinen", "Katja Peltonen", "Kristiina Väisänen", "Lasse Lehtonen", "Liisa Erkkilä",
+    "Maarit Halonen", "Matti Aalto", "Miika Nurmi", "Mikko Korpi", "Niko Hautala",
+    "Noora Rinne", "Olli Kukkonen", "Orvokki Paananen", "Paavo Kallio", "Petri Vainio",
+    "Riikka Mustonen", "Saara Piirainen", "Sanna Koivu", "Seppo Valtonen", "Tapio Leppänen",
+    "Taru Korpela", "Tiina Koski", "Tuula Mäkelä", "Vilma Pelkonen",
+    // Additional Mix & Misc. Names
+    "Alina Reznik", "Beck Mullins", "Bernard Lamar", "Celestine Broussard", "Darla Gros",
+    "Darrell Louviere", "Donovan Lee", "Ervin Halvari", "Eulalie Chauvin", "Felicia Merle",
+    "Finn Jääskeläinen", "Gaston Lavigne", "Gunther Ernst", "Heike Näslund", "Hilda Lamm",
+    "Inka Lampinen", "Jaana Pihkala", "Jesse-Mae Glover", "Kasper Autio", "Katrin Müller",
+    "Kylah Beth", "Lafayette Boudreau", "Lavinia Faye", "Lola Mignon", "Lorelei Stein",
+    "Louella Hicks", "Luke Monroe", "Maija Heiskanen", "Manfred Erber", "Marceline Arnaud",
+    "Marja-Leena Koivu", "Mason Wyatt", "Mireille Malveaux", "Neville Fontenot", "Odile Champoux",
+    "Oscar Wendel", "Pearl Nettles", "Priscilla Joplin", "Reinhardt Faust", "Risto Vaananen",
+    "Rudolf Meissner", "Ruth Ellen", "Sade Rantanen", "Sallie June", "Severin Vogel",
+    "Signe Ollila", "Suzette Armond", "Timo Harkonen", "Toby Luther", "Vera Gail",
+    "Viktoria Haas", "Ville Rautio", "Wilhelm Schuster", "Winifred Lane",
+    // Arabic-Inspired Names
+    "Aaliyah Noor", "Abdullah Kareem", "Aisha Farah", "Amir Rashid", "Basim Nabil",
+    "Dalia Hassan", "Faisal Zayed", "Hadia Salim", "Ibrahim Mustafa", "Jamila Rahim",
+    "Khalid Mansoor", "Latifa Zain", "Maha Karim", "Nadia Saif", "Omar Aziz",
+    "Rania Malik", "Samiya Rahim", "Tariq Jamil", "Yasmin Qasim", "Zainab Mustafa",
+    // Phoenician-Inspired Names
+    "Adoniram Phoenicus", "Astarte Elissar", "Eshmunazar Aram", "Hannibal Melqart", "Illyris Maron",
+    "Mago Dido", "Melqart Bennet", "Pygmalion Thamus", "Qedar Amir", "Saphira Delmar",
+    "Sidon Asher", "Tamaris Lydon", "Zimrath Salim", "Canaan Barak", "Hannibal Carthage",
+    // Southeast Asian-Inspired Names
+    "Ananda Suri", "Budi Santoso", "Chai An", "Dewi Kartika", "Hana Putri",
+    "Indra Wijaya", "Laksmi Dewi", "Nanda Putra", "Putri Ayu", "Raden Wijaya",
+    "Sari Wulan", "Sri Mulyani", "Surya Adi", "Tika Prasetya", "Wayan Eka",
+    "Yuni Setia",
+    // Overly British (Posh) Names
+    "Algernon Fitzroy", "Archibald Montague", "Bartholomew Percival", "Beauregard Kensington",
+    "Benedict Sterling", "Cecil Pemberton", "Chesterfield Wainscott", "Clarence Cavendish",
+    "Cornelius Ashford", "Cyril Pembroke", "Edmund Winthrop", "Fitzwilliam Blackwood",
+    "Geoffrey Harrington", "Harrington Worthington", "Lancelot Ashcroft", "Montgomery Fairfax",
+    "Percival Haverhill", "Reginald Beaumont", "Rupert Forsythe", "Thaddeus Wellington",
+    "Wellington Barrington", "Wilfred Kingsley", "Winston Radcliffe", "Ainsley Montford",
+    "Beaumont Fitzroy", "Cedric Kingswell", "Ferguson Worth", "Giles St John",
+    "Horatio Pembroke", "Ignatius Cavendish", "Jasper Kingsley", "Maximilian Ashford",
+    "Nigel Wrenford", "Oswald Montgomery", "Quentin Blackwood", "Sebastian Waverly",
+    "Tristram Pemberton"
   ];
   
-  // Populate FIRST_NAMES and LAST_NAMES from RAW_NAMES.
+  // Parse each RAW_NAMES entry into FIRST_NAMES and LAST_NAMES
   function parseName(fullName) {
     const trimmed = fullName.trim();
     if (!trimmed) return null;
@@ -493,9 +291,7 @@
     if (parts.length === 1) {
       return { first: parts[0].replace(/"/g, ""), last: "" };
     } else {
-      const first = parts[0].replace(/"/g, "");
-      const last = parts[parts.length - 1].replace(/"/g, "");
-      return { first, last };
+      return { first: parts[0].replace(/"/g, ""), last: parts[parts.length - 1].replace(/"/g, "") };
     }
   }
   
@@ -507,9 +303,7 @@
     }
   });
   
-  /* ==================================================
-     ========== RACES (Complete List) =================
-     ================================================== */
+  // ---------- Races ----------
   const RACES = [
     {
       name: "Dwarf",
@@ -548,9 +342,7 @@
     },
     {
       name: "Human",
-      abilityScoreBonuses: {
-        STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1
-      },
+      abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
       speed: 30,
       features: [],
       languages: ["Common", "One Extra Language of your choice"]
@@ -611,9 +403,7 @@
     }
   ];
   
-  /* ==================================================
-     ========== BACKGROUNDS (Complete List with New Mage) =
-     ================================================== */
+  // ---------- Backgrounds ----------
   const BACKGROUNDS = [
     {
       name: "Acolyte",
@@ -628,7 +418,7 @@
         "Belt pouch containing 15 gp"
       ],
       feature: "Shelter of the Faithful",
-      featureDesc: "As an Acolyte, you command the respect of those who share your faith. You can perform religious ceremonies and can call upon fellow adherents for shelter and support, though you must uphold the practices of your religion in return.",
+      featureDesc: "As an Acolyte, you command the respect of those who share your faith. You can perform religious ceremonies and call upon fellow adherents for shelter and support, though you must uphold your religion’s practices.",
       nicknames: ["Chant", "Chapel", "Faith", "Lumen", "Reverie"]
     },
     {
@@ -640,7 +430,7 @@
         "Belt pouch containing 15 gp"
       ],
       feature: "Criminal Contact",
-      featureDesc: "You have a reliable, trustworthy contact who acts as your liaison to a network of other criminals. You know how to get messages to and from your contact, even over great distances.",
+      featureDesc: "You have a reliable contact within a criminal network. You know how to send and receive messages discreetly.",
       nicknames: ["Shade", "Slick", "Pockets", "Rook", "Whisper"]
     },
     {
@@ -654,7 +444,7 @@
         "Belt pouch containing 10 gp"
       ],
       feature: "Rustic Hospitality",
-      featureDesc: "You fit in among common folk easily. They will shield you from the law or anyone else searching for you, though they will not risk their lives for you. In return, you must come to their aid in times of need.",
+      featureDesc: "You blend with the common folk. Locals may offer shelter or aid when you need it most.",
       nicknames: ["Buck", "Rusty", "Spotts", "Sarge", "Oakie"]
     },
     {
@@ -668,21 +458,21 @@
         "Belt pouch containing 15 gp"
       ],
       feature: "Guild Membership",
-      featureDesc: "Your guild offers you lodging and food, and you can receive legal and political support from them when needed. Guild members will often support you if it does not risk their own standing.",
+      featureDesc: "Your guild provides lodging, food, and political support when needed.",
       nicknames: ["Hammer", "Chisel", "Scribe", "Barter", "Ledger"]
     },
     {
       name: "Hermit",
       skillProficiencies: ["Medicine", "Religion"],
       equipment: [
-        "Scroll case stuffed full of notes from your studies or prayers",
+        "Scroll case stuffed with study notes or prayers",
         "Winter blanket",
         "Set of common clothes",
         "Herbalism kit",
         "5 gp"
       ],
       feature: "Discovery",
-      featureDesc: "Your seclusion allowed you to uncover a unique truth about the cosmos—an insight that may shape your destiny. Some might not accept your findings; you must decide how to share them, if at all.",
+      featureDesc: "Your seclusion has unveiled a unique truth about the cosmos—one that might shape your destiny.",
       nicknames: ["Quiet", "Wisp", "Moony", "Muse", "Cloister"]
     },
     {
@@ -695,7 +485,7 @@
         "Purse containing 25 gp"
       ],
       feature: "Position of Privilege",
-      featureDesc: "You carry the authority of your noble birth. Commoners treat you with respect, and other nobles see you as a peer. You can often secure an audience with the local ruler if you need to.",
+      featureDesc: "Your noble birth carries authority. Nobles and commoners alike treat you with due respect.",
       nicknames: ["Lordy", "Duchess", "Grace", "Count", "Regal"]
     },
     {
@@ -705,12 +495,12 @@
       equipment: [
         "Staff",
         "Hunting trap",
-        "Trophy from an animal you killed",
+        "Trophy from a slain animal",
         "Set of traveller's clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Wanderer",
-      featureDesc: "You have an excellent memory for geography and can always recall the general layout of terrain, settlements, and other features around you. You can find food and fresh water for yourself and up to five other people each day.",
+      featureDesc: "You possess an exceptional memory for geography and can recall terrain and settlement layouts with ease.",
       nicknames: ["Tracks", "Wild", "Hawk", "Cairn", "Scout"]
     },
     {
@@ -720,12 +510,12 @@
         "Bottle of black ink",
         "Quill",
         "Small knife",
-        "Letter from a dead colleague posing a question you have not yet been able to answer",
+        "Letter from a deceased colleague",
         "Set of common clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Researcher",
-      featureDesc: "When you attempt to learn or recall a piece of lore, if you don't know that information, you often know where and from whom you can obtain it. Your DM might rule that the knowledge you seek is secreted away or that it simply cannot be found.",
+      featureDesc: "If you lack specific lore, you usually know where to find it. Your knowledge might be hidden or hard to come by.",
       nicknames: ["Quill", "Stacks", "Owl", "Doc", "Booker"]
     },
     {
@@ -738,7 +528,7 @@
         "Belt pouch containing 10 gp"
       ],
       feature: "Arcane Initiate",
-      featureDesc: "You’ve begun tapping into the fundamentals of magic. You can channel an arcane bolt through your staff rather than attacking physically.",
+      featureDesc: "You’ve begun to tap into magic, channeling an arcane bolt through your staff instead of physical attacks.",
       nicknames: ["Arc", "Wizard", "Spark", "Boom", "Focus"]
     },
     {
@@ -752,7 +542,7 @@
         "Belt pouch containing 10 gp"
       ],
       feature: "Ship's Passage",
-      featureDesc: "You can secure free passage on a sailing ship for yourself and your adventuring companions. In return, you must assist the crew during the voyage.",
+      featureDesc: "Your seafaring skills secure free passage aboard ships—if you assist the crew along the way.",
       nicknames: ["Salty", "Anchor", "Rudder", "Knotty", "Seabreeze"]
     },
     {
@@ -760,13 +550,13 @@
       skillProficiencies: ["Athletics", "Intimidation"],
       equipment: [
         "Insignia of rank",
-        "Trophy taken from a fallen enemy",
-        "Set of bone dice or deck of cards",
+        "Trophy from a fallen enemy",
+        "Set of bone dice or a deck of cards",
         "Set of common clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Military Rank",
-      featureDesc: "You have a military rank from your career as a soldier. Soldiers loyal to your former military organisation still recognise your authority and influence, and they defer to you if they are of a lower rank.",
+      featureDesc: "Your former military rank carries weight with those still loyal to your old unit.",
       nicknames: ["Sarge", "Brass", "Boots", "Vets", "Gunner"]
     },
     {
@@ -774,14 +564,14 @@
       skillProficiencies: ["Sleight of Hand", "Stealth"],
       equipment: [
         "Small knife",
-        "Map of the city you grew up in",
+        "City map",
         "Pet mouse",
-        "Token to remember your parents by",
+        "Token of your parents",
         "Set of common clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "City Secrets",
-      featureDesc: "You know the secret patterns and flow to cities and can find passages through the urban sprawl that others would miss. You and your companions can travel between any two locations in the city twice as fast as your speed would normally allow.",
+      featureDesc: "You know urban shortcuts and hidden pathways—enabling rapid travel through cities.",
       nicknames: ["Rat", "Stray", "Alley", "Gutters", "Pebbles"]
     },
     {
@@ -789,14 +579,14 @@
       skillProficiencies: ["Survival", "Nature"],
       languages: [],
       equipment: [
-        "A small set of tanning tools",
-        "A sturdy apron",
-        "A cured hide you’re particularly proud of",
-        "A set of common clothes",
+        "Small set of tanning tools",
+        "Sturdy apron",
+        "A prized cured hide",
+        "Set of common clothes",
         "Belt pouch containing 5 gp"
       ],
       feature: "Leatherwise",
-      featureDesc: "You instantly identify the quality and source of hides or leather goods. You can also typically find buyers for raw hides or furs, even in remote settlements, thanks to your trade connections.",
+      featureDesc: "You can instantly judge the quality of hides and locate buyers even in remote settlements.",
       nicknames: ["Hide", "Skins", "Tannic", "Pelt", "Sinew"]
     },
     {
@@ -804,13 +594,13 @@
       skillProficiencies: ["Arcana", "Medicine"],
       languages: [],
       equipment: [
-        "An alchemist’s kit (including flasks, mortar & pestle)",
-        "A weathered notebook filled with formulae",
-        "A set of common clothes stained with reagents",
+        "Alchemist’s kit (flasks, mortar & pestle)",
+        "Weathered notebook of formulas",
+        "Reagent-stained common clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Experimental Brewer",
-      featureDesc: "Local apothecaries or herbalists often grant you discounts or small freebies, hoping your next discovery will be lucrative. You can usually identify common magical or chemical substances on sight.",
+      featureDesc: "Local apothecaries or herbalists often provide discounts in hopes that your next discovery is lucrative.",
       nicknames: ["Vial", "Fume", "Brew", "Pestle", "Tonic"]
     },
     {
@@ -818,14 +608,14 @@
       skillProficiencies: ["Athletics", "Perception"],
       languages: [],
       equipment: [
-        "A pickaxe",
-        "A lantern and a flask of oil",
-        "A small sample of precious ore (souvenir)",
-        "Sturdy boots and a set of rugged common clothes",
+        "Pickaxe",
+        "Lantern and flask of oil",
+        "Sample of precious ore",
+        "Sturdy boots and rugged clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Tunnel Instinct",
-      featureDesc: "You have an uncanny sense for detecting structural weaknesses underground and can often identify if a tunnel is stable. Other miners or dwarves typically trust your word on subterranean matters.",
+      featureDesc: "You have an uncanny ability to sense structural weaknesses underground.",
       nicknames: ["Pick", "Sparky", "Ore", "Dusty", "Coal"]
     },
     {
@@ -833,14 +623,14 @@
       skillProficiencies: ["Animal Handling", "Nature"],
       languages: [],
       equipment: [
-        "A length of rope",
-        "A small, carved token of a favourite beast",
-        "A supply of dried meat or treats",
-        "A set of simple outdoor attire",
+        "Length of rope",
+        "Carved token of a favourite beast",
+        "Supply of dried meat",
+        "Simple outdoor attire",
         "Belt pouch containing 5 gp"
       ],
       feature: "Animal Rapport",
-      featureDesc: "You have a calm and trustworthy air that most domestic animals respond to. Locals often ask you for help handling skittish or aggressive beasts.",
+      featureDesc: "Animals trust you instinctively; locals seek your help with unruly creatures.",
       nicknames: ["Buck", "Wrangler", "Whistle", "Critter", "Hoof"]
     },
     {
@@ -848,57 +638,57 @@
       skillProficiencies: ["Persuasion", "Investigation"],
       languages: [],
       equipment: [
-        "A small block of wax",
-        "A candle mould and a tinderbox",
-        "A ledger tracking your sales",
-        "A set of plain but neat clothes",
+        "Block of wax",
+        "Candle mould and tinderbox",
+        "Sales ledger",
+        "Plain, neat clothes",
         "Belt pouch containing 7 gp"
       ],
       feature: "Keeper of Light",
-      featureDesc: "You know how to create serviceable candles and have a knack for sourcing cheap tallow or beeswax. Townsfolk trust you not to leave them in the dark.",
+      featureDesc: "You know how to make reliable candles and source cheap tallow or beeswax.",
       nicknames: ["Candle", "Wax", "Wick", "Tallow", "Glow"]
     },
     {
       name: "Cooper",
-      skillProficiencies: ["History", "Sleight of Hand"], 
+      skillProficiencies: ["History", "Sleight of Hand"],
       languages: [],
       equipment: [
-        "A cooper’s hammer and a ring of iron hoops",
-        "A small cask you’ve crafted yourself",
-        "A set of serviceable working clothes",
+        "Cooper’s hammer and iron hoops",
+        "Self-crafted small cask",
+        "Serviceable working clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Well-Bound Containers",
-      featureDesc: "You know how to properly seal barrels and crates. Merchants who value secure shipping often appreciate your skills, and you can spot tampering at a glance.",
+      featureDesc: "Your barrels and crates are secure; you can spot any signs of tampering at a glance.",
       nicknames: ["Barrel", "Hoops", "Ring", "Crater", "Tapper"]
     },
     {
       name: "Cartwright",
-      skillProficiencies: ["Carpenter’s Tools (use ‘Tool Proficiency’ in your system)", "History"],
+      skillProficiencies: ["Carpenter’s Tools", "History"],
       languages: [],
       equipment: [
-        "A small woodworking toolkit",
-        "A miniature model cart of your own design",
-        "A set of sturdy common clothes",
+        "Woodworking toolkit",
+        "Miniature model cart",
+        "Sturdy common clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Roadwise",
-      featureDesc: "Having built and repaired carts, you understand travel and terrain intricately. You often prevent breakdowns or expedite journeys by advising on maintenance and routes.",
+      featureDesc: "Your experience building and repairing carts gives you insight into travel and maintenance.",
       nicknames: ["Axle", "Spokes", "Wheel", "Lumber", "Waggon"]
     },
     {
       name: "Scribe",
       skillProficiencies: ["History", "Investigation"],
-      languages: ["One of your choice"], 
+      languages: ["One of your choice"],
       equipment: [
-        "A quill and a small jar of ink",
-        "A sheaf of parchment",
-        "A personal log of your scribblings",
-        "A set of simple but tidy clothes",
+        "Quill and jar of ink",
+        "Sheaf of parchment",
+        "Personal scribble log",
+        "Simple, tidy clothes",
         "Belt pouch containing 5 gp"
       ],
       feature: "Academic Access",
-      featureDesc: "Your skills as a scribe grant you easier access to archives, libraries, and private collections. Scholars trust you to handle delicate documents.",
+      featureDesc: "Your writing skills grant you easier access to archives and private collections.",
       nicknames: ["Quill", "Ink", "Scroll", "Lexi", "Page"]
     },
     {
@@ -906,14 +696,14 @@
       skillProficiencies: ["Arcana", "Perception"],
       languages: [],
       equipment: [
-        "A small glassblowing pipe",
-        "A carefully wrapped glass trinket of your own design",
-        "A sturdy pair of goggles",
-        "A set of common clothes",
+        "Glassblowing pipe",
+        "Wrapped glass trinket",
+        "Sturdy goggles",
+        "Common clothes",
         "Belt pouch containing 5 gp"
       ],
       feature: "Fragile Eye",
-      featureDesc: "Your keen eye discerns flaws and cracks in glass and crystalline materials. Artisans and collectors seek your expertise to judge delicate wares.",
+      featureDesc: "Your discerning eye detects flaws in glass—making you a trusted judge among artisans.",
       nicknames: ["Fragile", "Pane", "Spark", "Torch", "Crystal"]
     },
     {
@@ -921,27 +711,27 @@
       skillProficiencies: ["Insight", "Sleight of Hand"],
       languages: [],
       equipment: [
-        "A loupe or small magnifying lens",
-        "A pouch of assorted uncut gemstones (low value)",
-        "A set of smart but modest clothes",
+        "Loupe or magnifying lens",
+        "Pouch of assorted uncut gemstones",
+        "Smart, modest clothes",
         "Belt pouch containing 15 gp"
       ],
       feature: "Stone Appraisal",
-      featureDesc: "You can swiftly gauge the authenticity and approximate value of gems or precious metals. Wealthy patrons may hire you to inspect prized possessions.",
+      featureDesc: "You can quickly assess the value of gems and precious metals.",
       nicknames: ["Shine", "Facet", "Gem", "Pearl", "Rocky"]
     },
     {
       name: "Shipwright",
-      skillProficiencies: ["Athletics", "Carpenter’s Tools (use ‘Tool Proficiency’ in your system)"],
+      skillProficiencies: ["Athletics", "Carpenter’s Tools"],
       languages: [],
       equipment: [
-        "A small mallet and chisel",
-        "A piece of driftwood with an etched diagram",
-        "A set of rugged clothes",
+        "Small mallet and chisel",
+        "Piece of driftwood with etched diagram",
+        "Rugged clothes",
         "Belt pouch containing 10 gp"
       ],
       feature: "Maritime Specialist",
-      featureDesc: "Ports and ship captains respect your experience. You can find work or passage aboard ships if you assist with repairs or related tasks. You can also often determine a vessel’s seaworthiness by sight.",
+      featureDesc: "Ship captains trust your expertise; you can assess a vessel’s seaworthiness at a glance.",
       nicknames: ["Timbers", "Hull", "Dock", "Anchor", "Mast"]
     },
     {
@@ -949,13 +739,13 @@
       skillProficiencies: ["Nature", "Perception"],
       languages: [],
       equipment: [
-        "A bundle of feathers and arrow shafts",
-        "A small bowyer’s toolkit",
-        "A set of workable common clothes",
+        "Bundle of feathers and arrow shafts",
+        "Small bowyer’s toolkit",
+        "Workable common clothes",
         "Belt pouch containing 5 gp"
       ],
       feature: "Arrow Precision",
-      featureDesc: "You can craft serviceable arrows from natural materials and assess the quality of bows and arrows at a glance. Hunters might hire you for your craft and expertise.",
+      featureDesc: "You craft serviceable arrows from natural materials and quickly judge the quality of bows.",
       nicknames: ["Arrow", "Feather", "Quiver", "Bowstring", "Fletch"]
     },
     {
@@ -963,13 +753,13 @@
       skillProficiencies: ["Sleight of Hand", "Insight"],
       languages: [],
       equipment: [
-        "A cobbler’s kit (awl, hammer, leather patches)",
-        "A well-worn pair of boots you’ve crafted",
-        "A set of common clothes",
+        "Cobbler’s kit (awl, hammer, patches)",
+        "Well-worn boots you’ve made",
+        "Common clothes",
         "Belt pouch containing 8 gp"
       ],
       feature: "Sure-Footed",
-      featureDesc: "You excel at fitting boots and identifying footprints. Travellers appreciate your skill, and you can sometimes track individuals by their unique footwear.",
+      featureDesc: "You excel at fitting boots and tracking individuals by their unique footprints.",
       nicknames: ["Boots", "Soles", "Stitch", "Tap", "Tread"]
     },
     {
@@ -977,14 +767,14 @@
       skillProficiencies: ["Animal Handling", "Nature"],
       languages: [],
       equipment: [
-        "A hoe or sickle",
-        "A small pouch of seeds",
-        "A wide-brimmed straw hat",
-        "A set of sturdy clothes",
+        "Hoe or sickle",
+        "Small pouch of seeds",
+        "Wide-brimmed straw hat",
+        "Sturdy clothes",
         "Belt pouch containing 5 gp"
       ],
       feature: "Local Harvest",
-      featureDesc: "You know how to grow and gather simple crops and can usually secure shelter or trade among rural folk who respect your honest labour.",
+      featureDesc: "You know how to grow and gather crops, earning respect among rural folk.",
       nicknames: ["Seed", "Haystack", "Plow", "Row", "Scythe"]
     },
     {
@@ -992,96 +782,172 @@
       skillProficiencies: ["Survival", "Perception"],
       languages: [],
       equipment: [
-        "A simple fishing rod or hand line",
-        "A small tackle box",
-        "A net",
-        "A set of waterproof boots",
+        "Simple fishing rod or hand line",
+        "Small tackle box",
+        "Net",
+        "Waterproof boots",
         "Belt pouch containing 5 gp"
       ],
       feature: "Waterside Hospitality",
-      featureDesc: "Those living near bodies of water recognise your knack for fishing. You can often secure a day’s rations for yourself and one or two companions, and fishers in other regions are friendly to you.",
+      featureDesc: "Your knack for fishing secures daily rations, and fellow fishers are friendly.",
       nicknames: ["Fin", "Hook", "Line", "Nets", "Minnow"]
+    },
+    {
+      name: "Mercenary Captain",
+      skillProficiencies: ["Athletics", "Persuasion"],
+      languages: ["One of your choice"],
+      equipment: [
+        "Finely maintained military uniform",
+        "Mercenary company insignia",
+        "Well-worn battlefield map",
+        "Belt pouch containing 20 gp"
+      ],
+      feature: "Commanding Presence",
+      featureDesc: "Your reputation rallies former comrades in battle, providing valuable assistance when needed.",
+      nicknames: ["Captain", "Commander", "Ironhand", "Chief", "Bull"]
+    },
+    {
+      name: "Courtier",
+      skillProficiencies: ["Persuasion", "Insight"],
+      languages: ["Latin", "One of your choice"],
+      equipment: [
+        "Finely tailored court attire",
+        "Signet ring bearing your family's crest",
+        "Letter of introduction from a noble patron",
+        "Belt pouch containing 15 gp"
+      ],
+      feature: "Access to Royal Privilege",
+      featureDesc: "Your position at court grants you entry to powerful circles and exclusive events.",
+      nicknames: ["Noble", "Lord", "Lady", "Squire", "Regent"]
+    },
+    {
+      name: "Cartographer",
+      skillProficiencies: ["Survival", "History"],
+      languages: ["One of your choice"],
+      equipment: [
+        "Traveller's clothes",
+        "Weathered journal with sketches and maps",
+        "Compass and sextant",
+        "Belt pouch containing 10 gp"
+      ],
+      feature: "Chart the Unknown",
+      featureDesc: "Your journeys into uncharted lands let you recall detailed maps and sometimes uncover hidden paths.",
+      nicknames: ["Scout", "Pathfinder", "Rover", "Nomad", "Wanderer"]
+    },
+    {
+      name: "Gunsmith",
+      skillProficiencies: ["Sleight of Hand", "Investigation"],
+      languages: ["One of your choice"],
+      equipment: [
+        "Artisan's tools for firearms",
+        "Vial of gunpowder",
+        "Sturdy work gloves",
+        "Belt pouch containing 15 gp"
+      ],
+      feature: "Master of Firearms",
+      featureDesc: "Your expertise in early firearms allows you to mend or modify weapons quickly.",
+      nicknames: ["Sparks", "Gunner", "Smith", "Blast", "Cannon"]
+    },
+    {
+      name: "Wealthy Merchant",
+      skillProficiencies: ["Persuasion", "Insight"],
+      languages: ["One of your choice"],
+      equipment: [
+        "Ledger of business dealings",
+        "Fine travelling clothes",
+        "Small scale and weighing weights",
+        "Belt pouch containing 25 gp"
+      ],
+      feature: "Trade Connections",
+      featureDesc: "Your extensive network secures fair prices and safe passage; merchants and officials are inclined to assist you.",
+      nicknames: ["Trader", "Broker", "Ledger", "Stonks", "Goldfinger"]
     }
   ];
   
-  /* ==================================================
-     ========== PERSONALITY TRAITS (Complete List) =====
-     ================================================== */
   const PERSONALITY_TRAITS = [
-    "I always see the best in people, even if they don’t deserve it.",
-    "I am suspicious of new faces and stick to familiar companions.",
-    "I laugh loudly and often, even at my own jokes.",
-    "I hum or sing quietly whenever I'm nervous.",
-    "I keep small trinkets from my travels and love to show them off.",
-    "I have a habit of forgetting names but remembering faces.",
-    "I firmly believe in fate and destiny, reading signs everywhere.",
-    "I can’t stand the sight of suffering and rush to help those in need.",
-    "I hoard secrets like gold and use them to my advantage.",
-    "I’m always tidying up, fussing over details even when it’s unnecessary.",
-    "I prefer the company of animals to people and often mimic their sounds.",
-    "I fixate on a single goal and can become oblivious to other issues.",
-    "I daydream about a grand future, sometimes missing important details.",
-    "I rarely speak, but when I do, it's usually cutting or direct.",
-    "I record everything I see in a small notebook—my memory is precious.",
-    "I have strong opinions on art and culture, ignoring practicalities.",
-    "I offer unsolicited advice to everyone, whether they ask or not.",
-    "I secretly enjoy meddling in other people's affairs to 'help' them.",
-    "I become giddy at the prospect of treasure or hidden knowledge.",
-    "I am extremely superstitious, performing little rituals constantly.",
-    "I avoid direct conflict if I can, preferring to talk my way out.",
-    "I try to turn every experience into a grand story or ballad.",
-    "I fuss about cleanliness, my gear must always be spotless.",
-    "I love discussing philosophy, even if others find it boring.",
-    "I feel most alive on the move, restless if I stay in one place long.",
-    "I never turn down a good gamble or game of chance.",
-    "I see omens in everyday happenings and trust them over logic.",
-    "I have an elaborate greeting ritual that I force upon new acquaintances.",
-    "I trust animals' judgement of people more than my own.",
-    "I keep a strict code of personal honour and won’t break it for anyone.",
-    "I love tall tales and exaggerate my own feats for dramatic effect.",
-    "I’m reluctant to share personal details, no matter how mundane.",
-    "I collect jokes and riddles, testing them on unsuspecting strangers.",
-    "I view cynicism as a shield, sarcasm as my chosen weapon.",
-    "I can't keep track of time unless I narrate my day out loud.",
-    "I have an intense personal rivalry with a close friend or sibling.",
-    "I’m fiercely protective of children and the weak, stepping in instantly.",
-    "I take minor slights personally and brood over them for days.",
-    "I’m fascinated by the arcane, even if I don’t fully understand it.",
-    "I can’t resist a friendly wager, even if it’s something I might lose.",
-    "I hold grudges far too long, plotting petty revenges.",
-    "I deeply admire heroes and strive to become like them someday.",
-    "I tease friends with gentle barbs and can’t resist a playful jab.",
-    "I am obsessed with collecting curiosities or random knick-knacks.",
-    "I hold my faith above all else, quietly praying in every spare moment.",
-    "I love performing in front of people—dancing, singing, or oratory.",
-    "I see potential threats everywhere and watch my back constantly.",
-    "I talk to inanimate objects when lonely, expecting no reply.",
-    "I share my food or drink with those less fortunate without hesitation.",
-    "I’m easily bored and seek constant stimulation or excitement.",
-    "I have a warm, hearty laugh that instantly sets others at ease.",
-    "I’ll do almost anything for a good story, even if it puts me at risk.",
-    "I rarely show emotion, keeping a stoic mask in all situations.",
-    "I can’t stand idleness, fidgeting or pacing if not kept busy.",
-    "I always look impeccably groomed, taking pride in my appearance.",
-    "I love mysteries and rumours, prying into others’ business for clues.",
-    "I speak in grandiose, flowery language that borders on ridiculous.",
-    "I resent authority, ignoring orders unless they serve my interest.",
-    "I have an odd collection of lucky charms that I never leave behind.",
-    "I become starstruck by famous warriors, nobles, or wizards.",
-    "I play with any fire source absentmindedly, enthralled by the flames.",
-    "I can’t resist a sob story, giving away resources I barely have.",
-    "I’m easily distracted by anything unusual or shiny, losing focus.",
-    "I brag about my modest accomplishments as if they’re legendary."
+    "I meticulously maintain my weapons and armour, treating each as a treasured heirloom.",
+    "I harbour a secret longing for a noble life, despite my modest origins.",
+    "I delight in reciting ancient proverbs and quoting obscure texts at every opportunity.",
+    "I possess an unyielding loyalty to my comrades, standing by them through siege and strife.",
+    "I savor the taste of fine wines and dream of lavish banquets, even in lean times.",
+    "I abide by a strict code of honour, with transgressions met by swift, decisive retribution.",
+    "I relish the thrill of a high-stakes wager, often risking more than I can spare.",
+    "I nurture an almost obsessive penchant for collecting curious relics from my travels.",
+    "I am endlessly fascinated by the intricacies of court politics, ever mindful of the balance of power.",
+    "I find solace in the quiet of moonlit nights, when the clamor of the world fades into whispering shadows.",
+    "I wax poetic about the art of warfare and the delicate science of strategy.",
+    "I frequent the local tavern, engaging in boisterous debates with fellow adventurers.",
+    "I maintain a fastidious appearance, convinced that one's bearing reflects the strength of one’s character.",
+    "I harbour a persistent ambition to rise above my station, no matter the trials I must endure.",
+    "I possess an insatiable curiosity for the arcane, often delving into forbidden tomes despite the risks.",
+    "I remain steadfastly loyal to time-honoured traditions, even as the world around me transforms.",
+    "I relish the challenge of solving riddles and puzzles, seeing them as tests of wit and mettle.",
+    "I harbour a quiet disdain for ostentatious wealth and empty titles, preferring substance over show.",
+    "I view every challenge as an opportunity for growth, embracing hardship as a teacher.",
+    "I cherish the memory of my ancestors, speaking of them with reverence as if they walked beside me.",
+    "I am known for my unwavering resolve, even in the face of overwhelming odds.",
+    "I find comfort in the rituals of daily life, from morning prayers to nightly vigils.",
+    "I am haunted by the ghost of a past mistake, driving me to seek redemption in every act.",
+    "I secretly collect relics of ancient battles, each piece a memento of lost glory.",
+    "I have a tendency to speak in a measured, deliberate tone, as if every word carries weight.",
+    "I pride myself on my knowledge of heraldry and lineage, keen to trace noble bloodlines.",
+    "I enjoy the art of duelling, both in verbal sparring and in combat, as a test of skill.",
+    "I display a quiet melancholy, reflective of a life burdened by duty and loss.",
+    "I am a firm believer in divine providence, seeing signs and miracles in everyday events.",
+    "I revel in the theatre of battle, finding a strange beauty in the chaos of war.",
+    "I hold conversations with great intellectuals, always seeking to expand my understanding of the world.",
+    "I maintain a secret correspondence with a long-forgotten scholar, exchanging ideas and forbidden lore.",
+    "I have a habit of wearing a particular token of remembrance—a locket or ring—that holds sentimental value.",
+    "I am quick to offer a toast to both fortune and fate, never shying away from celebration.",
+    "I speak with the authority of someone who has seen the rise and fall of empires.",
+    "I am known to be unusually punctual, believing that time itself is a precious commodity.",
+    "I harbour a rebellious streak, questioning established norms and challenging authority when necessary.",
+    "I take pride in my ability to navigate both the wilderness and the labyrinthine corridors of power.",
+    "I find deep satisfaction in crafting meticulous plans, always anticipating future moves.",
+    "I am resolute in the face of betrayal, my trust hard-earned and rarely given.",
+    "I often meditate on the transience of life, aware that every victory is fleeting.",
+    "I am known for my stoic demeanour, rarely allowing my emotions to show even in dire moments.",
+    "I have a penchant for quoting ancient wisdom, often in archaic language that others find perplexing.",
+    "I maintain a disciplined routine, rising before dawn and retiring at dusk without fail.",
+    "I have an eye for detail, noticing even the smallest signs of deception or treachery.",
+    "I cultivate an air of mystery, never revealing too much about my past or my intentions.",
+    "I possess a deep-seated sense of duty, which sometimes compels me to make personal sacrifices.",
+    "I have a quiet confidence, born from years of hardship and hard-won victories.",
+    "I hold a deep respect for the martial traditions of old, often seeking wisdom from veteran warriors.",
+    "I display a refined taste in both literature and music, preferring the classics to modern frivolities.",
+    "I am quick to defend the honour of my family, even if it means entering into conflict.",
+    "I have a habit of leaving subtle clues about my true intentions in casual conversation.",
+    "I find great joy in the art of letter writing, carefully crafting missives to friends and foes alike.",
+    "I am known to keep a detailed diary of my exploits, chronicling every battle and encounter.",
+    "I harbour a deep-seated mistrust of strangers, believing that trust must be earned through proven loyalty.",
+    "I am a connoisseur of fine art and sculpture, often spending hours admiring the craftsmanship of bygone eras.",
+    "I am driven by a desire for revenge against those who wronged me, a flame that never truly dies.",
+    "I display a keen sense of humour, often using wit to defuse tense situations.",
+    "I am unwavering in my principles, often refusing to compromise even in the face of dire consequences.",
+    "I have a deep admiration for the chivalric code, striving always to emulate the knights of old.",
+    "I take great care in the presentation of my words, believing that eloquence is a weapon as potent as any blade.",
+    "I have a propensity to be overly cautious, carefully weighing every risk before taking action.",
+    "I enjoy the challenge of solving complex problems, whether in battle strategy or in daily life.",
+    "I maintain a strict separation between my public persona and my private doubts, guarding my vulnerabilities closely.",
+    "I am driven by an insatiable curiosity about the natural world, often collecting specimens and observing wildlife.",
+    "I have a quiet, unassuming nature that belies the fierce determination burning within me.",
+    "I frequently ponder the nature of destiny, wondering if my path is preordained or carved by my own hand.",
+    "I hold firm beliefs about justice and retribution, often seeking to right the wrongs I encounter.",
+    "I am known to be a reliable confidant, always lending an ear to the troubled and the weary.",
+    "I display a subtle defiance of authority, quietly undermining those who abuse their power.",
+    "I am deeply affected by the tragedies of war, yet I persist in the belief that peace is attainable.",
+    "I have a habit of performing small acts of kindness anonymously, believing that true charity needs no recognition.",
+    "I am fascinated by ancient legends and myths, often incorporating their lessons into my own life.",
+    "I possess an inherent sense of duty towards my community, always ready to lend my skills to a worthy cause.",
+    "I am reflective and contemplative, often spending long nights in quiet introspection.",
+    "I have a flair for dramatics, sometimes exaggerating my exploits to entertain and inspire others.",
+    "I maintain a careful balance between ambition and humility, aware that pride can be a dangerous foe.",
+    "I am driven by a sense of destiny, convinced that my actions have far-reaching consequences.",
+    "I harbour a love for the rustic charm of rural life, finding beauty in simplicity and hard work.",
+    "I am resolute in my belief that honor and integrity will prevail, even in the darkest of times."
   ];
   
-  /* ==================================================
-     ========== PAGE INITIALISATION ===================
-     ================================================== */
-  window.addEventListener("DOMContentLoaded", () => {
-    populateSelect("race-select", RACES.map(r => r.name));
-    populateSelect("background-select", BACKGROUNDS.map(b => b.name));
-  });
-  
+  // ---------- Utility Functions ----------
   function populateSelect(selectId, optionsArray) {
     const selectElem = document.getElementById(selectId);
     optionsArray.forEach(opt => {
@@ -1092,9 +958,6 @@
     });
   }
   
-  /* ==================================================
-     ========== UTILITY & RANDOMISATION ===============
-     ================================================== */
   function pickRandom(array) {
     return array[Math.floor(Math.random() * array.length)];
   }
@@ -1117,8 +980,7 @@
       let rolls = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 6) + 1);
       rolls.sort((a, b) => a - b);
       rolls.shift(); // drop lowest
-      const sum = rolls.reduce((acc, val) => acc + val, 0);
-      scores.push(sum);
+      scores.push(rolls.reduce((acc, val) => acc + val, 0));
     }
     return scores;
   }
@@ -1131,9 +993,7 @@
     return Math.floor((score - 10) / 2);
   }
   
-  /* ==================================================
-     ========== NAME HANDLERS =========================
-     ================================================== */
+  // ---------- Name Handling ----------
   function randomName() {
     if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
       document.getElementById("name-input").value = "Nameless Soul";
@@ -1144,9 +1004,7 @@
     document.getElementById("name-input").value = first + " " + last;
   }
   
-  /* ==================================================
-     ========== RACE & BACKGROUND RANDOMISERS =========
-     ================================================== */
+  // ---------- Race & Background Randomisers ----------
   function randomRace() {
     const randomPick = pickRandom(RACES).name;
     document.getElementById("race-select").value = randomPick;
@@ -1157,9 +1015,7 @@
     document.getElementById("background-select").value = randomPick;
   }
   
-  /* ==================================================
-     ========== ABILITY SCORE HANDLERS ================
-     ================================================== */
+  // ---------- Ability Score Handlers ----------
   let currentScores = [10, 10, 10, 10, 10, 10]; // default
   function rollAbilityScores() {
     currentScores = roll4d6DropLowest();
@@ -1177,21 +1033,16 @@
     let html = "";
     currentScores.forEach((sc, i) => {
       const mod = abilityMod(sc);
-      const modPrefix = mod >= 0 ? "+" : "";
-      html += `${labels[i]}: <strong>${sc}</strong> (${modPrefix}${mod})<br/>`;
+      html += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
     });
     container.innerHTML = html;
   }
   
-  /* ==================================================
-     ========== WEAPONS, ARMOURS, AND PROFICIENCIES =====
-     ================================================== */
-  // Define categories for simple, martial, and improvised weapons.
+  // ---------- Weapons, Armours, and Proficiencies ----------
   const SIMPLE_WEAPONS = ["Club", "Dagger", "Handaxe", "Spear", "Sickle", "Light Crossbow"];
   const MARTIAL_WEAPONS = ["Shortsword"];
   const IMPROVISED_WEAPON = "Improvised (like a club)";
   
-  // Define weapon data including the special "Arcane Bolt (staff)" for Mage.
   const WEAPON_DATA = {
     "Club":             { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
     "Dagger":           { damageDie: "1d4", damageType: "piercing",    finesse: true,  ranged: false },
@@ -1201,7 +1052,6 @@
     "Light Crossbow":   { damageDie: "1d8", damageType: "piercing",    finesse: false, ranged: true  },
     "Shortsword":       { damageDie: "1d6", damageType: "piercing",    finesse: true,  ranged: false },
     "Improvised (like a club)": { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
-    // Special Mage weapon – uses INT modifier and deals force damage.
     "Arcane Bolt (staff)": {
       damageDie: "1d6",
       damageType: "force",
@@ -1218,47 +1068,61 @@
     { name: "Hide Armour",     baseAC: 12, dexCap: 2 }
   ];
   
-  // Map backgrounds to typical weapons.
   const BACKGROUND_WEAPONS = {
     "Mage": ["Arcane Bolt (staff)"],
     "Sage": ["Club", "Dagger"],
     "Criminal/Spy": ["Dagger", "Shortsword", "Light Crossbow", IMPROVISED_WEAPON],
     "Folk Hero": ["Sickle", "Club", "Spear", IMPROVISED_WEAPON],
     "Outlander": ["Spear", "Handaxe", "Club"],
-    "Soldier": ["Spear", "Shortsword", "Handaxe"]
+    "Soldier": ["Spear", "Shortsword", "Handaxe"],
+    "Mercenary Captain": ["Shortsword", "Spear", "Handaxe"],
+    "Courtier": ["Dagger"],
+    "Cartographer": ["Club", "Handaxe", IMPROVISED_WEAPON],
+    "Gunsmith": ["Dagger", IMPROVISED_WEAPON],
+    "Wealthy Merchant": ["Dagger", "Club"]
   };
   
-  // Which backgrounds grant weapon proficiency (simple or martial).
   const BACKGROUND_PROFICIENCIES = {
     "Soldier": "martial",
     "Outlander": "simple",
     "Criminal/Spy": "simple",
     "Folk Hero": "simple",
     "Sage": "simple",
-    "Mage": "simple"  // Mage uses a quarterstaff-like weapon; treat it as simple.
+    "Mage": "simple",
+    "Mercenary Captain": "martial",
+    "Courtier": "simple",
+    "Cartographer": "simple",
+    "Gunsmith": "simple",
+    "Wealthy Merchant": "simple"
   };
   
+  const RANDOM_EQUIPMENT_ITEMS = [
+    "Mysterious Amulet", "Battered Spyglass", "Pocket Watch", "Ornate Quill",
+    "Leather-bound Journal", "Faded Map", "Flask of Unknown Liquid", "Silver Pocket Mirror",
+    "Vial of Rare Perfume", "Gambler's Dice", "Signet Ring", "Tattered Parchment",
+    "Shimmering Dust", "Worn Leather Bookmark", "Carved Wooden Figurine", "Tiny Mysterious Key",
+    "Polished Obsidian Stone", "Brass Compass", "Ancient Coin Fragment", "Richly Embroidered Cloth"
+  ];
+  
+  function addRandomEquipment(equipmentArray) {
+    const extraItem = pickRandom(RANDOM_EQUIPMENT_ITEMS);
+    equipmentArray.push(extraItem);
+    return equipmentArray;
+  }
+  
+  // ---------- Weapon & Armour Calculations ----------
   function isProficientInWeapon(weaponName, backgroundName) {
     const cat = BACKGROUND_PROFICIENCIES[backgroundName];
     if (!cat) return false;
-    // Special case for Mage and its Arcane Bolt.
-    if (weaponName === "Arcane Bolt (staff)" && backgroundName === "Mage") {
-      return true;
-    }
-    if (SIMPLE_WEAPONS.includes(weaponName)) {
-      return (cat === "simple" || cat === "martial");
-    }
-    if (MARTIAL_WEAPONS.includes(weaponName)) {
-      return (cat === "martial");
-    }
+    if (weaponName === "Arcane Bolt (staff)" && backgroundName === "Mage") return true;
+    if (SIMPLE_WEAPONS.includes(weaponName)) return (cat === "simple" || cat === "martial");
+    if (MARTIAL_WEAPONS.includes(weaponName)) return (cat === "martial");
     return false;
   }
   
   function getRandomWeaponForBackground(bgName) {
     let weaponsArray = BACKGROUND_WEAPONS[bgName];
-    if (!weaponsArray) {
-      weaponsArray = ["Club", "Dagger", IMPROVISED_WEAPON];
-    }
+    if (!weaponsArray) weaponsArray = ["Club", "Dagger", IMPROVISED_WEAPON];
     return pickRandom(weaponsArray);
   }
   
@@ -1272,7 +1136,7 @@
     if (!data) return null;
     const strMod = abilityMod(scores[0]);
     const dexMod = abilityMod(scores[1]);
-    const intMod = abilityMod(scores[3]); // INT is at index 3
+    const intMod = abilityMod(scores[3]); // INT is index 3
     let usedMod = strMod;
     if (data.useInt) {
       usedMod = intMod;
@@ -1291,16 +1155,14 @@
     };
   }
   
-  /* ==================================================
-     ========== CHARACTER GENERATION ==================
-     ================================================== */
+  // ---------- Character Generation ----------
   function parseUserName(fullInput) {
     const parts = fullInput.trim().split(/\s+/);
     let firstName = "";
     let lastName = "";
     if (parts.length === 1) {
       firstName = parts[0];
-    } else if (parts.length > 1) {
+    } else {
       firstName = parts[0];
       lastName = parts[parts.length - 1];
     }
@@ -1308,33 +1170,25 @@
   }
   
   function generateCharacter() {
-    // 1. Read name
+    // 1. Read Name
     const rawName = document.getElementById("name-input").value.trim() || "Unnamed Hero";
     let { firstName, lastName } = parseUserName(rawName);
     
-    // 2. Race & Background selection
+    // 2. Race & Background Selection
     const raceSelected = document.getElementById("race-select").value;
     const raceData = RACES.find(r => r.name === raceSelected);
-    if (!raceData) {
-      alert("Please select a race.");
-      return;
-    }
+    if (!raceData) { alert("Please select a race."); return; }
     const bgSelected = document.getElementById("background-select").value;
     const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
-    if (!bgData) {
-      alert("Please select a background.");
-      return;
+    if (!bgData) { alert("Please select a background."); return; }
+    
+    // 3. Possibly add a Nickname
+    if (bgData.nicknames && bgData.nicknames.length > 0 && Math.random() < 0.2) {
+      const nick = pickRandom(bgData.nicknames);
+      firstName += ` "${nick}"`;
     }
     
-    // 3. Possibly add a nickname
-    if (bgData.nicknames && bgData.nicknames.length > 0) {
-      if (Math.random() < 0.2) {
-        const nick = pickRandom(bgData.nicknames);
-        firstName += ` "${nick}"`;
-      }
-    }
-    
-    // 4. Apply race ability score bonuses
+    // 4. Apply Race Ability Score Bonuses
     const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
     let finalScores = [...currentScores];
     for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
@@ -1343,24 +1197,18 @@
         finalScores[2] += 1; // CON
       } else {
         const idx = ABIL_ORDER.indexOf(ability);
-        if (idx !== -1) {
-          finalScores[idx] += bonus;
-        }
+        if (idx !== -1) finalScores[idx] += bonus;
       }
     }
     
-    // 5. Personality Traits
+    // 5. Select Personality Traits
     const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
     
-    // 6. Determine level => proficiency bonus
+    // 6. Determine Level (Proficiency Bonus)
     const levelChoice = document.getElementById("level-select").value;
-    let profBonus = 0;
-    if (levelChoice === "0.5") {
-      profBonus = 1;
-    }
+    const profBonus = levelChoice === "0.5" ? 1 : 0;
     
-    // 7. Pick random weapon & armour
-    //    If background is Mage, use Arcane Bolt (staff)
+    // 7. Pick Random Weapon & Armour
     const chosenWeapon = getRandomWeaponForBackground(bgData.name);
     const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
     const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
@@ -1369,20 +1217,24 @@
     const dexMod = abilityMod(finalScores[1]);
     const computedAC = computeArmourClass(chosenArmour, dexMod);
     
-    // 8. Compile final details
+    // 8. Compile Final Details
     const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
     const featuresList = raceData.features.length ? raceData.features.map(f => `- ${f}`).join("<br/>") : "None";
     const raceLangs = raceData.languages.join(", ");
-    const bgEquipmentList = bgData.equipment.map(eq => `- ${eq}`).join("<br/>");
-    const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
-    let bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
     
-    // 9. Output the generated character – the <h2> shows the character's name.
+    // Clone and augment background equipment
+    let finalEquipment = bgData.equipment.slice();
+    finalEquipment = addRandomEquipment(finalEquipment);
+    const bgEquipmentList = finalEquipment.map(eq => `- ${eq}`).join("<br/>");
+    
+    const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
+    const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
+    
+    // Output the generated character
     const outputDiv = document.getElementById("output");
     outputDiv.style.display = "block";
     outputDiv.classList.add("generated");
     document.getElementById("charName").innerHTML = fullNameFinal;
-    
     document.getElementById("charRace").innerHTML = `
       <strong>Race:</strong> ${raceData.name}<br/>
       <em>Speed:</em> ${raceData.speed} ft<br/>
@@ -1407,14 +1259,12 @@
       From Background: ${bgLangs}
     `;
     
-    let eqHTML = `<strong>Starting Equipment (from Background):</strong><br/>${bgEquipmentList}`;
+    let eqHTML = `<strong>Starting Equipment:</strong><br/>${bgEquipmentList}`;
     if (weaponStats) {
-      const atkSign = weaponStats.attackBonus >= 0 ? "+" : "";
-      const dmgSign = weaponStats.abilityMod >= 0 ? "+" : "";
       eqHTML += `
         <br/><br/><strong>Weapon:</strong> ${weaponStats.name}<br/>
-        <em>Attack Bonus:</em> ${atkSign}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
-        <em>Damage:</em> ${weaponStats.damageDie} ${dmgSign}${weaponStats.abilityMod} (${weaponStats.damageType})
+        <em>Attack Bonus:</em> ${weaponStats.attackBonus >= 0 ? "+" : ""}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
+        <em>Damage:</em> ${weaponStats.damageDie} ${weaponStats.abilityMod >= 0 ? "+" : ""}${weaponStats.abilityMod} (${weaponStats.damageType})
       `;
     }
     eqHTML += `<br/><br/><strong>Armour:</strong> ${chosenArmour.name} (AC = ${computedAC})`;
@@ -1429,24 +1279,19 @@
     `;
     document.getElementById("charTraits").innerHTML = traitsHTML;
     
-    // Show print button
     document.getElementById("printButton").style.display = "inline-block";
   }
   
   function formatAbilityScores(scoresArr) {
     const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-    let out = "<strong>Final Ability Scores:</strong><br/>";
+    let out = "<strong>Ability Scores:</strong><br/>";
     scoresArr.forEach((sc, i) => {
       const mod = abilityMod(sc);
-      const sign = mod >= 0 ? "+" : "";
-      out += `${labels[i]}: <strong>${sc}</strong> (${sign}${mod})<br/>`;
+      out += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
     });
     return out;
   }
   
-  /* ==================================================
-     ========== FULL RANDOM FUNCTION ==================
-     ================================================== */
   function fullRandom() {
     randomName();
     randomRace();
@@ -1454,6 +1299,12 @@
     rollAbilityScores();
     generateCharacter();
   }
+  
+  // ---------- Initialization ----------
+  window.addEventListener("DOMContentLoaded", () => {
+    populateSelect("race-select", RACES.map(r => r.name));
+    populateSelect("background-select", BACKGROUNDS.map(b => b.name));
+  });
 </script>
 </body>
 </html>
