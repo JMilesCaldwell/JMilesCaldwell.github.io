@@ -2,971 +2,808 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Ensure mobile responsiveness -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fantasy Dope Wars: Evershroud Sea Edition</title>
+  <title>D&D Map Generator (Improved)</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* Reset & Basic Layout */
-    * {
-      margin: 0; 
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* --- Global Styles --- */
     body {
-      font-family: 'Trebuchet MS', sans-serif;
-      background: linear-gradient(135deg, #232526 0%, #414345 100%),
-                  url('resources/docks.png') center/cover no-repeat;
-      color: #EEE;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    /* Container Fade-In */
-    .fade-in {
-      opacity: 0;
-      animation: fadeIn 0.8s ease forwards;
-    }
-    @keyframes fadeIn {
-      to { opacity: 1; }
+      margin: 0;
+      background: url('resources/alcazar.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      text-align: center;
     }
     .container {
-      max-width: 920px;
-      margin: 1rem auto;
-      background: rgba(0,0,0,0.75);
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.5);
-      position: relative;
+      width: fit-content; /* Expand to fit the 1000px canvas */
+      margin: 2rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 10px;
     }
-    h1, h2, h3, h4 {
-      font-family: serif;
-      margin-bottom: 0.4rem;
-    }
-    p, label, select, input, button {
-      margin: 0.2rem 0;
-    }
-    .hidden { display: none; }
-    .button {
-      background: #750000;
-      color: #EEE;
-      border: 1px solid #300000;
-      padding: 0.5rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin: 0.2rem;
-      font-weight: bold;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .button:hover {
-      background: #900000;
-      box-shadow: 0 0 10px rgba(255,0,0,0.3);
-    }
-
-    /* Table & Row Hover */
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    h1, h2 {
+      font-family: 'Cinzel', serif;
       margin: 0.5rem 0;
     }
-    th, td {
-      border: 1px solid #444;
-      padding: 0.4rem;
-      text-align: center;
-      background: rgba(255,255,255,0.1);
-      transition: background 0.2s ease;
-    }
-    th {
-      background: rgba(170,0,0,0.8);
-      color: #EEE;
-    }
-    tr:hover td {
-      background: rgba(255,255,255,0.15);
-    }
-
-    /* Log area & fade for lines */
-    .log {
-      max-height: 200px;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid #444;
-      padding: 0.5rem;
-      border-radius: 6px;
-      margin: 0.5rem 0;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-    .log-line {
-      animation: fadeInLog 0.5s ease forwards;
-      opacity: 0;
-    }
-    @keyframes fadeInLog {
-      to { opacity: 1; }
-    }
-    .alert { color: #FFAAAA; font-weight: bold; }
-
-    /* Fight Container Slide-In */
-    #fightContainer {
+    .description {
+      font-size: 1.2rem;
       margin-top: 1rem;
-      background: rgba(120,0,0,0.5);
-      padding: 1rem;
-      border-radius: 8px;
-      transition: max-height 0.5s ease, opacity 0.5s ease;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      order: -1; /* so it can appear near top if we flex in mobile */
     }
-    #fightContainer.show {
-      max-height: 300px;
-      opacity: 1;
+    .mapWrapper {
+      text-align: center;
     }
-
-    /* Day Progress Bar */
-    .progress-bar {
-      width: 100%;
-      background: #444;
-      height: 10px;
+    #mapCanvas {
+      border: 2px solid #660000;
+      background: #202020;
+      display: block;
+      margin: 1rem auto; 
+      image-rendering: pixelated;
+    }
+    .mapButton {
+      display: inline-block;
+      margin: 0.5rem;
+      padding: 0.6rem 1rem;
+      font-family: 'Cinzel', serif;
+      background: #8B0000;
+      color: #FAF4E0;
+      border: 1px solid #660000;
       border-radius: 4px;
-      overflow: hidden;
-      margin: 0.5rem 0;
+      cursor: pointer;
+      text-decoration: none;
     }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #a00, #f00);
-      width: 0%;
-      transition: width 0.4s ease;
+    .mapButton:hover {
+      background: #660000;
     }
-    /* Layout Wrappers for reorder on mobile */
-    .flex-row {
+    .controls {
+      margin: 1rem auto;
       display: flex;
-      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
       gap: 1rem;
+      flex-wrap: wrap;
     }
-    .top-panel {
-      display: flex; 
-      flex-direction: column;
-    }
-    /* Reorder on mobile: show fight/log at top, then market/inventory below */
-    @media (max-width: 600px) {
-      /* We'll reorder the log and fight container to appear first. */
-      #fightContainer, #logAreaParent {
-        order: -1; /* appear first in the flow. */
-      }
-      .log {
-        max-height: 150px;
-      }
+    .controls label {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
     }
   </style>
 </head>
 <body>
-
-<!-- Setup Screen -->
-<div class="container fade-in" id="setupContainer">
-  <h1>Fantasy Dope Wars: Evershroud Sea Edition</h1>
-  <p>
-    Embark upon the seas with 10% daily interest on your debt. Fight or flee pirates, 
-    endure storms, find bargains, or get exploited by your crew. 
-    <br/>Pay off your debt or face the consequences!
-  </p>
-  
-  <label>Captain’s Name:</label>
-  <input type="text" id="playerName" placeholder="Anon Captain" style="width:160px;" value="Anon Captain" />
-  <br><br>
-
-  <label>Game Length (Days):</label>
-  <select id="gameDays">
-    <option value="15">15 (Short)</option>
-    <option value="30" selected>30 (Standard)</option>
-    <option value="60">60 (Long)</option>
-  </select>
-  <br>
-
-  <label>Starting Gold:</label>
-  <input type="number" id="startGold" value="2000" style="width:80px;">
-  <br>
-
-  <label>Starting Debt:</label>
-  <input type="number" id="startDebt" value="5000" style="width:80px;">
-  <br>
-
-  <label>Starting Cargo Capacity:</label>
-  <input type="number" id="startCargo" value="50" style="width:80px;">
-  <br>
-
-  <label>Starting HP:</label>
-  <input type="number" id="startHP" value="100" style="width:80px;">
-  <br><br>
-
-  <button class="button" onclick="startGame()">Begin</button>
-
-  <h3>High Scores</h3>
-  <div id="scoreboardContainer"></div>
-  <button class="button" onclick="clearScores()">Clear Scores</button>
-</div>
-
-<!-- Main Game Container -->
-<div class="container fade-in hidden" id="gameContainer">
-  <h2>Sea Trading</h2>
-  
-  <!-- Status & Progress -->
-  <div id="statusLine" style="margin-bottom:0.5rem; font-weight:bold;"></div>
-  <div class="progress-bar">
-    <div class="progress-fill" id="dayProgress"></div>
-  </div>
-
-  <!-- The top panel: fight container & log (on mobile, we reorder them to top) -->
-  <div class="top-panel" id="topPanel">
-    <div id="fightContainer">
-      <h4>Pirates Attack!</h4>
-      <p id="fightText"></p>
-      <button class="button" onclick="attemptRun()">Run</button>
-      <button class="button" onclick="attemptFight()">Fight</button>
+  <div class="container">
+    <h1>D&D Map Generator (Improved)</h1>
+    <p class="description">
+      "Explore deserts, forests, caverns, or other lands. Choose whether it's a bustling village or a wild frontier!"
+    </p>
+    
+    <div class="controls">
+      <!-- Biome / Map Type Selection -->
+      <label>
+        Map Biome:
+        <select id="mapType">
+          <option value="desert">Desert</option>
+          <option value="city">City</option>
+          <option value="village">Village</option>
+          <option value="grassland" selected>Grassland</option>
+          <option value="mountain">Mountain</option>
+          <option value="forest">Forest</option>
+          <option value="cavern">Cavern</option>
+        </select>
+      </label>
+      
+      <!-- Style Selection -->
+      <label>
+        Map Style:
+        <select id="mapStyle">
+          <option value="village" selected>Village</option>
+          <option value="wilds">Wilds (No Buildings)</option>
+        </select>
+      </label>
+      
+      <button class="mapButton">Generate Map</button>
+      
+      <!-- Occupant Selection -->
+      <label>
+        Occupant:
+        <select id="occupantType">
+          <option value="player">Player</option>
+          <option value="enemy">Enemy</option>
+          <option value="npc">NPC</option>
+        </select>
+      </label>
     </div>
-
-    <h3>Log</h3>
-    <div class="log" id="logAreaParent">
-      <div id="logArea"></div>
+    
+    <div class="mapWrapper">
+      <canvas id="mapCanvas" width="1000" height="1000"></canvas>
     </div>
   </div>
 
-  <!-- Travel & Market/Inventory -->
-  <div class="flex-row" style="align-items: center; margin-bottom:0.5rem;">
-    <div>
-      <label for="locationSelect">Location:</label>
-      <select id="locationSelect"></select>
-    </div>
-    <div>
-      <button class="button" onclick="travel()">Sail (Ends Day)</button>
-      <button class="button" onclick="payDebtPrompt()">Pay Debt</button>
-    </div>
-  </div>
-
-  <div class="flex-row" style="justify-content: space-between;">
-    <!-- Market -->
-    <div style="flex:1; min-width:280px; margin-right:1rem;">
-      <h3>Market</h3>
-      <table id="marketTable">
-        <thead>
-          <tr>
-            <th>Good</th>
-            <th>Price (GP)</th>
-            <th colspan="3">Actions</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <!-- Inventory -->
-    <div style="flex:1; min-width:200px;">
-      <h3>Inventory</h3>
-      <table id="inventoryTable">
-        <thead>
-          <tr>
-            <th>Good</th>
-            <th>Qty</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-
-<!-- Game Over Screen -->
-<div class="container fade-in hidden" id="gameOverContainer">
-  <h2 id="gameOverTitle">Game Over</h2>
-  <p id="gameOverMessage"></p>
-  <button class="button" onclick="backToMainMenu()">Back to Main Menu</button>
-</div>
-
-<script>
-/*************************************************************************
- * 1) Sea Travel + Risk
- *************************************************************************/
-const seaLocationsData = [
-  { name: "Azure", distance: 0 },
-  { name: "Sylfaene", distance: 5 },
-  { name: "Holgren", distance: 8 },
-  { name: "Ryer", distance: 9 },
-  { name: "Waglynn Lighthouse", distance: 11 },
-  { name: "Commorragh", distance: 11 },
-  { name: "Devyth", distance: 12 },
-  { name: "Mong Harrad", distance: 17 },
-  { name: "Refuge", distance: 19 },
-  { name: "Morgrin Lighthouse", distance: 20 },
-  { name: "World's End", distance: 22 },
-  { name: "Fulcimer Lighthouse", distance: 25 },
-  { name: "Vigden", distance: 31 },
-  { name: "Meowygg", distance: 47 },
-  { name: "Mong Vinaya", distance: 46 },
-  { name: "Virgil", distance: 39 },
-  { name: "Hermit Sanctum", distance: 40 },
-  { name: "Wren", distance: 48 },
-  { name: "Villegrom Estate", distance: 60 },
-  { name: "Silt", distance: 63 },
-  { name: "Freeport", distance: 82 },
-  { name: "Giant's Head", distance: 5 }
-];
-function computeRisk(dist) {
-  if(dist<10) return 2;
-  if(dist<30) return 3;
-  if(dist<60) return 4;
-  return 5;
-}
-
-/*************************************************************************
- * 2) Goods
- *************************************************************************/
-const goodsList = [
-  { name: "Amber", minPrice: 5, maxPrice: 20 },
-  { name: "Salt", minPrice: 1, maxPrice: 5 },
-  { name: "Tin", minPrice: 4, maxPrice: 10 },
-  { name: "Wool", minPrice: 3, maxPrice: 8 },
-  { name: "Timber", minPrice: 6, maxPrice: 12 },
-  { name: "Salted Fish", minPrice: 2, maxPrice: 7 },
-  { name: "Copper", minPrice: 8, maxPrice: 20 },
-  { name: "Blackleaf", minPrice: 15, maxPrice: 35 },
-  { name: "Botanical Specimens", minPrice: 10, maxPrice: 28 },
-  { name: "Fungus", minPrice: 2, maxPrice: 6 },
-  { name: "Artifacts", minPrice: 25, maxPrice: 60 },
-  { name: "Luxury Goods", minPrice: 40, maxPrice: 100 },
-  { name: "Weapons/Armor", minPrice: 25, maxPrice: 70 },
-  { name: "Bronze", minPrice: 20, maxPrice: 45 },
-  { name: "Incense", minPrice: 15, maxPrice: 30 },
-  { name: "Wine", minPrice: 3, maxPrice: 9 },
-  { name: "Ale", minPrice: 1, maxPrice: 4 },
-  { name: "Iron", minPrice: 30, maxPrice: 60 },
-  { name: "Grain", minPrice: 1, maxPrice: 3 },
-];
-
-/*************************************************************************
- * 3) Game State
- *************************************************************************/
-let day=1, maxDays=30;
-let gold=2000, debt=5000;
-let cargoMax=50, cargoUsed=0;
-let playerHP=100;
-let ended=false;
-let currentLocation="";
-let dailyPrices={};
-let inventory={};
-let playerName="";
-
-// 10% daily interest
-const dailyInterestRate=0.10;
-// 15% chance of ship upgrade
-const shipUpgradeChance=0.15;
-// We'll store the seaLocations with risk
-let seaLocations=[];
-
-/*************************************************************************
- * 4) Scoreboard
- *************************************************************************/
-function updateScoreboard(){
-  let cont=document.getElementById("scoreboardContainer");
-  let scores=JSON.parse(localStorage.getItem("seaEditionScores"))||[];
-  if(!scores.length){
-    cont.innerHTML="<p>No high scores yet.</p>";
-    return;
-  }
-  let html=`
-    <table>
-      <thead><tr><th>Rank</th><th>Captain</th><th>Net Worth</th><th>Date</th></tr></thead>
-      <tbody>
-  `;
-  scores.forEach((s,i)=>{
-    html+=`
-      <tr>
-        <td>${i+1}</td>
-        <td>${s.name}</td>
-        <td>${s.netWorth}</td>
-        <td>${s.date}</td>
-      </tr>
-    `;
-  });
-  html+="</tbody></table>";
-  cont.innerHTML=html;
-}
-
-function clearScores(){
-  localStorage.setItem("seaEditionScores","[]");
-  updateScoreboard();
-}
-
-function saveScore(name, netWorth){
-  let scores=JSON.parse(localStorage.getItem("seaEditionScores"))||[];
-  scores.push({
-    name,
-    netWorth,
-    date:new Date().toLocaleString()
-  });
-  scores.sort((a,b)=>b.netWorth-a.netWorth);
-  if(scores.length>10) scores=scores.slice(0,10);
-  localStorage.setItem("seaEditionScores",JSON.stringify(scores));
-}
-
-/*************************************************************************
- * 5) Setup
- *************************************************************************/
-function startGame(){
-  playerName=(document.getElementById("playerName").value||"Anon Captain").trim();
-  day=1;
-  maxDays=parseInt(document.getElementById("gameDays").value,10);
-  gold=parseInt(document.getElementById("startGold").value,10);
-  debt=parseInt(document.getElementById("startDebt").value,10);
-  cargoMax=parseInt(document.getElementById("startCargo").value,10);
-  playerHP=parseInt(document.getElementById("startHP").value,10);
-  ended=false; 
-  cargoUsed=0;
-
-  seaLocations=seaLocationsData.map(l=>{
-    return {
-      name: l.name,
-      distance: l.distance,
-      risk: computeRisk(l.distance)
+  <script type="module">
+    /*******************************************************
+     * CONFIGURATION & GLOBALS
+     *******************************************************/
+    const CONFIG = {
+      tileSize: 20,
+      gridWidth: 50,
+      gridHeight: 50,
+      assetPath: 'resources/mapassets/',
+      canvasId: 'mapCanvas'
     };
-  });
-  currentLocation=seaLocations[0].name;
 
-  // Zero out inventory
-  inventory={};
-  goodsList.forEach(g=>inventory[g.name]=0);
+    let mapData = [];
+    let occupantInHand = null;
 
-  const locSel=document.getElementById("locationSelect");
-  locSel.innerHTML="";
-  seaLocations.forEach(loc=>{
-    const opt=document.createElement("option");
-    opt.value=loc.name;
-    opt.textContent=loc.name;
-    locSel.appendChild(opt);
-  });
-  locSel.value=currentLocation;
+    // TILE TYPES (strings correspond to asset filenames)
+    const TILE_TYPES = {
+      GRASS:       "grass",
+      TREE:        "tree",
+      DIRT:        "dirt",
+      SAND:        "sand",
+      WATER:       "water",
+      ROAD_STONE:  "roadStone",
+      ROAD_DIRT:   "roadDirt",
+      STONE:       "stone",
+      WALL:        "wall",
+      FLOOR:       "floor",
+      DOOR:        "door",
+      SOLID_STONE: "solidStone"
+    };
 
-  document.getElementById("setupContainer").classList.add("hidden");
-  document.getElementById("gameContainer").classList.remove("hidden");
-  document.getElementById("gameOverContainer").classList.add("hidden");
+    // Fallback colours (used if texture image isn't available)
+    const baseTileColours = {
+      [TILE_TYPES.GRASS]:       "#9AE582",
+      [TILE_TYPES.TREE]:        "#7BC16E",
+      [TILE_TYPES.DIRT]:        "#C2A15F",
+      [TILE_TYPES.SAND]:        "#DDD593",
+      [TILE_TYPES.WATER]:       "#2B64CF",
+      [TILE_TYPES.ROAD_STONE]:  "#777777",
+      [TILE_TYPES.ROAD_DIRT]:   "#A37E4C",
+      [TILE_TYPES.STONE]:       "#AAAAAA",
+      [TILE_TYPES.WALL]:        "#8B4513",
+      [TILE_TYPES.FLOOR]:       "#555555",
+      [TILE_TYPES.DOOR]:        "#552200",
+      [TILE_TYPES.SOLID_STONE]: "#000000"
+    };
 
-  randomizePrices();
-  refreshUI();
-  log(`Welcome, Captain ${playerName}! You have ${gold} GP, owe ${debt} (10% daily interest), and ${maxDays} days!`);
-}
+    // Preloaded textures dictionary
+    const tileTextures = {};
 
-/*************************************************************************
- * 6) Price Generation
- *************************************************************************/
-function randomizePrices(){
-  dailyPrices={};
-  seaLocations.forEach(loc=>{
-    dailyPrices[loc.name]={};
-    goodsList.forEach(g=>{
-      const base=randInt(g.minPrice,g.maxPrice);
-      const variance=1+(Math.random()*0.4-0.2);
-      dailyPrices[loc.name][g.name]=Math.max(1, Math.floor(base*variance));
-    });
-  });
-}
+    // Utility: fallback colour retrieval
+    const getColorForTileType = (tileType) => baseTileColours[tileType] || "#FFFFFF";
 
-/*************************************************************************
- * 7) Refresh UI
- *************************************************************************/
-function refreshUI(){
-  const statusText=`Day ${day}/${maxDays} | Location: ${currentLocation} | Gold: ${gold} | `+
-                   `Debt: ${debt} | HP: ${playerHP} | Cargo: ${cargoUsed}/${cargoMax}`;
-  document.getElementById("statusLine").textContent=statusText;
+    // Utility: get key by value from TILE_TYPES (e.g. 'grass' → 'GRASS')
+    const getKeyByValue = (obj, val) => Object.keys(obj).find(key => obj[key] === val);
 
-  const fraction=Math.min((day-1)/maxDays,1)*100;
-  document.getElementById("dayProgress").style.width=fraction+"%";
+    // Canvas context
+    const canvas = document.getElementById(CONFIG.canvasId);
+    const ctx = canvas.getContext("2d");
 
-  // Market table
-  const marketBody=document.getElementById("marketTable").querySelector("tbody");
-  marketBody.innerHTML="";
-  goodsList.forEach(g=>{
-    const price=dailyPrices[currentLocation][g.name];
-    const tr=document.createElement("tr");
-    const buyMaxCost= Math.floor(gold / price);
-    const buyMaxSpace = cargoMax - cargoUsed;
-    const maxBuyable = Math.min(buyMaxCost,buyMaxSpace);
-
-    const have=inventory[g.name];
-    tr.innerHTML=`
-      <td>${g.name}</td>
-      <td>${price} GP</td>
-      <td>
-        <button class="button" onclick="buyPrompt('${g.name}')">Buy</button>
-      </td>
-      <td>
-        <button class="button" onclick="buyMax('${g.name}')">Buy Max</button>
-      </td>
-      <td>
-        <button class="button" onclick="sellPrompt('${g.name}')">Sell</button>
-      </td>
-      <td>
-        <button class="button" onclick="sellAll('${g.name}')">Sell All</button>
-      </td>
-    `;
-    marketBody.appendChild(tr);
-  });
-
-  // Inventory
-  const invBody=document.getElementById("inventoryTable").querySelector("tbody");
-  invBody.innerHTML="";
-  for(let g of goodsList){
-    const qty=inventory[g.name];
-    if(qty>0){
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${g.name}</td><td>${qty}</td>`;
-      invBody.appendChild(tr);
+    /*******************************************************
+     * ASSET MANAGEMENT: Preload Textures with async/await
+     *******************************************************/
+    async function preloadTextures() {
+      const tileKeys = Object.keys(TILE_TYPES);
+      const promises = tileKeys.map(key => {
+        return new Promise((resolve) => {
+          const tileName = TILE_TYPES[key];
+          const img = new Image();
+          img.src = `${CONFIG.assetPath}${tileName}.png`;
+          img.onload = () => {
+            tileTextures[key] = img;
+            resolve();
+          };
+          img.onerror = () => {
+            console.error(`Error loading image: ${CONFIG.assetPath}${tileName}.png`);
+            // Even if an image fails, we resolve (using fallback fill)
+            tileTextures[key] = null;
+            resolve();
+          };
+        });
+      });
+      await Promise.all(promises);
     }
-  }
 
-  document.getElementById("fightContainer").classList.remove("show");
-}
-
-/*************************************************************************
- * 8) Logging
- *************************************************************************/
-function log(msg){
-  const logArea=document.getElementById("logArea");
-  const line=document.createElement("div");
-  line.className="log-line";
-  line.innerHTML=msg;
-  logArea.prepend(line);
-}
-
-/*************************************************************************
- * 9) Travel
- *************************************************************************/
-function travel(){
-  if(ended)return;
-  if(day>=maxDays){
-    log(`<span class="alert">No days left!</span>`);
-    return;
-  }
-  const newLoc=document.getElementById("locationSelect").value;
-  if(newLoc===currentLocation){
-    log(`<span class="alert">You're already in ${currentLocation}!</span>`);
-    return;
-  }
-  currentLocation=newLoc;
-  day++;
-
-  log(`Sailing to <strong>${currentLocation}</strong>. Day ${day}/${maxDays}.`);
-
-  // Daily interest
-  if(debt>0){
-    debt=Math.ceil(debt*(1+dailyInterestRate));
-    log(`<span class="alert">Interest accrues! Debt is now ${debt} GP.</span>`);
-  }
-
-  doRandomEvent();
-  randomizePrices();
-  refreshUI();
-  checkGameEnd();
-}
-
-/*************************************************************************
- * 10) Buying & Selling + "Buy Max" / "Sell All"
- *************************************************************************/
-function buyPrompt(good){
-  if(ended)return;
-  const price=dailyPrices[currentLocation][good];
-  const canAfford=Math.floor(gold/price);
-  const canSpace=(cargoMax-cargoUsed);
-  const maxBuy=Math.min(canAfford, canSpace);
-  if(maxBuy<=0){
-    log(`<span class="alert">Cannot buy ${good}; no space or not enough gold!</span>`);
-    return;
-  }
-  const qtyStr=prompt(`Buy how many ${good}? (Up to ${maxBuy})`);
-  if(!qtyStr)return;
-  const qty=parseInt(qtyStr,10);
-  if(!qty||qty<1)return;
-  if(qty>maxBuy){
-    log(`<span class="alert">You can only buy up to ${maxBuy}!</span>`);
-    return;
-  }
-  const cost=qty*price;
-  gold-=cost;
-  cargoUsed+=qty;
-  inventory[good]+=qty;
-  log(`Bought ${qty} x ${good} @ ${price} => ${cost} GP total.`);
-  refreshUI();
-}
-
-function buyMax(good){
-  if(ended)return;
-  const price=dailyPrices[currentLocation][good];
-  const canAfford=Math.floor(gold/price);
-  const canSpace=(cargoMax-cargoUsed);
-  const qty=Math.min(canAfford,canSpace);
-  if(qty<=0){
-    log(`<span class="alert">Cannot buy ${good}; no space or not enough gold!</span>`);
-    return;
-  }
-  const cost=qty*price;
-  gold-=cost;
-  cargoUsed+=qty;
-  inventory[good]+=qty;
-  log(`Bought MAX: ${qty} x ${good} @ ${price} => ${cost} GP total.`);
-  refreshUI();
-}
-
-function sellPrompt(good){
-  if(ended)return;
-  const have=inventory[good];
-  if(!have){
-    log(`<span class="alert">No ${good} to sell!</span>`);
-    return;
-  }
-  const price=dailyPrices[currentLocation][good];
-  const qtyStr=prompt(`Sell how many ${good}? (You have ${have})`);
-  if(!qtyStr)return;
-  const qty=parseInt(qtyStr,10);
-  if(!qty||qty<1)return;
-  if(qty>have){
-    log(`<span class="alert">You only have ${have}!</span>`);
-    return;
-  }
-  const income=qty*price;
-  gold+=income;
-  cargoUsed-=qty;
-  inventory[good]-=qty;
-  log(`Sold ${qty} x ${good} @ ${price} => ${income} GP.`);
-  refreshUI();
-}
-
-function sellAll(good){
-  if(ended)return;
-  const have=inventory[good];
-  if(!have||have<1){
-    log(`<span class="alert">You have no ${good} to sell!</span>`);
-    return;
-  }
-  const price=dailyPrices[currentLocation][good];
-  const income=have*price;
-  gold+=income;
-  cargoUsed-=have;
-  inventory[good]=0;
-  log(`Sold ALL: ${have} x ${good} @ ${price} => ${income} GP.`);
-  refreshUI();
-}
-
-/*************************************************************************
- * 11) Pay Debt
- *************************************************************************/
-function payDebtPrompt(){
-  if(ended)return;
-  if(debt<=0){
-    log(`Your debt is already cleared!`);
-    return;
-  }
-  const amtStr=prompt(`How much to pay? (Debt: ${debt}, Gold: ${gold})`);
-  if(!amtStr)return;
-  const amt=parseInt(amtStr,10);
-  if(!amt||amt<1)return;
-  if(amt>gold){
-    log(`<span class="alert">You don't have that much gold!</span>`);
-    return;
-  }
-  gold-=amt;
-  debt-=amt;
-  if(debt<0) debt=0;
-  log(`Paid ${amt} GP. Debt is now ${debt}.`);
-  refreshUI();
-  checkGameEnd();
-}
-
-/*************************************************************************
- * 12) Extended Random Events
- *************************************************************************/
-function doRandomEvent(){
-  // Check pirates first
-  const locObj=seaLocations.find(l=>l.name===currentLocation);
-  const risk= locObj? locObj.risk : 3;
-  if(Math.random()*10<risk){
-    showFightPrompt(); 
-    return;
-  }
-  // If no pirates, we do the other events
-  const subRoll=Math.random();
-  if(subRoll<0.3){
-    foundCargoEvent();
-  } else if(subRoll<0.45){
-    attemptShipUpgrade();
-  } else {
-    const subSubRoll=Math.random();
-    if(subSubRoll<0.2){
-      stormEvent();
-    } else if(subSubRoll<0.4){
-      crewWagesEvent();
-    } else if(subSubRoll<0.6){
-      benevolentMerchantEvent();
-    } else if(subSubRoll<0.8){
-      rarePriceShiftEvent();
-    } else {
-      log(`A calm day at sea—no special incidents.`);
-    }
-  }
-}
-
-// found cargo
-function foundCargoEvent(){
-  const found=pickRandom(goodsList);
-  const qty=randInt(1,3);
-  if(cargoUsed+qty<=cargoMax){
-    inventory[found.name]+=qty;
-    cargoUsed+=qty;
-    log(`Lucky find! ${qty} x ${found.name} afloat in a drifting crate.`);
-  } else {
-    log(`You spot a crate of ${found.name}, but no cargo space left!`);
-  }
-}
-
-// ship upgrade (15%)
-function attemptShipUpgrade(){
-  const cost=randInt(200,600);
-  const extraCap=randInt(20,40);
-  log(`A local shipwright in ${currentLocation} offers +${extraCap} cargo for ${cost} GP.`);
-  if(gold<cost){
-    log(`<span class="alert">You cannot afford that new ship right now!</span>`);
-    return;
-  }
-  const buy=confirm(`Buy the bigger ship for ${cost} GP? (Cargo +${extraCap})`);
-  if(buy){
-    gold-=cost;
-    cargoMax+=extraCap;
-    log(`<span class="alert">Bought the bigger ship! Cargo is now ${cargoMax}.</span>`);
-    refreshUI();
-  } else {
-    log(`You turn down the shipwright's offer.`);
-  }
-}
-
-// storm
-function stormEvent(){
-  const stormType=Math.random();
-  if(stormType<0.5){
-    // damage cargo
-    if(cargoUsed>0){
-      const lost=randInt(1,Math.min(5,cargoUsed));
-      // pick random good
-      const possible=goodsList.filter(g=>inventory[g.name]>0);
-      if(!possible.length){
-        log(`A fierce storm hits, but no cargo to lose!`);
-        return;
+    /*******************************************************
+     * BIOME & MAP SETTINGS
+     *******************************************************/
+    function getMapSettings(theme) {
+      switch(theme) {
+        case "desert":
+          return {
+            baseDist: { SAND: 0.6, DIRT: 0.2, STONE: 0.1, TREE: 0.0, GRASS: 0.1 },
+            waterBodies: 1,
+            waterMaxSize: 50,
+            roads: 2,
+            roadMaxLength: 40,
+            buildings: 5,
+            isCavern: false
+          };
+        case "city":
+          return {
+            baseDist: { DIRT: 0.05, STONE: 0.2, GRASS: 0.15, TREE: 0.1 },
+            waterBodies: 2,
+            waterMaxSize: 80,
+            roads: 8,
+            roadMaxLength: 80,
+            buildings: 15,
+            isCavern: false
+          };
+        case "village":
+          return {
+            baseDist: { GRASS: 0.4, DIRT: 0.3, STONE: 0.05, TREE: 0.2 },
+            waterBodies: 2,
+            waterMaxSize: 60,
+            roads: 4,
+            roadMaxLength: 60,
+            buildings: 8,
+            isCavern: false
+          };
+        case "grassland":
+          return {
+            baseDist: { GRASS: 0.6, TREE: 0.2, DIRT: 0.1, STONE: 0.05 },
+            waterBodies: 3,
+            waterMaxSize: 120,
+            roads: 4,
+            roadMaxLength: 60,
+            buildings: 6,
+            isCavern: false
+          };
+        case "mountain":
+          return {
+            baseDist: { STONE: 0.4, DIRT: 0.3, GRASS: 0.1, TREE: 0.05 },
+            waterBodies: 1,
+            waterMaxSize: 40,
+            roads: 3,
+            roadMaxLength: 50,
+            buildings: 4,
+            isCavern: false
+          };
+        case "forest":
+          return {
+            baseDist: { TREE: 0.6, GRASS: 0.2, DIRT: 0.1, STONE: 0.05 },
+            waterBodies: 3,
+            waterMaxSize: 80,
+            roads: 3,
+            roadMaxLength: 50,
+            buildings: 4,
+            isCavern: false
+          };
+        case "cavern":
+          return {
+            baseDist: {},
+            waterBodies: 0,
+            waterMaxSize: 0,
+            roads: 0,
+            roadMaxLength: 0,
+            buildings: 0,
+            isCavern: true
+          };
+        default:
+          return {
+            baseDist: { GRASS: 0.6, TREE: 0.2, DIRT: 0.1, STONE: 0.05 },
+            waterBodies: 2,
+            waterMaxSize: 60,
+            roads: 4,
+            roadMaxLength: 60,
+            buildings: 6,
+            isCavern: false
+          };
       }
-      const chosen=pickRandom(possible);
-      const lostQty=Math.min(lost, inventory[chosen.name]);
-      inventory[chosen.name]-=lostQty;
-      cargoUsed-=lostQty;
-      log(`<span class="alert">A fierce storm damages ${lostQty} x ${chosen.name}!</span>`);
-    } else {
-      log(`A fierce storm hits, but you carry no cargo—no losses!`);
     }
-  } else {
-    // you take damage
-    const dmg=randInt(5,20);
-    playerHP-=dmg;
-    log(`<span class="alert">A violent storm batters your ship, dealing ${dmg} damage!</span>`);
-    if(playerHP<=0){
-      playerHP=0;
-      log(`<span class="alert">You have perished at sea!</span>`);
-      endGame(false,"Lost to the storm's fury.");
-    }
-  }
-}
 
-// crew wages
-function crewWagesEvent(){
-  const wage=randInt(50,150);
-  if(gold>=wage){
-    gold-=wage;
-    log(`Your crew demands ${wage} GP in wages— you pay to maintain morale.`);
-  } else {
-    // can't pay => negative consequence
-    const penalty=Math.random();
-    if(penalty<0.5){
-      const dmg=randInt(5,15);
-      playerHP-=dmg;
-      log(`<span class="alert">Crew is furious; a brawl ensues— you take ${dmg} damage!</span>`);
-      if(playerHP<=0){
-        playerHP=0;
-        log(`<span class="alert">Crew mutiny! You are slain!</span>`);
-        endGame(false,"Killed by your own crew for failing wages.");
-      }
-    } else {
-      if(cargoUsed>0){
-        const stolen=randInt(1,Math.min(5,cargoUsed));
-        const possible=goodsList.filter(g=>inventory[g.name]>0);
-        if(!possible.length){
-          log(`No cargo for the angry crew to steal. Tensions remain high!`);
-          return;
+    /*******************************************************
+     * MAP GENERATION FUNCTIONS
+     *******************************************************/
+    // Initialize non-cavern map using base distribution probabilities
+    function initMap(dist) {
+      mapData = [];
+      let totalP = 0;
+      for (let t in dist) { totalP += dist[t]; }
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        const row = [];
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          const rand = Math.random();
+          let chosen = TILE_TYPES.GRASS;
+          let cumul = 0;
+          for (let t in dist) {
+            cumul += dist[t];
+            if (rand < cumul) {
+              chosen = TILE_TYPES[t];
+              break;
+            }
+          }
+          row.push({ type: chosen, occupant: null });
         }
-        const chosen=pickRandom(possible);
-        const stolenQty=Math.min(stolen,inventory[chosen.name]);
-        inventory[chosen.name]-=stolenQty;
-        cargoUsed-=stolenQty;
-        log(`<span class="alert">Crew steals ${stolenQty} x ${chosen.name} in frustration!</span>`);
-      } else {
-        log(`Crew is furious but no cargo to steal— morale is dire.`);
+        mapData.push(row);
       }
     }
-  }
-}
 
-// benevolent merchant => half price up to 3
-function benevolentMerchantEvent(){
-  const item=pickRandom(goodsList);
-  const basePrice=dailyPrices[currentLocation][item.name];
-  const discount=Math.max(1,Math.floor(basePrice*0.5));
-  log(`A kind merchant offers up to 3 x ${item.name} at half price: ${discount} GP each.`);
-  const maxSpace=cargoMax-cargoUsed;
-  if(maxSpace<=0){
-    log(`<span class="alert">No cargo space to buy from the kind merchant!</span>`);
-    return;
-  }
-  let maxBuy=3;
-  if(Math.floor(gold/discount)<maxBuy){
-    maxBuy=Math.floor(gold/discount);
-  }
-  maxBuy=Math.min(maxBuy,maxSpace);
-  if(maxBuy<=0){
-    log(`<span class="alert">Not enough gold or space for the discount deal!</span>`);
-    return;
-  }
-  const qtyStr=prompt(`Buy how many ${item.name}? (Up to ${maxBuy} @ ${discount} GP each)`);
-  if(!qtyStr)return;
-  const qty=parseInt(qtyStr,10);
-  if(!qty||qty<1)return;
-  if(qty>maxBuy){
-    log(`<span class="alert">You can only buy up to ${maxBuy}!</span>`);
-    return;
-  }
-  const cost=qty*discount;
-  gold-=cost;
-  inventory[item.name]+=qty;
-  cargoUsed+=qty;
-  log(`Bought ${qty} x ${item.name} @ ${discount} => ${cost} GP total. Great deal!`);
-  refreshUI();
-}
-
-// Rare price shift => half or double
-function rarePriceShiftEvent(){
-  const chosen=pickRandom(goodsList);
-  const oldPrice=dailyPrices[currentLocation][chosen.name];
-  const cheap=(Math.random()<0.5);
-  if(cheap){
-    dailyPrices[currentLocation][chosen.name]=Math.max(1,Math.floor(oldPrice*0.5));
-    log(`<span class="alert">A sudden surplus of ${chosen.name}! Price halves: was ${oldPrice}, now ${dailyPrices[currentLocation][chosen.name]}.`);
-  } else {
-    dailyPrices[currentLocation][chosen.name]=Math.ceil(oldPrice*2);
-    log(`<span class="alert">Massive demand for ${chosen.name}! Price doubles: was ${oldPrice}, now ${dailyPrices[currentLocation][chosen.name]}.`);
-  }
-}
-
-/*************************************************************************
- * 13) Pirates Fight
- *************************************************************************/
-function showFightPrompt(){
-  const fc=document.getElementById("fightContainer");
-  fc.classList.add("show");
-  document.getElementById("fightText").textContent=
-    `Pirates blockade your route near ${currentLocation}! Run or fight?`;
-}
-
-function attemptRun(){
-  document.getElementById("fightContainer").classList.remove("show");
-  if(Math.random()<0.4){
-    log(`<span class="alert">You tried to flee, but the pirates caught you!</span>`);
-    doFight();
-  } else {
-    log(`You outrun the pirate ship!`);
-  }
-}
-
-function attemptFight(){
-  document.getElementById("fightContainer").classList.remove("show");
-  doFight();
-}
-
-function doFight(){
-  const piratePower=randInt(20,60);
-  const yourPower=randInt(15,70);
-  if(yourPower>=piratePower){
-    log(`You repel the pirates! (Enemy:${piratePower}, You:${yourPower}).`);
-    const loot=randInt(10,50);
-    gold+=loot;
-    log(`You loot ${loot} GP from their ship.`);
-  } else {
-    const dmg=randInt(10,30);
-    playerHP-=dmg;
-    log(`<span class="alert">Lost the skirmish! (Enemy:${piratePower} vs You:${yourPower}), took ${dmg} damage!</span>`);
-    if(playerHP<=0){
-      playerHP=0;
-      log(`<span class="alert">You have been slain by pirates!</span>`);
-      endGame(false,"Killed in pirate battle.");
+    // Cellular Automata-based cavern generation
+    function generateCavern() {
+      let boolMap = randomBoolMap(0.45);
+      for (let i = 0; i < 5; i++) { boolMap = doCAStep(boolMap); }
+      const { largestMap, largestRegion } = keepLargestRegion(boolMap);
+      carveExits(largestMap, largestRegion);
+      convertBoolMapToCavern(largestMap);
     }
-  }
-  refreshUI();
-}
 
-/*************************************************************************
- * 14) Check End & End
- *************************************************************************/
-function checkGameEnd(){
-  if(day>maxDays && debt>0 && !ended){
-    endGame(false, "Time’s up and your debt remains unpaid!");
-  }
-}
+    function randomBoolMap(fillChance) {
+      const bm = [];
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        const row = [];
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          row.push(Math.random() < fillChance);
+        }
+        bm.push(row);
+      }
+      return bm;
+    }
 
-function endGame(success, reason){
-  ended=true;
-  document.getElementById("gameContainer").classList.add("hidden");
-  document.getElementById("gameOverContainer").classList.remove("hidden");
+    function doCAStep(bm) {
+      const newMap = [];
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        const row = [];
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          const n = countFloorNeighbours(bm, x, y);
+          row.push(bm[y][x] ? (n >= 4) : (n >= 5));
+        }
+        newMap.push(row);
+      }
+      return newMap;
+    }
 
-  const netWorth=gold+calcInventoryValue();
-  const msg= reason+`<br>Your net worth is ~${netWorth} GP.`;
-  if(success){
-    document.getElementById("gameOverTitle").textContent="Game Over (Success)";
-  } else {
-    document.getElementById("gameOverTitle").textContent="Game Over (Failure)";
-  }
-  document.getElementById("gameOverMessage").innerHTML=msg;
-  saveScore(playerName, netWorth);
-}
+    function countFloorNeighbours(bm, cx, cy) {
+      let c = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = cx + dx, ny = cy + dy;
+          if (nx >= 0 && ny >= 0 && nx < CONFIG.gridWidth && ny < CONFIG.gridHeight) {
+            if (bm[ny][nx]) c++;
+          }
+        }
+      }
+      return c;
+    }
 
-/*************************************************************************
- * 15) Inventory Value
- *************************************************************************/
-function calcInventoryValue(){
-  let sum=0;
-  goodsList.forEach(g=>{
-    const avg=(g.minPrice+g.maxPrice)/2;
-    sum+=avg*inventory[g.name];
-  });
-  return Math.floor(sum);
-}
+    function keepLargestRegion(bm) {
+      const visited = Array.from({ length: CONFIG.gridHeight }, () => Array(CONFIG.gridWidth).fill(false));
+      let bestSize = 0, bestRegion = [];
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          if (bm[y][x] && !visited[y][x]) {
+            const queue = [[x, y]];
+            visited[y][x] = true;
+            const regionCells = [[x, y]];
+            let size = 1;
+            while (queue.length) {
+              const [cx, cy] = queue.pop();
+              for (let [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
+                if (nx >= 0 && ny >= 0 && nx < CONFIG.gridWidth && ny < CONFIG.gridHeight) {
+                  if (bm[ny][nx] && !visited[ny][nx]) {
+                    visited[ny][nx] = true;
+                    queue.push([nx, ny]);
+                    regionCells.push([nx, ny]);
+                    size++;
+                  }
+                }
+              }
+            }
+            if (size > bestSize) {
+              bestSize = size;
+              bestRegion = regionCells;
+            }
+          }
+        }
+      }
+      const largestMap = bm.map(row => row.slice());
+      const regionSet = new Set(bestRegion.map(([xx, yy]) => `${xx},${yy}`));
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          if (largestMap[y][x] && !regionSet.has(`${x},${y}`)) {
+            largestMap[y][x] = false;
+          }
+        }
+      }
+      return { largestMap, largestRegion: bestRegion };
+    }
 
-/*************************************************************************
- * 16) Return to Setup
- *************************************************************************/
-function backToMainMenu(){
-  document.getElementById("setupContainer").classList.remove("hidden");
-  document.getElementById("gameContainer").classList.add("hidden");
-  document.getElementById("gameOverContainer").classList.add("hidden");
-  updateScoreboard();
-}
+    function carveExits(bm, regionCells) {
+      let boundaryCount = 0;
+      for (const [x, y] of regionCells) {
+        if (x === 0 || x === CONFIG.gridWidth - 1 || y === 0 || y === CONFIG.gridHeight - 1) {
+          boundaryCount++;
+          if (boundaryCount >= 3) break;
+        }
+      }
+      if (boundaryCount < 1) {
+        const needed = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < needed; i++) { carveOneExit(bm, regionCells); }
+      } else if (boundaryCount < 3) {
+        const toAdd = Math.floor(Math.random() * (3 - boundaryCount + 1));
+        for (let i = 0; i < toAdd; i++) { carveOneExit(bm, regionCells); }
+      }
+    }
 
-/*************************************************************************
- * Utility 
- *************************************************************************/
-function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
-function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+    function carveOneExit(bm, regionCells) {
+      if (!regionCells.length) return;
+      const [rx, ry] = regionCells[Math.floor(Math.random() * regionCells.length)];
+      let edgeX, edgeY;
+      const side = Math.floor(Math.random() * 4);
+      if (side === 0) { edgeY = 0; edgeX = Math.floor(Math.random() * CONFIG.gridWidth); }
+      else if (side === 1) { edgeY = CONFIG.gridHeight - 1; edgeX = Math.floor(Math.random() * CONFIG.gridWidth); }
+      else if (side === 2) { edgeX = 0; edgeY = Math.floor(Math.random() * CONFIG.gridHeight); }
+      else { edgeX = CONFIG.gridWidth - 1; edgeY = Math.floor(Math.random() * CONFIG.gridHeight); }
+      carveLine(bm, rx, ry, edgeX, edgeY);
+    }
 
-// On load
-window.addEventListener("load", updateScoreboard);
-</script>
+    function carveLine(bm, x1, y1, x2, y2) {
+      let steps = 0;
+      while ((x1 !== x2 || y1 !== y2) && steps < 2000) {
+        bm[y1][x1] = true;
+        if (x1 < x2) x1++;
+        else if (x1 > x2) x1--;
+        if (y1 < y2) y1++;
+        else if (y1 > y2) y1--;
+        steps++;
+      }
+      if (x1 >= 0 && x1 < CONFIG.gridWidth && y1 >= 0 && y1 < CONFIG.gridHeight) {
+        bm[y1][x1] = true;
+      }
+    }
+
+    function convertBoolMapToCavern(bm) {
+      mapData = [];
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        const row = [];
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          if (bm[y][x]) {
+            const r = Math.random();
+            if (r < 0.03) row.push({ type: TILE_TYPES.WATER, occupant: null });
+            else if (r < 0.15) row.push({ type: TILE_TYPES.DIRT, occupant: null });
+            else row.push({ type: TILE_TYPES.STONE, occupant: null });
+          } else {
+            row.push({ type: TILE_TYPES.SOLID_STONE, occupant: null });
+          }
+        }
+        mapData.push(row);
+      }
+    }
+
+    /*******************************************************
+     * WATER & ROAD FUNCTIONS
+     *******************************************************/
+    function createWaterBody(maxSize) {
+      const sx = Math.floor(Math.random() * CONFIG.gridWidth);
+      const sy = Math.floor(Math.random() * CONFIG.gridHeight);
+      floodFillWater(sx, sy, maxSize);
+    }
+    function floodFillWater(sx, sy, maxSize) {
+      const stack = [[sx, sy]];
+      let size = 0;
+      while (stack.length && size < maxSize) {
+        const [cx, cy] = stack.pop();
+        if (cx < 0 || cy < 0 || cx >= CONFIG.gridWidth || cy >= CONFIG.gridHeight) continue;
+        if (mapData[cy][cx].type === TILE_TYPES.WATER) continue;
+        if (Math.random() < 0.2) continue;
+        mapData[cy][cx].type = TILE_TYPES.WATER;
+        size++;
+        stack.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
+      }
+    }
+    function createRoad(maxLength, minW, maxW) {
+      let x, y;
+      if (Math.random() < 0.5) {
+        x = Math.floor(Math.random() * CONFIG.gridWidth);
+        y = (Math.random() < 0.5) ? 0 : CONFIG.gridHeight - 1;
+      } else {
+        x = (Math.random() < 0.5) ? 0 : CONFIG.gridWidth - 1;
+        y = Math.floor(Math.random() * CONFIG.gridHeight);
+      }
+      let direction = getRandomDirection();
+      const length = Math.floor(Math.random() * (maxLength / 2) + maxLength / 2);
+      const w = Math.floor(Math.random() * (maxW - minW + 1)) + minW;
+      for (let i = 0; i < length; i++) {
+        carveRoad(x, y, w);
+        x += direction.dx;
+        y += direction.dy;
+        if (Math.random() < 0.2) direction = getRandomDirection(direction);
+        if (x < 0 || x >= CONFIG.gridWidth || y < 0 || y >= CONFIG.gridHeight) break;
+      }
+    }
+    function carveRoad(cx, cy, width) {
+      const r = Math.floor(width / 2);
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx >= 0 && nx < CONFIG.gridWidth && ny >= 0 && ny < CONFIG.gridHeight) {
+            mapData[ny][nx].type = (Math.random() < 0.6) ? TILE_TYPES.ROAD_STONE : TILE_TYPES.ROAD_DIRT;
+          }
+        }
+      }
+    }
+    function getRandomDirection(prevDir) {
+      const dirs = [{dx:1,dy:0}, {dx:-1,dy:0}, {dx:0,dy:1}, {dx:0,dy:-1}];
+      if (prevDir && Math.random() < 0.6) return prevDir;
+      return dirs[Math.floor(Math.random() * dirs.length)];
+    }
+
+    /*******************************************************
+     * BUILDING GENERATION (with improved door logic)
+     *******************************************************/
+    const buildingShapes = [
+      { width: 4, height: 4, layout: [[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1]] },
+      { width: 5, height: 5, layout: [[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]] },
+      { width: 6, height: 5, layout: [[1,1,1,1,1,1],[1,0,0,0,0,1],[1,0,0,0,0,1],[1,0,0,0,0,1],[1,1,1,1,1,1]] },
+      { width: 7, height: 5, layout: [[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1]] },
+      { width: 7, height: 7, layout: [[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1]] },
+      { width: 8, height: 5, layout: [[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]] }
+    ];
+    function createBuildings(numBuildings) {
+      let attempts = 0, placed = 0;
+      while (placed < numBuildings && attempts < numBuildings * 50) {
+        attempts++;
+        const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
+        const sx = Math.floor(Math.random() * (CONFIG.gridWidth - shape.width));
+        const sy = Math.floor(Math.random() * (CONFIG.gridHeight - shape.height));
+        if (canPlaceBuilding(sx, sy, shape)) {
+          placeBuilding(sx, sy, shape);
+          placed++;
+        }
+      }
+    }
+    function canPlaceBuilding(sx, sy, shape) {
+      for (let y = 0; y < shape.height; y++) {
+        for (let x = 0; x < shape.width; x++) {
+          const val = shape.layout[y][x];
+          if (val === 1 || val === 0) {
+            const tileType = mapData[sy+y][sx+x].type;
+            if ([TILE_TYPES.WATER, TILE_TYPES.ROAD_STONE, TILE_TYPES.ROAD_DIRT, TILE_TYPES.SOLID_STONE].includes(tileType)) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+    function placeBuilding(sx, sy, shape) {
+      let localLayout = shape.layout.map(row => row.slice());
+      subdivideBuilding(localLayout);
+      placeExteriorDoor(localLayout);
+      ensureAccessibility(localLayout);
+      stampBuildingOntoMap(localLayout, sx, sy);
+    }
+    function subdivideBuilding(localLayout) {
+      const h = localLayout.length;
+      const w = localLayout[0].length;
+      if (w >= 7) {
+        const wx = Math.floor(w / 2);
+        for (let y = 1; y < h - 1; y++) { localLayout[y][wx] = 1; }
+        const doorY = Math.floor(Math.random() * (h - 2)) + 1;
+        localLayout[doorY][wx] = 2;
+      }
+      if (h >= 7) {
+        const wy = Math.floor(h / 2);
+        for (let x = 1; x < w - 1; x++) { localLayout[wy][x] = 1; }
+        const doorX = Math.floor(Math.random() * (w - 2)) + 1;
+        localLayout[wy][doorX] = 2;
+      }
+    }
+    function placeExteriorDoor(localLayout) {
+      const h = localLayout.length;
+      const w = localLayout[0].length;
+      let candidates = [];
+      for (let x = 1; x < w - 1; x++) {
+        if (isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout, x, 0)) {
+          candidates.push({ px: x, py: 0 });
+        }
+        if (isWallish(localLayout[h-1][x]) && hasExactlyTwoOrthWalls(localLayout, x, h-1)) {
+          candidates.push({ px: x, py: h-1 });
+        }
+      }
+      for (let y = 1; y < h - 1; y++) {
+        if (isWallish(localLayout[y][0]) && hasExactlyTwoOrthWalls(localLayout, 0, y)) {
+          candidates.push({ px: 0, py: y });
+        }
+        if (isWallish(localLayout[y][w-1]) && hasExactlyTwoOrthWalls(localLayout, w-1, y)) {
+          candidates.push({ px: w-1, py: y });
+        }
+      }
+      if (candidates.length > 0) {
+        const howMany = 1 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < howMany && candidates.length; i++) {
+          const idx = Math.floor(Math.random() * candidates.length);
+          const chosen = candidates[idx];
+          localLayout[chosen.py][chosen.px] = 2;
+          candidates.splice(idx, 1);
+        }
+      }
+    }
+    function ensureAccessibility(localLayout) {
+      const floors = collectFloorCells(localLayout);
+      if (!floors.length) return;
+      const doorCoords = collectDoorCoords(localLayout);
+      if (!doorCoords.length) return;
+      const mainDoor = doorCoords.find(d => isOnPerimeter(localLayout, d.x, d.y)) || doorCoords[0];
+      if (!mainDoor) return;
+      const visited = new Set();
+      const queue = [];
+      queue.push({ x: mainDoor.x, y: mainDoor.y });
+      visited.add(`${mainDoor.x},${mainDoor.y}`);
+      while (queue.length) {
+        const { x, y } = queue.shift();
+        for (const [nx, ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]) {
+          if (nx < 0 || ny < 0 || nx >= localLayout[0].length || ny >= localLayout.length) continue;
+          const val = localLayout[ny][nx];
+          if (val === 0 || val === 2) {
+            const key = `${nx},${ny}`;
+            if (!visited.has(key)) {
+              visited.add(key);
+              queue.push({ x: nx, y: ny });
+            }
+          }
+        }
+      }
+      const allVisited = floors.every(cell => visited.has(`${cell.x},${cell.y}`));
+      if (!allVisited) { forceInteriorDoor(localLayout, visited); }
+    }
+    function collectFloorCells(localLayout) {
+      const res = [];
+      for (let y = 0; y < localLayout.length; y++) {
+        for (let x = 0; x < localLayout[0].length; x++) {
+          if (localLayout[y][x] === 0 || localLayout[y][x] === 2) { res.push({ x, y }); }
+        }
+      }
+      return res;
+    }
+    function collectDoorCoords(localLayout) {
+      const res = [];
+      for (let y = 0; y < localLayout.length; y++) {
+        for (let x = 0; x < localLayout[0].length; x++) {
+          if (localLayout[y][x] === 2) { res.push({ x, y }); }
+        }
+      }
+      return res;
+    }
+    function isOnPerimeter(localLayout, x, y) {
+      return (x === 0 || y === 0 || x === localLayout[0].length - 1 || y === localLayout.length - 1);
+    }
+    function isWallish(val) { return val === 1 || val === 2; }
+    function hasExactlyTwoOrthWalls(localLayout, x, y) {
+      const up = (y > 0) && isWallish(localLayout[y-1][x]);
+      const down = (y < localLayout.length - 1) && isWallish(localLayout[y+1][x]);
+      const left = (x > 0) && isWallish(localLayout[y][x-1]);
+      const right = (x < localLayout[0].length - 1) && isWallish(localLayout[y][x+1]);
+      const count = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
+      if (count === 2) {
+        if (up && down) return true;
+        if (left && right) return true;
+      }
+      return false;
+    }
+    function forceInteriorDoor(localLayout, visited) {
+      const h = localLayout.length, w = localLayout[0].length;
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          if (localLayout[y][x] === 1 && hasExactlyTwoOrthWalls(localLayout, x, y)) {
+            const sides = [[1,0],[-1,0],[0,1],[0,-1]];
+            let visitedSide = false, unvisitedSide = false;
+            for (const [dx, dy] of sides) {
+              const nx = x + dx, ny = y + dy;
+              if (nx >= 0 && ny >= 0 && nx < w && ny < h) {
+                if (localLayout[ny][nx] === 0 || localLayout[ny][nx] === 2) {
+                  if (visited.has(`${nx},${ny}`)) visitedSide = true;
+                  else unvisitedSide = true;
+                }
+              }
+            }
+            if (visitedSide && unvisitedSide) { localLayout[y][x] = 2; return; }
+          }
+        }
+      }
+    }
+    function stampBuildingOntoMap(localLayout, sx, sy) {
+      const h = localLayout.length, w = localLayout[0].length;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const val = localLayout[y][x];
+          if (val === 1) { mapData[sy+y][sx+x].type = TILE_TYPES.WALL; }
+          else if (val === 0) { mapData[sy+y][sx+x].type = TILE_TYPES.FLOOR; }
+          else if (val === 2) { mapData[sy+y][sx+x].type = TILE_TYPES.DOOR; }
+        }
+      }
+    }
+
+    /*******************************************************
+     * DRAWING FUNCTIONS
+     *******************************************************/
+    function drawMap() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let y = 0; y < CONFIG.gridHeight; y++) {
+        for (let x = 0; x < CONFIG.gridWidth; x++) {
+          drawTile(x, y);
+        }
+      }
+    }
+    function drawTile(x, y) {
+      const tile = mapData[y][x];
+      const px = x * CONFIG.tileSize, py = y * CONFIG.tileSize;
+      const key = getKeyByValue(TILE_TYPES, tile.type);
+      const tex = tileTextures[key];
+      if (tex && tex.complete) { ctx.drawImage(tex, px, py, CONFIG.tileSize, CONFIG.tileSize); }
+      else { ctx.fillStyle = getColorForTileType(tile.type); ctx.fillRect(px, py, CONFIG.tileSize, CONFIG.tileSize); }
+      if (tile.occupant) {
+        ctx.fillStyle = tile.occupant.color;
+        const radius = CONFIG.tileSize * 0.3;
+        ctx.beginPath();
+        ctx.arc(px + CONFIG.tileSize/2, py + CONFIG.tileSize/2, radius, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.strokeRect(px, py, CONFIG.tileSize, CONFIG.tileSize);
+    }
+
+    /*******************************************************
+     * EVENT HANDLING FOR OCCUPANT PLACEMENT
+     *******************************************************/
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const tileX = Math.floor((e.clientX - rect.left) / CONFIG.tileSize);
+      const tileY = Math.floor((e.clientY - rect.top) / CONFIG.tileSize);
+      if (tileX < 0 || tileY < 0 || tileX >= CONFIG.gridWidth || tileY >= CONFIG.gridHeight) return;
+      const tile = mapData[tileY][tileX];
+      if (!occupantInHand) {
+        if (!tile.occupant) {
+          const occupantType = document.getElementById("occupantType").value;
+          let occupantColor = "#FFFFFF";
+          if (occupantType === "player") occupantColor = "#00FF00";
+          else if (occupantType === "enemy") occupantColor = "#FF0000";
+          else if (occupantType === "npc") occupantColor = "#0000FF";
+          tile.occupant = { type: occupantType, color: occupantColor };
+        } else {
+          occupantInHand = tile.occupant;
+          tile.occupant = null;
+        }
+      } else {
+        tile.occupant = occupantInHand;
+        occupantInHand = null;
+      }
+      drawTile(tileX, tileY);
+    });
+
+    /*******************************************************
+     * MAIN INITIALISATION FUNCTION
+     *******************************************************/
+    async function init() {
+      try { await preloadTextures(); }
+      catch (err) { console.error("Error preloading textures:", err); }
+      
+      const theme = document.getElementById("mapType").value;
+      const style = document.getElementById("mapStyle").value;
+      const settings = getMapSettings(theme);
+      
+      if (settings.isCavern) { generateCavern(); }
+      else {
+        initMap(settings.baseDist);
+        for (let i = 0; i < settings.waterBodies; i++) { createWaterBody(settings.waterMaxSize); }
+        for (let r = 0; r < settings.roads; r++) { createRoad(settings.roadMaxLength, 2, 3); }
+      }
+      if (!settings.isCavern && style === "village" && settings.buildings > 0) {
+        createBuildings(settings.buildings);
+      }
+      drawMap();
+    }
+
+    /*******************************************************
+     * INITIALISATION & EVENT BINDING
+     *******************************************************/
+    document.querySelector(".mapButton").addEventListener("click", () => { init(); });
+    window.addEventListener("load", () => {
+      init();
+      // Additional redraw via requestAnimationFrame after 1 second (belt-and-braces)
+      setTimeout(() => { requestAnimationFrame(drawMap); }, 1000);
+    });
+  </script>
 </body>
 </html>
