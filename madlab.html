@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>D&D Map Generator (Decorative Rocks & Full-Sprite Occupants)</title>
+  <title>D&D Map Generator (Simple Floors & Red-Bordered Occupants)</title>
 
   <!-- Example fonts; adapt if needed -->
   <link 
@@ -84,9 +84,9 @@
 </head>
 <body>
   <div class="container">
-    <h1>D&D Map Generator (Decorative Rocks & Full-Sprite Occupants)</h1>
+    <h1>Map Generator (Single Floor & Red-Bordered Sprites)</h1>
     <p class="description">
-      "Rocks only appear sparingly in deserts. Occupants fully replace the tile when present."
+      "One marble floor type per map. Occupants fully replace a tile, with a 1px red border inside the tile."
     </p>
 
     <div class="controls">
@@ -101,7 +101,6 @@
           <option value="mountain">Mountain</option>
           <option value="forest">Forest</option>
           <option value="cavern">Cavern</option>
-          <!-- Sample new types for demonstration; you can tweak or add your own -->
           <option value="volcanic">Volcanic</option>
           <option value="mudlands">Mudlands</option>
         </select>
@@ -133,7 +132,7 @@
       <label>
         Sprite:
         <select id="occupantSprite">
-          <!-- Removing the duplicate "asassin"; using "assassin" only. -->
+          <!-- Adjust or expand as needed. Ensure you actually have these images in your 'resources/occupants' folder. -->
           <option value="paladin">paladin</option>
           <option value="fighter">fighter</option>
           <option value="guardian">guardian</option>
@@ -182,10 +181,9 @@
     const GRID_HEIGHT = 50;
 
     let mapData = [];
-    let occupantInHand = null;
 
     /*******************************************************
-     * TILE TYPES (including a 'desertrock' tile)
+     * TILE TYPES
      *******************************************************/
     const TILE_TYPES = {
       GRASS:          "grass",
@@ -209,17 +207,11 @@
       MARBLE_2:       "marble2",
       MARBLE_3:       "marble3",
       MARBLE_4:       "marble4",
-      MARBLE_CRACK:   "marblecrack",
       DARK_TILE:      "darktile",
       DARK_TILE2:     "darktile2",
       DARK_TILE3:     "darktile3",
       DARK_TILE4:     "darktile4",
       CAVE_WALL:      "cavewall",
-      BRICK_1:        "brick1",
-      BRICK_2:        "brick2",
-      BRICK_3:        "brick3",
-      BRICK_4:        "brick4",
-      BRICK_5:        "brick5",
       MUD:            "mud",
       MUD2:           "mud2",
       MUD3:           "mud3",
@@ -262,17 +254,11 @@
       [TILE_TYPES.MARBLE_2]:       "#efefef",
       [TILE_TYPES.MARBLE_3]:       "#dddddd",
       [TILE_TYPES.MARBLE_4]:       "#cccccc",
-      [TILE_TYPES.MARBLE_CRACK]:   "#bbbaba",
       [TILE_TYPES.DARK_TILE]:      "#333333",
       [TILE_TYPES.DARK_TILE2]:     "#2a2a2a",
       [TILE_TYPES.DARK_TILE3]:     "#242424",
       [TILE_TYPES.DARK_TILE4]:     "#1f1f1f",
       [TILE_TYPES.CAVE_WALL]:      "#444444",
-      [TILE_TYPES.BRICK_1]:        "#9f5a3c",
-      [TILE_TYPES.BRICK_2]:        "#a66647",
-      [TILE_TYPES.BRICK_3]:        "#b26f4b",
-      [TILE_TYPES.BRICK_4]:        "#c37a4d",
-      [TILE_TYPES.BRICK_5]:        "#d3844b",
       [TILE_TYPES.MUD]:            "#6f4f3c",
       [TILE_TYPES.MUD2]:           "#6d4e3a",
       [TILE_TYPES.MUD3]:           "#5e4030",
@@ -296,13 +282,6 @@
     const tileTextures = {};
     const occupantSprites = {};
 
-    // occupant border colours for occupant type
-    const occupantColours = {
-      player: "#00FF00",
-      enemy:  "#FF0000",
-      npc:    "#0000FF"
-    };
-
     function getColorForTileType(tileType) {
       return baseTileColours[tileType] || "#FFFFFF";
     }
@@ -317,7 +296,6 @@
      * PRELOAD IMAGES
      *******************************************************/
     function preloadImages(onComplete) {
-      // occupant sprite names
       const occupantSpriteNames = [
         "paladin","fighter","guardian","halfblood","berserker","assassin",
         "warlock","sorcerer","priestess","cleric","druid","demon","mage",
@@ -469,8 +447,6 @@
      * MAIN MAP GENERATION
      *******************************************************/
     function generateMap() {
-      occupantInHand = null;
-
       const theme = document.getElementById("mapType").value;
       const style = document.getElementById("mapStyle").value;
       const settings = getMapSettings(theme);
@@ -491,14 +467,13 @@
         createBuildings(settings.buildings);
       }
 
-      // Theming pass for desert, forest, volcanic, mudlands, etc.
       decorateMap(theme);
 
       drawMap();
     }
 
     /*******************************************************
-     * MAP INIT (Non-cavern)
+     * NON-CAVERN MAP INIT
      *******************************************************/
     function initMap(dist) {
       mapData = [];
@@ -526,66 +501,36 @@
     }
 
     /*******************************************************
-     * DECORATION PASS
+     * LIGHT DECORATION PASS
      *******************************************************/
     function decorateMap(theme){
-      // 1) Terrain modifications
+      // Example theming
       for (let y=0; y<GRID_HEIGHT; y++){
         for (let x=0; x<GRID_WIDTH; x++){
           const tile = mapData[y][x];
 
-          // Forest => random shrubs in place of some trees
-          if (theme === "forest" && tile.type === TILE_TYPES.TREE) {
+          if(theme === "forest" && tile.type === TILE_TYPES.TREE){
+            // randomly convert some trees to shrubs
             if(Math.random() < 0.4){
-              tile.type = pickRandom([
-                TILE_TYPES.TREE, TILE_TYPES.SHRUB1, TILE_TYPES.SHRUB2, TILE_TYPES.SHRUB3
-              ]);
+              tile.type = pickRandom([TILE_TYPES.SHRUB1, TILE_TYPES.SHRUB2, TILE_TYPES.SHRUB3]);
             }
           }
-          // Volcanic => some stone => lava/magma
-          if (theme === "volcanic" && tile.type === TILE_TYPES.STONE) {
-            const r = Math.random();
-            if (r < 0.1) tile.type = TILE_TYPES.LAVA;
-            else if (r < 0.2) tile.type = TILE_TYPES.MAGMA;
-            else if (r < 0.3) tile.type = pickRandom([TILE_TYPES.BRIMSTONE, TILE_TYPES.BRIMSTONE2]);
+          // Volcanic => chance to turn stone => lava/magma
+          if(theme === "volcanic" && tile.type === TILE_TYPES.STONE){
+            let r = Math.random();
+            if(r < 0.1) tile.type = TILE_TYPES.LAVA;
+            else if(r < 0.2) tile.type = TILE_TYPES.MAGMA;
+            else if(r < 0.3) tile.type = pickRandom([TILE_TYPES.BRIMSTONE, TILE_TYPES.BRIMSTONE2]);
           }
-          // Mudlands => DIRT/SAND => MUD
-          if (theme === "mudlands" && 
-              (tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND)) {
+          // Mudlands => muddy conversions
+          if(theme === "mudlands" && (tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND)){
             tile.type = pickRandom([TILE_TYPES.MUD, TILE_TYPES.MUD2, TILE_TYPES.MUD3]);
           }
-          // Desert => we do NOT automatically turn SAND into desert rock.
-          // Instead, we just transform sand => desert sands/dunes/whitesand.
-          // We'll do a separate step for decorative rocks.
-          if (theme === "desert" && tile.type === TILE_TYPES.SAND) {
+          // Desert => transform base sand into dunes or whitesand
+          if(theme === "desert" && tile.type === TILE_TYPES.SAND){
             tile.type = pickRandom([
-              TILE_TYPES.DESERTSAND, TILE_TYPES.DESERTDUNE, 
-              TILE_TYPES.DESERTDUNE2, TILE_TYPES.WHITESAND
+              TILE_TYPES.DESERTSAND, TILE_TYPES.DESERTDUNE, TILE_TYPES.DESERTDUNE2, TILE_TYPES.WHITESAND
             ]);
-          }
-        }
-      }
-
-      // 2) If desert, add decorative “rocks” at low frequency
-      if(theme === "desert"){
-        placeDesertRocks(0.03); // about 3% chance per tile
-      }
-    }
-
-    // Low-frequency pass that changes some desert-y tile into DESERTROCK
-    function placeDesertRocks(chance){
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          const tile = mapData[y][x];
-          // We'll only place a rock on a “desert” type tile:
-          if( tile.type === TILE_TYPES.DESERTSAND || 
-              tile.type === TILE_TYPES.DESERTDUNE ||
-              tile.type === TILE_TYPES.DESERTDUNE2 ||
-              tile.type === TILE_TYPES.WHITESAND )
-          {
-            if(Math.random() < chance){
-              tile.type = TILE_TYPES.DESERTROCK;
-            }
           }
         }
       }
@@ -603,12 +548,11 @@
       carveExits(largestMap);
       convertBoolMapToCavern(largestMap);
     }
-
     function randomBoolMap(fillChance) {
       let bm = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        let row = [];
-        for (let x = 0; x < GRID_WIDTH; x++) {
+      for (let y=0; y<GRID_HEIGHT; y++){
+        let row=[];
+        for (let x=0; x<GRID_WIDTH; x++){
           row.push(Math.random() < fillChance);
         }
         bm.push(row);
@@ -617,133 +561,126 @@
     }
     function doCAStep(boolMap) {
       let newMap = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        let row = [];
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          const n = countFloorNeighbours(boolMap, x, y);
+      for (let y=0; y<GRID_HEIGHT; y++){
+        let row=[];
+        for(let x=0; x<GRID_WIDTH; x++){
+          const n = countFloorNeighbours(boolMap,x,y);
           const curr = boolMap[y][x];
-          if (curr) row.push(n >= 4);
-          else      row.push(n >= 5);
+          if(curr) row.push(n>=4);
+          else     row.push(n>=5);
         }
         newMap.push(row);
       }
       return newMap;
     }
     function countFloorNeighbours(bm, cx, cy) {
-      let c = 0;
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (dx === 0 && dy === 0) continue;
-          let nx = cx + dx;
-          let ny = cy + dy;
-          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
-            if (bm[ny][nx]) c++;
+      let c=0;
+      for(let dy=-1; dy<=1; dy++){
+        for(let dx=-1; dx<=1; dx++){
+          if(dx===0 && dy===0) continue;
+          let nx=cx+dx, ny=cy+dy;
+          if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
+            if(bm[ny][nx]) c++;
           }
         }
       }
       return c;
     }
-    function keepLargestRegion(boolMap) {
+    function keepLargestRegion(boolMap){
       let visited = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
+      for(let y=0; y<GRID_HEIGHT; y++){
         visited[y] = new Array(GRID_WIDTH).fill(false);
       }
-      let bestSize = 0, bestRegion = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (boolMap[y][x] && !visited[y][x]) {
-            let queue = [[x, y]];
-            visited[y][x] = true;
-            let regionCells = [[x, y]];
-            let size = 1;
-
-            while (queue.length) {
-              const [cx, cy] = queue.pop();
-              for (let [nx, ny] of [[cx+1, cy],[cx-1, cy],[cx, cy+1],[cx, cy-1]]) {
-                if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
-                  if (boolMap[ny][nx] && !visited[ny][nx]) {
-                    visited[ny][nx] = true;
-                    queue.push([nx, ny]);
-                    regionCells.push([nx, ny]);
+      let bestSize=0, bestRegion=[];
+      for(let y=0; y<GRID_HEIGHT; y++){
+        for(let x=0; x<GRID_WIDTH; x++){
+          if(boolMap[y][x] && !visited[y][x]){
+            let queue=[[x,y]];
+            visited[y][x]=true;
+            let regionCells=[[x,y]];
+            let size=1;
+            while(queue.length){
+              const [cx,cy]=queue.pop();
+              for(let [nx,ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]){
+                if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
+                  if(boolMap[ny][nx] && !visited[ny][nx]){
+                    visited[ny][nx]=true;
+                    queue.push([nx,ny]);
+                    regionCells.push([nx,ny]);
                     size++;
                   }
                 }
               }
             }
-            if (size > bestSize) {
-              bestSize = size;
-              bestRegion = regionCells;
+            if(size>bestSize){
+              bestSize=size;
+              bestRegion=regionCells;
             }
           }
         }
       }
-      let largestMap = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        largestMap[y] = boolMap[y].slice();
+      let largestMap=[];
+      for(let y=0; y<GRID_HEIGHT; y++){
+        largestMap[y]=boolMap[y].slice();
       }
-      let regionSet = new Set(bestRegion.map(([xx, yy]) => `${xx},${yy}`));
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (largestMap[y][x]) {
-            if (!regionSet.has(`${x},${y}`)) {
-              largestMap[y][x] = false;
-            }
+      let regionSet=new Set(bestRegion.map(([xx,yy])=>`${xx},${yy}`));
+      for(let y=0;y<GRID_HEIGHT;y++){
+        for(let x=0;x<GRID_WIDTH;x++){
+          if(largestMap[y][x] && !regionSet.has(`${x},${y}`)){
+            largestMap[y][x]=false;
           }
         }
       }
       return { largestMap, largestRegion: bestRegion };
     }
-    function carveExits(boolMap) {
-      let openings = 0;
-      for (let x=0; x<GRID_WIDTH; x++){
-        if (boolMap[0][x] || boolMap[GRID_HEIGHT-1][x]) openings++;
+    function carveExits(boolMap){
+      let openings=0;
+      for(let x=0;x<GRID_WIDTH;x++){
+        if(boolMap[0][x]||boolMap[GRID_HEIGHT-1][x]) openings++;
       }
-      for (let y=0; y<GRID_HEIGHT; y++){
-        if (boolMap[y][0] || boolMap[y][GRID_WIDTH-1]) openings++;
+      for(let y=0;y<GRID_HEIGHT;y++){
+        if(boolMap[y][0]||boolMap[y][GRID_WIDTH-1]) openings++;
       }
-      if (openings < 1) carveRandomLine(boolMap);
-      if (openings < 2) carveRandomLine(boolMap);
-      if (openings < 3 && Math.random()<0.5) carveRandomLine(boolMap);
+      if(openings<1) carveRandomLine(boolMap);
+      if(openings<2) carveRandomLine(boolMap);
+      if(openings<3 && Math.random()<0.5) carveRandomLine(boolMap);
     }
-    function carveRandomLine(boolMap) {
-      let tries = 0;
-      let cx, cy;
-      while (tries < 500) {
-        cx = Math.floor(Math.random()*GRID_WIDTH);
-        cy = Math.floor(Math.random()*GRID_HEIGHT);
-        if (boolMap[cy][cx]) break;
+    function carveRandomLine(boolMap){
+      let tries=0; let cx,cy;
+      while(tries<500){
+        cx=Math.floor(Math.random()*GRID_WIDTH);
+        cy=Math.floor(Math.random()*GRID_HEIGHT);
+        if(boolMap[cy][cx]) break;
         tries++;
       }
-      let ex = (Math.random()<0.5)? 0 : GRID_WIDTH-1;
-      let ey = Math.floor(Math.random()*GRID_HEIGHT);
-      carveLine(boolMap, cx, cy, ex, ey);
+      let ex=(Math.random()<0.5)?0:GRID_WIDTH-1;
+      let ey=Math.floor(Math.random()*GRID_HEIGHT);
+      carveLine(boolMap,cx,cy,ex,ey);
     }
-    function carveLine(boolMap, x1, y1, x2, y2) {
-      let steps = 0;
-      while ((x1 !== x2 || y1 !== y2) && steps < 2000) {
-        boolMap[y1][x1] = true;
-        if(x1 < x2) x1++;
-        else if(x1 > x2) x1--;
-        if(y1 < y2) y1++;
-        else if(y1 > y2) y1--;
+    function carveLine(boolMap,x1,y1,x2,y2){
+      let steps=0;
+      while((x1!==x2||y1!==y2)&&steps<2000){
+        boolMap[y1][x1]=true;
+        if(x1<x2)x1++; else if(x1>x2)x1--;
+        if(y1<y2)y1++; else if(y1>y2)y1--;
         steps++;
       }
       if(x1>=0 && x1<GRID_WIDTH && y1>=0 && y1<GRID_HEIGHT){
-        boolMap[y1][x1] = true;
+        boolMap[y1][x1]=true;
       }
     }
-    function convertBoolMapToCavern(boolMap) {
-      mapData = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        let row = [];
-        for(let x=0; x<GRID_WIDTH; x++){
+    function convertBoolMapToCavern(boolMap){
+      mapData=[];
+      for(let y=0;y<GRID_HEIGHT;y++){
+        let row=[];
+        for(let x=0;x<GRID_WIDTH;x++){
           if(boolMap[y][x]){
-            let r = Math.random();
-            if(r < 0.03) row.push({type: TILE_TYPES.WATER, occupant: null});
-            else if(r < 0.15) row.push({type: TILE_TYPES.DIRT, occupant: null});
-            else row.push({type: TILE_TYPES.STONE, occupant: null});
+            let r=Math.random();
+            if(r<0.03) row.push({type:TILE_TYPES.WATER, occupant:null});
+            else if(r<0.15) row.push({type:TILE_TYPES.DIRT, occupant:null});
+            else row.push({type:TILE_TYPES.STONE, occupant:null});
           } else {
-            row.push({type: TILE_TYPES.SOLID_STONE, occupant: null});
+            row.push({type:TILE_TYPES.SOLID_STONE, occupant:null});
           }
         }
         mapData.push(row);
@@ -754,19 +691,19 @@
      * WATER BODIES
      *******************************************************/
     function createWaterBody(maxSize){
-      const sx = Math.floor(Math.random()*GRID_WIDTH);
-      const sy = Math.floor(Math.random()*GRID_HEIGHT);
-      floodFillWater(sx, sy, maxSize);
+      const sx=Math.floor(Math.random()*GRID_WIDTH);
+      const sy=Math.floor(Math.random()*GRID_HEIGHT);
+      floodFillWater(sx,sy,maxSize);
     }
-    function floodFillWater(sx, sy, maxSize) {
-      let stack = [[sx, sy]];
-      let size = 0;
-      while (stack.length && size<maxSize) {
-        const [cx, cy] = stack.pop();
-        if(cx<0 || cy<0 || cx>=GRID_WIDTH || cy>=GRID_HEIGHT) continue;
-        if(mapData[cy][cx].type === TILE_TYPES.WATER) continue;
-        if(Math.random() < 0.2) continue;
-        mapData[cy][cx].type = TILE_TYPES.WATER;
+    function floodFillWater(sx,sy,maxSize){
+      let stack=[[sx,sy]];
+      let size=0;
+      while(stack.length && size<maxSize){
+        const[cx,cy]=stack.pop();
+        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) continue;
+        if(mapData[cy][cx].type===TILE_TYPES.WATER) continue;
+        if(Math.random()<0.2) continue;
+        mapData[cy][cx].type=TILE_TYPES.WATER;
         size++;
         stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
@@ -776,55 +713,53 @@
      * ROADS
      *******************************************************/
     function createRoad(maxLength, minW, maxW) {
-      let x, y;
-      if(Math.random()<0.5) {
-        x = Math.floor(Math.random()*GRID_WIDTH);
-        y = (Math.random()<0.5)? 0 : GRID_HEIGHT-1;
+      let x,y;
+      if(Math.random()<0.5){
+        x=Math.floor(Math.random()*GRID_WIDTH);
+        y=(Math.random()<0.5)?0:GRID_HEIGHT-1;
       } else {
-        x = (Math.random()<0.5)? 0 : GRID_WIDTH-1;
-        y = Math.floor(Math.random()*GRID_HEIGHT);
+        x=(Math.random()<0.5)?0:GRID_WIDTH-1;
+        y=Math.floor(Math.random()*GRID_HEIGHT);
       }
-      let direction = getRandomDirection();
-      const length = Math.floor(Math.random()*(maxLength/2) + maxLength/2);
-      const w = Math.floor(Math.random()*(maxW - minW + 1)) + minW;
+      let direction=getRandomDirection();
+      const length=Math.floor(Math.random()*(maxLength/2)+maxLength/2);
+      const w=Math.floor(Math.random()*(maxW-minW+1))+minW;
 
-      for(let i=0; i<length; i++){
-        carveRoad(x, y, w);
-        x += direction.dx;
-        y += direction.dy;
-        if(Math.random()<0.2) direction = getRandomDirection(direction);
-        if(x<0||x>=GRID_WIDTH||y<0||y>=GRID_HEIGHT) break;
+      for(let i=0;i<length;i++){
+        carveRoad(x,y,w);
+        x+=direction.dx; y+=direction.dy;
+        if(Math.random()<0.2) direction=getRandomDirection(direction);
+        if(x<0||x>=GRID_WIDTH||y<0||y>=GRID_HEIGHT)break;
       }
     }
-    function carveRoad(cx, cy, width){
-      const r = Math.floor(width/2);
-      for(let dy=-r; dy<=r; dy++){
-        for(let dx=-r; dx<=r; dx++){
-          let nx = cx+dx, ny = cy+dy;
-          if(nx>=0 && nx<GRID_WIDTH && ny>=0 && ny<GRID_HEIGHT){
-            mapData[ny][nx].type = (Math.random()<0.6)? TILE_TYPES.ROAD_STONE : TILE_TYPES.ROAD_DIRT;
+    function carveRoad(cx,cy,width){
+      const r=Math.floor(width/2);
+      for(let dy=-r;dy<=r;dy++){
+        for(let dx=-r;dx<=r;dx++){
+          let nx=cx+dx, ny=cy+dy;
+          if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT){
+            mapData[ny][nx].type=(Math.random()<0.6)?TILE_TYPES.ROAD_STONE:TILE_TYPES.ROAD_DIRT;
           }
         }
       }
     }
     function getRandomDirection(prevDir){
-      const dirs = [
-        {dx:1,dy:0},
-        {dx:-1,dy:0},
-        {dx:0,dy:1},
-        {dx:0,dy:-1}
+      const dirs=[
+        {dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}
       ];
-      if(prevDir && Math.random()<0.6) return prevDir;
+      if(prevDir&&Math.random()<0.6)return prevDir;
       return dirs[Math.floor(Math.random()*dirs.length)];
     }
 
     /*******************************************************
-     * BUILDINGS (Walls => Cobblestone, Floors => Single Type)
+     * BUILDINGS
+     * We'll keep only one type of interior floor per map:
+     *   choose from among the plain marbles
      *******************************************************/
     const buildingShapes = [
       {
-        width: 4, height: 4,
-        layout: [
+        width:4,height:4,
+        layout:[
           [1,1,1,1],
           [1,0,0,1],
           [1,0,0,1],
@@ -832,8 +767,8 @@
         ]
       },
       {
-        width: 5, height: 5,
-        layout: [
+        width:5,height:5,
+        layout:[
           [1,1,1,1,1],
           [1,0,0,0,1],
           [1,0,0,0,1],
@@ -842,8 +777,8 @@
         ]
       },
       {
-        width: 6, height: 5,
-        layout: [
+        width:6,height:5,
+        layout:[
           [1,1,1,1,1,1],
           [1,0,0,0,0,1],
           [1,0,0,0,0,1],
@@ -852,67 +787,50 @@
         ]
       },
       {
-        width: 7, height: 5,
-        layout: [
+        width:7,height:5,
+        layout:[
           [1,1,1,1,1,1,1],
           [1,0,0,0,0,0,1],
           [1,0,0,0,0,0,1],
           [1,0,0,0,0,0,1],
           [1,1,1,1,1,1,1]
-        ]
-      },
-      {
-        width: 7, height: 7,
-        layout: [
-          [1,1,1,1,1,1,1],
-          [1,0,0,0,0,0,1],
-          [1,0,0,0,0,0,1],
-          [1,0,0,0,0,0,1],
-          [1,0,0,0,0,0,1],
-          [1,0,0,0,0,0,1],
-          [1,1,1,1,1,1,1]
-        ]
-      },
-      {
-        width: 8, height: 5,
-        layout: [
-          [1,1,1,1,1,1,1,1],
-          [1,0,0,0,0,0,0,1],
-          [1,0,0,0,0,0,0,1],
-          [1,0,0,0,0,0,0,1],
-          [1,1,1,1,1,1,1,1]
         ]
       }
     ];
 
-    // A single tile chosen from this list for interior floors
-    const INTERIOR_FLOOR_OPTIONS = [
-      TILE_TYPES.BRICK_1, TILE_TYPES.BRICK_2, TILE_TYPES.BRICK_3,
-      TILE_TYPES.BRICK_4, TILE_TYPES.BRICK_5, TILE_TYPES.MARBLE_1,
-      TILE_TYPES.MARBLE_2, TILE_TYPES.MARBLE_3, TILE_TYPES.MARBLE_4,
-      TILE_TYPES.MARBLE_CRACK, TILE_TYPES.DARK_TILE, TILE_TYPES.DARK_TILE2,
-      TILE_TYPES.DARK_TILE3, TILE_TYPES.DARK_TILE4
+    // We only use these four marbles for interior floors (one chosen per map).
+    const POSSIBLE_FLOORS = [
+      TILE_TYPES.MARBLE_1,
+      TILE_TYPES.MARBLE_2,
+      TILE_TYPES.MARBLE_3,
+      TILE_TYPES.MARBLE_4
     ];
 
+    let chosenFloorTileForBuildings = null;
+
     function createBuildings(numBuildings){
+      // Decide once per entire map which marble we'll use
+      // for all building floors
+      chosenFloorTileForBuildings = pickRandom(POSSIBLE_FLOORS);
+
       let attempts=0, placed=0;
       while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
-        const shape = buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
-        const sx = Math.floor(Math.random()*(GRID_WIDTH - shape.width));
-        const sy = Math.floor(Math.random()*(GRID_HEIGHT - shape.height));
+        const shape=buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
+        const sx=Math.floor(Math.random()*(GRID_WIDTH - shape.width));
+        const sy=Math.floor(Math.random()*(GRID_HEIGHT - shape.height));
         if(canPlaceBuilding(sx,sy,shape)){
           placeBuilding(sx,sy,shape);
           placed++;
         }
       }
     }
-    function canPlaceBuilding(sx, sy, shape){
-      for(let y=0; y<shape.height; y++){
-        for(let x=0; x<shape.width; x++){
-          const val = shape.layout[y][x];
-          if(val===1 || val===0){
-            const tileType = mapData[sy+y][sx+x].type;
+    function canPlaceBuilding(sx,sy,shape){
+      for(let y=0;y<shape.height;y++){
+        for(let x=0;x<shape.width;x++){
+          const val=shape.layout[y][x];
+          if(val===1||val===0){
+            const tileType=mapData[sy+y][sx+x].type;
             if([
               TILE_TYPES.WATER, TILE_TYPES.ROAD_STONE, TILE_TYPES.ROAD_DIRT, 
               TILE_TYPES.SOLID_STONE, TILE_TYPES.LAVA, TILE_TYPES.MAGMA
@@ -924,109 +842,105 @@
       }
       return true;
     }
-
-    function placeBuilding(sx, sy, shape){
-      // Single tile for all floors in this building
-      const chosenFloorTile = pickRandom(INTERIOR_FLOOR_OPTIONS);
+    function placeBuilding(sx,sy,shape){
       let localLayout = shape.layout.map(r=>r.slice());
       subdivideBuilding(localLayout);
       placeExteriorDoor(localLayout);
       ensureAccessibility(localLayout);
-      stampBuildingOntoMap(localLayout, sx, sy, chosenFloorTile);
+      stampBuildingOntoMap(localLayout,sx,sy,chosenFloorTileForBuildings);
     }
-
     function subdivideBuilding(localLayout){
-      const h = localLayout.length;
-      const w = localLayout[0].length;
+      const h=localLayout.length; 
+      const w=localLayout[0].length;
+
       // vertical partition if wide
-      if(w >= 7){
-        let wx = Math.floor(w/2);
-        for(let y=1; y<h-1; y++){
-          localLayout[y][wx] = 1; 
+      if(w>=7){
+        let wx=Math.floor(w/2);
+        for(let y=1;y<h-1;y++){
+          localLayout[y][wx]=1;
         }
-        let doorY = Math.floor(Math.random()*(h-2)) + 1;
-        localLayout[doorY][wx] = 2;
+        let doorY=Math.floor(Math.random()*(h-2))+1;
+        localLayout[doorY][wx]=2;
       }
       // horizontal partition if tall
-      if(h >= 7){
-        let wy = Math.floor(h/2);
-        for(let x=1; x<w-1; x++){
-          localLayout[wy][x] = 1;
+      if(h>=7){
+        let wy=Math.floor(h/2);
+        for(let x=1;x<w-1;x++){
+          localLayout[wy][x]=1;
         }
-        let doorX = Math.floor(Math.random()*(w-2)) + 1;
-        localLayout[wy][doorX] = 2;
+        let doorX=Math.floor(Math.random()*(w-2))+1;
+        localLayout[wy][doorX]=2;
       }
     }
     function placeExteriorDoor(localLayout){
-      const h = localLayout.length;
-      const w = localLayout[0].length;
-      let candidates = [];
+      const h=localLayout.length; 
+      const w=localLayout[0].length;
+      let candidates=[];
 
-      for(let x=1; x<w-1; x++){
+      for(let x=1;x<w-1;x++){
         if(isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout,x,0)){
-          candidates.push({px:x, py:0});
+          candidates.push({px:x,py:0});
         }
-        if(isWallish(localLayout[h-1][x]) && hasExactlyTwoOrthWalls(localLayout,x,h-1)){
-          candidates.push({px:x, py:h-1});
+        if(isWallish(localLayout[h-1][x])&&hasExactlyTwoOrthWalls(localLayout,x,h-1)){
+          candidates.push({px:x,py:h-1});
         }
       }
-      for(let y=1; y<h-1; y++){
-        if(isWallish(localLayout[y][0]) && hasExactlyTwoOrthWalls(localLayout,0,y)){
-          candidates.push({px:0, py:y});
+      for(let y=1;y<h-1;y++){
+        if(isWallish(localLayout[y][0])&&hasExactlyTwoOrthWalls(localLayout,0,y)){
+          candidates.push({px:0,py:y});
         }
-        if(isWallish(localLayout[y][w-1]) && hasExactlyTwoOrthWalls(localLayout,w-1,y)){
-          candidates.push({px:w-1, py:y});
+        if(isWallish(localLayout[y][w-1])&&hasExactlyTwoOrthWalls(localLayout,w-1,y)){
+          candidates.push({px:w-1,py:y});
         }
       }
 
-      if(candidates.length > 0){
-        let howMany = 1 + Math.floor(Math.random()*2);
-        for(let i=0; i<howMany && candidates.length; i++){
-          let idx = Math.floor(Math.random()*candidates.length);
-          let chosen = candidates[idx];
-          localLayout[chosen.py][chosen.px] = 2;
+      if(candidates.length>0){
+        let howMany=1+Math.floor(Math.random()*2);
+        for(let i=0;i<howMany&&candidates.length;i++){
+          let idx=Math.floor(Math.random()*candidates.length);
+          let chosen=candidates[idx];
+          localLayout[chosen.py][chosen.px]=2;
           candidates.splice(idx,1);
         }
       }
     }
     function isWallish(val){
-      return val===1 || val===2;
+      return val===1||val===2;
     }
     function hasExactlyTwoOrthWalls(localLayout,x,y){
-      let up    = (y>0) && isWallish(localLayout[y-1][x]);
-      let down  = (y<localLayout.length-1) && isWallish(localLayout[y+1][x]);
-      let left  = (x>0) && isWallish(localLayout[y][x-1]);
-      let right = (x<localLayout[0].length-1) && isWallish(localLayout[y][x+1]);
-      let c = (up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
+      let up=(y>0)&&isWallish(localLayout[y-1][x]);
+      let down=(y<localLayout.length-1)&&isWallish(localLayout[y+1][x]);
+      let left=(x>0)&&isWallish(localLayout[y][x-1]);
+      let right=(x<localLayout[0].length-1)&&isWallish(localLayout[y][x+1]);
+      let c=(up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
       if(c===2){
-        if(up && down) return true;
-        if(left && right) return true;
+        if(up&&down)return true;
+        if(left&&right)return true;
       }
       return false;
     }
-
     function ensureAccessibility(localLayout){
-      const floors = collectFloorCells(localLayout);
-      if(!floors.length) return;
+      const floors=collectFloorCells(localLayout);
+      if(!floors.length)return;
 
-      let doorCoords = collectDoorCoords(localLayout);
-      if(!doorCoords.length) return; 
+      let doorCoords=collectDoorCoords(localLayout);
+      if(!doorCoords.length)return;
 
-      let mainDoor = doorCoords.find(d => isOnPerimeter(localLayout,d.x,d.y)) || doorCoords[0];
-      if(!mainDoor) return;
+      let mainDoor=doorCoords.find(d=>isOnPerimeter(localLayout,d.x,d.y))||doorCoords[0];
+      if(!mainDoor)return;
 
-      let visited = new Set();
-      let queue = [];
-      queue.push({x: mainDoor.x, y: mainDoor.y});
+      let visited=new Set();
+      let queue=[];
+      queue.push({x:mainDoor.x,y:mainDoor.y});
       visited.add(`${mainDoor.x},${mainDoor.y}`);
 
       while(queue.length){
-        let {x, y} = queue.shift();
-        for(let [nx, ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){
-          if(nx<0||ny<0||ny>=localLayout.length||nx>=localLayout[0].length) continue;
-          let val = localLayout[ny][nx];
-          if(val===0 || val===2){
-            let key = `${nx},${ny}`;
+        let {x,y}=queue.shift();
+        for(let [nx,ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){
+          if(nx<0||ny<0||ny>=localLayout.length||nx>=localLayout[0].length)continue;
+          let val=localLayout[ny][nx];
+          if(val===0||val===2){
+            let key=`${nx},${ny}`;
             if(!visited.has(key)){
               visited.add(key);
               queue.push({x:nx,y:ny});
@@ -1034,17 +948,16 @@
           }
         }
       }
-
-      let allVisited = floors.every(c => visited.has(`${c.x},${c.y}`));
+      let allVisited=floors.every(c=>visited.has(`${c.x},${c.y}`));
       if(!allVisited){
-        forceInteriorDoor(localLayout, visited);
+        forceInteriorDoor(localLayout,visited);
       }
     }
     function collectFloorCells(localLayout){
-      let res = [];
-      for(let y=0; y<localLayout.length; y++){
-        for(let x=0; x<localLayout[0].length; x++){
-          if(localLayout[y][x]===0 || localLayout[y][x]===2){
+      let res=[];
+      for(let y=0;y<localLayout.length;y++){
+        for(let x=0;x<localLayout[0].length;x++){
+          if(localLayout[y][x]===0||localLayout[y][x]===2){
             res.push({x,y});
           }
         }
@@ -1052,9 +965,9 @@
       return res;
     }
     function collectDoorCoords(localLayout){
-      let res = [];
-      for(let y=0; y<localLayout.length; y++){
-        for(let x=0; x<localLayout[0].length; x++){
+      let res=[];
+      for(let y=0;y<localLayout.length;y++){
+        for(let x=0;x<localLayout[0].length;x++){
           if(localLayout[y][x]===2){
             res.push({x,y});
           }
@@ -1065,44 +978,43 @@
     function isOnPerimeter(localLayout,x,y){
       return (x===0||y===0||x===localLayout[0].length-1||y===localLayout.length-1);
     }
-    function forceInteriorDoor(localLayout, visited){
-      const h = localLayout.length;
-      const w = localLayout[0].length;
-      for(let y=1; y<h-1; y++){
-        for(let x=1; x<w-1; x++){
+    function forceInteriorDoor(localLayout,visited){
+      const h=localLayout.length; 
+      const w=localLayout[0].length;
+      for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
           if(localLayout[y][x]===1 && hasExactlyTwoOrthWalls(localLayout,x,y)){
-            let sides = [ [1,0],[-1,0],[0,1],[0,-1] ];
-            let visitedSide = false, unvisitedSide = false;
+            let sides=[[1,0],[-1,0],[0,1],[0,-1]];
+            let visitedSide=false,unvisitedSide=false;
             for(let s of sides){
               let nx=x+s[0], ny=y+s[1];
-              if(nx>=0 && ny>=0 && nx<w && ny<h){
-                if(localLayout[ny][nx]===0 || localLayout[ny][nx]===2){
-                  if(visited.has(`${nx},${ny}`)) visitedSide = true;
-                  else unvisitedSide = true;
+              if(nx>=0&&ny>=0&&nx<w&&ny<h){
+                if(localLayout[ny][nx]===0||localLayout[ny][nx]===2){
+                  if(visited.has(`${nx},${ny}`))visitedSide=true;
+                  else unvisitedSide=true;
                 }
               }
             }
-            if(visitedSide && unvisitedSide){
-              localLayout[y][x] = 2;
+            if(visitedSide&&unvisitedSide){
+              localLayout[y][x]=2;
               return;
             }
           }
         }
       }
     }
-
-    function stampBuildingOntoMap(localLayout, sx, sy, chosenFloorTile){
-      const h = localLayout.length;
-      const w = localLayout[0].length;
-      for(let y=0; y<h; y++){
-        for(let x=0; x<w; x++){
-          const val = localLayout[y][x];
-          if(val === 1){
-            mapData[sy+y][sx+x].type = TILE_TYPES.COBBLESTONE;
-          } else if(val === 0){
-            mapData[sy+y][sx+x].type = chosenFloorTile;
-          } else if(val === 2){
-            mapData[sy+y][sx+x].type = TILE_TYPES.DOOR;
+    function stampBuildingOntoMap(localLayout,sx,sy,floorTile){
+      const h=localLayout.length;
+      const w=localLayout[0].length;
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          const val=localLayout[y][x];
+          if(val===1){
+            mapData[sy+y][sx+x].type=TILE_TYPES.COBBLESTONE;
+          } else if(val===0){
+            mapData[sy+y][sx+x].type=floorTile;
+          } else if(val===2){
+            mapData[sy+y][sx+x].type=TILE_TYPES.DOOR;
           }
         }
       }
@@ -1112,128 +1024,96 @@
      * DRAWING
      *******************************************************/
     function drawMap(){
-      const canvas = document.getElementById("mapCanvas");
-      const ctx = canvas.getContext("2d");
+      const canvas=document.getElementById("mapCanvas");
+      const ctx=canvas.getContext("2d");
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          drawCell(ctx, x, y);
+      for(let y=0;y<GRID_HEIGHT;y++){
+        for(let x=0;x<GRID_WIDTH;x++){
+          drawCell(ctx,x,y);
         }
       }
     }
+    function drawCell(ctx,gx,gy){
+      const tile=mapData[gy][gx];
+      const px=gx*TILE_SIZE;
+      const py=gy*TILE_SIZE;
 
-    // If occupant present, we skip drawing the tile background altogether
-    // and draw occupant’s sprite (covering entire tile) plus the occupant border
-    function drawCell(ctx, gx, gy){
-      const tile = mapData[gy][gx];
-      const px = gx * TILE_SIZE;
-      const py = gy * TILE_SIZE;
-
-      if(!tile.occupant){
-        // No occupant => draw tile
-        drawTile(ctx, tile, px, py);
+      // If occupant present, occupant sprite replaces tile
+      if(tile.occupant){
+        drawOccupantSprite(ctx,tile.occupant,px,py);
       } else {
-        // Occupant => occupant sprite replaces the tile
-        drawOccupantTile(ctx, tile.occupant, px, py);
+        // draw normal tile
+        const tileKey=getKeyByValue(TILE_TYPES,tile.type);
+        const tex=tileTextures[tileKey];
+        if(tex && tex.complete){
+          ctx.drawImage(tex,px,py,TILE_SIZE,TILE_SIZE);
+        } else {
+          // fallback colour
+          ctx.fillStyle=getColorForTileType(tile.type);
+          ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+        }
       }
-
-      // optional grid line
+      // optional subtle grid
       ctx.strokeStyle="rgba(0,0,0,0.3)";
-      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+      ctx.strokeRect(px,py,TILE_SIZE,TILE_SIZE);
     }
-
-    function drawTile(ctx, tile, px, py){
-      const tileKey = getKeyByValue(TILE_TYPES, tile.type);
-      const tex = tileTextures[tileKey];
-      if(tex && tex.complete){
-        ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
-      } else {
-        ctx.fillStyle = getColorForTileType(tile.type);
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-      }
-    }
-
-    // Occupant sprite replaces the tile
-    function drawOccupantTile(ctx, occupant, px, py){
-      // occupant sprite full tile coverage
-      const spriteImg = occupantSprites[occupant.sprite];
-      const borderColour = occupantColours[occupant.type] || "#FFFFFF";
-
-      // 1) fill tile with occupant sprite (or fallback)
+    function drawOccupantSprite(ctx, occupant, px, py){
+      // occupant sprite is entire 20x20 tile
+      const spriteImg=occupantSprites[occupant.sprite];
       if(spriteImg && spriteImg.complete){
-        ctx.drawImage(spriteImg, px, py, TILE_SIZE, TILE_SIZE);
+        ctx.drawImage(spriteImg,px,py,TILE_SIZE,TILE_SIZE);
       } else {
-        // fallback occupant shape if sprite missing
-        ctx.fillStyle = borderColour;
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        // fallback occupant colour
+        ctx.fillStyle="#999";
+        ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
       }
 
-      // 2) occupant border (1px stroke) on top
-      ctx.strokeStyle = borderColour;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+      // 1px red border inside the tile
+      // e.g. strokeRect(px+0.5, py+0.5, TILE_SIZE-1, TILE_SIZE-1)
+      ctx.strokeStyle="#FF0000";
+      ctx.lineWidth=1;
+      ctx.strokeRect(px+0.5, py+0.5, TILE_SIZE-1, TILE_SIZE-1);
     }
 
     /*******************************************************
-     * CLICK => Occupant Creation / Movement / Deletion
+     * CLICK => CREATE / DELETE OCCUPANT
      *******************************************************/
-    const canvas = document.getElementById("mapCanvas");
-    canvas.addEventListener("click", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
+    const canvas=document.getElementById("mapCanvas");
+    canvas.addEventListener("click",(e)=>{
+      const rect=canvas.getBoundingClientRect();
+      const clickX=e.clientX-rect.left;
+      const clickY=e.clientY-rect.top;
+      const tileX=Math.floor(clickX/TILE_SIZE);
+      const tileY=Math.floor(clickY/TILE_SIZE);
+      if(tileX<0||tileY<0||tileX>=GRID_WIDTH||tileY>=GRID_HEIGHT)return;
 
-      const tileX = Math.floor(clickX / TILE_SIZE);
-      const tileY = Math.floor(clickY / TILE_SIZE);
-      if(tileX<0 || tileY<0 || tileX>=GRID_WIDTH || tileY>=GRID_HEIGHT) return;
+      const tile=mapData[tileY][tileX];
+      const occupantType=document.getElementById("occupantType").value;
+      const occupantSprite=document.getElementById("occupantSprite").value;
 
-      const tile = mapData[tileY][tileX];
-      const occupantType = document.getElementById("occupantType").value;
-      const occupantSprite = document.getElementById("occupantSprite").value;
-
-      // Deletion
-      if(occupantType === "delete"){
+      if(occupantType==="delete"){
+        // remove occupant
         if(tile.occupant){
-          tile.occupant = null;
-          drawCell(canvas.getContext("2d"), tileX, tileY);
-        }
-        occupantInHand = null;
-        return;
-      }
-
-      // Normal occupant handling
-      if(!occupantInHand){
-        // pick occupant up if present
-        if(tile.occupant){
-          occupantInHand = tile.occupant;
-          tile.occupant = null;
-        } else {
-          // create occupant
-          tile.occupant = {
-            type: occupantType,
-            sprite: occupantSprite
-          };
+          tile.occupant=null;
+          drawCell(canvas.getContext("2d"),tileX,tileY);
         }
       } else {
-        // place occupant from hand
-        tile.occupant = occupantInHand;
-        occupantInHand = null;
+        // create or overwrite occupant on this tile
+        tile.occupant={
+          type: occupantType, 
+          sprite: occupantSprite
+        };
+        drawCell(canvas.getContext("2d"),tileX,tileY);
       }
-
-      drawCell(canvas.getContext("2d"), tileX, tileY);
     });
 
     /*******************************************************
      * ON LOAD
      *******************************************************/
-    window.onload = () => {
-      preloadImages(() => {
+    window.onload=()=>{
+      preloadImages(()=>{
         generateMap();
-        // second pass after a delay if images decode slowly
-        setTimeout(() => {
-          drawMap();
-        }, 1000);
       });
     };
   </script>
