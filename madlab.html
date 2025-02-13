@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>D&D Map Generator (Improved)</title>
+  <title>D&D Map Generator (Enhanced)</title>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -17,7 +17,7 @@
       text-align: center;
     }
     .container {
-      width: fit-content; /* Expand to fit the 1000px canvas */
+      width: fit-content;
       margin: 2rem auto;
       background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
@@ -72,7 +72,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>D&D Map Generator (Improved)</h1>
+    <h1>D&D Map Generator (Enhanced)</h1>
     <p class="description">
       "Explore deserts, forests, caverns, or other lands. Choose whether it's a bustling village or a wild frontier!"
     </p>
@@ -127,14 +127,15 @@
       tileSize: 20,
       gridWidth: 50,
       gridHeight: 50,
-      assetPath: 'resources/mapassets/',
-      canvasId: 'mapCanvas'
+      assetPathTiles: 'resources/mapassets/',
+      assetPathOccupants: 'resources/occupants/'
     };
 
+    // Map data & occupant tracking
     let mapData = [];
     let occupantInHand = null;
 
-    // TILE TYPES (strings correspond to asset filenames)
+    // Basic tile types (the value equals the "default" filename)
     const TILE_TYPES = {
       GRASS:       "grass",
       TREE:        "tree",
@@ -150,7 +151,7 @@
       SOLID_STONE: "solidStone"
     };
 
-    // Fallback colours (used if texture image isn't available)
+    // Fallback colours (original dot colours)
     const baseTileColours = {
       [TILE_TYPES.GRASS]:       "#9AE582",
       [TILE_TYPES.TREE]:        "#7BC16E",
@@ -166,46 +167,103 @@
       [TILE_TYPES.SOLID_STONE]: "#000000"
     };
 
-    // Preloaded textures dictionary
-    const tileTextures = {};
+    // Mapping tile type to an array of texture filenames (including your new assets)
+    const TILE_TEXTURE_OPTIONS = {
+      [TILE_TYPES.GRASS]:       ["grass.png", "ancienttile.png"],
+      [TILE_TYPES.TREE]:        ["tree.png", "shrub1.png", "shrub2.png", "shrub3.png"],
+      [TILE_TYPES.DIRT]:        ["dirt.png", "mud.png", "mud2.png", "mud3.png"],
+      [TILE_TYPES.SAND]:        ["sand.png", "desertsand.png", "desertdune.png", "desertdune2.png", "whitesand.png"],
+      [TILE_TYPES.WATER]:       ["water.png"],
+      [TILE_TYPES.ROAD_STONE]:  ["roadStone.png"],
+      [TILE_TYPES.ROAD_DIRT]:   ["roadDirt.png"],
+      [TILE_TYPES.STONE]:       ["stone.png", "marble1.png", "marble2.png", "marble3.png", "marble4.png", "marblecrack.png"],
+      [TILE_TYPES.WALL]:        ["wall.png", "brick1.png", "brick2.png", "brick3.png", "brick4.png", "brick5.png", "cavewall.png"],
+      [TILE_TYPES.FLOOR]:       ["floor.png", "darktile.png", "darktile2.png", "darktile3.png", "darktile4.png"],
+      [TILE_TYPES.DOOR]:        ["door.png"],
+      [TILE_TYPES.SOLID_STONE]: ["solidStone.png", "lava.png", "magma.png", "brimstone.png", "brimstone2.png", "sandstonetile.png", "desertrock.png"]
+    };
 
-    // Utility: fallback colour retrieval
+    // Occupant sprites (filenames). Duplicates are okay; they simply provide more variety.
+    const occupantSpriteFilenames = [
+      "paladin.png",
+      "fighter.png",
+      "guardian.png",
+      "halfblood.png",
+      "berserker.png",
+      "assassin.png",
+      "warlock.png",
+      "sorcerer.png",
+      "priestess.png",
+      "cleric.png",
+      "druid.png",
+      "demon.png",
+      "mage.png",
+      "serpent.png",
+      "chimera.png",
+      "ogre.png",
+      "edgelord.png",
+      "fallenangel.png",
+      "darkpriestess.png",
+      "darkguard.png",
+      "cultist.png",
+      "goblin.png",
+      "spider.png",
+      "bat.png",
+      "zombie.png",
+      "orc.png",
+      "orcbandit.png",
+      "orcchief.png",
+      "orcshaman.png",
+      "orcfighter.png"
+    ];
+
+    // Global dictionaries to store preloaded images
+    const loadedTileImages = {};     // key: filename → Image object
+    const loadedOccupantImages = {}; // key: filename → Image object
+
+    // Utility: Random choice from array
+    const randomChoice = arr => arr[Math.floor(Math.random() * arr.length)];
+
+    // Utility: Get fallback colour for a tile type
     const getColorForTileType = (tileType) => baseTileColours[tileType] || "#FFFFFF";
 
-    // Utility: get key by value from TILE_TYPES (e.g. 'grass' → 'GRASS')
-    const getKeyByValue = (obj, val) => Object.keys(obj).find(key => obj[key] === val);
-
-    // Canvas context
-    const canvas = document.getElementById(CONFIG.canvasId);
-    const ctx = canvas.getContext("2d");
+    // Utility: Get a DOM element by ID
+    const $ = id => document.getElementById(id);
 
     /*******************************************************
-     * ASSET MANAGEMENT: Preload Textures with async/await
+     * ASSET PRELOADING FUNCTIONS
      *******************************************************/
-    async function preloadTextures() {
-      const tileKeys = Object.keys(TILE_TYPES);
-      const promises = tileKeys.map(key => {
-        return new Promise((resolve) => {
-          const tileName = TILE_TYPES[key];
+    // Preload all tile textures (all unique filenames in TILE_TEXTURE_OPTIONS)
+    async function preloadTileTextures() {
+      const files = new Set();
+      for (const key in TILE_TEXTURE_OPTIONS) {
+        TILE_TEXTURE_OPTIONS[key].forEach(filename => files.add(filename));
+      }
+      const promises = [];
+      for (const filename of files) {
+        promises.push(new Promise((resolve) => {
           const img = new Image();
-          img.src = `${CONFIG.assetPath}${tileName}.png`;
-          img.onload = () => {
-            tileTextures[key] = img;
-            resolve();
-          };
-          img.onerror = () => {
-            console.error(`Error loading image: ${CONFIG.assetPath}${tileName}.png`);
-            // Even if an image fails, we resolve (using fallback fill)
-            tileTextures[key] = null;
-            resolve();
-          };
-        });
-      });
+          img.src = CONFIG.assetPathTiles + filename;
+          img.onload = () => { loadedTileImages[filename] = img; resolve(); };
+          img.onerror = () => { console.error("Error loading tile:", filename); resolve(); };
+        }));
+      }
+      await Promise.all(promises);
+    }
+
+    // Preload all occupant sprite images
+    async function preloadOccupantTextures() {
+      const promises = occupantSpriteFilenames.map(filename => new Promise((resolve) => {
+        const img = new Image();
+        img.src = CONFIG.assetPathOccupants + filename;
+        img.onload = () => { loadedOccupantImages[filename] = img; resolve(); };
+        img.onerror = () => { console.error("Error loading occupant sprite:", filename); resolve(); };
+      }));
       await Promise.all(promises);
     }
 
     /*******************************************************
-     * BIOME & MAP SETTINGS
+     * MAP SETTINGS & GENERATION FUNCTIONS
      *******************************************************/
     function getMapSettings(theme) {
       switch(theme) {
@@ -292,10 +350,7 @@
       }
     }
 
-    /*******************************************************
-     * MAP GENERATION FUNCTIONS
-     *******************************************************/
-    // Initialize non-cavern map using base distribution probabilities
+    // For non-cavern maps: randomly assign a tile type and choose one texture from the available options
     function initMap(dist) {
       mapData = [];
       let totalP = 0;
@@ -313,13 +368,16 @@
               break;
             }
           }
-          row.push({ type: chosen, occupant: null });
+          // Assign a random texture (filename) from the options for this tile type
+          const textureOptions = TILE_TEXTURE_OPTIONS[chosen] || [];
+          const texture = textureOptions.length ? randomChoice(textureOptions) : null;
+          row.push({ type: chosen, texture, occupant: null });
         }
         mapData.push(row);
       }
     }
 
-    // Cellular Automata-based cavern generation
+    // Cellular automata-based cavern generation remains as before
     function generateCavern() {
       let boolMap = randomBoolMap(0.45);
       for (let i = 0; i < 5; i++) { boolMap = doCAStep(boolMap); }
@@ -327,7 +385,6 @@
       carveExits(largestMap, largestRegion);
       convertBoolMapToCavern(largestMap);
     }
-
     function randomBoolMap(fillChance) {
       const bm = [];
       for (let y = 0; y < CONFIG.gridHeight; y++) {
@@ -339,7 +396,6 @@
       }
       return bm;
     }
-
     function doCAStep(bm) {
       const newMap = [];
       for (let y = 0; y < CONFIG.gridHeight; y++) {
@@ -352,7 +408,6 @@
       }
       return newMap;
     }
-
     function countFloorNeighbours(bm, cx, cy) {
       let c = 0;
       for (let dy = -1; dy <= 1; dy++) {
@@ -366,7 +421,6 @@
       }
       return c;
     }
-
     function keepLargestRegion(bm) {
       const visited = Array.from({ length: CONFIG.gridHeight }, () => Array(CONFIG.gridWidth).fill(false));
       let bestSize = 0, bestRegion = [];
@@ -379,7 +433,7 @@
             let size = 1;
             while (queue.length) {
               const [cx, cy] = queue.pop();
-              for (let [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
+              for (const [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
                 if (nx >= 0 && ny >= 0 && nx < CONFIG.gridWidth && ny < CONFIG.gridHeight) {
                   if (bm[ny][nx] && !visited[ny][nx]) {
                     visited[ny][nx] = true;
@@ -390,10 +444,7 @@
                 }
               }
             }
-            if (size > bestSize) {
-              bestSize = size;
-              bestRegion = regionCells;
-            }
+            if (size > bestSize) { bestSize = size; bestRegion = regionCells; }
           }
         }
       }
@@ -408,7 +459,6 @@
       }
       return { largestMap, largestRegion: bestRegion };
     }
-
     function carveExits(bm, regionCells) {
       let boundaryCount = 0;
       for (const [x, y] of regionCells) {
@@ -425,7 +475,6 @@
         for (let i = 0; i < toAdd; i++) { carveOneExit(bm, regionCells); }
       }
     }
-
     function carveOneExit(bm, regionCells) {
       if (!regionCells.length) return;
       const [rx, ry] = regionCells[Math.floor(Math.random() * regionCells.length)];
@@ -437,22 +486,18 @@
       else { edgeX = CONFIG.gridWidth - 1; edgeY = Math.floor(Math.random() * CONFIG.gridHeight); }
       carveLine(bm, rx, ry, edgeX, edgeY);
     }
-
     function carveLine(bm, x1, y1, x2, y2) {
       let steps = 0;
       while ((x1 !== x2 || y1 !== y2) && steps < 2000) {
         bm[y1][x1] = true;
-        if (x1 < x2) x1++;
-        else if (x1 > x2) x1--;
-        if (y1 < y2) y1++;
-        else if (y1 > y2) y1--;
+        if (x1 < x2) x1++; else if (x1 > x2) x1--;
+        if (y1 < y2) y1++; else if (y1 > y2) y1--;
         steps++;
       }
       if (x1 >= 0 && x1 < CONFIG.gridWidth && y1 >= 0 && y1 < CONFIG.gridHeight) {
         bm[y1][x1] = true;
       }
     }
-
     function convertBoolMapToCavern(bm) {
       mapData = [];
       for (let y = 0; y < CONFIG.gridHeight; y++) {
@@ -466,6 +511,9 @@
           } else {
             row.push({ type: TILE_TYPES.SOLID_STONE, occupant: null });
           }
+          // Also assign a random texture from the options for the chosen type:
+          const texOptions = TILE_TEXTURE_OPTIONS[row[x].type] || [];
+          row[x].texture = texOptions.length ? randomChoice(texOptions) : null;
         }
         mapData.push(row);
       }
@@ -526,7 +574,7 @@
     function getRandomDirection(prevDir) {
       const dirs = [{dx:1,dy:0}, {dx:-1,dy:0}, {dx:0,dy:1}, {dx:0,dy:-1}];
       if (prevDir && Math.random() < 0.6) return prevDir;
-      return dirs[Math.floor(Math.random() * dirs.length)];
+      return randomChoice(dirs);
     }
 
     /*******************************************************
@@ -544,7 +592,7 @@
       let attempts = 0, placed = 0;
       while (placed < numBuildings && attempts < numBuildings * 50) {
         attempts++;
-        const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
+        const shape = randomChoice(buildingShapes);
         const sx = Math.floor(Math.random() * (CONFIG.gridWidth - shape.width));
         const sy = Math.floor(Math.random() * (CONFIG.gridHeight - shape.height));
         if (canPlaceBuilding(sx, sy, shape)) {
@@ -575,8 +623,7 @@
       stampBuildingOntoMap(localLayout, sx, sy);
     }
     function subdivideBuilding(localLayout) {
-      const h = localLayout.length;
-      const w = localLayout[0].length;
+      const h = localLayout.length, w = localLayout[0].length;
       if (w >= 7) {
         const wx = Math.floor(w / 2);
         for (let y = 1; y < h - 1; y++) { localLayout[y][wx] = 1; }
@@ -591,8 +638,7 @@
       }
     }
     function placeExteriorDoor(localLayout) {
-      const h = localLayout.length;
-      const w = localLayout[0].length;
+      const h = localLayout.length, w = localLayout[0].length;
       let candidates = [];
       for (let x = 1; x < w - 1; x++) {
         if (isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout, x, 0)) {
@@ -711,6 +757,9 @@
           if (val === 1) { mapData[sy+y][sx+x].type = TILE_TYPES.WALL; }
           else if (val === 0) { mapData[sy+y][sx+x].type = TILE_TYPES.FLOOR; }
           else if (val === 2) { mapData[sy+y][sx+x].type = TILE_TYPES.DOOR; }
+          // Also reassign a texture for the updated type:
+          const options = TILE_TEXTURE_OPTIONS[mapData[sy+y][sx+x].type] || [];
+          mapData[sy+y][sx+x].texture = options.length ? randomChoice(options) : null;
         }
       }
     }
@@ -729,17 +778,26 @@
     function drawTile(x, y) {
       const tile = mapData[y][x];
       const px = x * CONFIG.tileSize, py = y * CONFIG.tileSize;
-      const key = getKeyByValue(TILE_TYPES, tile.type);
-      const tex = tileTextures[key];
-      if (tex && tex.complete) { ctx.drawImage(tex, px, py, CONFIG.tileSize, CONFIG.tileSize); }
-      else { ctx.fillStyle = getColorForTileType(tile.type); ctx.fillRect(px, py, CONFIG.tileSize, CONFIG.tileSize); }
-      if (tile.occupant) {
-        ctx.fillStyle = tile.occupant.color;
-        const radius = CONFIG.tileSize * 0.3;
-        ctx.beginPath();
-        ctx.arc(px + CONFIG.tileSize/2, py + CONFIG.tileSize/2, radius, 0, 2 * Math.PI);
-        ctx.fill();
+      // Draw the tile texture if available
+      if (tile.texture && loadedTileImages[tile.texture] && loadedTileImages[tile.texture].complete) {
+        ctx.drawImage(loadedTileImages[tile.texture], px, py, CONFIG.tileSize, CONFIG.tileSize);
+      } else {
+        ctx.fillStyle = getColorForTileType(tile.type);
+        ctx.fillRect(px, py, CONFIG.tileSize, CONFIG.tileSize);
       }
+      // Draw occupant sprite if present
+      if (tile.occupant) {
+        // Draw occupant sprite scaled to (tileSize - 2) to leave a 1px margin
+        const spriteFilename = tile.occupant.sprite;
+        if (spriteFilename && loadedOccupantImages[spriteFilename] && loadedOccupantImages[spriteFilename].complete) {
+          ctx.drawImage(loadedOccupantImages[spriteFilename], px+1, py+1, CONFIG.tileSize-2, CONFIG.tileSize-2);
+        }
+        // Draw a 1px border in the occupant's color around the sprite area
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = tile.occupant.color;
+        ctx.strokeRect(px+1, py+1, CONFIG.tileSize-2, CONFIG.tileSize-2);
+      }
+      // Draw a subtle grid over the tile
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.strokeRect(px, py, CONFIG.tileSize, CONFIG.tileSize);
     }
@@ -755,12 +813,14 @@
       const tile = mapData[tileY][tileX];
       if (!occupantInHand) {
         if (!tile.occupant) {
-          const occupantType = document.getElementById("occupantType").value;
+          const occupantType = $("occupantType").value;
           let occupantColor = "#FFFFFF";
           if (occupantType === "player") occupantColor = "#00FF00";
           else if (occupantType === "enemy") occupantColor = "#FF0000";
           else if (occupantType === "npc") occupantColor = "#0000FF";
-          tile.occupant = { type: occupantType, color: occupantColor };
+          // Assign a random occupant sprite from the list
+          const sprite = randomChoice(occupantSpriteFilenames);
+          tile.occupant = { type: occupantType, color: occupantColor, sprite };
         } else {
           occupantInHand = tile.occupant;
           tile.occupant = null;
@@ -773,14 +833,17 @@
     });
 
     /*******************************************************
-     * MAIN INITIALISATION FUNCTION
+     * INITIALISATION: Preload Assets & Generate Map
      *******************************************************/
     async function init() {
-      try { await preloadTextures(); }
-      catch (err) { console.error("Error preloading textures:", err); }
+      try {
+        await Promise.all([ preloadTileTextures(), preloadOccupantTextures() ]);
+      } catch (err) {
+        console.error("Error preloading assets:", err);
+      }
       
-      const theme = document.getElementById("mapType").value;
-      const style = document.getElementById("mapStyle").value;
+      const theme = $("mapType").value;
+      const style = $("mapStyle").value;
       const settings = getMapSettings(theme);
       
       if (settings.isCavern) { generateCavern(); }
@@ -796,12 +859,12 @@
     }
 
     /*******************************************************
-     * INITIALISATION & EVENT BINDING
+     * BINDING: Regenerate map on button click and on window load
      *******************************************************/
     document.querySelector(".mapButton").addEventListener("click", () => { init(); });
     window.addEventListener("load", () => {
       init();
-      // Additional redraw via requestAnimationFrame after 1 second (belt-and-braces)
+      // Belt-and-braces: a second redraw after 1 second
       setTimeout(() => { requestAnimationFrame(drawMap); }, 1000);
     });
   </script>
