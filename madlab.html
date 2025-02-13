@@ -3,21 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>D&D Map Generator (Enhanced)</title>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <title>D&D Map Generator (Textured)</title>
+  <!-- Example fonts; adapt if needed -->
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+    rel="stylesheet"
+  >
   <style>
-    /* --- Global Styles --- */
+    /* General Page Styling */
     body {
       margin: 0;
-      background: url('resources/alcazar.png') no-repeat center center fixed;
+      background: url('resources/mapgen.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
     .container {
-      width: fit-content;
+      width: fit-content; /* Ensures the container expands for the 1000px map */
       margin: 2rem auto;
       background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
@@ -72,13 +75,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>D&D Map Generator (Enhanced)</h1>
+    <h1>D&D Map Generator (Textured)</h1>
     <p class="description">
-      "Explore deserts, forests, caverns, or other lands. Choose whether it's a bustling village or a wild frontier!"
+      "Explore deserts, forests, caverns, or other lands. 
+       Choose whether it's a bustling village or a wild frontier!"
     </p>
-    
     <div class="controls">
-      <!-- Biome / Map Type Selection -->
+      <!-- Biome / Map Type selection -->
       <label>
         Map Biome:
         <select id="mapType">
@@ -91,8 +94,7 @@
           <option value="cavern">Cavern</option>
         </select>
       </label>
-      
-      <!-- Style Selection -->
+      <!-- Village vs Wilds -->
       <label>
         Map Style:
         <select id="mapStyle">
@@ -100,10 +102,8 @@
           <option value="wilds">Wilds (No Buildings)</option>
         </select>
       </label>
-      
-      <button class="mapButton">Generate Map</button>
-      
-      <!-- Occupant Selection -->
+      <button class="mapButton" onclick="generateMap()">Generate Map</button>
+      <!-- Occupant selection: player|enemy|npc -->
       <label>
         Occupant:
         <select id="occupantType">
@@ -113,29 +113,25 @@
         </select>
       </label>
     </div>
-    
     <div class="mapWrapper">
       <canvas id="mapCanvas" width="1000" height="1000"></canvas>
     </div>
   </div>
 
-  <script type="module">
+  <script>
     /*******************************************************
-     * CONFIGURATION & GLOBALS
+     * BASIC CONFIG & GLOBALS
      *******************************************************/
-    const CONFIG = {
-      tileSize: 20,
-      gridWidth: 50,
-      gridHeight: 50,
-      assetPathTiles: 'resources/mapassets/',
-      assetPathOccupants: 'resources/occupants/'
-    };
+    const TILE_SIZE = 20;
+    const GRID_WIDTH = 50;
+    const GRID_HEIGHT = 50;
 
-    // Map data & occupant tracking
     let mapData = [];
     let occupantInHand = null;
 
-    // Basic tile types (the value equals the "default" filename)
+    /*******************************************************
+     * TILE TYPES
+     *******************************************************/
     const TILE_TYPES = {
       GRASS:       "grass",
       TREE:        "tree",
@@ -151,7 +147,9 @@
       SOLID_STONE: "solidStone"
     };
 
-    // Fallback colours (original dot colours)
+    /*******************************************************
+     * FALLBACK COLOURS (used if an image isn't ready)
+     *******************************************************/
     const baseTileColours = {
       [TILE_TYPES.GRASS]:       "#9AE582",
       [TILE_TYPES.TREE]:        "#7BC16E",
@@ -167,7 +165,10 @@
       [TILE_TYPES.SOLID_STONE]: "#000000"
     };
 
-    // Mapping tile type to an array of texture filenames (including your new assets)
+    /*******************************************************
+     * TILE TEXTURE OPTIONS
+     * (All filenames here are assumed to reside in resources/mapassets/)
+     *******************************************************/
     const TILE_TEXTURE_OPTIONS = {
       [TILE_TYPES.GRASS]:       ["grass.png", "ancienttile.png"],
       [TILE_TYPES.TREE]:        ["tree.png", "shrub1.png", "shrub2.png", "shrub3.png"],
@@ -183,7 +184,10 @@
       [TILE_TYPES.SOLID_STONE]: ["solidStone.png", "lava.png", "magma.png", "brimstone.png", "brimstone2.png", "sandstonetile.png", "desertrock.png"]
     };
 
-    // Occupant sprites (filenames). Duplicates are okay; they simply provide more variety.
+    /*******************************************************
+     * OCCUPANT SPRITES
+     * (All occupant sprite filenames reside in resources/occupants/)
+     *******************************************************/
     const occupantSpriteFilenames = [
       "paladin.png",
       "fighter.png",
@@ -217,53 +221,72 @@
       "orcfighter.png"
     ];
 
-    // Global dictionaries to store preloaded images
-    const loadedTileImages = {};     // key: filename → Image object
-    const loadedOccupantImages = {}; // key: filename → Image object
-
-    // Utility: Random choice from array
-    const randomChoice = arr => arr[Math.floor(Math.random() * arr.length)];
-
-    // Utility: Get fallback colour for a tile type
-    const getColorForTileType = (tileType) => baseTileColours[tileType] || "#FFFFFF";
-
-    // Utility: Get a DOM element by ID
-    const $ = id => document.getElementById(id);
-
     /*******************************************************
-     * ASSET PRELOADING FUNCTIONS
+     * PRELOADED TEXTURES & SPRITES
      *******************************************************/
-    // Preload all tile textures (all unique filenames in TILE_TEXTURE_OPTIONS)
-    async function preloadTileTextures() {
-      const files = new Set();
-      for (const key in TILE_TEXTURE_OPTIONS) {
-        TILE_TEXTURE_OPTIONS[key].forEach(filename => files.add(filename));
-      }
-      const promises = [];
-      for (const filename of files) {
-        promises.push(new Promise((resolve) => {
-          const img = new Image();
-          img.src = CONFIG.assetPathTiles + filename;
-          img.onload = () => { loadedTileImages[filename] = img; resolve(); };
-          img.onerror = () => { console.error("Error loading tile:", filename); resolve(); };
-        }));
-      }
-      await Promise.all(promises);
+    const loadedTileImages = {};      // key: filename → Image object
+    const loadedOccupantImages = {};  // key: filename → Image object
+
+    // Utility: get fallback colour
+    function getColorForTileType(tileType) {
+      return baseTileColours[tileType] || "#FFFFFF";
     }
 
-    // Preload all occupant sprite images
-    async function preloadOccupantTextures() {
-      const promises = occupantSpriteFilenames.map(filename => new Promise((resolve) => {
-        const img = new Image();
-        img.src = CONFIG.assetPathOccupants + filename;
-        img.onload = () => { loadedOccupantImages[filename] = img; resolve(); };
-        img.onerror = () => { console.error("Error loading occupant sprite:", filename); resolve(); };
-      }));
-      await Promise.all(promises);
+    // Utility: get the key name (e.g. 'GRASS') by matching the value (e.g. 'grass')
+    function getKeyByValue(obj, val) {
+      return Object.keys(obj).find(key => obj[key] === val);
     }
 
     /*******************************************************
-     * MAP SETTINGS & GENERATION FUNCTIONS
+     * PRELOAD TILE TEXTURES (loads all unique filenames from TILE_TEXTURE_OPTIONS)
+     *******************************************************/
+    function preloadTileTextures(onComplete) {
+      const files = new Set();
+      for (let type in TILE_TEXTURE_OPTIONS) {
+        TILE_TEXTURE_OPTIONS[type].forEach(fname => files.add(fname));
+      }
+      let toLoad = files.size, loaded = 0;
+      files.forEach(fname => {
+        const img = new Image();
+        img.src = `resources/mapassets/${fname}`;
+        img.onload = () => {
+          loaded++;
+          if (loaded === toLoad && onComplete) {
+            onComplete();
+          }
+        };
+        img.onerror = () => {
+          console.error("Error loading tile image:", fname);
+          loaded++;
+          if (loaded === toLoad && onComplete) onComplete();
+        };
+        loadedTileImages[fname] = img;
+      });
+    }
+
+    /*******************************************************
+     * PRELOAD OCCUPANT SPRITES
+     *******************************************************/
+    function preloadOccupantSprites(onComplete) {
+      let toLoad = occupantSpriteFilenames.length, loaded = 0;
+      occupantSpriteFilenames.forEach(fname => {
+        const img = new Image();
+        img.src = `resources/occupants/${fname}`;
+        img.onload = () => {
+          loaded++;
+          if (loaded === toLoad && onComplete) onComplete();
+        };
+        img.onerror = () => {
+          console.error("Error loading occupant sprite:", fname);
+          loaded++;
+          if (loaded === toLoad && onComplete) onComplete();
+        };
+        loadedOccupantImages[fname] = img;
+      });
+    }
+
+    /*******************************************************
+     * BIOME SETTINGS
      *******************************************************/
     function getMapSettings(theme) {
       switch(theme) {
@@ -350,14 +373,44 @@
       }
     }
 
-    // For non-cavern maps: randomly assign a tile type and choose one texture from the available options
+    /*******************************************************
+     * MAIN MAP GENERATION
+     *******************************************************/
+    function generateMap() {
+      occupantInHand = null;
+      const theme = document.getElementById("mapType").value;
+      const style = document.getElementById("mapStyle").value;
+      const settings = getMapSettings(theme);
+
+      if (settings.isCavern) {
+        generateCavern();
+      } else {
+        initMap(settings.baseDist);
+        for (let i = 0; i < settings.waterBodies; i++) {
+          createWaterBody(settings.waterMaxSize);
+        }
+        for (let r = 0; r < settings.roads; r++) {
+          createRoad(settings.roadMaxLength, 2, 3);
+        }
+      }
+      if (!settings.isCavern && style === "village" && settings.buildings > 0) {
+        createBuildings(settings.buildings);
+      }
+      drawMap();
+    }
+
+    /*******************************************************
+     * NON-CAVERN MAP INIT
+     *******************************************************/
     function initMap(dist) {
       mapData = [];
       let totalP = 0;
-      for (let t in dist) { totalP += dist[t]; }
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        const row = [];
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
+      for (let t in dist){ 
+        totalP += dist[t];
+      }
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        let row = [];
+        for (let x = 0; x < GRID_WIDTH; x++) {
           const rand = Math.random();
           let chosen = TILE_TYPES.GRASS;
           let cumul = 0;
@@ -368,73 +421,86 @@
               break;
             }
           }
-          // Assign a random texture (filename) from the options for this tile type
-          const textureOptions = TILE_TEXTURE_OPTIONS[chosen] || [];
-          const texture = textureOptions.length ? randomChoice(textureOptions) : null;
-          row.push({ type: chosen, texture, occupant: null });
+          // Assign a random texture for this tile type (if available)
+          const options = TILE_TEXTURE_OPTIONS[chosen] || [];
+          const texture = options.length ? options[Math.floor(Math.random()*options.length)] : null;
+          row.push({ type: chosen, occupant: null, texture });
         }
         mapData.push(row);
       }
     }
 
-    // Cellular automata-based cavern generation remains as before
+    /*******************************************************
+     * CAVERN MAP GENERATION (CELLULAR AUTOMATA)
+     *******************************************************/
     function generateCavern() {
       let boolMap = randomBoolMap(0.45);
-      for (let i = 0; i < 5; i++) { boolMap = doCAStep(boolMap); }
+      for (let i = 0; i < 5; i++) {
+        boolMap = doCAStep(boolMap);
+      }
       const { largestMap, largestRegion } = keepLargestRegion(boolMap);
       carveExits(largestMap, largestRegion);
       convertBoolMapToCavern(largestMap);
     }
+
     function randomBoolMap(fillChance) {
-      const bm = [];
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        const row = [];
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
+      let bm = [];
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        let row = [];
+        for (let x = 0; x < GRID_WIDTH; x++) {
           row.push(Math.random() < fillChance);
         }
         bm.push(row);
       }
       return bm;
     }
-    function doCAStep(bm) {
-      const newMap = [];
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        const row = [];
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
-          const n = countFloorNeighbours(bm, x, y);
-          row.push(bm[y][x] ? (n >= 4) : (n >= 5));
+
+    function doCAStep(boolMap) {
+      let newMap = [];
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        let row = [];
+        for (let x = 0; x < GRID_WIDTH; x++) {
+          const n = countFloorNeighbours(boolMap, x, y);
+          const curr = boolMap[y][x];
+          row.push(curr ? (n >= 4) : (n >= 5));
         }
         newMap.push(row);
       }
       return newMap;
     }
+
     function countFloorNeighbours(bm, cx, cy) {
       let c = 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
-          const nx = cx + dx, ny = cy + dy;
-          if (nx >= 0 && ny >= 0 && nx < CONFIG.gridWidth && ny < CONFIG.gridHeight) {
+          let nx = cx + dx;
+          let ny = cy + dy;
+          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
             if (bm[ny][nx]) c++;
           }
         }
       }
       return c;
     }
+
     function keepLargestRegion(bm) {
-      const visited = Array.from({ length: CONFIG.gridHeight }, () => Array(CONFIG.gridWidth).fill(false));
+      let visited = [];
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        visited[y] = new Array(GRID_WIDTH).fill(false);
+      }
       let bestSize = 0, bestRegion = [];
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
           if (bm[y][x] && !visited[y][x]) {
-            const queue = [[x, y]];
+            let queue = [[x, y]];
             visited[y][x] = true;
-            const regionCells = [[x, y]];
+            let regionCells = [[x, y]];
             let size = 1;
             while (queue.length) {
               const [cx, cy] = queue.pop();
-              for (const [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
-                if (nx >= 0 && ny >= 0 && nx < CONFIG.gridWidth && ny < CONFIG.gridHeight) {
+              for (let [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
+                if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
                   if (bm[ny][nx] && !visited[ny][nx]) {
                     visited[ny][nx] = true;
                     queue.push([nx, ny]);
@@ -444,14 +510,20 @@
                 }
               }
             }
-            if (size > bestSize) { bestSize = size; bestRegion = regionCells; }
+            if (size > bestSize) {
+              bestSize = size;
+              bestRegion = regionCells;
+            }
           }
         }
       }
-      const largestMap = bm.map(row => row.slice());
-      const regionSet = new Set(bestRegion.map(([xx, yy]) => `${xx},${yy}`));
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
+      let largestMap = [];
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        largestMap[y] = bm[y].slice();
+      }
+      let regionSet = new Set(bestRegion.map(([xx, yy]) => `${xx},${yy}`));
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
           if (largestMap[y][x] && !regionSet.has(`${x},${y}`)) {
             largestMap[y][x] = false;
           }
@@ -459,155 +531,230 @@
       }
       return { largestMap, largestRegion: bestRegion };
     }
+
     function carveExits(bm, regionCells) {
       let boundaryCount = 0;
-      for (const [x, y] of regionCells) {
-        if (x === 0 || x === CONFIG.gridWidth - 1 || y === 0 || y === CONFIG.gridHeight - 1) {
+      for (let [x,y] of regionCells) {
+        if (x === 0 || x === GRID_WIDTH-1 || y === 0 || y === GRID_HEIGHT-1) {
           boundaryCount++;
           if (boundaryCount >= 3) break;
         }
       }
       if (boundaryCount < 1) {
-        const needed = 1 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < needed; i++) { carveOneExit(bm, regionCells); }
+        let needed = 1 + Math.floor(Math.random()*3);
+        for (let i = 0; i < needed; i++) {
+          carveOneExit(bm, regionCells);
+        }
       } else if (boundaryCount < 3) {
-        const toAdd = Math.floor(Math.random() * (3 - boundaryCount + 1));
-        for (let i = 0; i < toAdd; i++) { carveOneExit(bm, regionCells); }
+        let toAdd = Math.floor(Math.random() * (3 - boundaryCount + 1));
+        for (let i = 0; i < toAdd; i++) {
+          carveOneExit(bm, regionCells);
+        }
       }
     }
+
     function carveOneExit(bm, regionCells) {
-      if (!regionCells.length) return;
-      const [rx, ry] = regionCells[Math.floor(Math.random() * regionCells.length)];
+      if(!regionCells.length) return;
+      let [rx, ry] = regionCells[Math.floor(Math.random()*regionCells.length)];
       let edgeX, edgeY;
-      const side = Math.floor(Math.random() * 4);
-      if (side === 0) { edgeY = 0; edgeX = Math.floor(Math.random() * CONFIG.gridWidth); }
-      else if (side === 1) { edgeY = CONFIG.gridHeight - 1; edgeX = Math.floor(Math.random() * CONFIG.gridWidth); }
-      else if (side === 2) { edgeX = 0; edgeY = Math.floor(Math.random() * CONFIG.gridHeight); }
-      else { edgeX = CONFIG.gridWidth - 1; edgeY = Math.floor(Math.random() * CONFIG.gridHeight); }
+      const side = Math.floor(Math.random()*4);
+      if (side === 0) { edgeY = 0; edgeX = Math.floor(Math.random()*GRID_WIDTH); }
+      else if (side === 1){ edgeY = GRID_HEIGHT-1; edgeX = Math.floor(Math.random()*GRID_WIDTH); }
+      else if (side === 2){ edgeX = 0; edgeY = Math.floor(Math.random()*GRID_HEIGHT); }
+      else { edgeX = GRID_WIDTH-1; edgeY = Math.floor(Math.random()*GRID_HEIGHT); }
       carveLine(bm, rx, ry, edgeX, edgeY);
     }
+
     function carveLine(bm, x1, y1, x2, y2) {
       let steps = 0;
       while ((x1 !== x2 || y1 !== y2) && steps < 2000) {
         bm[y1][x1] = true;
-        if (x1 < x2) x1++; else if (x1 > x2) x1--;
-        if (y1 < y2) y1++; else if (y1 > y2) y1--;
+        if(x1 < x2) x1++;
+        else if(x1 > x2) x1--;
+        if(y1 < y2) y1++;
+        else if(y1 > y2) y1--;
         steps++;
       }
-      if (x1 >= 0 && x1 < CONFIG.gridWidth && y1 >= 0 && y1 < CONFIG.gridHeight) {
+      if(x1>=0 && x1<GRID_WIDTH && y1>=0 && y1<GRID_HEIGHT){
         bm[y1][x1] = true;
       }
     }
+
     function convertBoolMapToCavern(bm) {
       mapData = [];
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        const row = [];
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
-          if (bm[y][x]) {
-            const r = Math.random();
-            if (r < 0.03) row.push({ type: TILE_TYPES.WATER, occupant: null });
-            else if (r < 0.15) row.push({ type: TILE_TYPES.DIRT, occupant: null });
-            else row.push({ type: TILE_TYPES.STONE, occupant: null });
+      for(let y=0; y<GRID_HEIGHT; y++){
+        let row = [];
+        for(let x=0; x<GRID_WIDTH; x++){
+          if(bm[y][x]){
+            let r = Math.random();
+            if(r < 0.03) row.push({type: TILE_TYPES.WATER, occupant: null});
+            else if(r < 0.15) row.push({type: TILE_TYPES.DIRT, occupant: null});
+            else row.push({type: TILE_TYPES.STONE, occupant: null});
           } else {
-            row.push({ type: TILE_TYPES.SOLID_STONE, occupant: null });
+            row.push({type: TILE_TYPES.SOLID_STONE, occupant: null});
           }
-          // Also assign a random texture from the options for the chosen type:
-          const texOptions = TILE_TEXTURE_OPTIONS[row[x].type] || [];
-          row[x].texture = texOptions.length ? randomChoice(texOptions) : null;
+          // Also assign a random texture for the chosen type:
+          const options = TILE_TEXTURE_OPTIONS[row[x].type] || [];
+          row[x].texture = options.length ? options[Math.floor(Math.random()*options.length)] : null;
         }
         mapData.push(row);
       }
     }
 
     /*******************************************************
-     * WATER & ROAD FUNCTIONS
+     * WATER BODIES
      *******************************************************/
-    function createWaterBody(maxSize) {
-      const sx = Math.floor(Math.random() * CONFIG.gridWidth);
-      const sy = Math.floor(Math.random() * CONFIG.gridHeight);
+    function createWaterBody(maxSize){
+      const sx = Math.floor(Math.random()*GRID_WIDTH);
+      const sy = Math.floor(Math.random()*GRID_HEIGHT);
       floodFillWater(sx, sy, maxSize);
     }
     function floodFillWater(sx, sy, maxSize) {
-      const stack = [[sx, sy]];
+      let stack = [[sx, sy]];
       let size = 0;
-      while (stack.length && size < maxSize) {
+      while (stack.length && size<maxSize) {
         const [cx, cy] = stack.pop();
-        if (cx < 0 || cy < 0 || cx >= CONFIG.gridWidth || cy >= CONFIG.gridHeight) continue;
-        if (mapData[cy][cx].type === TILE_TYPES.WATER) continue;
-        if (Math.random() < 0.2) continue;
+        if(cx<0 || cy<0 || cx>=GRID_WIDTH || cy>=GRID_HEIGHT) continue;
+        if(mapData[cy][cx].type === TILE_TYPES.WATER) continue;
+        if(Math.random() < 0.2) continue;
         mapData[cy][cx].type = TILE_TYPES.WATER;
         size++;
-        stack.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
+        stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
     }
+
+    /*******************************************************
+     * ROADS
+     *******************************************************/
     function createRoad(maxLength, minW, maxW) {
       let x, y;
-      if (Math.random() < 0.5) {
-        x = Math.floor(Math.random() * CONFIG.gridWidth);
-        y = (Math.random() < 0.5) ? 0 : CONFIG.gridHeight - 1;
+      if(Math.random()<0.5) {
+        x = Math.floor(Math.random()*GRID_WIDTH);
+        y = (Math.random()<0.5)? 0 : GRID_HEIGHT-1;
       } else {
-        x = (Math.random() < 0.5) ? 0 : CONFIG.gridWidth - 1;
-        y = Math.floor(Math.random() * CONFIG.gridHeight);
+        x = (Math.random()<0.5)? 0 : GRID_WIDTH-1;
+        y = Math.floor(Math.random()*GRID_HEIGHT);
       }
       let direction = getRandomDirection();
-      const length = Math.floor(Math.random() * (maxLength / 2) + maxLength / 2);
-      const w = Math.floor(Math.random() * (maxW - minW + 1)) + minW;
-      for (let i = 0; i < length; i++) {
+      const length = Math.floor(Math.random()*(maxLength/2) + maxLength/2);
+      const w = Math.floor(Math.random()*(maxW - minW + 1)) + minW;
+      for(let i=0; i<length; i++){
         carveRoad(x, y, w);
         x += direction.dx;
         y += direction.dy;
-        if (Math.random() < 0.2) direction = getRandomDirection(direction);
-        if (x < 0 || x >= CONFIG.gridWidth || y < 0 || y >= CONFIG.gridHeight) break;
+        if(Math.random()<0.2) direction = getRandomDirection(direction);
+        if(x<0||x>=GRID_WIDTH||y<0||y>=GRID_HEIGHT) break;
       }
     }
-    function carveRoad(cx, cy, width) {
-      const r = Math.floor(width / 2);
-      for (let dy = -r; dy <= r; dy++) {
-        for (let dx = -r; dx <= r; dx++) {
-          const nx = cx + dx, ny = cy + dy;
-          if (nx >= 0 && nx < CONFIG.gridWidth && ny >= 0 && ny < CONFIG.gridHeight) {
-            mapData[ny][nx].type = (Math.random() < 0.6) ? TILE_TYPES.ROAD_STONE : TILE_TYPES.ROAD_DIRT;
+    function carveRoad(cx, cy, width){
+      const r = Math.floor(width/2);
+      for(let dy=-r; dy<=r; dy++){
+        for(let dx=-r; dx<=r; dx++){
+          let nx = cx+dx, ny = cy+dy;
+          if(nx>=0 && nx<GRID_WIDTH && ny>=0 && ny<GRID_HEIGHT){
+            mapData[ny][nx].type = (Math.random()<0.6)? TILE_TYPES.ROAD_STONE : TILE_TYPES.ROAD_DIRT;
           }
         }
       }
     }
-    function getRandomDirection(prevDir) {
-      const dirs = [{dx:1,dy:0}, {dx:-1,dy:0}, {dx:0,dy:1}, {dx:0,dy:-1}];
-      if (prevDir && Math.random() < 0.6) return prevDir;
-      return randomChoice(dirs);
+    function getRandomDirection(prevDir){
+      const dirs = [
+        {dx:1,dy:0},
+        {dx:-1,dy:0},
+        {dx:0,dy:1},
+        {dx:0,dy:-1}
+      ];
+      if(prevDir && Math.random()<0.6) return prevDir;
+      return dirs[Math.floor(Math.random()*dirs.length)];
     }
 
     /*******************************************************
-     * BUILDING GENERATION (with improved door logic)
+     * BUILDINGS (With BFS door logic)
      *******************************************************/
     const buildingShapes = [
-      { width: 4, height: 4, layout: [[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1]] },
-      { width: 5, height: 5, layout: [[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]] },
-      { width: 6, height: 5, layout: [[1,1,1,1,1,1],[1,0,0,0,0,1],[1,0,0,0,0,1],[1,0,0,0,0,1],[1,1,1,1,1,1]] },
-      { width: 7, height: 5, layout: [[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1]] },
-      { width: 7, height: 7, layout: [[1,1,1,1,1,1,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,0,0,0,0,0,1],[1,1,1,1,1,1,1]] },
-      { width: 8, height: 5, layout: [[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]] }
+      {
+        width: 4, height: 4,
+        layout: [
+          [1,1,1,1],
+          [1,0,0,1],
+          [1,0,0,1],
+          [1,1,1,1]
+        ]
+      },
+      {
+        width: 5, height: 5,
+        layout: [
+          [1,1,1,1,1],
+          [1,0,0,0,1],
+          [1,0,0,0,1],
+          [1,0,0,0,1],
+          [1,1,1,1,1]
+        ]
+      },
+      {
+        width: 6, height: 5,
+        layout: [
+          [1,1,1,1,1,1],
+          [1,0,0,0,0,1],
+          [1,0,0,0,0,1],
+          [1,0,0,0,0,1],
+          [1,1,1,1,1,1]
+        ]
+      },
+      {
+        width: 7, height: 5,
+        layout: [
+          [1,1,1,1,1,1,1],
+          [1,0,0,0,0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,1,1,1,1,1,1]
+        ]
+      },
+      {
+        width: 7, height: 7,
+        layout: [
+          [1,1,1,1,1,1,1],
+          [1,0,0,0,0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,1,1,1,1,1,1]
+        ]
+      },
+      {
+        width: 8, height: 5,
+        layout: [
+          [1,1,1,1,1,1,1,1],
+          [1,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,1],
+          [1,1,1,1,1,1,1,1]
+        ]
+      }
     ];
-    function createBuildings(numBuildings) {
-      let attempts = 0, placed = 0;
-      while (placed < numBuildings && attempts < numBuildings * 50) {
+    function createBuildings(numBuildings){
+      let attempts=0, placed=0;
+      while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
-        const shape = randomChoice(buildingShapes);
-        const sx = Math.floor(Math.random() * (CONFIG.gridWidth - shape.width));
-        const sy = Math.floor(Math.random() * (CONFIG.gridHeight - shape.height));
-        if (canPlaceBuilding(sx, sy, shape)) {
-          placeBuilding(sx, sy, shape);
+        const shape = buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
+        const sx = Math.floor(Math.random()*(GRID_WIDTH - shape.width));
+        const sy = Math.floor(Math.random()*(GRID_HEIGHT - shape.height));
+        if(canPlaceBuilding(sx,sy,shape)){
+          placeBuilding(sx,sy,shape);
           placed++;
         }
       }
     }
-    function canPlaceBuilding(sx, sy, shape) {
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
+    function canPlaceBuilding(sx, sy, shape){
+      for(let y=0; y<shape.height; y++){
+        for(let x=0; x<shape.width; x++){
           const val = shape.layout[y][x];
-          if (val === 1 || val === 0) {
+          if(val===1 || val===0){
             const tileType = mapData[sy+y][sx+x].type;
-            if ([TILE_TYPES.WATER, TILE_TYPES.ROAD_STONE, TILE_TYPES.ROAD_DIRT, TILE_TYPES.SOLID_STONE].includes(tileType)) {
+            if([TILE_TYPES.WATER, TILE_TYPES.ROAD_STONE, TILE_TYPES.ROAD_DIRT, TILE_TYPES.SOLID_STONE]
+              .includes(tileType)){
               return false;
             }
           }
@@ -615,211 +762,247 @@
       }
       return true;
     }
-    function placeBuilding(sx, sy, shape) {
-      let localLayout = shape.layout.map(row => row.slice());
+    function placeBuilding(sx, sy, shape){
+      let localLayout = shape.layout.map(r=>r.slice());
       subdivideBuilding(localLayout);
       placeExteriorDoor(localLayout);
       ensureAccessibility(localLayout);
       stampBuildingOntoMap(localLayout, sx, sy);
     }
-    function subdivideBuilding(localLayout) {
-      const h = localLayout.length, w = localLayout[0].length;
-      if (w >= 7) {
-        const wx = Math.floor(w / 2);
-        for (let y = 1; y < h - 1; y++) { localLayout[y][wx] = 1; }
-        const doorY = Math.floor(Math.random() * (h - 2)) + 1;
+    function subdivideBuilding(localLayout){
+      const h = localLayout.length;
+      const w = localLayout[0].length;
+      if(w >= 7){
+        let wx = Math.floor(w/2);
+        for(let y=1; y<h-1; y++){
+          localLayout[y][wx] = 1;
+        }
+        let doorY = Math.floor(Math.random()*(h-2)) + 1;
         localLayout[doorY][wx] = 2;
       }
-      if (h >= 7) {
-        const wy = Math.floor(h / 2);
-        for (let x = 1; x < w - 1; x++) { localLayout[wy][x] = 1; }
-        const doorX = Math.floor(Math.random() * (w - 2)) + 1;
+      if(h >= 7){
+        let wy = Math.floor(h/2);
+        for(let x=1; x<w-1; x++){
+          localLayout[wy][x] = 1;
+        }
+        let doorX = Math.floor(Math.random()*(w-2)) + 1;
         localLayout[wy][doorX] = 2;
       }
     }
-    function placeExteriorDoor(localLayout) {
-      const h = localLayout.length, w = localLayout[0].length;
+    function placeExteriorDoor(localLayout){
+      const h = localLayout.length;
+      const w = localLayout[0].length;
       let candidates = [];
-      for (let x = 1; x < w - 1; x++) {
-        if (isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout, x, 0)) {
-          candidates.push({ px: x, py: 0 });
+      for(let x=1; x<w-1; x++){
+        if(isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout,x,0)){
+          candidates.push({px:x, py:0});
         }
-        if (isWallish(localLayout[h-1][x]) && hasExactlyTwoOrthWalls(localLayout, x, h-1)) {
-          candidates.push({ px: x, py: h-1 });
-        }
-      }
-      for (let y = 1; y < h - 1; y++) {
-        if (isWallish(localLayout[y][0]) && hasExactlyTwoOrthWalls(localLayout, 0, y)) {
-          candidates.push({ px: 0, py: y });
-        }
-        if (isWallish(localLayout[y][w-1]) && hasExactlyTwoOrthWalls(localLayout, w-1, y)) {
-          candidates.push({ px: w-1, py: y });
+        if(isWallish(localLayout[h-1][x]) && hasExactlyTwoOrthWalls(localLayout,x,h-1)){
+          candidates.push({px:x, py:h-1});
         }
       }
-      if (candidates.length > 0) {
-        const howMany = 1 + Math.floor(Math.random() * 2);
-        for (let i = 0; i < howMany && candidates.length; i++) {
-          const idx = Math.floor(Math.random() * candidates.length);
-          const chosen = candidates[idx];
+      for(let y=1; y<h-1; y++){
+        if(isWallish(localLayout[y][0]) && hasExactlyTwoOrthWalls(localLayout,0,y)){
+          candidates.push({px:0, py:y});
+        }
+        if(isWallish(localLayout[y][w-1]) && hasExactlyTwoOrthWalls(localLayout,w-1,y)){
+          candidates.push({px:w-1, py:y});
+        }
+      }
+      if(candidates.length > 0){
+        let howMany = 1 + Math.floor(Math.random()*2);
+        for(let i=0; i<howMany && candidates.length; i++){
+          let idx = Math.floor(Math.random()*candidates.length);
+          let chosen = candidates[idx];
           localLayout[chosen.py][chosen.px] = 2;
-          candidates.splice(idx, 1);
+          candidates.splice(idx,1);
         }
       }
     }
-    function ensureAccessibility(localLayout) {
+    function ensureAccessibility(localLayout){
       const floors = collectFloorCells(localLayout);
-      if (!floors.length) return;
-      const doorCoords = collectDoorCoords(localLayout);
-      if (!doorCoords.length) return;
-      const mainDoor = doorCoords.find(d => isOnPerimeter(localLayout, d.x, d.y)) || doorCoords[0];
-      if (!mainDoor) return;
-      const visited = new Set();
-      const queue = [];
-      queue.push({ x: mainDoor.x, y: mainDoor.y });
+      if(!floors.length) return;
+      let doorCoords = collectDoorCoords(localLayout);
+      if(!doorCoords.length) return;
+      let mainDoor = doorCoords.find(d => isOnPerimeter(localLayout,d.x,d.y)) || doorCoords[0];
+      if(!mainDoor) return;
+      let visited = new Set();
+      let queue = [];
+      queue.push({x: mainDoor.x, y: mainDoor.y});
       visited.add(`${mainDoor.x},${mainDoor.y}`);
-      while (queue.length) {
-        const { x, y } = queue.shift();
-        for (const [nx, ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]) {
-          if (nx < 0 || ny < 0 || nx >= localLayout[0].length || ny >= localLayout.length) continue;
-          const val = localLayout[ny][nx];
-          if (val === 0 || val === 2) {
-            const key = `${nx},${ny}`;
-            if (!visited.has(key)) {
+      while(queue.length){
+        let {x, y} = queue.shift();
+        for(let [nx, ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){
+          if(nx<0||ny<0||nx>=localLayout[0].length||ny>=localLayout.length) continue;
+          let val = localLayout[ny][nx];
+          if(val===0 || val===2){
+            let key = `${nx},${ny}`;
+            if(!visited.has(key)){
               visited.add(key);
-              queue.push({ x: nx, y: ny });
+              queue.push({x:nx, y:ny});
             }
           }
         }
       }
-      const allVisited = floors.every(cell => visited.has(`${cell.x},${cell.y}`));
-      if (!allVisited) { forceInteriorDoor(localLayout, visited); }
+      let allVisited = floors.every(c => visited.has(`${c.x},${c.y}`));
+      if(!allVisited){
+        forceInteriorDoor(localLayout, visited);
+      }
     }
-    function collectFloorCells(localLayout) {
-      const res = [];
-      for (let y = 0; y < localLayout.length; y++) {
-        for (let x = 0; x < localLayout[0].length; x++) {
-          if (localLayout[y][x] === 0 || localLayout[y][x] === 2) { res.push({ x, y }); }
+    function collectFloorCells(localLayout){
+      let res = [];
+      for(let y=0; y<localLayout.length; y++){
+        for(let x=0; x<localLayout[0].length; x++){
+          if(localLayout[y][x]===0 || localLayout[y][x]===2){
+            res.push({x,y});
+          }
         }
       }
       return res;
     }
-    function collectDoorCoords(localLayout) {
-      const res = [];
-      for (let y = 0; y < localLayout.length; y++) {
-        for (let x = 0; x < localLayout[0].length; x++) {
-          if (localLayout[y][x] === 2) { res.push({ x, y }); }
+    function collectDoorCoords(localLayout){
+      let res = [];
+      for(let y=0; y<localLayout.length; y++){
+        for(let x=0; x<localLayout[0].length; x++){
+          if(localLayout[y][x]===2){
+            res.push({x,y});
+          }
         }
       }
       return res;
     }
-    function isOnPerimeter(localLayout, x, y) {
-      return (x === 0 || y === 0 || x === localLayout[0].length - 1 || y === localLayout.length - 1);
+    function isOnPerimeter(localLayout,x,y){
+      return (x===0||y===0||x===localLayout[0].length-1||y===localLayout.length-1);
     }
-    function isWallish(val) { return val === 1 || val === 2; }
-    function hasExactlyTwoOrthWalls(localLayout, x, y) {
-      const up = (y > 0) && isWallish(localLayout[y-1][x]);
-      const down = (y < localLayout.length - 1) && isWallish(localLayout[y+1][x]);
-      const left = (x > 0) && isWallish(localLayout[y][x-1]);
-      const right = (x < localLayout[0].length - 1) && isWallish(localLayout[y][x+1]);
-      const count = (up ? 1 : 0) + (down ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0);
-      if (count === 2) {
-        if (up && down) return true;
-        if (left && right) return true;
+    function isWallish(val){
+      return val===1 || val===2;
+    }
+    function hasExactlyTwoOrthWalls(localLayout,x,y){
+      let up    = (y>0) && isWallish(localLayout[y-1][x]);
+      let down  = (y<localLayout.length-1) && isWallish(localLayout[y+1][x]);
+      let left  = (x>0) && isWallish(localLayout[y][x-1]);
+      let right = (x<localLayout[0].length-1) && isWallish(localLayout[y][x+1]);
+      let c = (up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
+      if(c===2){
+        if(up && down) return true;
+        if(left && right) return true;
       }
       return false;
     }
-    function forceInteriorDoor(localLayout, visited) {
-      const h = localLayout.length, w = localLayout[0].length;
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          if (localLayout[y][x] === 1 && hasExactlyTwoOrthWalls(localLayout, x, y)) {
-            const sides = [[1,0],[-1,0],[0,1],[0,-1]];
+    function forceInteriorDoor(localLayout, visited){
+      const h = localLayout.length;
+      const w = localLayout[0].length;
+      for(let y=1; y<h-1; y++){
+        for(let x=1; x<w-1; x++){
+          if(localLayout[y][x]===1 && hasExactlyTwoOrthWalls(localLayout,x,y)){
+            let sides = [ [1,0],[-1,0],[0,1],[0,-1] ];
             let visitedSide = false, unvisitedSide = false;
-            for (const [dx, dy] of sides) {
-              const nx = x + dx, ny = y + dy;
-              if (nx >= 0 && ny >= 0 && nx < w && ny < h) {
-                if (localLayout[ny][nx] === 0 || localLayout[ny][nx] === 2) {
-                  if (visited.has(`${nx},${ny}`)) visitedSide = true;
+            for(let s of sides){
+              let nx=x+s[0], ny=y+s[1];
+              if(nx>=0 && ny>=0 && nx<w && ny<h){
+                if(localLayout[ny][nx]===0 || localLayout[ny][nx]===2){
+                  if(visited.has(`${nx},${ny}`)) visitedSide = true;
                   else unvisitedSide = true;
                 }
               }
             }
-            if (visitedSide && unvisitedSide) { localLayout[y][x] = 2; return; }
+            if(visitedSide && unvisitedSide){
+              localLayout[y][x] = 2;
+              return;
+            }
           }
         }
       }
     }
-    function stampBuildingOntoMap(localLayout, sx, sy) {
-      const h = localLayout.length, w = localLayout[0].length;
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
+    function stampBuildingOntoMap(localLayout, sx, sy){
+      const h = localLayout.length;
+      const w = localLayout[0].length;
+      for(let y=0; y<h; y++){
+        for(let x=0; x<w; x++){
           const val = localLayout[y][x];
-          if (val === 1) { mapData[sy+y][sx+x].type = TILE_TYPES.WALL; }
-          else if (val === 0) { mapData[sy+y][sx+x].type = TILE_TYPES.FLOOR; }
-          else if (val === 2) { mapData[sy+y][sx+x].type = TILE_TYPES.DOOR; }
-          // Also reassign a texture for the updated type:
-          const options = TILE_TEXTURE_OPTIONS[mapData[sy+y][sx+x].type] || [];
-          mapData[sy+y][sx+x].texture = options.length ? randomChoice(options) : null;
+          if(val===1){
+            mapData[sy+y][sx+x].type = TILE_TYPES.WALL;
+          } else if(val===0){
+            mapData[sy+y][sx+x].type = TILE_TYPES.FLOOR;
+          } else if(val===2){
+            mapData[sy+y][sx+x].type = TILE_TYPES.DOOR;
+          }
+          // Reassign a random texture based on the final type:
+          const opts = TILE_TEXTURE_OPTIONS[mapData[sy+y][sx+x].type] || [];
+          mapData[sy+y][sx+x].texture = opts.length ? opts[Math.floor(Math.random()*opts.length)] : null;
         }
       }
     }
 
     /*******************************************************
-     * DRAWING FUNCTIONS
+     * DRAWING
      *******************************************************/
-    function drawMap() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let y = 0; y < CONFIG.gridHeight; y++) {
-        for (let x = 0; x < CONFIG.gridWidth; x++) {
-          drawTile(x, y);
+    function drawMap(){
+      const canvas = document.getElementById("mapCanvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(let y=0; y<GRID_HEIGHT; y++){
+        for(let x=0; x<GRID_WIDTH; x++){
+          drawTile(ctx, x, y);
         }
       }
     }
-    function drawTile(x, y) {
+    function drawTile(ctx, x, y) {
       const tile = mapData[y][x];
-      const px = x * CONFIG.tileSize, py = y * CONFIG.tileSize;
-      // Draw the tile texture if available
-      if (tile.texture && loadedTileImages[tile.texture] && loadedTileImages[tile.texture].complete) {
-        ctx.drawImage(loadedTileImages[tile.texture], px, py, CONFIG.tileSize, CONFIG.tileSize);
+      const px = x * TILE_SIZE;
+      const py = y * TILE_SIZE;
+      const texFile = tile.texture;
+      if(texFile && loadedTileImages[texFile] && loadedTileImages[texFile].complete) {
+        ctx.drawImage(loadedTileImages[texFile], px, py, TILE_SIZE, TILE_SIZE);
       } else {
         ctx.fillStyle = getColorForTileType(tile.type);
-        ctx.fillRect(px, py, CONFIG.tileSize, CONFIG.tileSize);
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
       }
       // Draw occupant sprite if present
-      if (tile.occupant) {
-        // Draw occupant sprite scaled to (tileSize - 2) to leave a 1px margin
-        const spriteFilename = tile.occupant.sprite;
-        if (spriteFilename && loadedOccupantImages[spriteFilename] && loadedOccupantImages[spriteFilename].complete) {
-          ctx.drawImage(loadedOccupantImages[spriteFilename], px+1, py+1, CONFIG.tileSize-2, CONFIG.tileSize-2);
+      if(tile.occupant){
+        const spriteFile = tile.occupant.sprite;
+        if(spriteFile && loadedOccupantImages[spriteFile] && loadedOccupantImages[spriteFile].complete) {
+          // Draw sprite leaving a 1px border
+          ctx.drawImage(loadedOccupantImages[spriteFile], px+1, py+1, TILE_SIZE-2, TILE_SIZE-2);
+        } else {
+          // Fallback: draw a colored dot
+          ctx.fillStyle = tile.occupant.color;
+          const radius = TILE_SIZE * 0.3;
+          ctx.beginPath();
+          ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, radius, 0, 2*Math.PI);
+          ctx.fill();
         }
-        // Draw a 1px border in the occupant's color around the sprite area
+        // Draw 1px border around occupant area in the occupant's color
         ctx.lineWidth = 1;
         ctx.strokeStyle = tile.occupant.color;
-        ctx.strokeRect(px+1, py+1, CONFIG.tileSize-2, CONFIG.tileSize-2);
+        ctx.strokeRect(px+1, py+1, TILE_SIZE-2, TILE_SIZE-2);
       }
-      // Draw a subtle grid over the tile
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.strokeRect(px, py, CONFIG.tileSize, CONFIG.tileSize);
+      // Draw a subtle grid
+      ctx.strokeStyle="rgba(0,0,0,0.3)";
+      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
     }
 
     /*******************************************************
-     * EVENT HANDLING FOR OCCUPANT PLACEMENT
+     * CLICK => OCCUPANT CREATION/MOVEMENT
      *******************************************************/
+    const canvas = document.getElementById("mapCanvas");
     canvas.addEventListener("click", (e) => {
       const rect = canvas.getBoundingClientRect();
-      const tileX = Math.floor((e.clientX - rect.left) / CONFIG.tileSize);
-      const tileY = Math.floor((e.clientY - rect.top) / CONFIG.tileSize);
-      if (tileX < 0 || tileY < 0 || tileX >= CONFIG.gridWidth || tileY >= CONFIG.gridHeight) return;
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const tileX = Math.floor(clickX / TILE_SIZE);
+      const tileY = Math.floor(clickY / TILE_SIZE);
+      if(tileX<0 || tileY<0 || tileX>=GRID_WIDTH || tileY>=GRID_HEIGHT) return;
       const tile = mapData[tileY][tileX];
-      if (!occupantInHand) {
-        if (!tile.occupant) {
-          const occupantType = $("occupantType").value;
+      if(!occupantInHand){
+        if(!tile.occupant){
+          const occupantType = document.getElementById("occupantType").value;
           let occupantColor = "#FFFFFF";
-          if (occupantType === "player") occupantColor = "#00FF00";
-          else if (occupantType === "enemy") occupantColor = "#FF0000";
-          else if (occupantType === "npc") occupantColor = "#0000FF";
-          // Assign a random occupant sprite from the list
-          const sprite = randomChoice(occupantSpriteFilenames);
+          if(occupantType==="player") occupantColor="#00FF00";
+          else if(occupantType==="enemy") occupantColor="#FF0000";
+          else if(occupantType==="npc") occupantColor="#0000FF";
+          // Assign a random sprite from your list
+          const sprite = occupantSpriteFilenames[Math.floor(Math.random()*occupantSpriteFilenames.length)];
           tile.occupant = { type: occupantType, color: occupantColor, sprite };
         } else {
           occupantInHand = tile.occupant;
@@ -829,44 +1012,22 @@
         tile.occupant = occupantInHand;
         occupantInHand = null;
       }
-      drawTile(tileX, tileY);
+      drawTile(canvas.getContext("2d"), tileX, tileY);
     });
 
     /*******************************************************
-     * INITIALISATION: Preload Assets & Generate Map
+     * ON LOAD: Preload tile textures & occupant sprites, then generate & draw map
      *******************************************************/
-    async function init() {
-      try {
-        await Promise.all([ preloadTileTextures(), preloadOccupantTextures() ]);
-      } catch (err) {
-        console.error("Error preloading assets:", err);
-      }
-      
-      const theme = $("mapType").value;
-      const style = $("mapStyle").value;
-      const settings = getMapSettings(theme);
-      
-      if (settings.isCavern) { generateCavern(); }
-      else {
-        initMap(settings.baseDist);
-        for (let i = 0; i < settings.waterBodies; i++) { createWaterBody(settings.waterMaxSize); }
-        for (let r = 0; r < settings.roads; r++) { createRoad(settings.roadMaxLength, 2, 3); }
-      }
-      if (!settings.isCavern && style === "village" && settings.buildings > 0) {
-        createBuildings(settings.buildings);
-      }
-      drawMap();
-    }
-
-    /*******************************************************
-     * BINDING: Regenerate map on button click and on window load
-     *******************************************************/
-    document.querySelector(".mapButton").addEventListener("click", () => { init(); });
-    window.addEventListener("load", () => {
-      init();
-      // Belt-and-braces: a second redraw after 1 second
-      setTimeout(() => { requestAnimationFrame(drawMap); }, 1000);
-    });
+    window.onload = () => {
+      preloadTileTextures(() => {
+        preloadOccupantSprites(() => {
+          generateMap();
+          setTimeout(() => {
+            drawMap();
+          }, 1000);
+        });
+      });
+    };
   </script>
 </body>
 </html>
