@@ -3,1344 +3,1270 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Comedic Fantasy Commoner Generator</title>
+  <title>Commoner Generator</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <!-- ========== GOOGLE FONTS (some comedic flair) ========== -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Open+Sans:wght@400;600&display=swap"
-    rel="stylesheet"
-  >
-
+  <!-- Google Fonts removed for a simpler look -->
   <style>
-    /* ============ BASIC STYLES ============ */
-    /* This code is intentionally large to reflect the original scale. */
-
+    /* BASIC STYLES */
     body {
       margin: 0;
-      /* Comedic background image, can be replaced with your own. */
-      background: url('https://via.placeholder.com/1920x1080?text=Comedic+Fantasy') no-repeat center center fixed;
-      background-size: cover;
-      color: #F0EAD6; /* Light parchment color */
-      font-family: 'Open Sans', sans-serif;
+      background-color: #f8f8f8;
+      color: #333;
+      font-family: "Helvetica", "Arial", sans-serif;
       text-align: center;
     }
-
     h1, h2, h3 {
-      font-family: 'Amatic SC', cursive; /* Quirky heading font */
+      font-family: inherit;
       margin-bottom: 0.5rem;
-      color: #FFF4EC;
     }
-
     .fancy-divider {
-      margin: 0.25rem 0 1rem;
-      font-size: 1.2rem;
-      text-align: center;
+      margin: 0.5rem 0 1rem;
+      position: relative;
     }
     .fancy-divider::after {
-      /* Extra comedic flair symbols */
-      content: "♛ ♪ ☼";
-      color: #FFC0CB;
-      letter-spacing: 0.5rem;
+      content: "";
+      display: block;
+      width: 50%;
+      height: 1px;
+      background: #ccc;
+      margin: 0.5rem auto;
     }
-
     .container {
-      max-width: 1000px;
+      max-width: 800px;
       margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.6);
+      background: #fff;
       padding: 2rem;
       border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
     }
-
     label {
       display: inline-block;
-      width: 160px;
+      width: 150px;
       margin-right: 8px;
       font-weight: bold;
-      color: #FFFAF0;
     }
-
     select, input[type="text"], input[type="number"] {
       margin-bottom: 1rem;
-      padding: 0.3rem;
+      padding: 0.2rem;
       font-size: 1rem;
-      background-color: #fffaf0; /* Slightly creamy for comedic flair */
+      background-color: #fff;
       color: #333;
       border: 1px solid #ccc;
-      font-family: 'Open Sans', sans-serif;
+      font-family: inherit;
     }
-
     .button {
-      background-color: #6B8E23; /* Olive color for comedic vibe */
+      background-color: #8A9A5B; /* Moss green */
       color: #fff;
       border: none;
       padding: 0.5rem 1rem;
       cursor: pointer;
       font-size: 1rem;
       margin: 0.5rem 0;
-      font-family: 'Open Sans', sans-serif;
-      border-radius: 4px;
+      font-family: inherit;
     }
     .button:hover {
-      background-color: #556B2F;
+      background-color: #768f4d;
     }
-
     .output {
       margin-top: 2rem;
       padding: 1rem;
-      border: 1px solid #aaa;
-      background-color: #fffaf0;
+      border: 1px solid #ddd;
+      background-color: #fafafa;
       color: #333;
-      text-align: left;
     }
-
     .footer {
       margin-top: 3rem;
       font-size: 0.9rem;
-      color: #ddd;
-      font-family: 'Open Sans', sans-serif;
+      color: #666;
+      font-family: inherit;
     }
-
-    /* Hide the print button until a character is generated */
+    /* Hide print button until a character is generated */
     #printButton {
       display: none;
     }
-
-    /* ============= PRINT ONLY THE SHEET =============
-       When printing, hide everything except #output. */
     @media print {
-      body * {
-        visibility: hidden !important;
-      }
-      #output,
-      #output * {
-        visibility: visible !important;
-      }
-      #output {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
+      body * { visibility: hidden !important; }
+      #output, #output * { visibility: visible !important; }
+      #output { position: absolute; left: 0; top: 0; width: 100%; }
     }
   </style>
 </head>
 <body>
-
-<div class="container">
-  <h1>Comedic Fantasy Commoner Generator</h1>
-  <div class="fancy-divider"></div>
-
-  <!-- HOME BUTTON (optional link) -->
-  <button class="button" onclick="window.location.href='https://example.com'">
-    Home
-  </button>
-
-  <p>
-    Generate a “level 0” or “level 0.5” comedic fantasy commoner.
-    With robust, whimsical data sets to match the scale of the original.
-  </p>
-
-  <!-- ============ CHARACTER CREATION FORM ============ -->
-  <div id="creation-form">
-
-    <!-- Character Name -->
-    <div>
-      <label for="name-input">Name:</label>
-      <input type="text" id="name-input" placeholder="Enter or randomise" />
-      <button class="button" onclick="randomName()">Random</button>
-    </div>
-
-    <!-- Race Selection -->
-    <div>
-      <label for="race-select">Race:</label>
-      <select id="race-select">
-        <option value="">-- Choose --</option>
-      </select>
-      <button class="button" onclick="randomRace()">Random</button>
-    </div>
-
-    <!-- Background Selection -->
-    <div>
-      <label for="background-select">Background:</label>
-      <select id="background-select">
-        <option value="">-- Choose --</option>
-      </select>
-      <button class="button" onclick="randomBackground()">Random</button>
-    </div>
-
-    <!-- Ability Scores -->
-    <div>
-      <label>Ability Scores:</label><br/>
-      <button class="button" onclick="rollAbilityScores()">Roll (4d6 drop lowest)</button>
-      <button class="button" onclick="standardArray()">Standard Array (15,14,13,12,10,8)</button>
-      <div id="abilities-display" style="margin-top:0.5rem;"></div>
-    </div>
-
-    <!-- Level Selection -->
-    <div>
-      <label for="level-select">Level:</label>
-      <select id="level-select">
-        <option value="0">0 (True Commoner)</option>
-        <option value="0.5">0.5 (Slightly Skilled)</option>
-      </select>
-    </div>
-
-    <!-- Generate Character & Full Random -->
-    <div>
-      <button class="button" onclick="generateCharacter()">Generate Commoner</button>
-      <button class="button" onclick="fullRandom()">Full Random</button>
-    </div>
-  </div>
-
-  <!-- ============ OUTPUT ============ -->
-  <div id="output" class="output" style="display: none;">
-    <h2 id="charName"></h2>
+  <div class="container">
+    <h1>Commoner Generator</h1>
     <div class="fancy-divider"></div>
 
-    <div id="charRace"></div>
-    <div id="charBackground"></div>
-    <div id="charAbilityScores"></div>
-    <div id="charProficiencies"></div>
-    <div id="charLanguages"></div>
-    <div id="charEquipment"></div>
-
-    <hr/>
-    <div id="charTraits" style="margin-top:1rem;"></div>
-  </div>
-
-  <!-- PRINT BUTTON (appears once generated) -->
-  <button class="button" id="printButton" onclick="window.print()">Print Commoner</button>
-
-  <!-- ============ OGL NOTICE (FULL) ============ -->
-  <div class="footer">
-    <h3>Open Game License</h3>
+    <!-- HOME BUTTON -->
+    <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/index.html'">
+      Home
+    </button>
+    
     <p>
-      This work includes material taken from the 5e System Reference Document (SRD),
-      © 2016, Wizards of the Coast, Inc. and is covered by the 
-      <strong>Open Game License, Version 1.0a</strong>.
-      <br/><br/>
-      <em>
-      OPEN GAME LICENSE Version 1.0a<br>
-      The following text is the property of Wizards of the Coast, Inc., 
-      and is Copyright 2000 Wizards of the Coast, Inc ("Wizards").
-      All Rights Reserved.<br>
-      1. Definitions: (a)"Contributors" means the copyright and/or 
-      trademark owners who have contributed Open Game Content...
-      <a href="https://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf" target="_blank">Read the full license</a>.
-      </em>
+      Generate a “level 0” or “level 0.5” commoner.
     </p>
+    
+    <!-- CHARACTER CREATION FORM -->
+    <div id="creation-form">
+      <!-- Character Name -->
+      <div>
+        <label for="name-input">Name:</label>
+        <input type="text" id="name-input" placeholder="Enter or randomise" />
+        <button class="button" onclick="randomName()">Random</button>
+      </div>
+      <!-- Race Selection -->
+      <div>
+        <label for="race-select">Race:</label>
+        <select id="race-select">
+          <option value="">-- Choose --</option>
+        </select>
+        <button class="button" onclick="randomRace()">Random</button>
+      </div>
+      <!-- Background Selection -->
+      <div>
+        <label for="background-select">Background:</label>
+        <select id="background-select">
+          <option value="">-- Choose --</option>
+        </select>
+        <button class="button" onclick="randomBackground()">Random</button>
+      </div>
+      <!-- Level Selection -->
+      <div>
+        <label for="level-select">Level:</label>
+        <select id="level-select">
+          <option value="0">0 (True Commoner)</option>
+          <option value="0.5">0.5 (Slightly Skilled)</option>
+        </select>
+      </div>
+      <!-- Ability Scores -->
+      <div>
+        <label>Ability Scores:</label><br/>
+        <button class="button" onclick="rollAbilityScores()">Roll (4d6 drop lowest)</button>
+        <button class="button" onclick="standardArray()">Standard Array (15,14,13,12,10,8)</button>
+        <div id="abilities-display" style="margin-top:0.5rem;"></div>
+      </div>
+      <!-- Generate Character & Full Random -->
+      <div>
+        <button class="button" onclick="generateCharacter()">Generate Character</button>
+        <button class="button" onclick="fullRandom()">Full Random</button>
+      </div>
+    </div>
+    
+    <!-- OUTPUT -->
+    <div id="output" class="output" style="display: none;">
+      <h2 id="charName" style="margin-top: 0;"></h2>
+      <div class="fancy-divider"></div>
+      <div id="charRace"></div>
+      <div id="charBackground"></div>
+      <div id="charAbilityScores"></div>
+      <div id="charProficiencies"></div>
+      <div id="charLanguages"></div>
+      <div id="charEquipment"></div>
+      <hr/>
+      <div id="charTraits" style="margin-top:1rem;"></div>
+    </div>
+    
+    <!-- PRINT BUTTON -->
+    <button class="button" id="printButton" onclick="window.print()">Print</button>
+    
+    <!-- OGL NOTICE -->
+    <div class="footer">
+      <h3>Open Game License</h3>
+      <p>
+        This work includes material taken from the 5e System Reference Document (SRD),
+        © 2016, Wizards of the Coast, Inc. and is covered by the 
+        <strong>Open Game License, Version 1.0a</strong>.
+        <br/><br/>
+        <em>
+        OPEN GAME LICENSE Version 1.0a<br>
+        The following text is the property of Wizards of the Coast, Inc. and is Copyright 
+        2000 Wizards of the Coast, Inc ("Wizards"). All Rights Reserved.<br>
+        1. Definitions: (a)"Contributors" means the copyright...
+        <a href="https://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf" target="_blank">Read the full license</a>.
+        </em>
+      </p>
+    </div>
   </div>
-</div>
 
-<script>
-/* ==================================================
-   ========== LARGE NAME SYSTEM (COMEDIC) ===========
-   ================================================== */
+  <script>
+    // ---------- Global Arrays and Constants ----------
+    let FIRST_NAMES = [];
+    let LAST_NAMES = [];
+    
+    // New RAW_NAMES array: Roman-inspired names only.
+    const RAW_NAMES = [
+      // Roman-inspired names
+  "Marcus Aurelius", "Gaius Julius", "Lucius Cornelius", "Publius Vergilius", "Tiberius Claudius",
+  "Quintus Fabius", "Gnaeus Pompeius", "Sextus Propertius", "Decimus Brutus", "Servius Sulpicius",
+  "Flavius Valerius", "Aulus Vitellius", "Spurius Postumius", "Appius Claudius", "Vibius Pansa",
+  "Marcus Tullius", "Gaius Cassius", "Lucius Tarquinius", "Marcus Licinius", "Gaius Marius",
+  "Titus Livius", "Publius Ovidius", "Marcus Porcius", "Quintus Horatius", "Decimus Junius",
+  "Lucius Annaeus", "Sextus Pompeius", "Gaius Octavius", "Tiberius Sempronius", "Marcus Calpurnius",
+  "Gaius Sallustius", "Lucius Accius", "Publius Rutilius", "Decimus Iunius", "Marcus Junius",
+  "Gaius Gracchus", "Lucius Cornificius", "Sextus Julius", "Marcus Vipsanius", "Gaius Fannius",
+  "Titus Quinctius", "Publius Cornelius", "Decimus Laelius", "Lucius Munatius", "Marcus Furius",
+  "Gaius Rabirius", "Tiberius Gracchus", "Marcus Servilius", "Gaius Duilius", "Lucius Domitius",
+  "Publius Clodius", "Decimus Carfulenus", "Marcus Minucius", "Gaius Scribonius", "Lucius Aemilius",
+  "Publius Scipio", "Gaius Calpurnius", "Lucius Licinius", "Publius Sulpicius", "Titus Flavius",
+  "Marcus Fabius",
 
-/* We replicate the logic from the original code. 
-   Below we define large comedic arrays. */
+  // Warhammer 40k / Sisters of Battle inspired names
+  "Seraphina Dominus", "Isabella Mortis", "Cassandra Infernus", "Valentina Praetor", "Alexia Crucis",
+  "Justina Martyr", "Aurelia Vindex", "Lavinia Sancta", "Celestine Exemplar", "Veronica Virtus",
+  "Dominica Fidelis", "Octavia Sacra", "Marcella Bellator", "Sabina Gloria", "Vespera Fidelis",
+  "Thalia Invicta", "Basilia Sacerdos", "Evangeline Purgata", "Adrianna Puritas", "Aurora Bellona",
 
-let FIRST_NAMES = [];
-let LAST_NAMES = [];
+  // Classical Aristocratic British names
+  "Charles Windsor", "Victoria Spencer", "Elizabeth Montague", "Henry Cavendish", "Georgiana Fairfax",
+  "Frederick Howard", "Beatrice Seymour", "Algernon Fitzroy", "Cecilia Lancaster", "Edmund Blackwood",
+  "Matilda Radcliffe", "Richard Beaumont", "Florence Ashford", "Augustus Hastings", "Lydia Pemberton",
+  "Penelope Sterling", "Arthur Pembroke", "Isadora Broughton", "Sebastian Langley", "Margaret Stanhope",
+  "Peregrine Sinclair", "Anastasia Foxworth", "Winston Radcliffe", "Harold Abernathy", "Dorothy Lytton",
+  "Reginald Montagu", "Josephine Cavendish", "Edward Somerset", "Alice Kensington", "Oliver Fitzroy",
+  "Beatrice Ashcroft", "Benedict Lockwood", "Imogen Fairfax", "Julian Blackwell", "Catherine Moreton",
+  "Frederick Kingsley", "Adelaide Winthrop",
 
-const RAW_NAMES = [
-  // A huge comedic list of ~200 names 
-  "Gigglenut Wobblesworth",
-  "Puffersnook Winklebottom",
-  "Daffodil Spindlethorpe",
-  "Ziggity Zogworthy",
-  "Flummox Bumblethorn",
-  "Sprinkle Tinkleroot",
-  "Muddlefoot Jazzyfrill",
-  "Twinkleface Butterhop",
-  "Snickle Loonhopper",
-  "Bibblesnuff Merrymoose",
-  "Fiddlewig Zonk",
-  "Doodle VonHiccup",
-  "Razzmatazz Binglebutt",
-  "Cricket Fuffernick",
-  "Muffin Twirljay",
-  "Boddington Snootlebop",
-  "Wigglesnort Frimble",
-  "Zanzibar Jigglesauce",
-  "Hiccuphorn Frangleclaw",
-  "Cookie Tumbletwirl",
-  "Niffles Quickenpop",
-  "Quibble Dazzlemuff",
-  "Pippin Singletweed",
-  "Brickle Bumblefizz",
-  "Rumpletie Glittersnap",
-  "Kajigger Diddlepump",
-  "Guffin Mewlwhiff",
-  "Zugzug Blortersnook",
-  "Blinkus Poppinrod",
-  "Fibble Buttersqueeze",
-  "Jinkle Spriggleton",
-  "Tugger Miffleslack",
-  "Hootens Rasplenip",
-  "Zonko Fiddlenock",
-  "Crungly Tinselwhip",
-  "Napper Jinglemirch",
-  "Ribblestan Clodhopper",
-  "Shimmerstem Piffleflip",
-  "Tumblefoot Quizzle",
-  "Bongo Dazzlecrumb",
-  "Miggle Stumblefuss",
-  "Wimble Snollygoster",
-  "Biffle Hoopendazz",
-  "Klipple Jazzybuzz",
-  "Flipper Derpledew",
-  "Zinny Muckwench",
-  "Huffle Drizzleflap",
-  "Clonker Mopplegrain",
-  "Skoochy Buffernugget",
-  "Gribble Dandywrench",
-  "Mimzy Floofengill",
-  "Snorkle Gruddlewink",
-  "Umbra Twirlymew",
-  "Vipper Clankerspike",
-  "Wumble Glovernick",
-  "Doodlehonk Fizzens",
-  "Faffy Glimmercog",
-  "Grunky Bumbleflap",
-  "Honcho Drabbledoke",
-  "Igloo Wisherjack",
-  "Jinxy Natterflake",
-  "Krunk Rhapsodypunch",
-  "Lumple Tinderdock",
-  "Monka Twiddlebeak",
-  "Niffy Wappenslack",
-  "Obble Bobbleback",
-  "Poffin Tutterbin",
-  "Quarky Zesterdimp",
-  "Rigmor Glittertoes",
-  "Scumble Tatterblink",
-  "Twango Jibblenut",
-  "Urple Flickersnap",
-  "Vimby Yapperdink",
-  "Wimblesnot Glimmerford",
-  "Yippee Niffleknot",
-  "Zipper Piffyjack",
-  "Bobbin Hootish",
-  "Snoot Fiddleknock",
-  "Frootie Mingerbell",
-  "Sparkle Giddyfuss",
-  "Flinxy Grombag",
-  "Zingle Snurry",
-  "Hubblefuss Clamperton",
-  "Dibbledap Twinklebutt",
-  "Fuzzle Pumpernick",
-  "Grixby Dazzleband",
-  "Nibbles Tinkertuff",
-  "Jibbles Donkingshoot",
-  "Crimble Foofendirk",
-  "Slurpz Wigglepounce",
-  "Toggel Minkumsnort",
-  "Tiffy Bunsprinkle",
-  "Wrinkle Stubblenock",
-  "Xiggy Crumpchaff",
-  "Yaffle Fiddlefuss",
-  "Zigzag Bunkersniff",
-  "Tuffet Glimmerplop",
-  "Knuckles Bafflebang",
-  "Bibble Rinksnap",
-  "Snippydook Foggerwink",
-  "Quinny Fudgefry",
-  "Derry Mifflestuff",
-  "Epoxy Gloomdrift",
-  "Flinky Jacksprout",
-  "Grenby Butterchime",
-  "Hunky Drimmlestone",
-  "Indigo Raspbuncle",
-  "Joggles Mezzoplex",
-  "Kumquat Frimblestub",
-  "Ludo Pinklespore",
-  "Mogey Wifflecake",
-  "Noonoo Zigbolt",
-  "Orble Wallynock",
-  "Popple Blizzledock",
-  "Ribbles Grinklemush",
-  "Snaggy Quoppleding",
-  "Toodles Fringlestomp",
-  "Upsy Scruffler",
-  "Velvety Nuthatch",
-  "Wambo Bucklespit",
-  "Zorflap Tiddlewink",
-  "Fibble Gloopensnort",
-  "Huggle Trixiedum",
-  "Puffle Gloobender",
-  "Sizzle Yippinstomp",
-  "Quee Quoofendip",
-  "Nurfle Stinkyswamp",
-  "Stumple Briningford",
-  "Baggy Drunkenpunch",
-  "Dinky Frabblesmack",
-  "Easel Doodlebrink",
-  "Flapper Sprangleton",
-  "Gribbin Tiltermilk",
-  "Hipsy Danderflip",
-  "Jippy Mozzleton",
-  "Krumple Daffysnort",
-  "Leezle Quompersnik",
-  "Mitzle Quirkensock",
-  "Nordy Flickerbeak",
-  "Ooloo Shimmerpunch",
-  "Pipsy Turntangle",
-  "Rasp Clobbertail",
-  "Snazz Slinklering",
-  "Tinka Dunderfizz",
-  "Udoo Haggletash",
-  "Vinty Jifferplank",
-  "Wombo Narglesnuff",
-  "Xexy Miffleflute",
-  "Yawble Grumbleton",
-  "Zibbly Gackledunk",
-  "Armpit Gunksprout",
-  "Beeble Dorkindale",
-  "Chumple Gigglybunt",
-  "Doodle Poppelfritz",
-  "Eggsy Wackledurf",
-  "Florky Janglemoor",
-  "Gammer Stumblechuck",
-  "Huffly Zirglepop",
-  "Igby Futtermuck",
-  "Jibber Splatterfoot",
-  "Kippy Minklestop",
-  "Lurk Spudderchoke",
-  "Mumfy Dazzlechirp",
-  "Nimly Drampersnug",
-  "Oddy Winklebib",
-  "Pudgy Kinkersloth",
-  "Quonty Laughershot",
-  "Rippit Bumblefoot",
-  "Snorf Harrumphfrill",
-  "Tulla Gilgenwhoof",
-  "Ursul Zobberslack",
-  "Virple Noggydew",
-  "Wooper Nurdlesnipe",
-  "Xed Speckleband",
-  "Yenby Shudderswitch",
-  "Zonther Giggymug"
+  // African influenced names
+  "Kwame Mensah", "Amina Okoro", "Chinua Obi", "Zuri Abebe", "Thandiwe Nkosi", "Nia Masego",
+  "Kofi Amadi", "Amara Diouf", "Adebola Ajayi", "Ngozi Okafor", "Jelani Kamau", "Ayo Balogun",
+  "Imani Diallo", "Tajudeen Abubakar", "Khadija Bello", "Sekou Traoré", "Fatou Diarra", "Lumumba Okoro",
+  "Zola Adebayo", "Makena Madu", "Obi Nwankwo", "Eshe Chikwe", "Nuru Jabari", "Tafari Musa",
+  "Amadi Okoye", "Kwesi Boateng", "Adwoa Mensah", "Yaw Agyapong", "Efua Asante", "Kweku Anokye",
+
+  // Additional varied names
+  "Aria Montgomery", "Soren Blackwood", "Luca Lancaster", "Milo Kensington", "Ivy Barrington",
+  "Nova Sinclair", "Zane Whitmore", "Leona Harrington", "Ezra Ashford", "Kai Montgomery",
+  "Mira Caldwell", "Rowan Ellington", "Sienna Fairfax", "Lilah Kingsley", "Jasper Hawthorne",
+  "Evelyn Penrose", "Felix Remington", "Isla Beaumont", "Damian Whitaker", "Celeste Stanmore",
+  "Orion Winthrop", "Morgana Pendragon", "Calista Redmond", "Lucian Fairchild", "Seraphine Sterling",
+  "Dorian Hargreaves", "Elara Windsor", "Iris Blackwell", "Silas Cartwright", "Clara Montrose",
+  "Alaric Godfrey", "Ophelia Davenport", "Cyrus Ellison", "Adeline Fairfax", "Theodore Prescott",
+  "Lillian Ashcroft", "Vincent Mortimer", "Aurora Fairfax", "Maximilian Black", "Beatrix Sinclair",
+  "Gideon Worth", "Eleanor Chambers", "Quentin Lockhart", "Rosalind Merriweather", "Dante Rochester",
+  "Vivienne Lancaster", "Leopold Harrington", "Margaux Beauregard", "Constantine Vanderbilt",
+  "Cecilia Radcliffe", "Phineas Montgomery", "Serena Fitzgerald", "Benedict Montclair", "Arabella Kingswell",
+  "Julian Fitzroy", "Eloise Carmichael", "Tristan Everhart", "Felicity Marchand", "Derrick Sutherland",
+  "Isadora Ashford", "Cameron Loxley", "Genevieve Morland", "Roderick Sinclair", "Selena Whitfield"
 ];
-
-/* We'll parse RAW_NAMES into separate FIRST_NAMES and LAST_NAMES. */
-function parseFullName(fullName) {
-  const trimmed = fullName.trim();
-  if (!trimmed) return null;
-  const parts = trimmed.split(/\s+/);
-  if (parts.length === 1) {
-    return { first: parts[0], last: "" };
-  } else {
-    const first = parts[0];
-    const last = parts[parts.length - 1];
-    return { first, last };
-  }
-}
-
-RAW_NAMES.forEach((nm) => {
-  const parsed = parseFullName(nm);
-  if (parsed) {
-    FIRST_NAMES.push(parsed.first);
-    LAST_NAMES.push(parsed.last);
-  }
-});
-
-/* ==================================================
-   ========== SRD-BASED RACES (COMEDIC) =============
-   ================================================== */
-const RACES = [
-  {
-    name: "Gigglen Goblin",
-    abilityScoreBonuses: { DEX: 2, CHA: -1 },
-    speed: 30,
-    features: [
-      "Nimble Escape (disengage/hide as bonus action)",
-      "Comedic Cackle (once/day confuses enemies)"
-    ],
-    languages: ["Common", "Goblinish"]
-  },
-  {
-    name: "Dazzle Elf",
-    abilityScoreBonuses: { DEX: 2 },
-    speed: 30,
-    features: [
-      "Darkvision (60 ft)",
-      "Sparkle Senses (+2 to Perception checks in sunlight)",
-      "Fey Glitter (once/day produce glitzy illusions)"
-    ],
-    languages: ["Common", "Elvish"]
-  },
-  {
-    name: "Snortling Dwarf",
-    abilityScoreBonuses: { CON: 2 },
-    speed: 25,
-    features: [
-      "Darkvision (60 ft)",
-      "Snorty Resilience (adv. on poison saves)",
-      "Stone Guffaw (once/day shake ground with laughter)"
-    ],
-    languages: ["Common", "Dwarvish"]
-  },
-  {
-    name: "Mirthling Halfling",
-    abilityScoreBonuses: { DEX: 2 },
-    speed: 25,
-    features: [
-      "Lucky (reroll 1s on attacks/ability checks/saves)",
-      "Brave (adv. on fear saves)",
-      "Mirthful Spirit"
-    ],
-    languages: ["Common", "Halflingish"]
-  },
-  {
-    name: "Bogsnort Orc",
-    abilityScoreBonuses: { STR: 2, INT: -1 },
-    speed: 30,
-    features: [
-      "Relentless Endurance (once/day drop to 1 HP instead of 0)",
-      "Swampy Snort (resistance to comedic stench illusions)"
-    ],
-    languages: ["Common", "Orcish"]
-  },
-  {
-    name: "Spriggan Gnome",
-    abilityScoreBonuses: { INT: 2 },
-    speed: 25,
-    features: [
-      "Darkvision (60 ft)",
-      "Gnome Cunning (adv. on mental saves vs. illusions)",
-      "Tinker Trickster"
-    ],
-    languages: ["Common", "Gnomish"]
-  },
-  {
-    name: "Half-Elfish Nudger",
-    abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 },
-    speed: 30,
-    features: [
-      "Nudging Charm (once/day subtly push an NPC reaction +1 step)",
-      "Darkvision (60 ft)",
-      "Elf-Human Heritage"
-    ],
-    languages: ["Common", "Elvish", "One Extra Language"]
-  },
-  {
-    name: "Punny Tiefling",
-    abilityScoreBonuses: { CHA: 2, INT: 1 },
-    speed: 30,
-    features: [
-      "Darkvision (60 ft)",
-      "Hellish Wittyness (once/day use pun to distract foes)",
-      "Infernal Legacy"
-    ],
-    languages: ["Common", "Infernalish"]
-  },
-  {
-    name: "Dragoonborn Chuckler",
-    abilityScoreBonuses: { STR: 2, CHA: 1 },
-    speed: 30,
-    features: [
-      "Draconic Chuckle (once/day 15 ft cone laughter breath, deals Psychic damage)",
-      "Resistance to Psychic if from comedic breath",
-      "Scaly Hide"
-    ],
-    languages: ["Common", "Dragonsnort"]
-  },
-  {
-    name: "Fizziwig Human",
-    abilityScoreBonuses: {
-      STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1
-    },
-    speed: 30,
-    features: ["Versatile", "Adaptive Humor"],
-    languages: ["Common", "One Extra Language of your choice"]
-  }
-];
-
-/* ==================================================
-   ========== BACKGROUNDS (COMEDIC) (Large) =========
-   ================================================== */
-const BACKGROUNDS = [
-  {
-    name: "Acolyte of Slapstick",
-    skillProficiencies: ["Insight", "Performance"],
-    equipment: [
-      "Holy symbol (shaped like a clown nose)",
-      "Rubber chicken",
-      "5 squeaky hammers",
-      "Vestments with silly prints",
-      "Set of comedic clothes",
-      "Belt pouch containing 15 cp"
-    ],
-    feature: "Shelter of the Goofs",
-    featureDesc: "You can find comedic lodging in temples of slapstick. They feed you pie in the face daily.",
-    nicknames: ["Slappy", "Rubberholic", "Squeaker"]
-  },
-  {
-    name: "Criminal/Spy (who loves Pranks)",
-    skillProficiencies: ["Deception", "Stealth"],
-    equipment: [
-      "Crowbar disguised as a giant banana",
-      "Dark comedic clothes including clown hood",
-      "Belt pouch containing 15 cp"
-    ],
-    feature: "Prankster Contact",
-    featureDesc: "You have a reliable, silly contact in the underbelly who smuggles whoopee cushions.",
-    nicknames: ["Sneakster", "Banana Thief", "Whoopee"]
-  },
-  {
-    name: "Folk Hero (Town Laughingstock)",
-    skillProficiencies: ["Animal Handling", "Survival"],
-    equipment: [
-      "Set of comedic artisan's tools (like a donkey brush)",
-      "Floppy shovel",
-      "Iron pot with cartoon hole",
-      "Set of comedic clothes",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "Rustic Hospitality (But Everyone Laughs)",
-    featureDesc: "Commoners love your silly ways, so they hide you and also giggle at you.",
-    nicknames: ["Hayseed", "Giggle Farmer", "Pitchfork Chuckle"]
-  },
-  {
-    name: "Guild Artisan (Candy Crafter)",
-    skillProficiencies: ["Insight", "Persuasion"],
-    equipment: [
-      "Set of candy-making tools",
-      "Letter of introduction from the Candy Guild",
-      "Set of candy-patterned clothes",
-      "Belt pouch containing 15 gp"
-    ],
-    feature: "Candy Membership",
-    featureDesc: "Guild members might trade sweets for your comedic candy innovations.",
-    nicknames: ["Sugarplum", "Toffee Maker", "Candyman"]
-  },
-  {
-    name: "Hermit of the Silly Swamp",
-    skillProficiencies: ["Medicine", "Religion"],
-    equipment: [
-      "Scroll case stuffed with comedic swamp observations",
-      "Rubber snake",
-      "Set of comedic rags",
-      "Herbalism kit soaked in swamp water",
-      "5 cp"
-    ],
-    feature: "Swampy Discovery",
-    featureDesc: "You found comedic truths in the bog that amuse or horrify others.",
-    nicknames: ["Frogwhisper", "Soggy Sage", "Mud Prophet"]
-  },
-  {
-    name: "Noble (Heir to Laughter Kingdom)",
-    skillProficiencies: ["History", "Persuasion"],
-    equipment: [
-      "Set of flamboyant clothes",
-      "Signet ring shaped like a smiley face",
-      "Scroll of comedic pedigree",
-      "Purse containing 25 gp"
-    ],
-    feature: "Position of Comedy",
-    featureDesc: "Commoners see your comedic aristocracy with awe. Nobles see you as an odd equal.",
-    nicknames: ["Lord Chuckles", "Duchess Giggle", "Count Guffaw"]
-  },
-  {
-    name: "Outlander (Wacky Wanderer)",
-    skillProficiencies: ["Athletics", "Survival"],
-    equipment: [
-      "Staff carved with silly faces",
-      "Hunting trap that squeaks",
-      "Trophy from an exotic comedic creature you pranked",
-      "Set of comedic traveler’s clothes",
-      "Belt pouch containing 10 gp"
-    ],
-    feature: "Wanderer (with comedic memory)",
-    featureDesc: "You always recall comedic side roads, hidden jokes, and can find comedic sustenance.",
-    nicknames: ["Joker Scout", "Mirth Rover", "Punchline Explorer"]
-  },
-  {
-    name: "Sage (Arcane Slapstick Scholar)",
-    skillProficiencies: ["Arcana", "History"],
-    equipment: [
-      "Bottle of invisible ink (or so you claim)",
-      "Quill shaped like a goose’s head",
-      "Tiny comedic knife",
-      "A letter from a clown wizard with a baffling riddle",
-      "Set of comedic robes",
-      "Belt pouch containing 10 gp"
-    ],
-    feature: "Comic Researcher",
-    featureDesc: "You know where to find comedic lore in the grand libraries of guffaws.",
-    nicknames: ["Quillfool", "Owlclown", "Stacks-o-laughs"]
-  },
-  {
-    name: "Sailor (on the Jolly Sea)",
-    skillProficiencies: ["Athletics", "Perception"],
-    equipment: [
-      "Belaying pin shaped like a fish",
-      "50 feet of silly rope with comedic patterns",
-      "Lucky charm shaped like a rubber duck",
-      "Set of comedic sailor clothes",
-      "Belt pouch containing 10 gp"
-    ],
-    feature: "Ship’s Passage (But Everyone Laughs)",
-    featureDesc: "You can get passage, but your comedic rep means the crew may play pranks on you.",
-    nicknames: ["Anchors Aweird", "Salty Joker", "Deck Chuckler"]
-  },
-  {
-    name: "Soldier (of Clown Wars)",
-    skillProficiencies: ["Athletics", "Intimidation"],
-    equipment: [
-      "Insignia of comedic rank (like a clown badge)",
-      "Trophy from a clown war foe (a big red nose?)",
-      "Set of comedic dice or clownish deck of cards",
-      "Set of comedic battle clothes",
-      "Belt pouch containing 10 gp"
-    ],
-    feature: "Military Rank (Clown Division)",
-    featureDesc: "Other comedic soldiers respect your authority if they outrank you in silliness.",
-    nicknames: ["Major Banana Peel", "Captain Confetti", "Sarge Seltzer"]
-  },
-  // Large comedic expansions:
-  {
-    name: "Urchin (Balloon Maker)",
-    skillProficiencies: ["Sleight of Hand", "Stealth"],
-    equipment: [
-      "Small squeaky knife",
-      "Map of comedic carnival city you grew up in",
-      "Pet balloon animal (deflates daily)",
-      "Token from your silly parents",
-      "Set of comedic clothes",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "City Secrets (Carnival Tunnels)",
-    featureDesc: "You know hidden carnival tracks that double travel speed if you amuse watchers.",
-    nicknames: ["Balloon Rat", "Clown Alley Kid", "Pop Stray"]
-  },
-  {
-    name: "Tanner (Leather Gag Maker)",
-    skillProficiencies: ["Survival", "Nature"],
-    languages: [],
-    equipment: [
-      "A comedic tanning kit",
-      "Sturdy apron with funny slogans",
-      "A dyed hide with comedic face",
-      "Comedic clothes",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Leatherwise (Silly Edition)",
-    featureDesc: "You can identify comedic potential in hides, selling them to jesters easily.",
-    nicknames: ["Hide-n-Giggle", "Skins Fool", "Tannic Chuckle"]
-  },
-  {
-    name: "Alchemist (Fizzy Drinker)",
-    skillProficiencies: ["Arcana", "Medicine"],
-    languages: [],
-    equipment: [
-      "Alchemist’s kit with comedic flasks",
-      "Weathered notebook full of fizz formulas",
-      "Set of stained comedic clothes",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "Experimental Fizz",
-    featureDesc: "Local comedic brewers see your potions as potential comedic gold.",
-    nicknames: ["Fizzle", "BrewJoke", "BubbleDoc"]
-  },
-  {
-    name: "Miner (Sparkly Gem Hunter)",
-    skillProficiencies: ["Athletics", "Perception"],
-    languages: [],
-    equipment: [
-      "A comedic pickaxe (sparkly handle)",
-      "A lantern shaped like a silly face",
-      "Small gem sample with comedic swirl",
-      "Sturdy comedic boots",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "Tunnel Instinct (Silly)",
-    featureDesc: "You can sense comedic collapses or illusions in mines; dwarves trust your jokes.",
-    nicknames: ["Pick Chuckle", "Orepun", "Dusty Laugh"]
-  },
-  {
-    name: "Beast Tamer (Silly Squeak)",
-    skillProficiencies: ["Animal Handling", "Nature"],
-    languages: [],
-    equipment: [
-      "A length of comedic rope",
-      "A carved token of your favorite silly beast",
-      "Dried comedic jerky treats",
-      "Set of comedic outdoor attire",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Animal Rapport (Squeak Edition)",
-    featureDesc: "Domestic beasts find you comedic, possibly calming them with squeaks.",
-    nicknames: ["Buck Cluck", "Wrangler Chuckles", "Critter Giggler"]
-  },
-  // ... (You can keep going to 40 or 50 comedic backgrounds if you want the code extremely large)
-  {
-    name: "Chandler (Luminescent Candle Maker)",
-    skillProficiencies: ["Persuasion", "Investigation"],
-    languages: [],
-    equipment: [
-      "Block of color-changing wax",
-      "Candle mould shaped like a clown hat",
-      "Ledger of comedic sales",
-      "Set of comedic neat clothes",
-      "Belt pouch containing 7 cp"
-    ],
-    feature: "Keeper of Light (Silly Candles)",
-    featureDesc: "Locals rely on your color-shifting comedic candles for festivals.",
-    nicknames: ["Candle Giggles", "Wax Joker", "Wick Chuckle"]
-  },
-  {
-    name: "Cooper (Barrel of Laughs)",
-    skillProficiencies: ["History", "Sleight of Hand"],
-    languages: [],
-    equipment: [
-      "Cooper’s hammer (painted bright pink)",
-      "Ring of comedic iron hoops",
-      "Small barrel you made (painted clown face)",
-      "Set of comedic working clothes",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "Well-Bound Containers (Silly Edition)",
-    featureDesc: "Merchants love your comedic barrels for storing clown supplies, if not dignity.",
-    nicknames: ["Barrel Guffaw", "Hoops Chuckle", "Ring Ding"]
-  },
-  {
-    name: "Cartwright (Silly Waggons)",
-    skillProficiencies: ["Carpenter’s Tools", "History"],
-    languages: [],
-    equipment: [
-      "Small comedic woodworking toolkit",
-      "Mini cart model with comedic paint",
-      "Set of comedic sturdy clothes",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "Roadwise (Clown Edition)",
-    featureDesc: "You can fix comedic squeaks in waggons & advise on comedic routes.",
-    nicknames: ["Wheels Chuckle", "Axle Giggles", "Spokes HaHa"]
-  },
-  {
-    name: "Scribe (Jokebook Keeper)",
-    skillProficiencies: ["History", "Investigation"],
-    languages: ["One comedic language"], 
-    equipment: [
-      "Quill shaped like a comedic feather",
-      "Small jar of multicolor comedic ink",
-      "Stack of silly parchment",
-      "A personal log of comedic scribbles",
-      "Set of comedic neat clothes",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Comedic Academic Access",
-    featureDesc: "Libraries let you copy comedic jokes if you promise to amuse them.",
-    nicknames: ["Ink Guffaw", "Scroll Giggles", "Quill Chuckle"]
-  },
-  {
-    name: "Glassblower (Prank Glass Art)",
-    skillProficiencies: ["Arcana", "Perception"],
-    languages: [],
-    equipment: [
-      "Glassblowing pipe shaped like a duck",
-      "A carefully wrapped comedic glass statue",
-      "Comedic goggles with painted eyebrows",
-      "Set of comedic clothes",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Fragile Eye (Silly Edition)",
-    featureDesc: "You spot comedic cracks or illusions in glass or illusions disguised as glass.",
-    nicknames: ["Fragile Gag", "Pane Chuckles", "Torch Laugh"]
-  },
-  {
-    name: "Jeweller (Clown Gems)",
-    skillProficiencies: ["Insight", "Sleight of Hand"],
-    languages: [],
-    equipment: [
-      "Loupe shaped like a monocle with googly eyes",
-      "Pouch of comedic low-value gem shards",
-      "Set of comedic but modest clothes",
-      "Belt pouch containing 15 cp"
-    ],
-    feature: "Clown Gem Appraisal",
-    featureDesc: "You swiftly gauge comedic gem illusions & approximate value in comedic markets.",
-    nicknames: ["Shine Chuckles", "Facet Giggle", "Pearl Guffaw"]
-  },
-  {
-    name: "Shipwright (Silly Ship Repairs)",
-    skillProficiencies: ["Athletics", "Carpenter’s Tools"],
-    languages: [],
-    equipment: [
-      "Small mallet (rainbow handle)",
-      "Driftwood piece with comedic etch",
-      "Set of comedic rugged clothes",
-      "Belt pouch containing 10 cp"
-    ],
-    feature: "Maritime Comedy Specialist",
-    featureDesc: "Ports respect your comedic approach to ship repairs. You can find comedic passage.",
-    nicknames: ["Timbers Giggles", "Hull Laugh", "Dock Chuckle"]
-  },
-  {
-    name: "Bowyer/Fletcher (Clown Arrows)",
-    skillProficiencies: ["Nature", "Perception"],
-    languages: [],
-    equipment: [
-      "Bundle of squeaking arrow shafts",
-      "Small bowyer’s comedic toolkit",
-      "Set of comedic workable clothes",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Arrow Prankster",
-    featureDesc: "You craft comedic arrows from nature & can assess comedic bows at a glance.",
-    nicknames: ["Arrow Chuckle", "Fletch Laugh", "Bowstring Guffaw"]
-  },
-  {
-    name: "Cobbler (Funny Boots)",
-    skillProficiencies: ["Sleight of Hand", "Insight"],
-    languages: [],
-    equipment: [
-      "Cobbler’s comedic kit (awl, hammer, clown patches)",
-      "A giant comedic boot you crafted",
-      "Set of comedic clothes",
-      "Belt pouch containing 8 cp"
-    ],
-    feature: "Sure-Footed (Funny Steps)",
-    featureDesc: "Your comedic boots amuse and you can track prints that look comedic in style.",
-    nicknames: ["Boot Chuckle", "Soles Giggle", "Stitch Laugh"]
-  },
-  {
-    name: "Farmer (Cackling Crops)",
-    skillProficiencies: ["Animal Handling", "Nature"],
-    languages: [],
-    equipment: [
-      "Sickle shaped like a grin",
-      "A small pouch of trick seeds",
-      "A wide-brimmed comedic straw hat",
-      "A set of comedic sturdy clothes",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Local Harvest Laughter",
-    featureDesc: "You know comedic ways to tend crops. Locals love your silly produce.",
-    nicknames: ["Seed Chuckle", "Haystack Laugh", "Scythe Giggles"]
-  },
-  {
-    name: "Fisher (Fishy Comedian)",
-    skillProficiencies: ["Survival", "Perception"],
-    languages: [],
-    equipment: [
-      "A comedic fishing rod with squeak handle",
-      "A small tackle box of rubber worms",
-      "A net that whistles",
-      "A set of comedic waterproof boots",
-      "Belt pouch containing 5 cp"
-    ],
-    feature: "Waterside Comedy",
-    featureDesc: "Fisherfolk enjoy your comedic fish tales & help you gather silly fish rations.",
-    nicknames: ["Fin Chuckle", "Hook Giggles", "Minnow Laugh"]
-  }
-];
-
-/* ==================================================
-   ========== PERSONALITY TRAITS (Large comedic) =====
-   ================================================== */
-const PERSONALITY_TRAITS = [
-  "I laugh spontaneously even without a joke.",
-  "I juggle random objects whenever I’m bored.",
-  "I consider big hats the peak of civilisation.",
-  "I respond to conflict with clown horns instead of words.",
-  "I name all insects I see, believing they’re my minions.",
-  "I keep a diary of every pun I hear, rating them harshly.",
-  "I talk to my reflection as if it’s a twin sibling.",
-  "I can’t sleep unless I recite at least ten knock-knock jokes.",
-  "I brew questionable potions from random mushrooms, just to see what happens.",
-  "I always smell freshly-baked cookies, even when none exist.",
-  /* We'll go up to ~100 comedic traits to match the scale */
-  "I have a secret handshake I attempt with everyone, though no one else knows it.",
-  "I prefer to climb through windows rather than use doors.",
-  "I offer sock puppets to strangers as a conversation starter.",
-  "I answer rhetorical questions earnestly, often confusing people.",
-  "I practice comedic shadow puppets on cave walls.",
-  "I sniff books to gauge their comedic value.",
-  "I firmly believe spoons are superior to forks for all tasks.",
-  "I constantly hum a tune that changes key unpredictably.",
-  "I suspect geese are spies from another realm.",
-  "I try to guess people’s favourite fruit upon first meeting them.",
-  "I argue with the sun for setting too early.",
-  "I squeak like a duck if someone touches my shoulder unexpectedly.",
-  "I dream of hosting a carnival on the moon.",
-  "I collect feathers, hoping to build wings one day.",
-  "I greet enemies with tickles before attacking.",
-  "I narrate my life out loud as if in a comedic play.",
-  "I refuse to wear matching shoes, calling it “fashion rebellion.”",
-  "I believe wearing three hats at once doubles my intelligence.",
-  "I blow bubbles from a pipe instead of smoking it.",
-  "I measure all distances in clown noses instead of feet.",
-  "I cannot resist patting every dog I see and telling it secrets.",
-  "I claim I can speak to cheese, though it’s never confirmed.",
-  "I suspect all mirrors lead to an alternate clown dimension.",
-  "I yodel at dawn to greet the new day, baffling neighbours.",
-  "I hoard rubber ducks, insisting they predict the weather.",
-  "I only dance the polka in serious ceremonies.",
-  "I treat maps as suggestions, preferring to wander aimlessly.",
-  "I try to solve every riddle with a limerick.",
-  "I take notes on every pun I hear, grading them A-F.",
-  "I keep a hidden maraca for urgent comedic breaks.",
-  "I believe cacti are guardian spirits of the desert.",
-  "I chat with inanimate objects, seeking their wise counsel.",
-  "I see conspiracies in idle chatter, weaving comedic theories.",
-  "I randomly change my accent mid-sentence to keep people guessing.",
-  "I quote fake philosophers at length, attributing it to “the Eldest Clown.”",
-  "I name each toe individually, boasting about their personalities.",
-  "I attempt to ride any large animal as a noble steed, even goats or giant chickens.",
-  "I snort when I laugh, but pretend it’s a battle cry.",
-  "I fear hummingbirds, believing they hold cosmic secrets.",
-  "I claim to have invented the concept of “high fives.”",
-  "I dress up mannequins in comedic outfits for personal company.",
-  "I keep a diary of dream jokes and read them to strangers.",
-  "I cannot read a menu without creating comedic alliterations of each dish.",
-  "I beep like a car horn whenever people block my path.",
-  "I store confetti in my pockets for random celebrations.",
-  "I greet any mention of danger with a comedic challenge, like “Aha! Let’s juggle knives!”",
-  "I prefer sleeping in closets because beds are “too mainstream.”",
-  "I suspect reading glasses hold mind-control powers, so I wear four pairs at once.",
-  "I brew coffee in teapots and tea in coffee pots, just to be contrarian.",
-  "I greet authority figures with a handshake and a whoopee cushion.",
-  "I write comedic disclaimers on every item I own, just in case.",
-  "I chew gum to the rhythm of the environment, like a comedic interpretive dance.",
-  "I attempt to camouflage myself behind lampposts, exclaiming “You can’t see me!”",
-  "I brag about invisible tattoos that illustrate my heroic illusions.",
-  "I speak in riddles, but get them wrong halfway through.",
-  "I have an imaginary friend named Sir Bubbles, who I blame for my mistakes.",
-  "I use random words like “spoonfish” or “plonk” as filler in normal conversation.",
-  "I always knock on a table thrice for luck, even mid-battle.",
-  "I juggle spoons or pebbles whenever anxious, ignoring social cues.",
-  "I suspect fish can read my thoughts, so I wear a tinfoil hat near lakes.",
-  "I stage comedic sword fights with broomsticks in empty rooms for practice.",
-  "I believe sneezes are actually comedic ghosts escaping the body.",
-  "I break into show tunes if anyone says the word “banana.”",
-  "I bet on snail races that I host in secret alleyways.",
-  "I claim to be an expert in “flabbergastology,” a made-up discipline.",
-  "I keep a tiny silver bell, ringing it whenever I have a comedic idea.",
-  "I sleepwalk while reciting knock-knock jokes.",
-  "I cannot hold serious conversations without winking every few seconds.",
-  "I interpret all warnings as invitations for comedic pranks.",
-  "I suspect walnuts are enchanted eggs from a nut wizard realm.",
-  "I compare every new acquaintance to a type of pastry, explaining in detail.",
-  "I firmly believe time flows backward on holidays, so I dress in reverse.",
-  "I try to high-five any statue or carving that looks vaguely humanoid.",
-  "I talk like a pirate whenever I’m confused, hoping it clarifies things.",
-  "I greet the rising moon with a love poem each night, praising its comedic shape.",
-  "I store random birds’ feathers in a scrap book titled “Featherpedia.”",
-  "I keep a comedic scoreboard of my day’s puns on my belt.",
-  "I cannot refrain from interpretive dance when I hear a lute playing.",
-  "I hope to open a comedic donkey ranch that also sells cupcakes.",
-  "I wear clown shoes under normal boots, just in case I need comedic footsteps.",
-  "I suspect ravens are actually stand-up comedians in disguise.",
-  "I claim my hair is cursed to change color whenever I’m bored.",
-  "I taste-test potions with a comedic straw, claiming it’s safer that way.",
-  "I adore fireworks but set them off at random times for comedic shock.",
-  "I casually mention that I’m older than I look because I once time-traveled in a trunk."
-];
-
-/* ==================================================
-   ========== PAGE INITIALISATION ===================
-   ================================================== */
-
-window.addEventListener("DOMContentLoaded", () => {
-  populateSelect("race-select", RACES.map(r => r.name));
-  populateSelect("background-select", BACKGROUNDS.map(b => b.name));
-});
-
-function populateSelect(selectId, optionsArray) {
-  const selectElem = document.getElementById(selectId);
-  optionsArray.forEach(opt => {
-    const optionEl = document.createElement("option");
-    optionEl.value = opt;
-    optionEl.innerText = opt;
-    selectElem.appendChild(optionEl);
-  });
-}
-
-/* ==================================================
-   ========== RANDOMISATION + HELPER FUNCTIONS =======
-   ================================================== */
-
-function pickRandom(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-function pickMultipleDistinct(array, count) {
-  // same logic as the original
-  const copy = [...array];
-  const result = [];
-  if (count > copy.length) count = copy.length;
-  for (let i = 0; i < count; i++) {
-    const index = Math.floor(Math.random() * copy.length);
-    result.push(copy[index]);
-    copy.splice(index, 1);
-  }
-  return result;
-}
-
-function roll4d6DropLowest() {
-  let scores = [];
-  for (let i = 0; i < 6; i++) {
-    let rolls = [0,0,0,0].map(() => Math.floor(Math.random() * 6) + 1);
-    rolls.sort((a,b) => a - b);
-    rolls.shift(); // drop the lowest
-    const sum = rolls.reduce((acc, val) => acc + val, 0);
-    scores.push(sum);
-  }
-  return scores;
-}
-
-function getStandardArray() {
-  return [15,14,13,12,10,8];
-}
-
-function abilityMod(score) {
-  return Math.floor((score - 10) / 2);
-}
-
-/* ==================================================
-   ========== NAME HANDLERS =========================
-   ================================================== */
-
-function randomName() {
-  if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
-    document.getElementById("name-input").value = "Nameless Soul";
-    return;
-  }
-  const first = pickRandom(FIRST_NAMES);
-  const last = pickRandom(LAST_NAMES);
-  document.getElementById("name-input").value = first + " " + last;
-}
-
-/* ==================================================
-   ========== RACE & BACKGROUND RANDOMISERS =========
-   ================================================== */
-
-function randomRace() {
-  const randomPick = pickRandom(RACES).name;
-  document.getElementById("race-select").value = randomPick;
-}
-
-function randomBackground() {
-  const randomPick = pickRandom(BACKGROUNDS).name;
-  document.getElementById("background-select").value = randomPick;
-}
-
-/* ==================================================
-   ========== ABILITY SCORE HANDLERS ================
-   ================================================== */
-
-let currentScores = [10,10,10,10,10,10]; // default
-
-function rollAbilityScores() {
-  currentScores = roll4d6DropLowest();
-  displayScores();
-}
-
-function standardArray() {
-  currentScores = getStandardArray();
-  displayScores();
-}
-
-function displayScores() {
-  const container = document.getElementById("abilities-display");
-  const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-  let html = "";
-  currentScores.forEach((sc, i) => {
-    const mod = abilityMod(sc);
-    const modPrefix = mod >= 0 ? "+" : "";
-    html += `${labels[i]}: <strong>${sc}</strong> (${modPrefix}${mod})<br/>`;
-  });
-  container.innerHTML = html;
-}
-
-/* ==================================================
-   ========== CHARACTER GENERATION ==================
-   ================================================== */
-
-function parseUserName(fullInput) {
-  const parts = fullInput.trim().split(/\s+/);
-  let firstName = "";
-  let lastName = "";
-  if (parts.length === 1) {
-    firstName = parts[0];
-  } else if (parts.length > 1) {
-    firstName = parts[0];
-    lastName = parts[parts.length - 1];
-  }
-  return { firstName, lastName };
-}
-
-function generateCharacter() {
-  // 1. Name: parse user’s typed input
-  const rawName = document.getElementById("name-input").value.trim() || "Unnamed Goon";
-  let { firstName, lastName } = parseUserName(rawName);
-
-  // 2. Race & background data
-  const raceSelected = document.getElementById("race-select").value;
-  const raceData = RACES.find(r => r.name === raceSelected);
-  if (!raceData) {
-    // If user never selected a race or used Full Random, randomRace() is called in fullRandom. 
-    // But if they manually pressed "Generate Commoner" without picking, we can prompt:
-    alert("Please select a race (or use Full Random).");
-    return;
-  }
-
-  const bgSelected = document.getElementById("background-select").value;
-  const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
-  if (!bgData) {
-    alert("Please select a background (or use Full Random).");
-    return;
-  }
-
-  // 3. Possibly add a nickname (1/5 chance)
-  if (bgData.nicknames && bgData.nicknames.length > 0) {
-    if (Math.random() < 0.2) {
-      const nick = pickRandom(bgData.nicknames);
-      firstName += ` "${nick}"`;
-    }
-  }
-
-  // 4. Apply race ability score bonuses
-  let finalScores = [...currentScores];
-  const ABIL_ORDER = ["STR","DEX","CON","INT","WIS","CHA"];
-
-  for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
-    if (ability === "PLUS_TWO_OTHERS") {
-      // If not specifically assigned, default to DEX & CON
-      const dexIndex = ABIL_ORDER.indexOf("DEX");
-      const conIndex = ABIL_ORDER.indexOf("CON");
-      finalScores[dexIndex] += 1;
-      finalScores[conIndex] += 1;
-    } else {
-      const index = ABIL_ORDER.indexOf(ability);
-      if (index !== -1) {
-        finalScores[index] += bonus;
+    
+    // Parse each RAW_NAMES entry into FIRST_NAMES and LAST_NAMES
+    function parseName(fullName) {
+      const trimmed = fullName.trim();
+      if (!trimmed) return null;
+      const parts = trimmed.split(/\s+/);
+      if (parts.length === 1) {
+        return { first: parts[0].replace(/"/g, ""), last: "" };
+      } else {
+        return { first: parts[0].replace(/"/g, ""), last: parts[parts.length - 1].replace(/"/g, "") };
       }
     }
-  }
-
-  // 5. Personality Traits: pick exactly 2
-  const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
-
-  // 6. Race & background features
-  const featuresList = raceData.features.length
-    ? raceData.features.map(feat => `- ${feat}`).join("<br/>")
-    : "None";
-  const raceLangs = raceData.languages.join(", ");
-
-  // 7. Background eq, skills, etc.
-  const bgEquipment = bgData.equipment.map(eq => `- ${eq}`).join("<br/>");
-  const bgSkills = bgData.skillProficiencies
-    ? bgData.skillProficiencies.join(", ")
-    : "None";
-  let bgLangs = "None";
-  if (bgData.languages && bgData.languages.length > 0) {
-    bgLangs = bgData.languages.join(", ");
-  }
-
-  // 8. Random weapon & comedic armour
-  const chosenWeapon = getRandomWeaponForBackground(bgData.name);
-  const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
-
-  // Level-based proficiency
-  const levelChoice = document.getElementById("level-select").value;
-  let profBonus = 0;
-  if (levelChoice === "0.5") {
-    profBonus = 1; 
-  }
-  const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
-
-  const chosenArmour = pickRandom(ARMORS);
-  const dexMod = abilityMod(finalScores[1]);
-  const computedAC = computeArmourClass(chosenArmour, dexMod);
-
-  // 9. Compile final details
-  const fullName = lastName ? firstName + " " + lastName : firstName;
-
-  // Output display
-  const outputDiv = document.getElementById("output");
-  outputDiv.style.display = "block";
-  outputDiv.classList.add("generated");
-
-  // Name as heading
-  document.getElementById("charName").innerHTML = fullName;
-
-  document.getElementById("charRace").innerHTML = `<strong>Race:</strong> ${raceData.name}
-    <br/><em>Speed:</em> ${raceData.speed} ft
-    <br/><em>Features:</em><br/> ${featuresList}`;
-
-  document.getElementById("charBackground").innerHTML = `
-    <strong>Background:</strong> ${bgData.name}<br/>
-    <em>Skill Proficiencies:</em> ${bgSkills}<br/>
-    <em>Equipment:</em><br/>${bgEquipment}<br/>
-    <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
-    <small>${bgData.featureDesc}</small>
-  `;
-
-  document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
-  document.getElementById("charProficiencies").innerHTML = `
-    <strong>Proficiencies (Level ${levelChoice}, from Race/Background):</strong>
-    <br/>Background Skills: ${bgSkills}
-  `;
-  document.getElementById("charLanguages").innerHTML = `
-    <strong>Languages:</strong>
-    <br/>From Race: ${raceLangs}
-    <br/>From Background: ${bgLangs}
-  `;
-
-  let eqHTML = `<strong>Starting Equipment (from Background):</strong><br/>${bgEquipment}`;
-  if (weaponStats) {
-    const atkSign = (weaponStats.attackBonus >= 0) ? "+" : "";
-    const dmgSign = (weaponStats.abilityMod >= 0) ? "+" : "";
-    eqHTML += `<br/><br/><strong>Weapon:</strong> ${weaponStats.name}<br/>
-      <em>Attack Bonus:</em> ${atkSign}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
-      <em>Damage:</em> ${weaponStats.damageDie} ${dmgSign}${weaponStats.abilityMod} (${weaponStats.damageType})
-    `;
-  }
-  eqHTML += `<br/><br/><strong>Armour:</strong> ${chosenArmour.name} (AC = ${computedAC})`;
-  document.getElementById("charEquipment").innerHTML = eqHTML;
-
-  // Personality traits
-  const traitsHTML = `
-    <h3>Personality Traits</h3>
-    <ul>
-      <li>${chosenTraits[0]}</li>
-      <li>${chosenTraits[1]}</li>
-    </ul>
-  `;
-  document.getElementById("charTraits").innerHTML = traitsHTML;
-
-  // Show Print Button
-  document.getElementById("printButton").style.display = "inline-block";
-}
-
-/* Format final ability scores to mirror original style */
-function formatAbilityScores(scoresArr) {
-  const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-  let output = "<strong>Final Ability Scores (Level 0 or 0.5):</strong><br/>";
-  scoresArr.forEach((sc, i) => {
-    const mod = abilityMod(sc);
-    const modSign = mod >= 0 ? "+" : "";
-    output += `${labels[i]}: <strong>${sc}</strong> (${modSign}${mod})<br/>`;
-  });
-  return output;
-}
-
-/* ==================================================
-   ========== FULL RANDOM FUNCTION ==================
-   ================================================== */
-function fullRandom() {
-  randomName();
-  randomRace();
-  randomBackground();
-  rollAbilityScores();
-  generateCharacter();
-}
-</script>
-
+    
+    RAW_NAMES.forEach(entry => {
+      const parsed = parseName(entry);
+      if (parsed) {
+        if (parsed.first) FIRST_NAMES.push(parsed.first);
+        if (parsed.last) LAST_NAMES.push(parsed.last);
+      }
+    });
+    
+    // ---------- Races ----------
+    const RACES = [
+      {
+        name: "Dwarf",
+        abilityScoreBonuses: { CON: 2 },
+        speed: 25,
+        features: [
+          "Darkvision (60 ft)",
+          "Dwarven Resilience (adv. on poison saves)",
+          "Dwarven Combat Training",
+          "Stonecunning"
+        ],
+        languages: ["Common", "Dwarvish"]
+      },
+      {
+        name: "Elf",
+        abilityScoreBonuses: { DEX: 2 },
+        speed: 30,
+        features: [
+          "Darkvision (60 ft)",
+          "Keen Senses (proficiency in Perception)",
+          "Fey Ancestry (adv. on charm saves)",
+          "Trance"
+        ],
+        languages: ["Common", "Elvish"]
+      },
+      {
+        name: "Halfling",
+        abilityScoreBonuses: { DEX: 2 },
+        speed: 25,
+        features: [
+          "Lucky (reroll 1s on attack/ability/saving throws)",
+          "Brave (adv. on fear saves)",
+          "Halfling Nimbleness"
+        ],
+        languages: ["Common", "Halfling"]
+      },
+      {
+        name: "Human",
+        abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
+        speed: 30,
+        features: [],
+        languages: ["Common", "One Extra Language of your choice"]
+      },
+      {
+        name: "Dragonborn",
+        abilityScoreBonuses: { STR: 2, CHA: 1 },
+        speed: 30,
+        features: [
+          "Draconic Ancestry",
+          "Breath Weapon",
+          "Damage Resistance (based on ancestry)"
+        ],
+        languages: ["Common", "Draconic"]
+      },
+      {
+        name: "Gnome",
+        abilityScoreBonuses: { INT: 2 },
+        speed: 25,
+        features: [
+          "Darkvision (60 ft)",
+          "Gnome Cunning (adv. on mental saves vs. magic)"
+        ],
+        languages: ["Common", "Gnomish"]
+      },
+      {
+        name: "Half-Elf",
+        abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 },
+        speed: 30,
+        features: [
+          "Darkvision (60 ft)",
+          "Fey Ancestry (adv. on charm saves)",
+          "Skill Versatility (proficiency in two skills)"
+        ],
+        languages: ["Common", "Elvish", "One Extra Language"]
+      },
+      {
+        name: "Half-Orc",
+        abilityScoreBonuses: { STR: 2, CON: 1 },
+        speed: 30,
+        features: [
+          "Darkvision (60 ft)",
+          "Relentless Endurance (once per long rest)",
+          "Savage Attacks"
+        ],
+        languages: ["Common", "Orc"]
+      },
+      {
+        name: "Tiefling",
+        abilityScoreBonuses: { CHA: 2, INT: 1 },
+        speed: 30,
+        features: [
+          "Darkvision (60 ft)",
+          "Hellish Resistance (resist fire)",
+          "Infernal Legacy"
+        ],
+        languages: ["Common", "Infernal"]
+      }
+    ];
+    
+    // ---------- Backgrounds ----------
+    const BACKGROUNDS = [
+      {
+        name: "Acolyte",
+        skillProficiencies: ["Insight", "Religion"],
+        languages: ["Two of your choice"],
+        equipment: [
+          "Holy symbol",
+          "Prayer book or prayer wheel",
+          "5 sticks of incense",
+          "Vestments",
+          "Set of common clothes",
+          "Belt pouch containing 15 gp"
+        ],
+        feature: "Shelter of the Faithful",
+        featureDesc: "As an Acolyte, you command the respect of those who share your faith. You can perform religious ceremonies and call upon fellow adherents for shelter and support, though you must uphold your religion’s practices.",
+        nicknames: ["Chant", "Chapel", "Faith", "Lumen", "Reverie"]
+      },
+      {
+        name: "Criminal/Spy",
+        skillProficiencies: ["Deception", "Stealth"],
+        equipment: [
+          "Crowbar",
+          "Set of dark common clothes including hood",
+          "Belt pouch containing 15 gp"
+        ],
+        feature: "Criminal Contact",
+        featureDesc: "You have a reliable contact within a criminal network. You know how to send and receive messages discreetly.",
+        nicknames: ["Shade", "Slick", "Pockets", "Rook", "Whisper"]
+      },
+      {
+        name: "Folk Hero",
+        skillProficiencies: ["Animal Handling", "Survival"],
+        equipment: [
+          "Set of artisan's tools (one of your choice)",
+          "Shovel",
+          "Iron pot",
+          "Set of common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Rustic Hospitality",
+        featureDesc: "You blend with the common folk. Locals may offer shelter or aid when you need it most.",
+        nicknames: ["Buck", "Rusty", "Spotts", "Sarge", "Oakie"]
+      },
+      {
+        name: "Guild Artisan (Guild Merchant)",
+        skillProficiencies: ["Insight", "Persuasion"],
+        languages: ["One of your choice"],
+        equipment: [
+          "Set of artisan's tools (one of your choice)",
+          "Letter of introduction from your guild",
+          "Set of traveller's clothes",
+          "Belt pouch containing 15 gp"
+        ],
+        feature: "Guild Membership",
+        featureDesc: "Your guild provides lodging, food, and political support when needed.",
+        nicknames: ["Hammer", "Chisel", "Scribe", "Barter", "Ledger"]
+      },
+      {
+        name: "Hermit",
+        skillProficiencies: ["Medicine", "Religion"],
+        equipment: [
+          "Scroll case stuffed with study notes or prayers",
+          "Winter blanket",
+          "Set of common clothes",
+          "Herbalism kit",
+          "5 gp"
+        ],
+        feature: "Discovery",
+        featureDesc: "Your seclusion has unveiled a unique truth about the cosmos—one that might shape your destiny.",
+        nicknames: ["Quiet", "Wisp", "Moony", "Muse", "Cloister"]
+      },
+      {
+        name: "Noble",
+        skillProficiencies: ["History", "Persuasion"],
+        equipment: [
+          "Set of fine clothes",
+          "Signet ring",
+          "Scroll of pedigree",
+          "Purse containing 25 gp"
+        ],
+        feature: "Position of Privilege",
+        featureDesc: "Your noble birth carries authority. Nobles and commoners alike treat you with due respect.",
+        nicknames: ["Lordy", "Duchess", "Grace", "Count", "Regal"]
+      },
+      {
+        name: "Outlander",
+        skillProficiencies: ["Athletics", "Survival"],
+        languages: ["One of your choice"],
+        equipment: [
+          "Staff",
+          "Hunting trap",
+          "Trophy from a slain animal",
+          "Set of traveller's clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Wanderer",
+        featureDesc: "You possess an exceptional memory for geography and can recall terrain and settlement layouts with ease.",
+        nicknames: ["Tracks", "Wild", "Hawk", "Cairn", "Scout"]
+      },
+      {
+        name: "Sage",
+        skillProficiencies: ["Arcana", "History"],
+        equipment: [
+          "Bottle of black ink",
+          "Quill",
+          "Small knife",
+          "Letter from a deceased colleague",
+          "Set of common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Researcher",
+        featureDesc: "If you lack specific lore, you usually know where to find it. Your knowledge might be hidden or hard to come by.",
+        nicknames: ["Quill", "Stacks", "Owl", "Doc", "Booker"]
+      },
+      {
+        name: "Mage",
+        skillProficiencies: ["Arcana", "History"],
+        equipment: [
+          "Quarterstaff (arcane focus for Mage Bolt)",
+          "Spellbook or arcane notes",
+          "Set of common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Arcane Initiate",
+        featureDesc: "You’ve begun to tap into magic, channeling an arcane bolt through your staff instead of physical attacks.",
+        nicknames: ["Arc", "Wizard", "Spark", "Boom", "Focus"]
+      },
+      {
+        name: "Sailor",
+        skillProficiencies: ["Athletics", "Perception"],
+        equipment: [
+          "Belaying pin (club)",
+          "50 feet of silk rope",
+          "Lucky charm",
+          "Set of common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Ship's Passage",
+        featureDesc: "Your seafaring skills secure free passage aboard ships—if you assist the crew along the way.",
+        nicknames: ["Salty", "Anchor", "Rudder", "Knotty", "Seabreeze"]
+      },
+      {
+        name: "Soldier",
+        skillProficiencies: ["Athletics", "Intimidation"],
+        equipment: [
+          "Insignia of rank",
+          "Trophy from a fallen enemy",
+          "Set of bone dice or a deck of cards",
+          "Set of common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Military Rank",
+        featureDesc: "Your former military rank carries weight with those still loyal to your old unit.",
+        nicknames: ["Sarge", "Brass", "Boots", "Vets", "Gunner"]
+      },
+      {
+        name: "Urchin",
+        skillProficiencies: ["Sleight of Hand", "Stealth"],
+        equipment: [
+          "Small knife",
+          "City map",
+          "Pet mouse",
+          "Token of your parents",
+          "Set of common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "City Secrets",
+        featureDesc: "You know urban shortcuts and hidden pathways—enabling rapid travel through cities.",
+        nicknames: ["Rat", "Stray", "Alley", "Gutters", "Pebbles"]
+      },
+      {
+        name: "Tanner",
+        skillProficiencies: ["Survival", "Nature"],
+        languages: [],
+        equipment: [
+          "Small set of tanning tools",
+          "Sturdy apron",
+          "A prized cured hide",
+          "Set of common clothes",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Leatherwise",
+        featureDesc: "You can instantly judge the quality of hides and locate buyers even in remote settlements.",
+        nicknames: ["Hide", "Skins", "Tannic", "Pelt", "Sinew"]
+      },
+      {
+        name: "Alchemist",
+        skillProficiencies: ["Arcana", "Medicine"],
+        languages: [],
+        equipment: [
+          "Alchemist’s kit (flasks, mortar & pestle)",
+          "Weathered notebook of formulas",
+          "Reagent-stained common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Experimental Brewer",
+        featureDesc: "Local apothecaries or herbalists often provide discounts in hopes that your next discovery is lucrative.",
+        nicknames: ["Vial", "Fume", "Brew", "Pestle", "Tonic"]
+      },
+      {
+        name: "Miner",
+        skillProficiencies: ["Athletics", "Perception"],
+        languages: [],
+        equipment: [
+          "Pickaxe",
+          "Lantern and flask of oil",
+          "Sample of precious ore",
+          "Sturdy boots and rugged clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Tunnel Instinct",
+        featureDesc: "You have an uncanny ability to sense structural weaknesses underground.",
+        nicknames: ["Pick", "Sparky", "Ore", "Dusty", "Coal"]
+      },
+      {
+        name: "Beast Tamer",
+        skillProficiencies: ["Animal Handling", "Nature"],
+        languages: [],
+        equipment: [
+          "Length of rope",
+          "Carved token of a favourite beast",
+          "Supply of dried meat",
+          "Simple outdoor attire",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Animal Rapport",
+        featureDesc: "Animals trust you instinctively; locals seek your help with unruly creatures.",
+        nicknames: ["Buck", "Wrangler", "Whistle", "Critter", "Hoof"]
+      },
+      {
+        name: "Chandler",
+        skillProficiencies: ["Persuasion", "Investigation"],
+        languages: [],
+        equipment: [
+          "Block of wax",
+          "Candle mould and tinderbox",
+          "Sales ledger",
+          "Plain, neat clothes",
+          "Belt pouch containing 7 gp"
+        ],
+        feature: "Keeper of Light",
+        featureDesc: "You know how to make reliable candles and source cheap tallow or beeswax.",
+        nicknames: ["Candle", "Wax", "Wick", "Tallow", "Glow"]
+      },
+      {
+        name: "Cooper",
+        skillProficiencies: ["History", "Sleight of Hand"],
+        languages: [],
+        equipment: [
+          "Cooper’s hammer and iron hoops",
+          "Self-crafted small cask",
+          "Serviceable working clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Well-Bound Containers",
+        featureDesc: "Your barrels and crates are secure; you can spot any signs of tampering at a glance.",
+        nicknames: ["Barrel", "Hoops", "Ring", "Crater", "Tapper"]
+      },
+      {
+        name: "Cartwright",
+        skillProficiencies: ["Carpenter’s Tools", "History"],
+        languages: [],
+        equipment: [
+          "Woodworking toolkit",
+          "Miniature model cart",
+          "Sturdy common clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Roadwise",
+        featureDesc: "Your experience building and repairing carts gives you insight into travel and maintenance.",
+        nicknames: ["Axle", "Spokes", "Wheel", "Lumber", "Waggon"]
+      },
+      {
+        name: "Scribe",
+        skillProficiencies: ["History", "Investigation"],
+        languages: ["One of your choice"],
+        equipment: [
+          "Quill and jar of ink",
+          "Sheaf of parchment",
+          "Personal scribble log",
+          "Simple, tidy clothes",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Academic Access",
+        featureDesc: "Your writing skills grant you easier access to archives and private collections.",
+        nicknames: ["Quill", "Ink", "Scroll", "Lexi", "Page"]
+      },
+      {
+        name: "Glassblower",
+        skillProficiencies: ["Arcana", "Perception"],
+        languages: [],
+        equipment: [
+          "Glassblowing pipe",
+          "Wrapped glass trinket",
+          "Sturdy goggles",
+          "Common clothes",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Fragile Eye",
+        featureDesc: "Your discerning eye detects flaws in glass—making you a trusted judge among artisans.",
+        nicknames: ["Fragile", "Pane", "Spark", "Torch", "Crystal"]
+      },
+      {
+        name: "Jeweller",
+        skillProficiencies: ["Insight", "Sleight of Hand"],
+        languages: [],
+        equipment: [
+          "Loupe or magnifying lens",
+          "Pouch of assorted uncut gemstones",
+          "Smart, modest clothes",
+          "Belt pouch containing 15 gp"
+        ],
+        feature: "Stone Appraisal",
+        featureDesc: "You can quickly assess the value of gems and precious metals.",
+        nicknames: ["Shine", "Facet", "Gem", "Pearl", "Rocky"]
+      },
+      {
+        name: "Shipwright",
+        skillProficiencies: ["Athletics", "Carpenter’s Tools"],
+        languages: [],
+        equipment: [
+          "Small mallet and chisel",
+          "Piece of driftwood with etched diagram",
+          "Rugged clothes",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Maritime Specialist",
+        featureDesc: "Ship captains trust your expertise; you can assess a vessel’s seaworthiness at a glance.",
+        nicknames: ["Timbers", "Hull", "Dock", "Anchor", "Mast"]
+      },
+      {
+        name: "Bowyer/Fletcher",
+        skillProficiencies: ["Nature", "Perception"],
+        languages: [],
+        equipment: [
+          "Bundle of feathers and arrow shafts",
+          "Small bowyer’s toolkit",
+          "Workable common clothes",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Arrow Precision",
+        featureDesc: "You craft serviceable arrows from natural materials and quickly judge the quality of bows.",
+        nicknames: ["Arrow", "Feather", "Quiver", "Bowstring", "Fletch"]
+      },
+      {
+        name: "Cobbler",
+        skillProficiencies: ["Sleight of Hand", "Insight"],
+        languages: [],
+        equipment: [
+          "Cobbler’s kit (awl, hammer, patches)",
+          "Well-worn boots you’ve made",
+          "Common clothes",
+          "Belt pouch containing 8 gp"
+        ],
+        feature: "Sure-Footed",
+        featureDesc: "You excel at fitting boots and tracking individuals by their unique footprints.",
+        nicknames: ["Boots", "Soles", "Stitch", "Tap", "Tread"]
+      },
+      {
+        name: "Farmer",
+        skillProficiencies: ["Animal Handling", "Nature"],
+        languages: [],
+        equipment: [
+          "Hoe or sickle",
+          "Small pouch of seeds",
+          "Wide-brimmed straw hat",
+          "Sturdy clothes",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Local Harvest",
+        featureDesc: "You know how to grow and gather crops, earning respect among rural folk.",
+        nicknames: ["Seed", "Haystack", "Plow", "Row", "Scythe"]
+      },
+      {
+        name: "Fisher",
+        skillProficiencies: ["Survival", "Perception"],
+        languages: [],
+        equipment: [
+          "Simple fishing rod or hand line",
+          "Small tackle box",
+          "Net",
+          "Waterproof boots",
+          "Belt pouch containing 5 gp"
+        ],
+        feature: "Waterside Hospitality",
+        featureDesc: "Your knack for fishing secures daily rations, and fellow fishers are friendly.",
+        nicknames: ["Fin", "Hook", "Line", "Nets", "Minnow"]
+      },
+      {
+        name: "Mercenary Captain",
+        skillProficiencies: ["Athletics", "Persuasion"],
+        languages: ["One of your choice"],
+        equipment: [
+          "Finely maintained military uniform",
+          "Mercenary company insignia",
+          "Well-worn battlefield map",
+          "Belt pouch containing 20 gp"
+        ],
+        feature: "Commanding Presence",
+        featureDesc: "Your reputation rallies former comrades in battle, providing valuable assistance when needed.",
+        nicknames: ["Captain", "Commander", "Ironhand", "Chief", "Bull"]
+      },
+      {
+        name: "Courtier",
+        skillProficiencies: ["Persuasion", "Insight"],
+        languages: ["Latin", "One of your choice"],
+        equipment: [
+          "Finely tailored court attire",
+          "Signet ring bearing your family's crest",
+          "Letter of introduction from a noble patron",
+          "Belt pouch containing 15 gp"
+        ],
+        feature: "Access to Royal Privilege",
+        featureDesc: "Your position at court grants you entry to powerful circles and exclusive events.",
+        nicknames: ["Noble", "Lord", "Lady", "Squire", "Regent"]
+      },
+      {
+        name: "Cartographer",
+        skillProficiencies: ["Survival", "History"],
+        languages: ["One of your choice"],
+        equipment: [
+          "Traveller's clothes",
+          "Weathered journal with sketches and maps",
+          "Compass and sextant",
+          "Belt pouch containing 10 gp"
+        ],
+        feature: "Chart the Unknown",
+        featureDesc: "Your journeys into uncharted lands let you recall detailed maps and sometimes uncover hidden paths.",
+        nicknames: ["Scout", "Pathfinder", "Rover", "Nomad", "Wanderer"]
+      },
+      {
+        name: "Wealthy Merchant",
+        skillProficiencies: ["Persuasion", "Insight"],
+        languages: ["One of your choice"],
+        equipment: [
+          "Ledger of business dealings",
+          "Fine travelling clothes",
+          "Small scale and weighing weights",
+          "Belt pouch containing 25 gp"
+        ],
+        feature: "Trade Connections",
+        featureDesc: "Your extensive network secures fair prices and safe passage; merchants and officials are inclined to assist you.",
+        nicknames: ["Trader", "Broker", "Ledger", "Stonks", "Goldfinger"]
+      }
+    ];
+    
+    // ---------- Background Proficiencies (Updated: Removed Gunsmith) ----------
+    const BACKGROUND_PROFICIENCIES = {
+      "Soldier": "martial",
+      "Outlander": "simple",
+      "Criminal/Spy": "simple",
+      "Folk Hero": "simple",
+      "Sage": "simple",
+      "Mage": "simple",
+      "Mercenary Captain": "martial",
+      "Courtier": "simple",
+      "Cartographer": "simple",
+      "Wealthy Merchant": "simple"
+    };
+    
+    const PERSONALITY_TRAITS = [
+      "I meticulously maintain my weapons and armour, treating each as a treasured heirloom.",
+      "I harbour a secret longing for a noble life, despite my modest origins.",
+      "I delight in reciting ancient proverbs and quoting obscure texts at every opportunity.",
+      "I possess an unyielding loyalty to my comrades, standing by them through siege and strife.",
+      "I savor the taste of fine wines and dream of lavish banquets, even in lean times.",
+      "I abide by a strict code of honour, with transgressions met by swift, decisive retribution.",
+      "I relish the thrill of a high-stakes wager, often risking more than I can spare.",
+      "I nurture an almost obsessive penchant for collecting curious relics from my travels.",
+      "I am endlessly fascinated by the intricacies of court politics, ever mindful of the balance of power.",
+      "I find solace in the quiet of moonlit nights, when the clamor of the world fades into whispering shadows.",
+      "I wax poetic about the art of warfare and the delicate science of strategy.",
+      "I frequent the local tavern, engaging in boisterous debates with fellow adventurers.",
+      "I maintain a fastidious appearance, convinced that one's bearing reflects the strength of one’s character.",
+      "I harbour a persistent ambition to rise above my station, no matter the trials I must endure.",
+      "I possess an insatiable curiosity for the arcane, often delving into forbidden tomes despite the risks.",
+      "I remain steadfastly loyal to time-honoured traditions, even as the world around me transforms.",
+      "I relish the challenge of solving riddles and puzzles, seeing them as tests of wit and mettle.",
+      "I harbour a quiet disdain for ostentatious wealth and empty titles, preferring substance over show.",
+      "I view every challenge as an opportunity for growth, embracing hardship as a teacher.",
+      "I cherish the memory of my ancestors, speaking of them with reverence as if they walked beside me.",
+      "I am known for my unwavering resolve, even in the face of overwhelming odds.",
+      "I find comfort in the rituals of daily life, from morning prayers to nightly vigils.",
+      "I am haunted by the ghost of a past mistake, driving me to seek redemption in every act.",
+      "I secretly collect relics of ancient battles, each piece a memento of lost glory.",
+      "I have a tendency to speak in a measured, deliberate tone, as if every word carries weight.",
+      "I pride myself on my knowledge of heraldry and lineage, keen to trace noble bloodlines.",
+      "I enjoy the art of duelling, both in verbal sparring and in combat, as a test of skill.",
+      "I display a quiet melancholy, reflective of a life burdened by duty and loss.",
+      "I am a firm believer in divine providence, seeing signs and miracles in everyday events.",
+      "I revel in the theatre of battle, finding a strange beauty in the chaos of war.",
+      "I hold conversations with great intellectuals, always seeking to expand my understanding of the world.",
+      "I maintain a secret correspondence with a long-forgotten scholar, exchanging ideas and forbidden lore.",
+      "I have a habit of wearing a particular token of remembrance—a locket or ring—that holds sentimental value.",
+      "I am quick to offer a toast to both fortune and fate, never shying away from celebration.",
+      "I speak with the authority of someone who has seen the rise and fall of empires.",
+      "I am known to be unusually punctual, believing that time itself is a precious commodity.",
+      "I harbour a rebellious streak, questioning established norms and challenging authority when necessary.",
+      "I take pride in my ability to navigate both the wilderness and the labyrinthine corridors of power.",
+      "I find deep satisfaction in crafting meticulous plans, always anticipating future moves.",
+      "I am resolute in the face of betrayal, my trust hard-earned and rarely given.",
+      "I often meditate on the transience of life, aware that every victory is fleeting.",
+      "I am known for my stoic demeanour, rarely allowing my emotions to show even in dire moments.",
+      "I have a penchant for quoting ancient wisdom, often in archaic language that others find perplexing.",
+      "I maintain a disciplined routine, rising before dawn and retiring at dusk without fail.",
+      "I have an eye for detail, noticing even the smallest signs of deception or treachery.",
+      "I cultivate an air of mystery, never revealing too much about my past or my intentions.",
+      "I possess a deep-seated sense of duty, which sometimes compels me to make personal sacrifices.",
+      "I have a quiet confidence, born from years of hardship and hard-won victories.",
+      "I hold a deep respect for the martial traditions of old, often seeking wisdom from veteran warriors.",
+      "I display a refined taste in both literature and music, preferring the classics to modern frivolities.",
+      "I am quick to defend the honour of my family, even if it means entering into conflict.",
+      "I have a habit of leaving subtle clues about my true intentions in casual conversation.",
+      "I find great joy in the art of letter writing, carefully crafting missives to friends and foes alike.",
+      "I am known to keep a detailed diary of my exploits, chronicling every battle and encounter.",
+      "I harbour a deep-seated mistrust of strangers, believing that trust must be earned through proven loyalty.",
+      "I am a connoisseur of fine art and sculpture, often spending hours admiring the craftsmanship of bygone eras.",
+      "I am driven by a desire for revenge against those who wronged me, a flame that never truly dies.",
+      "I display a keen sense of humour, often using wit to defuse tense situations.",
+      "I am unwavering in my principles, often refusing to compromise even in the face of dire consequences.",
+      "I have a deep admiration for the chivalric code, striving always to emulate the knights of old.",
+      "I take great care in the presentation of my words, believing that eloquence is a weapon as potent as any blade.",
+      "I have a propensity to be overly cautious, carefully weighing every risk before taking action.",
+      "I enjoy the challenge of solving complex problems, whether in battle strategy or in daily life.",
+      "I maintain a strict separation between my public persona and my private doubts, guarding my vulnerabilities closely.",
+      "I am driven by an insatiable curiosity about the natural world, often collecting specimens and observing wildlife.",
+      "I have a quiet, unassuming nature that belies the fierce determination burning within me.",
+      "I frequently ponder the nature of destiny, wondering if my path is preordained or carved by my own hand.",
+      "I hold firm beliefs about justice and retribution, often seeking to right the wrongs I encounter.",
+      "I am known to be a reliable confidant, always lending an ear to the troubled and the weary.",
+      "I display a subtle defiance of authority, quietly undermining those who abuse their power.",
+      "I am deeply affected by the tragedies of war, yet I persist in the belief that peace is attainable.",
+      "I have a habit of performing small acts of kindness anonymously, believing that true charity needs no recognition.",
+      "I am fascinated by ancient legends and myths, often incorporating their lessons into my own life.",
+      "I possess an inherent sense of duty towards my community, always ready to lend my skills to a worthy cause.",
+      "I am reflective and contemplative, often spending long nights in quiet introspection.",
+      "I have a flair for dramatics, sometimes exaggerating my exploits to entertain and inspire others.",
+      "I maintain a careful balance between ambition and humility, aware that pride can be a dangerous foe.",
+      "I am driven by a sense of destiny, convinced that my actions have far-reaching consequences.",
+      "I harbour a love for the rustic charm of rural life, finding beauty in simplicity and hard work.",
+      "I am resolute in my belief that honor and integrity will prevail, even in the darkest of times."
+    ];
+    
+    // ---------- Utility Functions ----------
+    function populateSelect(selectId, optionsArray) {
+      const selectElem = document.getElementById(selectId);
+      optionsArray.forEach(opt => {
+        const optionEl = document.createElement("option");
+        optionEl.value = opt;
+        optionEl.innerText = opt;
+        selectElem.appendChild(optionEl);
+      });
+    }
+    
+    function pickRandom(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+    
+    function pickMultipleDistinct(array, count) {
+      const copy = [...array];
+      const result = [];
+      if (count > copy.length) count = copy.length;
+      for (let i = 0; i < count; i++) {
+        const index = Math.floor(Math.random() * copy.length);
+        result.push(copy[index]);
+        copy.splice(index, 1);
+      }
+      return result;
+    }
+    
+    function roll4d6DropLowest() {
+      let scores = [];
+      for (let i = 0; i < 6; i++) {
+        let rolls = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 6) + 1);
+        rolls.sort((a, b) => a - b);
+        rolls.shift(); // drop lowest
+        scores.push(rolls.reduce((acc, val) => acc + val, 0));
+      }
+      return scores;
+    }
+    
+    function getStandardArray() {
+      return [15, 14, 13, 12, 10, 8];
+    }
+    
+    function abilityMod(score) {
+      return Math.floor((score - 10) / 2);
+    }
+    
+    // ---------- Name Handling ----------
+    function randomName() {
+      if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
+        document.getElementById("name-input").value = "Nameless Soul";
+        return;
+      }
+      const first = pickRandom(FIRST_NAMES);
+      const last = pickRandom(LAST_NAMES);
+      document.getElementById("name-input").value = first + " " + last;
+    }
+    
+    // ---------- Race & Background Randomisers ----------
+    function randomRace() {
+      const randomPick = pickRandom(RACES).name;
+      document.getElementById("race-select").value = randomPick;
+    }
+    
+    function randomBackground() {
+      const randomPick = pickRandom(BACKGROUNDS).name;
+      document.getElementById("background-select").value = randomPick;
+    }
+    
+    // ---------- Ability Score Handlers ----------
+    let currentScores = [10, 10, 10, 10, 10, 10]; // default
+    function rollAbilityScores() {
+      currentScores = roll4d6DropLowest();
+      displayScores();
+    }
+    
+    function standardArray() {
+      currentScores = getStandardArray();
+      displayScores();
+    }
+    
+    function displayScores() {
+      const container = document.getElementById("abilities-display");
+      const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+      let html = "";
+      currentScores.forEach((sc, i) => {
+        const mod = abilityMod(sc);
+        html += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
+      });
+      container.innerHTML = html;
+    }
+    
+    // ---------- Weapons, Armours, and Proficiencies ----------
+    const SIMPLE_WEAPONS = ["Club", "Dagger", "Handaxe", "Spear", "Sickle", "Light Crossbow"];
+    const MARTIAL_WEAPONS = ["Shortsword"];
+    const IMPROVISED_WEAPON = "Improvised (like a club)";
+    
+    const WEAPON_DATA = {
+      "Club":             { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
+      "Dagger":           { damageDie: "1d4", damageType: "piercing",    finesse: true,  ranged: false },
+      "Handaxe":          { damageDie: "1d6", damageType: "slashing",    finesse: false, ranged: false },
+      "Spear":            { damageDie: "1d6", damageType: "piercing",    finesse: false, ranged: false },
+      "Sickle":           { damageDie: "1d4", damageType: "slashing",    finesse: false, ranged: false },
+      "Light Crossbow":   { damageDie: "1d8", damageType: "piercing",    finesse: false, ranged: true  },
+      "Shortsword":       { damageDie: "1d6", damageType: "piercing",    finesse: true,  ranged: false },
+      "Improvised (like a club)": { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
+      "Arcane Bolt (staff)": {
+        damageDie: "1d6",
+        damageType: "force",
+        ranged: true,
+        finesse: false,
+        useInt: true
+      }
+    };
+    
+    const ARMORS = [
+      { name: "No Armour",       baseAC: 10, dexCap: null },
+      { name: "Padded Armour",   baseAC: 11, dexCap: null },
+      { name: "Leather Armour",  baseAC: 11, dexCap: null },
+      { name: "Hide Armour",     baseAC: 12, dexCap: 2 }
+    ];
+    
+    const BACKGROUND_WEAPONS = {
+      "Mage": ["Arcane Bolt (staff)"],
+      "Sage": ["Club", "Dagger"],
+      "Criminal/Spy": ["Dagger", "Shortsword", "Light Crossbow", IMPROVISED_WEAPON],
+      "Folk Hero": ["Sickle", "Club", "Spear", IMPROVISED_WEAPON],
+      "Outlander": ["Spear", "Handaxe", "Club"],
+      "Soldier": ["Spear", "Shortsword", "Handaxe"],
+      "Mercenary Captain": ["Shortsword", "Spear", "Handaxe"],
+      "Courtier": ["Dagger"],
+      "Cartographer": ["Club", "Handaxe", IMPROVISED_WEAPON],
+      "Wealthy Merchant": ["Dagger", "Club"]
+    };
+    
+    function isProficientInWeapon(weaponName, backgroundName) {
+      const cat = BACKGROUND_PROFICIENCIES[backgroundName];
+      if (!cat) return false;
+      if (weaponName === "Arcane Bolt (staff)" && backgroundName === "Mage") return true;
+      if (SIMPLE_WEAPONS.includes(weaponName)) return (cat === "simple" || cat === "martial");
+      if (MARTIAL_WEAPONS.includes(weaponName)) return (cat === "martial");
+      return false;
+    }
+    
+    function getRandomWeaponForBackground(bgName) {
+      let weaponsArray = BACKGROUND_WEAPONS[bgName];
+      if (!weaponsArray) weaponsArray = ["Club", "Dagger", IMPROVISED_WEAPON];
+      return pickRandom(weaponsArray);
+    }
+    
+    function computeArmourClass(armour, dexMod) {
+      const effectiveDex = (armour.dexCap !== null) ? Math.min(dexMod, armour.dexCap) : dexMod;
+      return armour.baseAC + (effectiveDex > 0 ? effectiveDex : 0);
+    }
+    
+    function computeWeaponStats(weaponName, scores, isProficient, profBonus) {
+      const data = WEAPON_DATA[weaponName];
+      if (!data) return null;
+      const strMod = abilityMod(scores[0]);
+      const dexMod = abilityMod(scores[1]);
+      const intMod = abilityMod(scores[3]); // INT is index 3
+      let usedMod = strMod;
+      if (data.useInt) {
+        usedMod = intMod;
+      } else if (data.ranged) {
+        usedMod = dexMod;
+      } else if (data.finesse) {
+        usedMod = Math.max(strMod, dexMod);
+      }
+      const attackBonus = usedMod + (isProficient ? profBonus : 0);
+      return {
+        name: weaponName,
+        damageDie: data.damageDie,
+        damageType: data.damageType,
+        attackBonus: attackBonus,
+        abilityMod: usedMod
+      };
+    }
+    
+    // ---------- Character Generation ----------
+    function parseUserName(fullInput) {
+      const parts = fullInput.trim().split(/\s+/);
+      let firstName = "";
+      let lastName = "";
+      if (parts.length === 1) {
+        firstName = parts[0];
+      } else {
+        firstName = parts[0];
+        lastName = parts[parts.length - 1];
+      }
+      return { firstName, lastName };
+    }
+    
+    function generateCharacter() {
+      // 1. Read Name
+      const rawName = document.getElementById("name-input").value.trim() || "Unnamed Hero";
+      let { firstName, lastName } = parseUserName(rawName);
+      
+      // 2. Race & Background Selection
+      const raceSelected = document.getElementById("race-select").value;
+      const raceData = RACES.find(r => r.name === raceSelected);
+      if (!raceData) { alert("Please select a race."); return; }
+      const bgSelected = document.getElementById("background-select").value;
+      const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
+      if (!bgData) { alert("Please select a background."); return; }
+      
+      // 3. Possibly add a Nickname
+      if (bgData.nicknames && bgData.nicknames.length > 0 && Math.random() < 0.2) {
+        const nick = pickRandom(bgData.nicknames);
+        firstName += ` "${nick}"`;
+      }
+      
+      // 4. Apply Race Ability Score Bonuses
+      const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+      let finalScores = [...currentScores];
+      for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
+        if (ability === "PLUS_TWO_OTHERS") {
+          finalScores[1] += 1; // DEX
+          finalScores[2] += 1; // CON
+        } else {
+          const idx = ABIL_ORDER.indexOf(ability);
+          if (idx !== -1) finalScores[idx] += bonus;
+        }
+      }
+      
+      // 5. Select Personality Traits
+      const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
+      
+      // 6. Determine Level (Proficiency Bonus)
+      const levelChoice = document.getElementById("level-select").value;
+      const profBonus = levelChoice === "0.5" ? 1 : 0;
+      
+      // 7. Pick Random Weapon & Armour
+      const chosenWeapon = getRandomWeaponForBackground(bgData.name);
+      const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
+      const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
+      
+      const chosenArmour = pickRandom(ARMORS);
+      const dexMod = abilityMod(finalScores[1]);
+      const computedAC = computeArmourClass(chosenArmour, dexMod);
+      
+      // 8. Compile Final Details
+      const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
+      const featuresList = raceData.features.length ? raceData.features.map(f => `- ${f}`).join("<br/>") : "None";
+      const raceLangs = raceData.languages.join(", ");
+      
+      // Clone and augment background equipment
+      let finalEquipment = bgData.equipment.slice();
+      finalEquipment = addRandomEquipment(finalEquipment);
+      const bgEquipmentList = finalEquipment.map(eq => `- ${eq}`).join("<br/>");
+      
+      const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
+      const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
+      
+      // Output the generated character
+      const outputDiv = document.getElementById("output");
+      outputDiv.style.display = "block";
+      outputDiv.classList.add("generated");
+      document.getElementById("charName").innerHTML = fullNameFinal;
+      document.getElementById("charRace").innerHTML = `
+        <strong>Race:</strong> ${raceData.name}<br/>
+        <em>Speed:</em> ${raceData.speed} ft<br/>
+        <em>Features:</em><br/> ${featuresList}
+      `;
+      document.getElementById("charBackground").innerHTML = `
+        <strong>Background:</strong> ${bgData.name}<br/>
+        <em>Skill Proficiencies:</em> ${bgSkills}<br/>
+        <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
+        <small>${bgData.featureDesc}</small>
+      `;
+      document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
+      document.getElementById("charProficiencies").innerHTML = `
+        <strong>Proficiencies (From BG, at Level ${levelChoice}):</strong><br/>
+        Weapon Category: ${BACKGROUND_PROFICIENCIES[bgData.name] || "None"}<br/>
+        Background Skills: ${bgSkills}
+      `;
+      document.getElementById("charLanguages").innerHTML = `
+        <strong>Languages:</strong><br/>
+        From Race: ${raceLangs}<br/>
+        From Background: ${bgLangs}
+      `;
+      
+      let eqHTML = `<strong>Starting Equipment:</strong><br/>${bgEquipmentList}`;
+      if (weaponStats) {
+        eqHTML += `
+          <br/><br/><strong>Weapon:</strong> ${weaponStats.name}<br/>
+          <em>Attack Bonus:</em> ${weaponStats.attackBonus >= 0 ? "+" : ""}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
+          <em>Damage:</em> ${weaponStats.damageDie} ${weaponStats.abilityMod >= 0 ? "+" : ""}${weaponStats.abilityMod} (${weaponStats.damageType})
+        `;
+      }
+      eqHTML += `<br/><br/><strong>Armour:</strong> ${chosenArmour.name} (AC = ${computedAC})`;
+      document.getElementById("charEquipment").innerHTML = eqHTML;
+      
+      const traitsHTML = `
+        <h3>Personality Traits</h3>
+        <ul>
+          <li>${chosenTraits[0]}</li>
+          <li>${chosenTraits[1]}</li>
+        </ul>
+      `;
+      document.getElementById("charTraits").innerHTML = traitsHTML;
+      
+      document.getElementById("printButton").style.display = "inline-block";
+    }
+    
+    function formatAbilityScores(scoresArr) {
+      const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+      let out = "<strong>Ability Scores:</strong><br/>";
+      scoresArr.forEach((sc, i) => {
+        const mod = abilityMod(sc);
+        out += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
+      });
+      return out;
+    }
+    
+    function fullRandom() {
+      randomName();
+      randomRace();
+      randomBackground();
+      rollAbilityScores();
+      generateCharacter();
+    }
+    
+    function addRandomEquipment(equipmentArray) {
+      const extraItem = pickRandom([
+        "Mysterious Amulet", "Battered Spyglass", "Pocket Watch", "Ornate Quill",
+        "Leather-bound Journal", "Faded Map", "Flask of Unknown Liquid", "Silver Pocket Mirror",
+        "Vial of Rare Perfume", "Gambler's Dice", "Signet Ring", "Tattered Parchment",
+        "Shimmering Dust", "Worn Leather Bookmark", "Carved Wooden Figurine", "Tiny Mysterious Key",
+        "Polished Obsidian Stone", "Brass Compass", "Ancient Coin Fragment", "Richly Embroidered Cloth",
+        "Cracked Mug", "Rusty Spoon", "Faded Letter", "Worn-out Boot", "Bent Nail", "Dented Shield",
+        "Old Quill", "Moldy Bread Slice", "Stained Handkerchief", "Tattered Pouch", "Bent Key",
+        "Frayed Rope", "Broken Lens", "Smudged Eyeglasses", "Dusty Tome", "Worn-out Page",
+        "Faded Banner", "Cracked Cup", "Tarnished Spoon", "Soggy Bread", "Bent Spoon", "Dull Knife",
+        "Old Candle Stub", "Chewed Pencil", "Rusted Chain", "Frayed Scarf", "Empty Flask",
+        "Cracked Mirror", "Muddy Boot", "Broken Arrow", "Wobbly Chair Leg", "Stale Biscuit",
+        "Crumpled Receipt", "Used Napkin", "Tattered Scroll", "Old Coin", "Scratched Lens", "Bent Nail",
+        "Dusty Rope", "Chewed Gum", "Half-empty Ink Bottle", "Soggy Parchment", "Stained Letter",
+        "Rusty Key", "Worn-out Book Cover", "Battered Wallet", "Crumbled Cookie", "Dull Pencil",
+        "Old Doorknob", "Torn Page", "Smudged Quill", "Bent Branch", "Cracked Tile", "Mildewed Cloth",
+        "Broken Bottle", "Scratched Plate", "Faded Picture", "Dented Can", "Worn-out Belt", "Frayed Cord",
+        "Chewed Bootlace", "Cracked Eggshell", "Moldy Cheese Slice", "Bent Spoon", "Tarnished Medallion",
+        "Cracked Platter", "Old Rag", "Splintered Wood", "Mossy Stone", "Cracked Jug", "Dented Bucket",
+        "Stained Apron", "Worn-out Gloves", "Rusty Hinge", "Smudged Glass", "Mildewed Paper", "Frayed Ribbon",
+        "Old Button", "Chipped Mug", "Cracked Doorknob"
+      ]);
+      equipmentArray.push(extraItem);
+      return equipmentArray;
+    }
+    
+    // ---------- Initialization ----------
+    window.addEventListener("DOMContentLoaded", () => {
+      populateSelect("race-select", RACES.map(r => r.name));
+      populateSelect("background-select", BACKGROUNDS.map(b => b.name));
+    });
+  </script>
 </body>
 </html>
