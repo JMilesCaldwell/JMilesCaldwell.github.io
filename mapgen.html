@@ -40,16 +40,29 @@
       margin-top: 1rem;
     }
 
+    /* The wrapper will "contain" the canvas, 
+       and hide overflowing areas to mimic Google Maps–style. */
     .mapWrapper {
-      text-align: center;
+      position: relative;
+      width: 1000px;        /* or any fixed size you prefer */
+      height: 700px;        /* or any fixed size you prefer */
+      margin: 1rem auto;
+      overflow: hidden;     /* crucial for clipped panning/zooming */
+      display: inline-block;
+      border: 2px solid #660000;  /* slight border to see the bounding box */
+      background: #202020;
     }
 
     #mapCanvas {
-      border: 2px solid #660000;
-      background: #202020;
-      display: block;
-      margin: 1rem auto; 
+      /* We'll apply transform for panning & zoom. */
+      position: absolute;
+      top: 0;
+      left: 0;
+      /* The map is physically 1000x1000 in 'world' space. */
+      width: 1000px;
+      height: 1000px;
       image-rendering: pixelated;
+      transform-origin: top left;
     }
 
     .mapButton {
@@ -117,21 +130,22 @@
 
       <button class="mapButton" onclick="generateMap()">Generate Map</button>
 
-      <!-- Occupant selection: player|enemy|npc|delete -->
+      <!-- Occupant selection: none|player|enemy|npc (NO 'delete') -->
       <label>
         Occupant Type:
         <select id="occupantType">
+          <option value="none" selected>None</option>
           <option value="player">Player</option>
           <option value="enemy">Enemy</option>
           <option value="npc">NPC</option>
-          <option value="delete">Delete Occupant</option>
         </select>
       </label>
 
-      <!-- Occupant sprite selection -->
+      <!-- Occupant sprite selection; includes "none" -->
       <label>
         Sprite:
         <select id="occupantSprite">
+          <option value="none" selected>None</option>
           <option value="paladin">paladin</option>
           <option value="fighter">fighter</option>
           <option value="guardian">guardian</option>
@@ -164,10 +178,28 @@
           <option value="orcfighter">orcfighter</option>
         </select>
       </label>
+
+      <!-- CLEAR BUTTON sets occupantType + occupantSprite to "none" -->
+      <button class="mapButton" onclick="clearOccupantSelection()">Clear</button>
+    </div>
+
+    <!-- 
+      NEW: Buttons to pick the "mode" of occupant interaction:
+      place, delete, or move
+    -->
+    <div class="controls">
+      <button class="mapButton" onclick="setMode('place')">Place</button>
+      <button class="mapButton" onclick="setMode('delete')">Delete</button>
+      <button class="mapButton" onclick="setMode('move')">Move</button>
     </div>
 
     <div class="mapWrapper">
       <canvas id="mapCanvas" width="1000" height="1000"></canvas>
+    </div>
+
+    <!-- HOME BUTTON AT BOTTOM -->
+    <div style="margin-top: 1rem;">
+      <a href="index.html" class="mapButton">Home</a>
     </div>
   </div>
 
@@ -179,18 +211,34 @@
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
 
-    // occupantInHand => if we're carrying an occupant
-    // occupant is { type: "player"/"enemy"/"npc", sprite: "mage"/"orc"/... }
+    // occupantInHand => if we're carrying an occupant (used in Move mode)
     let occupantInHand = null; 
 
     // occupant border colours
     const occupantColours = {
-      player: "#00FF00",  // green
-      enemy:  "#FF0000",  // red
-      npc:    "#0000FF"   // blue
+      player: "#00FF00",
+      enemy:  "#FF0000",
+      npc:    "#0000FF"
     };
 
+    // occupant management mode: 'place' | 'delete' | 'move'
+    let currentMode = 'place';
+
     let mapData = []; // entire map structure
+
+    /*******************************************************
+     * PAN & ZOOM
+     *******************************************************/
+    let scale = 1.0;
+    let offsetX = 0;
+    let offsetY = 0;
+    const minScale = 0.3;
+    const maxScale = 3.0;
+
+    // Track dragging
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
 
     /*******************************************************
      * TILE TYPES
@@ -286,7 +334,7 @@
      * PRELOADED TEXTURES
      *******************************************************/
     const tileTextures = {};
-    const occupantSprites = {};
+    const occupantSpritesMap = {};
 
     function getColorForTileType(tileType) {
       return baseTileColours[tileType] || "#FFFFFF";
@@ -337,7 +385,7 @@
         img.src = `resources/mapassets/${spriteName}.png`;
         img.onload = checkDone;
         img.onerror = checkDone;
-        occupantSprites[spriteName] = img;
+        occupantSpritesMap[spriteName] = img;
       });
     }
 
@@ -454,13 +502,17 @@
      *******************************************************/
     function generateMap() {
       occupantInHand = null; // reset occupant carrying
+      offsetX = 0;
+      offsetY = 0;
+      scale = 1.0;
+      updateCanvasTransform(); // reset transform
 
       const theme = document.getElementById("mapType").value;
       const style = document.getElementById("mapStyle").value;
       const settings = getMapSettings(theme);
 
-      // If cavern => do CA approach
       if (settings.isCavern) {
+        // CA approach
         generateCavern();
       } else {
         // normal
@@ -487,9 +539,6 @@
      *******************************************************/
     function initMap(dist) {
       mapData = [];
-      let totalP = 0;
-      for (let t in dist) totalP += dist[t];
-
       for (let y = 0; y < GRID_HEIGHT; y++) {
         let row = [];
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -532,7 +581,8 @@
             ]);
           }
           // mudlands => dirt/sand => mud
-          if(theme === "mudlands" && (tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND)){
+          if(theme === "mudlands" && 
+             (tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND)){
             tile.type = pickRandom([TILE_TYPES.MUD, TILE_TYPES.MUD2, TILE_TYPES.MUD3]);
           }
           // desert => transform base sand => dunes / whitesand
@@ -767,7 +817,6 @@
 
     /*******************************************************
      * BUILDINGS (Village Generation)
-     * Single floor tile for entire map: pick from 4 marbles
      *******************************************************/
     const buildingShapes = [
       {
@@ -810,7 +859,6 @@
         ]
       }
     ];
-
     // Only these four for building floors
     const POSSIBLE_FLOORS = [
       TILE_TYPES.MARBLE_1,
@@ -818,13 +866,10 @@
       TILE_TYPES.MARBLE_3,
       TILE_TYPES.MARBLE_4
     ];
-
     let chosenFloorTileForBuildings=null;
 
     function createBuildings(numBuildings){
-      // pick single floor tile for entire map
       chosenFloorTileForBuildings = pickRandom(POSSIBLE_FLOORS);
-
       let attempts=0, placed=0;
       while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
@@ -869,7 +914,6 @@
       const h=localLayout.length; 
       const w=localLayout[0].length;
 
-      // vertical partition if wide
       if(w>=7){
         let wx=Math.floor(w/2);
         for(let y=1;y<h-1;y++){
@@ -878,7 +922,6 @@
         let doorY=Math.floor(Math.random()*(h-2))+1;
         localLayout[doorY][wx]=2; // door placeholder
       }
-      // horizontal partition if tall
       if(h>=7){
         let wy=Math.floor(h/2);
         for(let x=1;x<w-1;x++){
@@ -1042,8 +1085,8 @@
      * DRAWING
      *******************************************************/
     function drawMap(){
-      const canvas=document.getElementById("mapCanvas");
-      const ctx=canvas.getContext("2d");
+      const canvas = document.getElementById("mapCanvas");
+      const ctx = canvas.getContext("2d");
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -1078,72 +1121,167 @@
     }
 
     function drawOccupantSprite(ctx, occupant, px, py){
-      const spriteImg = occupantSprites[occupant.sprite];
-      if(spriteImg && spriteImg.complete){
-        ctx.drawImage(spriteImg, px, py, TILE_SIZE, TILE_SIZE);
-      } else {
-        // fallback occupant colour
-        ctx.fillStyle="#999";
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      if(occupant.sprite && occupant.sprite !== "none"){
+        const spriteImg = occupantSpritesMap[occupant.sprite];
+        if(spriteImg && spriteImg.complete){
+          ctx.drawImage(spriteImg, px, py, TILE_SIZE, TILE_SIZE);
+        } else {
+          // fallback occupant colour
+          ctx.fillStyle="#999";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
       }
-
-      // occupant border => depends on occupant.type
       const borderColor = occupantColours[occupant.type] || "#FF00FF";
       ctx.strokeStyle=borderColor;
       ctx.lineWidth=1;
-      // 1px inside
       ctx.strokeRect(px+0.5, py+0.5, TILE_SIZE-1, TILE_SIZE-1);
     }
 
     /*******************************************************
-     * CLICK => Occupant Creation/Movement/Deletion
+     * MODE SELECTOR (Place, Delete, Move)
      *******************************************************/
-    const canvas=document.getElementById("mapCanvas");
-    canvas.addEventListener("click",(e)=>{
-      const rect=canvas.getBoundingClientRect();
-      const clickX=e.clientX-rect.left;
-      const clickY=e.clientY-rect.top;
-      const tileX=Math.floor(clickX/TILE_SIZE);
-      const tileY=Math.floor(clickY/TILE_SIZE);
-      if(tileX<0||tileY<0||tileX>=GRID_WIDTH||tileY>=GRID_HEIGHT)return;
+    function setMode(mode){
+      currentMode = mode;
+      // If we switch away from move mode, 
+      // discard anything we might be holding in occupantInHand:
+      if(currentMode !== 'move'){
+        occupantInHand = null;
+      }
+    }
 
-      const tile=mapData[tileY][tileX];
+    /*******************************************************
+     * CANVAS EVENTS => Occupant & Panning
+     *******************************************************/
+    const canvas = document.getElementById("mapCanvas");
+    const mapWrapper = document.querySelector(".mapWrapper");
+
+    // CLICK => occupant logic depends on currentMode
+    canvas.addEventListener("click",(e)=>{
+      // If we are dragging, skip occupant logic to avoid accidental clicks.
+      if(isDragging) return;
+
+      // 1) Where is the click inside mapWrapper?
+      const wrapperRect = mapWrapper.getBoundingClientRect();
+      const mouseXInWrapper = e.clientX - wrapperRect.left;
+      const mouseYInWrapper = e.clientY - wrapperRect.top;
+
+      // 2) Inverse transform
+      const worldX = (mouseXInWrapper - offsetX) / scale;
+      const worldY = (mouseYInWrapper - offsetY) / scale;
+
+      const tileX = Math.floor(worldX / TILE_SIZE);
+      const tileY = Math.floor(worldY / TILE_SIZE);
+      if(tileX<0||tileY<0||tileX>=GRID_WIDTH||tileY>=GRID_HEIGHT) return;
+
+      // retrieve occupant type and sprite
       const occupantType=document.getElementById("occupantType").value;
       const occupantSprite=document.getElementById("occupantSprite").value;
 
-      if(occupantType==="delete"){
-        // remove occupant if present
-        if(tile.occupant){
-          tile.occupant=null;
-          occupantInHand=null; 
-          drawCell(canvas.getContext("2d"),tileX,tileY);
-        }
-        return;
-      }
+      const tile=mapData[tileY][tileX];
 
-      // Normal occupant logic
-      if(!occupantInHand){
-        // Not holding anything
-        if(tile.occupant){
-          // pick occupant up
-          occupantInHand = tile.occupant;
-          tile.occupant = null;
-          drawCell(canvas.getContext("2d"),tileX,tileY);
-        } else {
-          // create occupant
+      switch(currentMode){
+        case 'delete':
+          if(tile.occupant){
+            tile.occupant = null;
+            occupantInHand = null;
+            drawCell(canvas.getContext("2d"), tileX, tileY);
+          }
+          break;
+
+        case 'move':
+          // If occupantInHand is null => pick occupant (if any)
+          if(!occupantInHand){
+            if(tile.occupant){
+              occupantInHand = tile.occupant;
+              tile.occupant = null;
+              drawCell(canvas.getContext("2d"), tileX, tileY);
+            }
+          } else {
+            // occupantInHand != null => place occupant here
+            tile.occupant = occupantInHand;
+            occupantInHand = null;
+            drawCell(canvas.getContext("2d"), tileX, tileY);
+          }
+          break;
+
+        case 'place':
+        default:
+          // occupantInHand is irrelevant in place mode => clear it
+          occupantInHand = null;
+          // If occupant type is "none", do nothing
+          if(occupantType === "none") return;
+          // Overwrite occupant with new occupant
           tile.occupant = {
             type: occupantType,
             sprite: occupantSprite
           };
-          drawCell(canvas.getContext("2d"),tileX,tileY);
-        }
-      } else {
-        // We ARE holding occupant => place occupant here
-        tile.occupant = occupantInHand;
-        occupantInHand = null;
-        drawCell(canvas.getContext("2d"),tileX,tileY);
+          drawCell(canvas.getContext("2d"), tileX, tileY);
+          break;
       }
     });
+
+    // WHEEL => Zoom in/out around cursor
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const wrapperRect = mapWrapper.getBoundingClientRect();
+      const mouseX = e.clientX - wrapperRect.left;
+      const mouseY = e.clientY - wrapperRect.top;
+
+      const worldX = (mouseX - offsetX) / scale;
+      const worldY = (mouseY - offsetY) / scale;
+
+      const zoomSpeed = 0.1;
+      let newScale = scale;
+      if(e.deltaY < 0) {
+        // zoom in
+        newScale += zoomSpeed;
+      } else {
+        // zoom out
+        newScale -= zoomSpeed;
+      }
+      newScale = Math.min(Math.max(newScale, minScale), maxScale);
+
+      offsetX = mouseX - worldX * newScale;
+      offsetY = mouseY - worldY * newScale;
+      scale = newScale;
+
+      updateCanvasTransform();
+    }, { passive: false });
+
+    // DRAG => Pan
+    canvas.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if(!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      offsetX += dx;
+      offsetY += dy;
+      updateCanvasTransform();
+    });
+
+    window.addEventListener("pointerup", () => {
+      isDragging = false;
+    });
+
+    // Helper to apply transform
+    function updateCanvasTransform(){
+      canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    }
+
+    /*******************************************************
+     * CLEAR button => occupantType = none, occupantSprite = none
+     *******************************************************/
+    function clearOccupantSelection() {
+      document.getElementById("occupantType").value = "none";
+      document.getElementById("occupantSprite").value = "none";
+    }
 
     /*******************************************************
      * ON LOAD
