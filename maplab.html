@@ -20,14 +20,17 @@
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
+      /* Prevent iOS Safari overscroll background bounce in some cases */
+      overscroll-behavior: none;
     }
 
     .container {
-      width: fit-content; 
+      /* Let the container width adapt as needed */
       margin: 2rem auto;
       background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
       border-radius: 10px;
+      max-width: 95vw;
     }
 
     h1, h2 {
@@ -40,29 +43,29 @@
       margin-top: 1rem;
     }
 
-    /* The wrapper will "contain" the canvas, 
-       and hide overflowing areas to mimic Google Maps–style. */
+    /* Responsive map wrapper */
     .mapWrapper {
-      position: relative;
-      width: 1000px;        /* or any fixed size you prefer */
-      height: 700px;        /* or any fixed size you prefer */
+      width: 90vw;
+      max-width: 1000px;
+      height: 60vh;
+      max-height: 700px;
       margin: 1rem auto;
-      overflow: hidden;     /* crucial for clipped panning/zooming */
-      display: inline-block;
-      border: 2px solid #660000;  /* slight border to see the bounding box */
+      overflow: hidden;
+      position: relative;
+      display: block;
+      border: 2px solid #660000;
       background: #202020;
     }
 
     #mapCanvas {
-      /* We'll apply transform for panning & zoom. */
+      width: 1000px;
+      height: 1000px;
       position: absolute;
       top: 0;
       left: 0;
-      /* The map is physically 1000x1000 in 'world' space. */
-      width: 1000px;
-      height: 1000px;
-      image-rendering: pixelated;
       transform-origin: top left;
+      image-rendering: pixelated;
+      touch-action: none;  
     }
 
     .mapButton {
@@ -103,7 +106,6 @@
     </p>
 
     <div class="controls">
-      <!-- Biome / Map Type selection -->
       <label>
         Map Biome:
         <select id="mapType">
@@ -119,7 +121,6 @@
         </select>
       </label>
 
-      <!-- Village vs Wilds -->
       <label>
         Map Style:
         <select id="mapStyle">
@@ -130,7 +131,6 @@
 
       <button class="mapButton" onclick="generateMap()">Generate Map</button>
 
-      <!-- Occupant selection: none|player|enemy|npc|delete -->
       <label>
         Occupant Type:
         <select id="occupantType">
@@ -138,11 +138,9 @@
           <option value="player">Player</option>
           <option value="enemy">Enemy</option>
           <option value="npc">NPC</option>
-          <option value="delete">Delete Occupant</option>
         </select>
       </label>
 
-      <!-- Occupant sprite selection; includes "none" -->
       <label>
         Sprite:
         <select id="occupantSprite">
@@ -180,15 +178,19 @@
         </select>
       </label>
 
-      <!-- CLEAR BUTTON sets occupantType + occupantSprite to "none" -->
       <button class="mapButton" onclick="clearOccupantSelection()">Clear</button>
+    </div>
+
+    <div class="controls">
+      <button class="mapButton" onclick="setMode('place')">Place</button>
+      <button class="mapButton" onclick="setMode('delete')">Delete</button>
+      <button class="mapButton" onclick="setMode('move')">Move</button>
     </div>
 
     <div class="mapWrapper">
       <canvas id="mapCanvas" width="1000" height="1000"></canvas>
     </div>
 
-    <!-- HOME BUTTON AT BOTTOM -->
     <div style="margin-top: 1rem;">
       <a href="index.html" class="mapButton">Home</a>
     </div>
@@ -202,7 +204,9 @@
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
 
-    // occupantInHand => if we're carrying an occupant
+    let mapData = []; // entire map structure
+
+    // occupantInHand => if carrying an occupant for Move mode
     let occupantInHand = null; 
 
     // occupant border colours
@@ -212,7 +216,8 @@
       npc:    "#0000FF"
     };
 
-    let mapData = []; // entire map structure
+    // occupant management mode: 'place' | 'delete' | 'move'
+    let currentMode = 'place';
 
     /*******************************************************
      * PAN & ZOOM
@@ -223,10 +228,18 @@
     const minScale = 0.3;
     const maxScale = 3.0;
 
-    // Track dragging
     let isDragging = false;
     let dragStartX = 0;
     let dragStartY = 0;
+
+    /* 
+      For pinch-zoom on mobile:
+      We'll keep track of all active pointers, 
+      and if exactly two are down, we'll do pinch.
+    */
+    let activePointers = new Map();
+    let initialPinchDistance = 0;
+    let initialPinchScale = 1.0;
 
     /*******************************************************
      * TILE TYPES
@@ -273,71 +286,142 @@
       SHRUB3:         "shrub3"
     };
 
-    /*******************************************************
-     * FALLBACK COLOURS
-     *******************************************************/
-    const baseTileColours = {
-      [TILE_TYPES.GRASS]:       "#9AE582",
-      [TILE_TYPES.TREE]:        "#7BC16E",
-      [TILE_TYPES.DIRT]:        "#C2A15F",
-      [TILE_TYPES.SAND]:        "#DDD593",
-      [TILE_TYPES.WATER]:       "#2B64CF",
-      [TILE_TYPES.ROAD_STONE]:  "#777777",
-      [TILE_TYPES.ROAD_DIRT]:   "#A37E4C",
-      [TILE_TYPES.STONE]:       "#AAAAAA",
-      [TILE_TYPES.WALL]:        "#8B4513",
-      [TILE_TYPES.FLOOR]:       "#555555",
-      [TILE_TYPES.DOOR]:        "#552200",
-      [TILE_TYPES.SOLID_STONE]: "#000000",
-      [TILE_TYPES.COBBLESTONE]: "#666666",
-      [TILE_TYPES.ANCIENT_TILE]:   "#897B42",
-      [TILE_TYPES.SANDSTONE_TILE]: "#d0c5a5",
-      [TILE_TYPES.MARBLE_1]:       "#f0f0f0",
-      [TILE_TYPES.MARBLE_2]:       "#efefef",
-      [TILE_TYPES.MARBLE_3]:       "#dddddd",
-      [TILE_TYPES.MARBLE_4]:       "#cccccc",
-      [TILE_TYPES.DARK_TILE]:      "#333333",
-      [TILE_TYPES.DARK_TILE2]:     "#2a2a2a",
-      [TILE_TYPES.DARK_TILE3]:     "#242424",
-      [TILE_TYPES.DARK_TILE4]:     "#1f1f1f",
-      [TILE_TYPES.CAVE_WALL]:      "#444444",
-      [TILE_TYPES.MUD]:            "#6f4f3c",
-      [TILE_TYPES.MUD2]:           "#6d4e3a",
-      [TILE_TYPES.MUD3]:           "#5e4030",
-      [TILE_TYPES.LAVA]:           "#cf3416",
-      [TILE_TYPES.MAGMA]:          "#aa2200",
-      [TILE_TYPES.BRIMSTONE]:      "#ff5500",
-      [TILE_TYPES.BRIMSTONE2]:     "#ee4400",
-      [TILE_TYPES.WHITESAND]:      "#f5f5da",
-      [TILE_TYPES.DESERTDUNE2]:    "#e3d7ad",
-      [TILE_TYPES.DESERTSAND]:     "#ede2ba",
-      [TILE_TYPES.DESERTDUNE]:     "#e0d198",
-      [TILE_TYPES.DESERTROCK]:     "#bca566",
-      [TILE_TYPES.SHRUB1]:         "#6da969",
-      [TILE_TYPES.SHRUB2]:         "#7bb37c",
-      [TILE_TYPES.SHRUB3]:         "#8ebd8a"
+    /**
+     * For easier hooking in the new multi-tile approach (like multiple tree or grass textures),
+     * we define some "variant arrays." When the code sees a "TREE" or "GRASS", we can randomly pick 
+     * from a set of new assets (like treetiles, grasstiles, etc.).
+     */
+    const tileVariants = {
+      // foresty trees
+      FOREST_TREES: [
+        "treetiles/trees1.png",
+        "treetiles/trees2.png",
+        "treetiles/trees3.png",
+        "treetiles/trees4.png",
+        "treetiles/trees5.png"
+      ],
+      // grass base
+      GRASS_VARIANTS: [
+        "grasstiles/grasstile1.png",
+        "grasstiles/grasstile2.png",
+        "grasstiles/grasstile3.png",
+        "grasstiles/grasstile4.png",
+        "grasstiles/grasstile5.png"
+      ],
+      // single, scattered tree in grass
+      GRASS_SCATTER_TREES: [
+        "grasstiles/grasstree1.png",
+        "grasstiles/grasstree2.png"
+      ],
+      // new desert variants
+      DESERT_VARIANTS: [
+        "deserttiles/desertflat.png",
+        "deserttiles/desertflat2.png",
+        "deserttiles/desertrock1.png",
+        "deserttiles/desertrock2.png",
+        "deserttiles/desertrock3.png",
+        "deserttiles/desertrock4.png"
+      ],
+      // previously we had a mixed array for building walls;
+      // now we replace that with grouped wall types.
+      // (See buildingWallGroups defined below.)
+      // random dark tiles for volcanic area
+      VOLCANIC_DARKS: [
+        "darktile.png",
+        "darktile2.png",
+        "darktile3.png",
+        "darktile4.png"
+      ]
     };
 
-    /*******************************************************
-     * PRELOADED TEXTURES
-     *******************************************************/
+    // Group building wall assets by their prefix, so walls remain consistent.
+    const buildingWallGroups = {
+      brick: [
+        "brick1.png",
+        "brick2.png",
+        "brick3.png",
+        "brick4.png",
+        "brick5.png"
+      ],
+      cobble: [
+        "cobble1.png",
+        "cobble2.png",
+        "cobble3.png",
+        "cobble4.png",
+        "cobblestone.png"
+      ]
+    };
+
+    /**
+     * We store the actual <Image> objects by *filename*, rather than separate keys. 
+     * So tileTextures["treetiles/trees1.png"] => <Image> object
+     */
     const tileTextures = {};
     const occupantSpritesMap = {};
 
+    /*******************************************************
+     * HELPER FUNCTIONS
+     *******************************************************/
     function getColorForTileType(tileType) {
+      // fallback color, if needed
+      const baseTileColours = {
+        [TILE_TYPES.GRASS]:       "#9AE582",
+        [TILE_TYPES.TREE]:        "#7BC16E",
+        [TILE_TYPES.DIRT]:        "#C2A15F",
+        [TILE_TYPES.SAND]:        "#DDD593",
+        [TILE_TYPES.WATER]:       "#2B64CF",
+        [TILE_TYPES.ROAD_STONE]:  "#777777",
+        [TILE_TYPES.ROAD_DIRT]:   "#A37E4C",
+        [TILE_TYPES.STONE]:       "#AAAAAA",
+        [TILE_TYPES.WALL]:        "#8B4513",
+        [TILE_TYPES.FLOOR]:       "#555555",
+        [TILE_TYPES.DOOR]:        "#552200",
+        [TILE_TYPES.SOLID_STONE]: "#000000",
+        [TILE_TYPES.COBBLESTONE]: "#666666",
+        [TILE_TYPES.ANCIENT_TILE]:   "#897B42",
+        [TILE_TYPES.SANDSTONE_TILE]: "#d0c5a5",
+        [TILE_TYPES.MARBLE_1]:       "#f0f0f0",
+        [TILE_TYPES.MARBLE_2]:       "#efefef",
+        [TILE_TYPES.MARBLE_3]:       "#dddddd",
+        [TILE_TYPES.MARBLE_4]:       "#cccccc",
+        [TILE_TYPES.DARK_TILE]:      "#333333",
+        [TILE_TYPES.DARK_TILE2]:     "#2a2a2a",
+        [TILE_TYPES.DARK_TILE3]:     "#242424",
+        [TILE_TYPES.DARK_TILE4]:     "#1f1f1f",
+        [TILE_TYPES.CAVE_WALL]:      "#444444",
+        [TILE_TYPES.MUD]:            "#6f4f3c",
+        [TILE_TYPES.MUD2]:           "#6d4e3a",
+        [TILE_TYPES.MUD3]:           "#5e4030",
+        [TILE_TYPES.LAVA]:           "#cf3416",
+        [TILE_TYPES.MAGMA]:          "#aa2200",
+        [TILE_TYPES.BRIMSTONE]:      "#ff5500",
+        [TILE_TYPES.BRIMSTONE2]:     "#ee4400",
+        [TILE_TYPES.WHITESAND]:      "#f5f5da",
+        [TILE_TYPES.DESERTDUNE2]:    "#e3d7ad",
+        [TILE_TYPES.DESERTSAND]:     "#ede2ba",
+        [TILE_TYPES.DESERTDUNE]:     "#e0d198",
+        [TILE_TYPES.DESERTROCK]:     "#bca566",
+        [TILE_TYPES.SHRUB1]:         "#6da969",
+        [TILE_TYPES.SHRUB2]:         "#7bb37c",
+        [TILE_TYPES.SHRUB3]:         "#8ebd8a"
+      };
       return baseTileColours[tileType] || "#FFFFFF";
     }
+
+    // Find a key in TILE_TYPES by value.
     function getKeyByValue(obj, val) {
       return Object.keys(obj).find(key => obj[key] === val);
     }
+
     function pickRandom(arr) {
-      return arr[Math.floor(Math.random()*arr.length)];
+      return arr[Math.floor(Math.random() * arr.length)];
     }
 
     /*******************************************************
      * PRELOAD IMAGES
      *******************************************************/
     function preloadImages(onComplete) {
+      // occupant sprite names (unchanged)
       const occupantSpriteNames = [
         "paladin","fighter","guardian","halfblood","berserker","assassin",
         "warlock","sorcerer","priestess","cleric","druid","demon","mage",
@@ -346,8 +430,17 @@
         "orcbandit","orcchief","orcshaman","orcfighter"
       ];
 
-      const allTileValues = Object.values(TILE_TYPES);
-      const totalToLoad = allTileValues.length + occupantSpriteNames.length;
+      // All existing tile values from TILE_TYPES
+      const allOldTilePaths = Object.values(TILE_TYPES).map(val => `resources/mapassets/${val}.png`);
+
+      // Our new variant arrays (like the entire tileVariants object)
+      const variantPaths = Object.values(tileVariants).flat().map(file => `resources/mapassets/${file}`);
+
+      // Combine them
+      const allTilePaths = [...allOldTilePaths, ...variantPaths];
+
+      // total to load is occupant sprites + tile images
+      const totalToLoad = allTilePaths.length + occupantSpriteNames.length;
       let loadedCount = 0;
 
       function checkDone() {
@@ -358,13 +451,12 @@
       }
 
       // Load tile textures
-      allTileValues.forEach(val => {
+      allTilePaths.forEach(path => {
         const img = new Image();
-        img.src = `resources/mapassets/${val}.png`; 
+        img.src = path; 
         img.onload = checkDone;
-        img.onerror = checkDone; 
-        const tileKey = getKeyByValue(TILE_TYPES, val);
-        tileTextures[tileKey] = img;
+        img.onerror = checkDone;
+        tileTextures[path] = img;
       });
 
       // Load occupant sprites
@@ -454,7 +546,7 @@
           };
         case "volcanic":
           return {
-            baseDist: { STONE: 0.6, DIRT: 0.3, GRASS: 0.0, TREE: 0.0, SAND: 0.1 },
+            baseDist: { STONE: 0.8, DIRT: 0.2 },
             waterBodies: 0,
             waterMaxSize: 0,
             roads: 1,
@@ -493,17 +585,15 @@
       offsetX = 0;
       offsetY = 0;
       scale = 1.0;
-      updateCanvasTransform(); // reset transform
+      updateCanvasTransform();
 
       const theme = document.getElementById("mapType").value;
       const style = document.getElementById("mapStyle").value;
       const settings = getMapSettings(theme);
 
-      // If cavern => do CA approach
       if (settings.isCavern) {
         generateCavern();
       } else {
-        // normal
         initMap(settings.baseDist);
         for (let i = 0; i < settings.waterBodies; i++) {
           createWaterBody(settings.waterMaxSize);
@@ -513,7 +603,6 @@
         }
       }
 
-      // buildings if style is "village"
       if (!settings.isCavern && style === "village" && settings.buildings > 0) {
         createBuildings(settings.buildings);
       }
@@ -522,9 +611,6 @@
       drawMap();
     }
 
-    /*******************************************************
-     * MAP INIT & DECORATION
-     *******************************************************/
     function initMap(dist) {
       mapData = [];
       for (let y = 0; y < GRID_HEIGHT; y++) {
@@ -540,52 +626,111 @@
               break;
             }
           }
-          row.push({ type: chosen, occupant: null });
+          row.push({ type: chosen, occupant: null, variant: null });
         }
         mapData.push(row);
       }
     }
 
-    function decorateMap(theme){
+    function decorateMap(theme) {
+      createBeaches();
       for (let y=0; y<GRID_HEIGHT; y++){
         for (let x=0; x<GRID_WIDTH; x++){
           const tile = mapData[y][x];
-
-          // forest => some trees => shrubs
-          if(theme === "forest" && tile.type === TILE_TYPES.TREE){
-            if(Math.random() < 0.4){
-              tile.type = pickRandom([
-                TILE_TYPES.SHRUB1, TILE_TYPES.SHRUB2, TILE_TYPES.SHRUB3
-              ]);
+          if(theme === "forest") {
+            if(tile.type === TILE_TYPES.TREE){
+              if(Math.random() < 0.5) {
+                tile.variant = pickRandom(tileVariants.FOREST_TREES);
+              }
+            } 
+            else if(tile.type === TILE_TYPES.GRASS) {
+              if(Math.random() < 0.6) {
+                tile.variant = pickRandom(tileVariants.GRASS_VARIANTS);
+              }
             }
           }
-          // volcanic => stone => lava
-          if(theme === "volcanic" && tile.type === TILE_TYPES.STONE){
-            let r = Math.random();
-            if(r < 0.1) tile.type = TILE_TYPES.LAVA;
-            else if(r < 0.2) tile.type = TILE_TYPES.MAGMA;
-            else if(r < 0.3) tile.type = pickRandom([
-              TILE_TYPES.BRIMSTONE, TILE_TYPES.BRIMSTONE2
-            ]);
+          else if(theme === "volcanic") {
+            if(tile.type === TILE_TYPES.STONE || tile.type === TILE_TYPES.DIRT) {
+              const r = Math.random();
+              if(r < 0.15) {
+                tile.type = TILE_TYPES.LAVA;
+              } else if(r < 0.30) {
+                tile.type = TILE_TYPES.MAGMA;
+              } else if(r < 0.65) {
+                tile.type = (Math.random() < 0.5) ? TILE_TYPES.BRIMSTONE : TILE_TYPES.BRIMSTONE2;
+              } else {
+                tile.type = TILE_TYPES.DARK_TILE;
+                tile.variant = pickRandom(tileVariants.VOLCANIC_DARKS);
+              }
+            }
           }
-          // mudlands => dirt/sand => mud
-          if(theme === "mudlands" && 
-             (tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND)){
-            tile.type = pickRandom([TILE_TYPES.MUD, TILE_TYPES.MUD2, TILE_TYPES.MUD3]);
+          else if(theme === "mudlands") {
+            if((tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND) && Math.random() < 0.7) {
+              tile.type = pickRandom([TILE_TYPES.MUD, TILE_TYPES.MUD2, TILE_TYPES.MUD3]);
+            }
           }
-          // desert => transform base sand => dunes / whitesand
-          if(theme === "desert" && tile.type === TILE_TYPES.SAND){
-            tile.type = pickRandom([
-              TILE_TYPES.DESERTSAND, TILE_TYPES.DESERTDUNE, 
-              TILE_TYPES.DESERTDUNE2, TILE_TYPES.WHITESAND
-            ]);
+          else if(theme === "desert") {
+            if(tile.type === TILE_TYPES.SAND) {
+              if(Math.random() < 0.7) {
+                tile.variant = pickRandom(tileVariants.DESERT_VARIANTS);
+              } else {
+                tile.type = pickRandom([
+                  TILE_TYPES.DESERTSAND, 
+                  TILE_TYPES.DESERTDUNE, 
+                  TILE_TYPES.DESERTDUNE2
+                ]);
+              }
+            }
+          }
+          else if(theme === "grassland") {
+            if(tile.type === TILE_TYPES.GRASS) {
+              if(Math.random() < 0.5) {
+                tile.variant = pickRandom(tileVariants.GRASS_VARIANTS);
+              }
+              else if(Math.random() < 0.05) {
+                tile.variant = pickRandom(tileVariants.GRASS_SCATTER_TREES);
+              }
+            }
+          }
+          else {
+            if(tile.type === TILE_TYPES.TREE && Math.random() < 0.2) {
+              tile.variant = pickRandom(tileVariants.FOREST_TREES);
+            }
+            if(tile.type === TILE_TYPES.GRASS && Math.random() < 0.2) {
+              tile.variant = pickRandom(tileVariants.GRASS_VARIANTS);
+            }
+          }
+        }
+      }
+    }
+
+    function createBeaches() {
+      let directions = [[1,0],[-1,0],[0,1],[0,-1]];
+      for(let y=0; y<GRID_HEIGHT; y++){
+        for(let x=0; x<GRID_WIDTH; x++){
+          if(mapData[y][x].type === TILE_TYPES.WATER) {
+            directions.forEach(d => {
+              let nx = x + d[0], ny = y + d[1];
+              if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
+                const neighbour = mapData[ny][nx];
+                if([
+                  TILE_TYPES.GRASS, TILE_TYPES.SAND, TILE_TYPES.DESERTSAND, 
+                  TILE_TYPES.DESERTDUNE, TILE_TYPES.DESERTDUNE2
+                ].includes(neighbour.type)) {
+                  if(Math.random() < 0.7) {
+                    neighbour.type = TILE_TYPES.WHITESAND;
+                    neighbour.variant = null; 
+                  }
+                }
+              }
+            });
           }
         }
       }
     }
 
     /*******************************************************
-     * CAVERN GENERATION (CA)
+     * CAVERN GENERATION
      *******************************************************/
     function generateCavern() {
       let boolMap = randomBoolMap(0.45);
@@ -725,11 +870,11 @@
         for(let x=0;x<GRID_WIDTH;x++){
           if(boolMap[y][x]){
             let r=Math.random();
-            if(r<0.03) row.push({type:TILE_TYPES.WATER, occupant:null});
-            else if(r<0.15) row.push({type:TILE_TYPES.DIRT, occupant:null});
-            else row.push({type:TILE_TYPES.STONE, occupant:null});
+            if(r<0.03) row.push({type:TILE_TYPES.WATER, occupant:null, variant:null});
+            else if(r<0.15) row.push({type:TILE_TYPES.DIRT, occupant:null, variant:null});
+            else row.push({type:TILE_TYPES.STONE, occupant:null, variant:null});
           } else {
-            row.push({type:TILE_TYPES.SOLID_STONE, occupant:null});
+            row.push({type:TILE_TYPES.SOLID_STONE, occupant:null, variant:null});
           }
         }
         mapData.push(row);
@@ -791,6 +936,7 @@
             mapData[ny][nx].type=(Math.random()<0.6)
               ?TILE_TYPES.ROAD_STONE
               :TILE_TYPES.ROAD_DIRT;
+            mapData[ny][nx].variant=null;
           }
         }
       }
@@ -847,7 +993,6 @@
         ]
       }
     ];
-    // Only these four for building floors
     const POSSIBLE_FLOORS = [
       TILE_TYPES.MARBLE_1,
       TILE_TYPES.MARBLE_2,
@@ -861,7 +1006,7 @@
       let attempts=0, placed=0;
       while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
-        const shape=buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
+        const shape=pickRandom(buildingShapes);
         const sx=Math.floor(Math.random()*(GRID_WIDTH - shape.width));
         const sy=Math.floor(Math.random()*(GRID_HEIGHT - shape.height));
         if(canPlaceBuilding(sx,sy,shape)){
@@ -876,7 +1021,6 @@
           const val=shape.layout[y][x];
           if(val===1||val===0){
             const tileType=mapData[sy+y][sx+x].type;
-            // can't place on water, roads, solid stone, lava, magma, etc.
             if([
               TILE_TYPES.WATER, TILE_TYPES.ROAD_STONE, TILE_TYPES.ROAD_DIRT, 
               TILE_TYPES.SOLID_STONE, TILE_TYPES.LAVA, TILE_TYPES.MAGMA
@@ -889,23 +1033,23 @@
       return true;
     }
     function placeBuilding(sx,sy,shape){
-      // subdivide, place interior walls/doors
       let localLayout = shape.layout.map(r=>r.slice());
       subdivideBuilding(localLayout);
       placeExteriorDoor(localLayout);
       ensureAccessibility(localLayout);
-
-      // stamp onto map => walls => cobblestone, floors => chosen marble, doors => DOOR
-      stampBuildingOntoMap(localLayout,sx,sy,chosenFloorTileForBuildings);
+      // Choose a wall group and a single variant for this building.
+      const wallGroupKey = pickRandom(Object.keys(buildingWallGroups));
+      const wallGroup = buildingWallGroups[wallGroupKey];
+      const chosenWallVariant = pickRandom(wallGroup);
+      stampBuildingOntoMap(localLayout,sx,sy,chosenFloorTileForBuildings, chosenWallVariant);
     }
     function subdivideBuilding(localLayout){
       const h=localLayout.length; 
       const w=localLayout[0].length;
-
       if(w>=7){
         let wx=Math.floor(w/2);
         for(let y=1;y<h-1;y++){
-          localLayout[y][wx]=1; // interior wall
+          localLayout[y][wx]=1; 
         }
         let doorY=Math.floor(Math.random()*(h-2))+1;
         localLayout[doorY][wx]=2; // door placeholder
@@ -923,8 +1067,6 @@
       const h=localLayout.length; 
       const w=localLayout[0].length;
       let candidates=[];
-
-      // check top/bottom edges, skip corners
       for(let x=1;x<w-1;x++){
         if(isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout,x,0)){
           candidates.push({px:x,py:0});
@@ -933,7 +1075,6 @@
           candidates.push({px:x,py:h-1});
         }
       }
-      // check left/right edges
       for(let y=1;y<h-1;y++){
         if(isWallish(localLayout[y][0]) && hasExactlyTwoOrthWalls(localLayout,0,y)){
           candidates.push({px:0,py:y});
@@ -942,7 +1083,6 @@
           candidates.push({px:w-1,py:y});
         }
       }
-
       if(candidates.length>0){
         let howMany=1+Math.floor(Math.random()*2);
         for(let i=0;i<howMany && candidates.length;i++){
@@ -971,10 +1111,8 @@
     function ensureAccessibility(localLayout){
       const floors=collectFloorCells(localLayout);
       if(!floors.length)return;
-
       let doorCoords=collectDoorCoords(localLayout);
       if(!doorCoords.length)return;
-
       let mainDoor=doorCoords.find(d=>isOnPerimeter(localLayout,d.x,d.y))||doorCoords[0];
       if(!mainDoor)return;
 
@@ -1052,18 +1190,21 @@
         }
       }
     }
-    function stampBuildingOntoMap(localLayout,sx,sy,floorTile){
+    function stampBuildingOntoMap(localLayout,sx,sy,floorTile, wallVariant){
       const h=localLayout.length;
       const w=localLayout[0].length;
       for(let y=0;y<h;y++){
         for(let x=0;x<w;x++){
           const val=localLayout[y][x];
           if(val===1){
-            mapData[sy+y][sx+x].type=TILE_TYPES.COBBLESTONE;
+            mapData[sy+y][sx+x].type=TILE_TYPES.WALL;
+            mapData[sy+y][sx+x].variant = wallVariant;
           } else if(val===0){
             mapData[sy+y][sx+x].type=floorTile;
+            mapData[sy+y][sx+x].variant = null;
           } else if(val===2){
             mapData[sy+y][sx+x].type=TILE_TYPES.DOOR;
+            mapData[sy+y][sx+x].variant = null;
           }
         }
       }
@@ -1088,22 +1229,32 @@
       const px=gx*TILE_SIZE;
       const py=gy*TILE_SIZE;
 
-      // occupant => occupant sprite replaces tile
       if(tile.occupant){
         drawOccupantSprite(ctx,tile.occupant,px,py);
-      } else {
-        // normal tile
-        const tileKey=getKeyByValue(TILE_TYPES,tile.type);
-        const tex=tileTextures[tileKey];
-        if(tex && tex.complete){
-          ctx.drawImage(tex,px,py,TILE_SIZE,TILE_SIZE);
-        } else {
-          // fallback
-          ctx.fillStyle=getColorForTileType(tile.type);
-          ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+      } 
+      else {
+        if(tile.variant) {
+          const variantPath = `resources/mapassets/${tile.variant}`;
+          const tex = tileTextures[variantPath];
+          if(tex && tex.complete){
+            ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
+          } else {
+            ctx.fillStyle = getColorForTileType(tile.type);
+            ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+          }
+        }
+        else {
+          const tileKey = getKeyByValue(TILE_TYPES,tile.type);
+          const basePath = tileKey ? `resources/mapassets/${tile.type}.png` : null;
+          const tex = basePath ? tileTextures[basePath] : null;
+          if(tex && tex.complete){
+            ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
+          } else {
+            ctx.fillStyle = getColorForTileType(tile.type);
+            ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+          }
         }
       }
-      // subtle grid
       ctx.strokeStyle="rgba(0,0,0,0.3)";
       ctx.strokeRect(px,py,TILE_SIZE,TILE_SIZE);
     }
@@ -1114,7 +1265,6 @@
         if(spriteImg && spriteImg.complete){
           ctx.drawImage(spriteImg, px, py, TILE_SIZE, TILE_SIZE);
         } else {
-          // fallback occupant colour
           ctx.fillStyle="#999";
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
@@ -1126,23 +1276,32 @@
     }
 
     /*******************************************************
-     * CANVAS EVENTS => Occupant & Panning
+     * MODE SELECTOR (Place, Delete, Move)
+     *******************************************************/
+    function setMode(mode){
+      currentMode = mode;
+      if(currentMode !== 'move'){
+        occupantInHand = null;
+      }
+    }
+
+    /*******************************************************
+     * CANVAS EVENTS => Occupant & Panning & Pinch
      *******************************************************/
     const canvas = document.getElementById("mapCanvas");
     const mapWrapper = document.querySelector(".mapWrapper");
 
-    // CLICK => occupant creation/movement/deletion
-    canvas.addEventListener("click",(e)=>{
-      // If we are dragging, we skip occupant logic to avoid accidental clicks.
-      if(isDragging) return;
+    function updateCanvasTransform(){
+      canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    }
 
-      // 1) Where is the click inside mapWrapper?
+    canvas.addEventListener("click",(e)=>{
+      if(isDragging || activePointers.size > 1) return;
+
       const wrapperRect = mapWrapper.getBoundingClientRect();
       const mouseXInWrapper = e.clientX - wrapperRect.left;
       const mouseYInWrapper = e.clientY - wrapperRect.top;
 
-      // 2) Inverse transform: remove offset, then remove scale.
-      //    So we find the "true" map coordinate in the 1000x1000 world space.
       const worldX = (mouseXInWrapper - offsetX) / scale;
       const worldY = (mouseYInWrapper - offsetY) / scale;
 
@@ -1150,72 +1309,62 @@
       const tileY = Math.floor(worldY / TILE_SIZE);
       if(tileX<0||tileY<0||tileX>=GRID_WIDTH||tileY>=GRID_HEIGHT) return;
 
-      const tile=mapData[tileY][tileX];
       const occupantType=document.getElementById("occupantType").value;
       const occupantSprite=document.getElementById("occupantSprite").value;
+      const tile=mapData[tileY][tileX];
 
-      if(occupantType==="delete"){
-        // remove occupant if present
-        if(tile.occupant){
-          tile.occupant=null;
-          occupantInHand=null; 
-          drawCell(canvas.getContext("2d"),tileX,tileY);
-        }
-        return;
-      }
-      if(occupantType==="none"){
-        // no occupant creation
-        return;
-      }
-
-      // Normal occupant logic
-      if(!occupantInHand){
-        // Not currently holding anything
-        if(tile.occupant){
-          // pick occupant up
-          occupantInHand = tile.occupant;
-          tile.occupant = null;
-          drawCell(canvas.getContext("2d"),tileX,tileY);
-        } else {
-          // create occupant
+      switch(currentMode){
+        case 'delete':
+          if(tile.occupant){
+            tile.occupant = null;
+            occupantInHand = null;
+            drawCell(canvas.getContext("2d"), tileX, tileY);
+          }
+          break;
+        case 'move':
+          if(!occupantInHand){
+            if(tile.occupant){
+              occupantInHand = tile.occupant;
+              tile.occupant = null;
+              drawCell(canvas.getContext("2d"), tileX, tileY);
+            }
+          } else {
+            tile.occupant = occupantInHand;
+            occupantInHand = null;
+            drawCell(canvas.getContext("2d"), tileX, tileY);
+          }
+          break;
+        case 'place':
+        default:
+          occupantInHand = null;
+          if(occupantType === "none") return;
           tile.occupant = {
             type: occupantType,
             sprite: occupantSprite
           };
-          drawCell(canvas.getContext("2d"),tileX,tileY);
-        }
-      } else {
-        // We ARE holding occupant => place occupant here
-        tile.occupant = occupantInHand;
-        occupantInHand = null;
-        drawCell(canvas.getContext("2d"),tileX,tileY);
+          drawCell(canvas.getContext("2d"), tileX, tileY);
+          break;
       }
     });
 
-    // WHEEL => Zoom in/out around cursor
     canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       const wrapperRect = mapWrapper.getBoundingClientRect();
       const mouseX = e.clientX - wrapperRect.left;
       const mouseY = e.clientY - wrapperRect.top;
 
-      // Where in world space was the pointer?
       const worldX = (mouseX - offsetX) / scale;
       const worldY = (mouseY - offsetY) / scale;
 
-      // Adjust scale
       const zoomSpeed = 0.1;
       let newScale = scale;
       if(e.deltaY < 0) {
-        // zoom in
         newScale += zoomSpeed;
       } else {
-        // zoom out
         newScale -= zoomSpeed;
       }
       newScale = Math.min(Math.max(newScale, minScale), maxScale);
 
-      // Recompute offset so worldX/worldY remains under the cursor
       offsetX = mouseX - worldX * newScale;
       offsetY = mouseY - worldY * newScale;
       scale = newScale;
@@ -1223,44 +1372,97 @@
       updateCanvasTransform();
     }, { passive: false });
 
-    // DRAG => Pan
     canvas.addEventListener("pointerdown", (e) => {
-      isDragging = true;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activePointers.size === 1) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+      }
+      else if (activePointers.size === 2) {
+        isDragging = false; 
+        initialPinchDistance = getPinchDistance();
+        initialPinchScale = scale;
+      }
     });
 
     window.addEventListener("pointermove", (e) => {
-      if(!isDragging) return;
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      offsetX += dx;
-      offsetY += dy;
-      updateCanvasTransform();
+      if (!activePointers.has(e.pointerId)) return;
+
+      const oldData = activePointers.get(e.pointerId);
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointers.size === 1 && isDragging) {
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        offsetX += dx;
+        offsetY += dy;
+        updateCanvasTransform();
+      } 
+      else if (activePointers.size === 2) {
+        const newDist = getPinchDistance();
+        const scaleRatio = newDist / initialPinchDistance;
+        let newScale = initialPinchScale * scaleRatio;
+        newScale = Math.min(Math.max(newScale, minScale), maxScale);
+
+        const midpoint = getPinchMidpoint();
+        const wrapperRect = mapWrapper.getBoundingClientRect();
+        const midXInWrapper = midpoint.x - wrapperRect.left;
+        const midYInWrapper = midpoint.y - wrapperRect.top;
+
+        const worldX = (midXInWrapper - offsetX) / scale;
+        const worldY = (midYInWrapper - offsetY) / scale;
+
+        scale = newScale;
+        offsetX = midXInWrapper - worldX * newScale;
+        offsetY = midYInWrapper - worldY * newScale;
+        updateCanvasTransform();
+
+        e.preventDefault();
+      }
     });
 
-    window.addEventListener("pointerup", () => {
-      isDragging = false;
+    window.addEventListener("pointerup", (e) => {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) {
+        initialPinchDistance = 0;
+      }
+      if (activePointers.size === 0) {
+        isDragging = false;
+      }
     });
 
-    // Helper to apply transform
-    function updateCanvasTransform(){
-      canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    window.addEventListener("pointercancel", (e) => {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) {
+        initialPinchDistance = 0;
+      }
+      if (activePointers.size === 0) {
+        isDragging = false;
+      }
+    });
+
+    function getPinchDistance() {
+      if (activePointers.size !== 2) return 0;
+      const points = [...activePointers.values()];
+      const dx = points[0].x - points[1].x;
+      const dy = points[0].y - points[1].y;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+    function getPinchMidpoint() {
+      const points = [...activePointers.values()];
+      const x = (points[0].x + points[1].x) / 2;
+      const y = (points[0].y + points[1].y) / 2;
+      return { x, y };
     }
 
-    /*******************************************************
-     * CLEAR button => occupantType = none, occupantSprite = none
-     *******************************************************/
     function clearOccupantSelection() {
       document.getElementById("occupantType").value = "none";
       document.getElementById("occupantSprite").value = "none";
     }
 
-    /*******************************************************
-     * ON LOAD
-     *******************************************************/
     window.onload=()=>{
       preloadImages(()=>{
         generateMap();
