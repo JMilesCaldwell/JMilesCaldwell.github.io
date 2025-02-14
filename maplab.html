@@ -40,27 +40,29 @@
       margin-top: 1rem;
     }
 
+    /* The wrapper will "contain" the canvas, 
+       and hide overflowing areas to mimic Google Maps–style. */
     .mapWrapper {
-      text-align: center;
-      /* 
-        Added for controlling canvas zoom via transform. 
-        We keep overflow visible for partial zoom expansion.
-      */
-      overflow: visible;
-      display: inline-block; /* So scaling doesn't push other elements strangely */
+      position: relative;
+      width: 1000px;        /* or any fixed size you prefer */
+      height: 700px;        /* or any fixed size you prefer */
+      margin: 1rem auto;
+      overflow: hidden;     /* crucial for clipped panning/zooming */
+      display: inline-block;
+      border: 2px solid #660000;  /* slight border to see the bounding box */
+      background: #202020;
     }
 
     #mapCanvas {
-      border: 2px solid #660000;
-      background: #202020;
-      display: block;
-      margin: 1rem auto; 
+      /* We'll apply transform for panning & zoom. */
+      position: absolute;
+      top: 0;
+      left: 0;
+      /* The map is physically 1000x1000 in 'world' space. */
+      width: 1000px;
+      height: 1000px;
       image-rendering: pixelated;
-      /* 
-        We rely on transform scale for zoom, but keep the actual 
-        width/height for coordinate calculations in code. 
-      */
-      transform-origin: top left; 
+      transform-origin: top left;
     }
 
     .mapButton {
@@ -90,14 +92,6 @@
     .controls label {
       font-family: 'Cinzel', serif;
       font-size: 1rem;
-    }
-
-    /* 
-      Additional container for zoom buttons so they can be 
-      styled nicely in line with the rest of controls 
-    */
-    .zoomControls {
-      margin: 1rem auto;
     }
   </style>
 </head>
@@ -136,10 +130,11 @@
 
       <button class="mapButton" onclick="generateMap()">Generate Map</button>
 
-      <!-- Occupant selection: player|enemy|npc|delete -->
+      <!-- Occupant selection: none|player|enemy|npc|delete -->
       <label>
         Occupant Type:
         <select id="occupantType">
+          <option value="none" selected>None</option>
           <option value="player">Player</option>
           <option value="enemy">Enemy</option>
           <option value="npc">NPC</option>
@@ -147,8 +142,7 @@
         </select>
       </label>
 
-      <!-- Occupant sprite selection; 
-           ADDED "none" OPTION HERE -->
+      <!-- Occupant sprite selection; includes "none" -->
       <label>
         Sprite:
         <select id="occupantSprite">
@@ -186,17 +180,8 @@
         </select>
       </label>
 
-      <!-- CLEAR BUTTON for occupantSprite -->
-      <button class="mapButton" onclick="clearSpriteSelection()">Clear Sprite</button>
-    </div>
-
-    <!-- 
-      ZOOM CONTROLS for canvas 
-      Buttons that scale the canvas alone 
-    -->
-    <div class="zoomControls">
-      <button class="mapButton" onclick="zoomMap(true)">Zoom In</button>
-      <button class="mapButton" onclick="zoomMap(false)">Zoom Out</button>
+      <!-- CLEAR BUTTON sets occupantType + occupantSprite to "none" -->
+      <button class="mapButton" onclick="clearOccupantSelection()">Clear</button>
     </div>
 
     <div class="mapWrapper">
@@ -218,23 +203,30 @@
     const GRID_HEIGHT = 50;
 
     // occupantInHand => if we're carrying an occupant
-    // occupant is { type: "player"/"enemy"/"npc", sprite: "mage"/"orc"/... }
     let occupantInHand = null; 
 
     // occupant border colours
     const occupantColours = {
-      player: "#00FF00",  // green
-      enemy:  "#FF0000",  // red
-      npc:    "#0000FF"   // blue
+      player: "#00FF00",
+      enemy:  "#FF0000",
+      npc:    "#0000FF"
     };
 
     let mapData = []; // entire map structure
 
-    /* 
-      ADDED: scale factor for zoom. 
-      We'll adjust this in zoomMap(inOrOut).
-    */
-    let currentScale = 1.0;
+    /*******************************************************
+     * PAN & ZOOM
+     *******************************************************/
+    let scale = 1.0;
+    let offsetX = 0;
+    let offsetY = 0;
+    const minScale = 0.3;
+    const maxScale = 3.0;
+
+    // Track dragging
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
 
     /*******************************************************
      * TILE TYPES
@@ -498,6 +490,10 @@
      *******************************************************/
     function generateMap() {
       occupantInHand = null; // reset occupant carrying
+      offsetX = 0;
+      offsetY = 0;
+      scale = 1.0;
+      updateCanvasTransform(); // reset transform
 
       const theme = document.getElementById("mapType").value;
       const style = document.getElementById("mapStyle").value;
@@ -809,7 +805,6 @@
 
     /*******************************************************
      * BUILDINGS (Village Generation)
-     * Single floor tile for entire map: pick from 4 marbles
      *******************************************************/
     const buildingShapes = [
       {
@@ -852,7 +847,6 @@
         ]
       }
     ];
-
     // Only these four for building floors
     const POSSIBLE_FLOORS = [
       TILE_TYPES.MARBLE_1,
@@ -860,13 +854,10 @@
       TILE_TYPES.MARBLE_3,
       TILE_TYPES.MARBLE_4
     ];
-
     let chosenFloorTileForBuildings=null;
 
     function createBuildings(numBuildings){
-      // pick single floor tile for entire map
       chosenFloorTileForBuildings = pickRandom(POSSIBLE_FLOORS);
-
       let attempts=0, placed=0;
       while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
@@ -911,7 +902,6 @@
       const h=localLayout.length; 
       const w=localLayout[0].length;
 
-      // vertical partition if wide
       if(w>=7){
         let wx=Math.floor(w/2);
         for(let y=1;y<h-1;y++){
@@ -920,7 +910,6 @@
         let doorY=Math.floor(Math.random()*(h-2))+1;
         localLayout[doorY][wx]=2; // door placeholder
       }
-      // horizontal partition if tall
       if(h>=7){
         let wy=Math.floor(h/2);
         for(let x=1;x<w-1;x++){
@@ -1084,8 +1073,8 @@
      * DRAWING
      *******************************************************/
     function drawMap(){
-      const canvas=document.getElementById("mapCanvas");
-      const ctx=canvas.getContext("2d");
+      const canvas = document.getElementById("mapCanvas");
+      const ctx = canvas.getContext("2d");
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -1120,7 +1109,6 @@
     }
 
     function drawOccupantSprite(ctx, occupant, px, py){
-      // occupant.sprite might be "none". If so, do not draw a sprite.
       if(occupant.sprite && occupant.sprite !== "none"){
         const spriteImg = occupantSpritesMap[occupant.sprite];
         if(spriteImg && spriteImg.complete){
@@ -1130,31 +1118,37 @@
           ctx.fillStyle="#999";
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
-      } 
-      // occupant border => depends on occupant.type
+      }
       const borderColor = occupantColours[occupant.type] || "#FF00FF";
       ctx.strokeStyle=borderColor;
       ctx.lineWidth=1;
-      // 1px inside
       ctx.strokeRect(px+0.5, py+0.5, TILE_SIZE-1, TILE_SIZE-1);
     }
 
     /*******************************************************
-     * CLICK => Occupant Creation/Movement/Deletion
+     * CANVAS EVENTS => Occupant & Panning
      *******************************************************/
-    const canvas=document.getElementById("mapCanvas");
+    const canvas = document.getElementById("mapCanvas");
+    const mapWrapper = document.querySelector(".mapWrapper");
+
+    // CLICK => occupant creation/movement/deletion
     canvas.addEventListener("click",(e)=>{
-      const rect=canvas.getBoundingClientRect();
-      // 
-      // Account for currentScale so tile picking isn't off.
-      //
-      const clickX=(e.clientX - rect.left) / currentScale;
-      const clickY=(e.clientY - rect.top) / currentScale;
+      // If we are dragging, we skip occupant logic to avoid accidental clicks.
+      if(isDragging) return;
 
-      const tileX=Math.floor(clickX/TILE_SIZE);
-      const tileY=Math.floor(clickY/TILE_SIZE);
+      // 1) Where is the click inside mapWrapper?
+      const wrapperRect = mapWrapper.getBoundingClientRect();
+      const mouseXInWrapper = e.clientX - wrapperRect.left;
+      const mouseYInWrapper = e.clientY - wrapperRect.top;
 
-      if(tileX<0||tileY<0||tileX>=GRID_WIDTH||tileY>=GRID_HEIGHT)return;
+      // 2) Inverse transform: remove offset, then remove scale.
+      //    So we find the "true" map coordinate in the 1000x1000 world space.
+      const worldX = (mouseXInWrapper - offsetX) / scale;
+      const worldY = (mouseYInWrapper - offsetY) / scale;
+
+      const tileX = Math.floor(worldX / TILE_SIZE);
+      const tileY = Math.floor(worldY / TILE_SIZE);
+      if(tileX<0||tileY<0||tileX>=GRID_WIDTH||tileY>=GRID_HEIGHT) return;
 
       const tile=mapData[tileY][tileX];
       const occupantType=document.getElementById("occupantType").value;
@@ -1169,10 +1163,14 @@
         }
         return;
       }
+      if(occupantType==="none"){
+        // no occupant creation
+        return;
+      }
 
       // Normal occupant logic
       if(!occupantInHand){
-        // Not holding anything
+        // Not currently holding anything
         if(tile.occupant){
           // pick occupant up
           occupantInHand = tile.occupant;
@@ -1194,23 +1192,69 @@
       }
     });
 
-    /*******************************************************
-     * ZOOM FUNCTIONALITY
-     *******************************************************/
-    function zoomMap(zoomIn) {
-      const step = 0.1;
-      if(zoomIn) {
-        currentScale += step;
+    // WHEEL => Zoom in/out around cursor
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const wrapperRect = mapWrapper.getBoundingClientRect();
+      const mouseX = e.clientX - wrapperRect.left;
+      const mouseY = e.clientY - wrapperRect.top;
+
+      // Where in world space was the pointer?
+      const worldX = (mouseX - offsetX) / scale;
+      const worldY = (mouseY - offsetY) / scale;
+
+      // Adjust scale
+      const zoomSpeed = 0.1;
+      let newScale = scale;
+      if(e.deltaY < 0) {
+        // zoom in
+        newScale += zoomSpeed;
       } else {
-        currentScale = Math.max(0.1, currentScale - step); 
+        // zoom out
+        newScale -= zoomSpeed;
       }
-      canvas.style.transform = `scale(${currentScale})`;
+      newScale = Math.min(Math.max(newScale, minScale), maxScale);
+
+      // Recompute offset so worldX/worldY remains under the cursor
+      offsetX = mouseX - worldX * newScale;
+      offsetY = mouseY - worldY * newScale;
+      scale = newScale;
+
+      updateCanvasTransform();
+    }, { passive: false });
+
+    // DRAG => Pan
+    canvas.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if(!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      offsetX += dx;
+      offsetY += dy;
+      updateCanvasTransform();
+    });
+
+    window.addEventListener("pointerup", () => {
+      isDragging = false;
+    });
+
+    // Helper to apply transform
+    function updateCanvasTransform(){
+      canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
 
     /*******************************************************
-     * CLEAR BUTTON => occupantSprite set to none
+     * CLEAR button => occupantType = none, occupantSprite = none
      *******************************************************/
-    function clearSpriteSelection() {
+    function clearOccupantSelection() {
+      document.getElementById("occupantType").value = "none";
       document.getElementById("occupantSprite").value = "none";
     }
 
