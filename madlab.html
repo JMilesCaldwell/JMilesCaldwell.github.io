@@ -99,7 +99,7 @@
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
     <p class="description">
-      "Generate caverns, roads, buildings, single-floor villages, mixed biomes, coastal maps and more."
+      "Generate caverns, roads, buildings, villages, and dynamic biome blends."
     </p>
 
     <div class="controls">
@@ -142,7 +142,7 @@
         Sprite:
         <select id="occupantSprite">
           <option value="none" selected>None</option>
-          <!-- Updated occupant sprite list to match new filenames -->
+          <!-- Updated occupant sprite list -->
           <option value="assassin">assassin</option>
           <option value="bat">bat</option>
           <option value="berserker">berserker</option>
@@ -209,16 +209,13 @@
     const TILE_SIZE = 20;
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
-
-    let mapData = []; // entire map structure
-    let occupantInHand = null; // for Move mode
-
+    let mapData = [];
+    let occupantInHand = null;
     const occupantColours = {
       player: "#00FF00",
       enemy:  "#FF0000",
       npc:    "#0000FF"
     };
-
     let currentMode = 'place';
 
     /*******************************************************
@@ -232,8 +229,7 @@
 
     /*******************************************************
      * TILE TYPES & ASSET PATHS
-     *
-     * Each value is the relative path (without .png)
+     * Note: New jungle tiles added.
      *******************************************************/
     const TILE_TYPES = {
       // Grass variants
@@ -271,17 +267,20 @@
       BRIMSTONE1:  "tiles/vulcanic/brimstone",
       BRIMSTONE2:  "tiles/vulcanic/brimstone2",
       LAVASTONE1:  "tiles/vulcanic/lavastone1",
-      // Roads & bridges
+      // Roads & Bridges
       ROAD_STONE:  "tiles/dirt/roadDirt",
       ROAD_DIRT:   "tiles/dirt/dirtTile",
       WOOD_PLANKS:"tiles/buildings/floors/woodfloor",
       // Shrubs
       SHRUB_1:    "tiles/dirt/shrub1",
       SHRUB_2:    "tiles/dirt/shrub2",
-      SHRUB_3:    "tiles/dirt/shrub3"
+      SHRUB_3:    "tiles/dirt/shrub3",
+      // Jungle variants (for mixing with grass)
+      JUNGLE_GRASS: "tiles/jungle/jungleGrass",
+      JUNGLE_TREE:  "tiles/jungle/jungletree1"
     };
 
-    // Building assets
+    // Building assets (these remain un-mixed within a building)
     const BUILDING_WALLS = [
       "tiles/buildings/walls/brick1",
       "tiles/buildings/walls/brick2",
@@ -306,16 +305,16 @@
       "tiles/buildings/doors/gateStone"
     ];
 
-    // Helper to pick a random tile from a set of keys
-    function pickRandomTileFrom(...tileKeys) {
-      return TILE_TYPES[tileKeys[Math.floor(Math.random()*tileKeys.length)]];
-    }
+    // Helper functions to pick random tiles
     function pickRandom(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
+    function pickRandomTileFrom(...tileKeys) {
+      return TILE_TYPES[tileKeys[Math.floor(Math.random()*tileKeys.length)]];
+    }
 
-    const tileTextures = {};       // loaded tile images
-    const occupantSpritesMap = {}; // loaded occupant sprite images
+    const tileTextures = {};
+    const occupantSpritesMap = {};
 
     function getColorForTileType(tilePath) {
       return "#999999";
@@ -331,14 +330,12 @@
       "orkshaman","orkfighter","paladin","priestess","ranger","rat","rogue","serpent",
       "sorcerer","spider","spider2","warlock","wight","zombie"
     ];
-
     function preloadImages(onComplete) {
       const allTilePaths = [];
       for (const key in TILE_TYPES) { allTilePaths.push(TILE_TYPES[key]); }
       BUILDING_WALLS.forEach(p => allTilePaths.push(p));
       BUILDING_FLOORS.forEach(p => allTilePaths.push(p));
       BUILDING_DOORS.forEach(p => allTilePaths.push(p));
-
       const uniqueTilePaths = [...new Set(allTilePaths)];
       const totalToLoad = uniqueTilePaths.length + occupantSpriteNames.length;
       let loadedCount = 0;
@@ -437,11 +434,9 @@
       occupantInHand = null;
       offsetX = 0; offsetY = 0; scale = 1.0;
       updateCanvasTransform();
-
       const theme = document.getElementById("mapType").value;
       const style = document.getElementById("mapStyle").value;
       const settings = getMapSettings(theme);
-
       if (settings.isCavern) {
         generateCavern();
       } else {
@@ -453,20 +448,15 @@
           createRoad(settings.roadMaxLength, 2, 3);
         }
       }
-
       if (!settings.isCavern && style === "village" && settings.buildings > 0) {
         createBuildings(settings.buildings);
       }
-
       decorateMap(theme);
       drawMap();
     }
 
     /*******************************************************
-     * INIT MAP WITH PATCHES
-     * 
-     * Divides the grid into patches (e.g. 5x5) and assigns one
-     * terrain category per patch according to the biome distribution.
+     * INIT MAP WITH PATCHES (5x5 blocks)
      *******************************************************/
     function chooseCategoryFromDistribution(dist) {
       const rand = Math.random();
@@ -504,56 +494,63 @@
     function pickTileFromCategory(cat) {
       switch(cat) {
         case 'GRASS':
-          return pickRandom([
-            TILE_TYPES.GRASS_1, TILE_TYPES.GRASS_2, TILE_TYPES.GRASS_3,
-            TILE_TYPES.GRASS_4, TILE_TYPES.GRASS_5
-          ]);
+          return pickRandom([TILE_TYPES.GRASS_1, TILE_TYPES.GRASS_2, TILE_TYPES.GRASS_3, TILE_TYPES.GRASS_4, TILE_TYPES.GRASS_5]);
         case 'TREE':
-          return pickRandom([ TILE_TYPES.TREE_1, TILE_TYPES.TREE_2 ]);
+          return pickRandom([TILE_TYPES.TREE_1, TILE_TYPES.TREE_2]);
         case 'DIRT':
-          return pickRandom([ TILE_TYPES.DIRT_1, TILE_TYPES.DIRT_2, TILE_TYPES.DIRT_3 ]);
+          return pickRandom([TILE_TYPES.DIRT_1, TILE_TYPES.DIRT_2, TILE_TYPES.DIRT_3]);
         case 'DESERT':
-          return pickRandom([
-            TILE_TYPES.SAND_1, TILE_TYPES.SAND_2, TILE_TYPES.SAND_3,
-            TILE_TYPES.DUNE_1, TILE_TYPES.CACTUS_1, TILE_TYPES.CACTUS_2
-          ]);
+          return pickRandom([TILE_TYPES.SAND_1, TILE_TYPES.SAND_2, TILE_TYPES.SAND_3, TILE_TYPES.DUNE_1, TILE_TYPES.CACTUS_1, TILE_TYPES.CACTUS_2]);
         case 'STONE':
-          return pickRandom([ TILE_TYPES.ROAD_STONE, TILE_TYPES.LAVASTONE1, TILE_TYPES.ROAD_DIRT ]);
+          return pickRandom([TILE_TYPES.ROAD_STONE, TILE_TYPES.LAVASTONE1, TILE_TYPES.ROAD_DIRT]);
         default:
           return TILE_TYPES.GRASS_1;
       }
     }
 
     /*******************************************************
-     * DECORATE MAP (Reduced mixing within patches)
+     * DECORATE MAP – Mixing Rules
      *******************************************************/
     function decorateMap(theme){
       for (let y = 0; y < GRID_HEIGHT; y++){
         for (let x = 0; x < GRID_WIDTH; x++){
           const tile = mapData[y][x];
-          if(theme === "forest") {
-            if(tile.type.includes("grasstile") && Math.random() < 0.1){
-              tile.type = pickRandom([TILE_TYPES.SHRUB_1, TILE_TYPES.SHRUB_2, TILE_TYPES.SHRUB_3]);
-            }
+
+          // Mix water into any terrain except volcanic
+          if(theme !== "volcanic" && !isWaterTile(tile.type) && Math.random() < 0.05) {
+             tile.type = TILE_TYPES.WATER;
           }
-          if(theme === "volcanic") {
-            if(tile.type.includes("lavastone") || tile.type.includes("dirtTile")){
-              let r = Math.random();
-              if(r < 0.1) tile.type = TILE_TYPES.LAVA_1;
-              else if(r < 0.15) tile.type = TILE_TYPES.LAVA_2;
-              else if(r < 0.2) tile.type = pickRandom([TILE_TYPES.BRIMSTONE1, TILE_TYPES.BRIMSTONE2]);
-              else if(r < 0.25) tile.type = TILE_TYPES.MAGMA;
-            }
+          // Mix jungle into grass (allowed mix: jungle & grass)
+          if((theme === "grassland" || theme === "forest") && tile.type.includes("grasstile") && Math.random() < 0.1) {
+             tile.type = TILE_TYPES.JUNGLE_GRASS;
           }
-          if(theme === "mudlands") {
-            if(tile.type.includes("dirt") && Math.random() < 0.05){
-              tile.type = pickRandom([ TILE_TYPES.SWAMP, TILE_TYPES.WATERROCKS ]);
-            }
+          // Mix grass and dirt: a bit of dirt in grass patches and vice versa
+          if(tile.type.includes("grasstile") && Math.random() < 0.1){
+             tile.type = pickRandom([TILE_TYPES.DIRT_1, TILE_TYPES.DIRT_2, TILE_TYPES.DIRT_3]);
           }
-          if(theme === "desert") {
-            if(tile.type.includes("sand") && Math.random() < 0.1){
-              tile.type = pickRandom([TILE_TYPES.CACTUS_1, TILE_TYPES.CACTUS_2, TILE_TYPES.DUNE_1]);
-            }
+          if(tile.type.includes("dirt") && Math.random() < 0.1){
+             tile.type = pickRandom([TILE_TYPES.GRASS_1, TILE_TYPES.GRASS_2, TILE_TYPES.GRASS_3, TILE_TYPES.GRASS_4, TILE_TYPES.GRASS_5]);
+          }
+          // Mix desert and dirt: a slight chance to change desert to dirt
+          if(tile.type.includes("sand") && Math.random() < 0.1){
+             tile.type = pickRandom([TILE_TYPES.DIRT_1, TILE_TYPES.DIRT_2, TILE_TYPES.DIRT_3]);
+          }
+          // For volcanic, mix in lava textures—but if the tile is desert type (sand), do not mix in brimstone
+          if(theme === "volcanic" && (tile.type.includes("lavastone") || tile.type.includes("dirtTile"))){
+             let r = Math.random();
+             if(tile.type.includes("sand")){
+               if(r < 0.2) tile.type = TILE_TYPES.LAVA_1;
+               else if(r < 0.3) tile.type = TILE_TYPES.LAVA_2;
+             } else {
+               if(r < 0.1) tile.type = TILE_TYPES.LAVA_1;
+               else if(r < 0.15) tile.type = TILE_TYPES.LAVA_2;
+               else if(r < 0.2) tile.type = pickRandom([TILE_TYPES.BRIMSTONE1, TILE_TYPES.BRIMSTONE2]);
+               else if(r < 0.25) tile.type = TILE_TYPES.MAGMA;
+             }
+          }
+          // In caverns, occasionally simulate a lava river (vulcanic mix in caves)
+          if(theme === "cavern" && (tile.type === TILE_TYPES.CAVE_1 || tile.type === TILE_TYPES.CAVE_2) && Math.random() < 0.05){
+             tile.type = pickRandom([TILE_TYPES.LAVA_1, TILE_TYPES.LAVA_2]);
           }
         }
       }
@@ -782,6 +779,7 @@
 
     /*******************************************************
      * BUILDINGS
+     * Walls and floors will be uniform per building.
      *******************************************************/
     const buildingShapes = [
       {
@@ -825,6 +823,7 @@
       }
     ];
     let chosenFloorTileForBuildings = null;
+    // For each building, choose a single wall type
     function createBuildings(numBuildings){
       chosenFloorTileForBuildings = pickRandom(BUILDING_FLOORS);
       let attempts = 0, placed = 0;
@@ -834,7 +833,9 @@
         const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
         const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
         if(canPlaceBuilding(sx, sy, shape)){
-          placeBuilding(sx, sy, shape);
+          // Choose a uniform wall type for this building
+          const chosenWallTileForBuilding = pickRandom(BUILDING_WALLS);
+          placeBuilding(sx, sy, shape, chosenFloorTileForBuildings, chosenWallTileForBuilding);
           placed++;
         }
       }
@@ -845,9 +846,7 @@
           const val = shape.layout[y][x];
           if(val === 1 || val === 0){
             const tileType = mapData[sy+y][sx+x].type;
-            if(isWaterTile(tileType) || tileType.includes("lava") || 
-               tileType.includes("magma") || tileType.includes("brimstone") || 
-               tileType.includes("caveRock")){
+            if(isWaterTile(tileType) || tileType.includes("lava") || tileType.includes("magma") || tileType.includes("brimstone") || tileType.includes("caveRock")){
               return false;
             }
           }
@@ -855,12 +854,12 @@
       }
       return true;
     }
-    function placeBuilding(sx, sy, shape){
+    function placeBuilding(sx, sy, shape, floorTile, wallTile){
       let localLayout = shape.layout.map(r => r.slice());
       subdivideBuilding(localLayout);
       placeExteriorDoor(localLayout);
       ensureAccessibility(localLayout);
-      stampBuildingOntoMap(localLayout, sx, sy, chosenFloorTileForBuildings);
+      stampBuildingOntoMap(localLayout, sx, sy, floorTile, wallTile);
     }
     function subdivideBuilding(localLayout){
       const h = localLayout.length, w = localLayout[0].length;
@@ -932,12 +931,10 @@
       if(!doorCoords.length) return;
       let mainDoor = doorCoords.find(d => isOnPerimeter(localLayout, d.x, d.y)) || doorCoords[0];
       if(!mainDoor) return;
-
       let visited = new Set();
       let queue = [];
       queue.push({x: mainDoor.x, y: mainDoor.y});
       visited.add(`${mainDoor.x},${mainDoor.y}`);
-
       while(queue.length){
         let {x, y} = queue.shift();
         for(let [nx, ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){
@@ -1004,13 +1001,14 @@
         }
       }
     }
-    function stampBuildingOntoMap(localLayout, sx, sy, floorTile){
+    function stampBuildingOntoMap(localLayout, sx, sy, floorTile, wallTile){
       const h = localLayout.length, w = localLayout[0].length;
       for(let y = 0; y < h; y++){
         for(let x = 0; x < w; x++){
           const val = localLayout[y][x];
           if(val === 1){
-            mapData[sy+y][sx+x].type = pickRandom(BUILDING_WALLS);
+            // Use uniform wall type for this building
+            mapData[sy+y][sx+x].type = wallTile;
           } else if(val === 0){
             mapData[sy+y][sx+x].type = floorTile;
           } else if(val === 2){
