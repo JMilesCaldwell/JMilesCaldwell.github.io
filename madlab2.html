@@ -20,7 +20,7 @@
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
-      overscroll-behavior: none;
+      overscroll-behaviour: none;
     }
 
     .container {
@@ -238,7 +238,7 @@
     /*******************************************************
      * TILE TYPES & ASSET MAPPING
      *******************************************************/
-    // Extend TILE_TYPES with a new type for farmland.
+    // Extended TILE_TYPES now includes cave-specific types and a negative space.
     const TILE_TYPES = {
       GRASS: "grass",
       TREE: "tree",
@@ -272,7 +272,10 @@
       DESERTDUNE: "desertdune",
       DESERTROCK: "desertrock",
       SHRUB1: "shrub1",
-      FARMLAND: "farmland"
+      FARMLAND: "farmland",
+      // New types for cavern maps:
+      CAVE_FLOOR: "cave_floor",
+      NEGATIVE: "negative"
     };
 
     // Mapping for each tile type to its asset folder and possible filenames.
@@ -310,14 +313,17 @@
       DESERTDUNE: { folder: "desert", files: ["dune1.png"] },
       DESERTROCK: { folder: "desert", files: ["desertBoulder.png", "sandRock.png"] },
       SHRUB1: { folder: "dirt", files: ["shrub1.png", "shrub2.png", "shrub3.png"] },
-      FARMLAND: { folder: "farmland", files: ["corn.png", "pumpkins.png", "rye.png", "sunflowers.png", "vinyard.png", "wheat.png"] }
+      FARMLAND: { folder: "farmland", files: ["corn.png", "pumpkins.png", "rye.png", "sunflowers.png", "vinyard.png", "wheat.png"] },
+      // New mapping for cavern walkable floor using provided textures.
+      CAVE_FLOOR: { folder: "cavern", files: ["cave1.png", "cave2.png", "caveBog.png", "caveBones.png", "caveCliff1.png", "caveCliff2.png", "caveMoss1.png", "caveMoss2.png", "cavePool.png", "cavePoolsmall.png", "cavePuddle.png"] },
+      // Negative space: no images; we'll use a fallback colour.
+      NEGATIVE: { folder: "", files: [] }
     };
 
     // Object to hold preloaded images for tiles.
     const tileTextures = {};
 
     function getColorForTileType(tileType) {
-      // Fallback colours if images haven't loaded.
       const fallbackColours = {
         grass: "#9AE582",
         tree: "#7BC16E",
@@ -340,7 +346,12 @@
         marble4: "#cccccc",
         darktile: "#333333",
         cavewall: "#444444",
-        mud: "#6f4f3c"
+        mud: "#6f4f3c",
+        // Fallback for cavern floor if image not loaded.
+        cave_floor: "#6e6e6e",
+        // Negative space: pure black.
+        negative: "#000000",
+        farmland: "#A1C349"
       };
       return fallbackColours[tileType] || "#FFFFFF";
     }
@@ -361,13 +372,10 @@
         "orcbandit","orcchief","orcshaman","orcfighter"
       ];
 
-      // Count total images to load
       let totalToLoad = 0;
-      // Count tile images
       for (let key in tileAssetMapping) {
         totalToLoad += tileAssetMapping[key].files.length;
       }
-      // Count occupant sprites
       totalToLoad += occupantSpriteNames.length;
       let loadedCount = 0;
 
@@ -378,20 +386,23 @@
         }
       }
 
-      // Preload tile images.
       for (let key in tileAssetMapping) {
         tileTextures[key] = [];
         const mapping = tileAssetMapping[key];
         mapping.files.forEach(filename => {
           const img = new Image();
-          img.src = `resources/mapgen/mapassets/tiles/${mapping.folder}/${filename}`;
-          img.onload = checkDone;
-          img.onerror = checkDone;
+          // If folder is empty (as for NEGATIVE), skip loading.
+          if(mapping.folder){
+            img.src = `resources/mapgen/mapassets/tiles/${mapping.folder}/${filename}`;
+            img.onload = checkDone;
+            img.onerror = checkDone;
+          } else {
+            checkDone();
+          }
           tileTextures[key].push(img);
         });
       }
 
-      // Preload occupant sprites.
       for (let spriteName of occupantSpriteNames) {
         const img = new Image();
         img.src = `resources/mapgen/mapassets/sprites/${spriteName}.png`;
@@ -454,15 +465,12 @@
         generateCavern();
       } else {
         initMap(settings.baseDist);
-        // Create water bodies (ponds)
         for (let i = 0; i < settings.waterBodies; i++) {
           createWaterBody(settings.waterMaxSize);
         }
-        // In riverlands (or occasionally) generate a river.
         if (theme === "riverlands" || Math.random() < 0.2) {
           createRiver(settings.roadMaxLength);
         }
-        // Carve roads.
         for (let r = 0; r < settings.roads; r++) {
           createRoad(settings.roadMaxLength, 2, 3);
         }
@@ -474,11 +482,9 @@
 
       decorateMap(theme);
 
-      // If "Generate Fields" is checked, add farmland patches.
       if (document.getElementById("generateFields").checked) {
         createFields(3);
       }
-      // If "Add City Walls" is checked, enclose the map perimeter with walls.
       if (document.getElementById("cityWalls").checked) {
         createCityWalls();
       }
@@ -508,8 +514,8 @@
     }
 
     function decorateMap(theme){
-      for (let y=0; y<GRID_HEIGHT; y++){
-        for (let x=0; x<GRID_WIDTH; x++){
+      for (let y = 0; y < GRID_HEIGHT; y++){
+        for (let x = 0; x < GRID_WIDTH; x++){
           const tile = mapData[y][x];
           if(theme === "forest" && tile.type === TILE_TYPES.TREE){
             if(Math.random() < 0.4){
@@ -533,7 +539,7 @@
     }
 
     /*******************************************************
-     * CAVERN GENERATION
+     * CAVERN GENERATION (UPDATED)
      *******************************************************/
     function generateCavern() {
       let boolMap = randomBoolMap(0.45);
@@ -665,18 +671,16 @@
         boolMap[y1][x1] = true;
       }
     }
+    // Updated: For caverns, walkable tiles use CAVE_FLOOR and non-walkable become negative (black).
     function convertBoolMapToCavern(boolMap){
       mapData = [];
       for(let y = 0; y < GRID_HEIGHT; y++){
         let row = [];
         for(let x = 0; x < GRID_WIDTH; x++){
           if(boolMap[y][x]){
-            let r = Math.random();
-            if(r < 0.03) row.push({ type: TILE_TYPES.WATER, occupant: null });
-            else if(r < 0.15) row.push({ type: TILE_TYPES.DIRT, occupant: null });
-            else row.push({ type: TILE_TYPES.STONE, occupant: null });
+            row.push({ type: TILE_TYPES.CAVE_FLOOR, occupant: null });
           } else {
-            row.push({ type: TILE_TYPES.SOLID_STONE, occupant: null });
+            row.push({ type: TILE_TYPES.NEGATIVE, occupant: null });
           }
         }
         mapData.push(row);
@@ -704,7 +708,6 @@
         stack.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
       }
     }
-    // Generate a meandering river.
     function createRiver(maxLength) {
       let x, y;
       if(Math.random() < 0.5){
@@ -1014,15 +1017,20 @@
     /*******************************************************
      * NEW FEATURES: FARMLAND FIELDS & CITY WALLS
      *******************************************************/
+    // For fields, choose a single crop (by index) per field.
     function createFields(numFields) {
       for (let i = 0; i < numFields; i++){
         const fieldWidth = Math.floor(Math.random() * 5) + 3;
         const fieldHeight = Math.floor(Math.random() * 5) + 3;
         const sx = Math.floor(Math.random() * (GRID_WIDTH - fieldWidth));
         const sy = Math.floor(Math.random() * (GRID_HEIGHT - fieldHeight));
+        // Choose one crop index from the farmland textures.
+        const cropIndex = Math.floor(Math.random() * tileAssetMapping.FARMLAND.files.length);
         for (let y = sy; y < sy + fieldHeight; y++){
           for (let x = sx; x < sx + fieldWidth; x++){
+            // Instead of randomising, assign a fixed crop index.
             mapData[y][x].type = TILE_TYPES.FARMLAND;
+            mapData[y][x].crop = cropIndex;
           }
         }
       }
@@ -1057,17 +1065,16 @@
       if(tile.occupant){
         drawOccupantSprite(ctx, tile.occupant, px, py);
       } else {
-        // Retrieve the asset key.
-        const tileKey = getKeyByValue(TILE_TYPES, tile.type);
-        const textures = tileTextures[tileKey];
-        if(textures && textures.length){
-          const tex = pickRandom(textures);
-          if(tex && tex.complete){
-            ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(tile.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
+        let tileKey = getKeyByValue(TILE_TYPES, tile.type);
+        let tex = null;
+        // For farmland fields with a fixed crop, use that texture.
+        if(tile.type === TILE_TYPES.FARMLAND && tile.crop !== undefined) {
+          tex = tileTextures["FARMLAND"][tile.crop];
+        } else if(tileKey in tileTextures && tileTextures[tileKey].length) {
+          tex = pickRandom(tileTextures[tileKey]);
+        }
+        if(tex && tex.complete){
+          ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
         } else {
           ctx.fillStyle = getColorForTileType(tile.type);
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
