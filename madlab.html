@@ -25,7 +25,6 @@
     }
 
     .container {
-      /* Let the container width adapt as needed */
       margin: 2rem auto;
       background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
@@ -65,7 +64,7 @@
       left: 0;
       transform-origin: top left;
       image-rendering: pixelated;
-      touch-action: none;  
+      touch-action: none;
     }
 
     .mapButton {
@@ -102,7 +101,7 @@
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
     <p class="description">
-      "Generate caverns, roads, buildings, single-floor villages, sprites, and more."
+      "Generate caverns, roads, buildings, single-floor villages, mixed biomes, coastal maps and more."
     </p>
 
     <div class="controls">
@@ -145,36 +144,45 @@
         Sprite:
         <select id="occupantSprite">
           <option value="none" selected>None</option>
-          <option value="paladin">paladin</option>
-          <option value="fighter">fighter</option>
-          <option value="guardian">guardian</option>
-          <option value="halfblood">halfblood</option>
-          <option value="berserker">berserker</option>
+          <!-- Updated occupant sprite list to match new filenames -->
           <option value="assassin">assassin</option>
-          <option value="warlock">warlock</option>
-          <option value="sorcerer">sorcerer</option>
-          <option value="priestess">priestess</option>
-          <option value="cleric">cleric</option>
-          <option value="druid">druid</option>
-          <option value="demon">demon</option>
-          <option value="mage">mage</option>
-          <option value="serpent">serpent</option>
+          <option value="bat">bat</option>
+          <option value="berserker">berserker</option>
+          <option value="brigand">brigand</option>
           <option value="chimera">chimera</option>
-          <option value="ogre">ogre</option>
+          <option value="cleric">cleric</option>
+          <option value="cultist">cultist</option>
+          <option value="darkguard">darkguard</option>
+          <option value="darkpriestess">darkpriestess</option>
+          <option value="demon">demon</option>
+          <option value="druid">druid</option>
           <option value="edgelord">edgelord</option>
           <option value="fallenangel">fallenangel</option>
-          <option value="darkpriestess">darkpriestess</option>
-          <option value="darkguard">darkguard</option>
-          <option value="cultist">cultist</option>
+          <option value="fighter">fighter</option>
+          <option value="ghost">ghost</option>
           <option value="goblin">goblin</option>
-          <option value="spider">spider</option>
-          <option value="bat">bat</option>
-          <option value="zombie">zombie</option>
+          <option value="guardian">guardian</option>
+          <option value="halfblood">halfblood</option>
+          <option value="imp">imp</option>
+          <option value="mage">mage</option>
+          <option value="ogre">ogre</option>
           <option value="orc">orc</option>
           <option value="orcbandit">orcbandit</option>
           <option value="orcchief">orcchief</option>
-          <option value="orcshaman">orcshaman</option>
-          <option value="orcfighter">orcfighter</option>
+          <option value="orkshaman">orkshaman</option>
+          <option value="orkfighter">orkfighter</option>
+          <option value="paladin">paladin</option>
+          <option value="priestess">priestess</option>
+          <option value="ranger">ranger</option>
+          <option value="rat">rat</option>
+          <option value="rogue">rogue</option>
+          <option value="serpent">serpent</option>
+          <option value="sorcerer">sorcerer</option>
+          <option value="spider">spider</option>
+          <option value="spider2">spider2</option>
+          <option value="warlock">warlock</option>
+          <option value="wight">wight</option>
+          <option value="zombie">zombie</option>
         </select>
       </label>
 
@@ -205,9 +213,7 @@
     const GRID_HEIGHT = 50;
 
     let mapData = []; // entire map structure
-
-    // occupantInHand => if carrying an occupant for Move mode
-    let occupantInHand = null; 
+    let occupantInHand = null; // for Move mode
 
     // occupant border colours
     const occupantColours = {
@@ -232,208 +238,148 @@
     let dragStartX = 0;
     let dragStartY = 0;
 
-    /* 
-      For pinch-zoom on mobile:
-      We'll keep track of all active pointers, 
-      and if exactly two are down, we'll do pinch.
-    */
     let activePointers = new Map();
     let initialPinchDistance = 0;
     let initialPinchScale = 1.0;
 
     /*******************************************************
      * TILE TYPES
+     *
+     * Each 'value' here is the relative path (without .png),
+     * which we’ll prefix with "resources/mapgen/mapassets/"
      *******************************************************/
     const TILE_TYPES = {
-      GRASS:          "grass",
-      TREE:           "tree",
-      DIRT:           "dirt",
-      SAND:           "sand",
-      WATER:          "water",
-      ROAD_STONE:     "roadStone",
-      ROAD_DIRT:      "roadDirt",
-      STONE:          "stone",
-      WALL:           "wall",
-      FLOOR:          "floor",
-      DOOR:           "door",
-      SOLID_STONE:    "solidStone",
-      COBBLESTONE:    "cobblestone",
-      ANCIENT_TILE:   "ancienttile",
-      SANDSTONE_TILE: "sandstonetile",
-      MARBLE_1:       "marble1",
-      MARBLE_2:       "marble2",
-      MARBLE_3:       "marble3",
-      MARBLE_4:       "marble4",
-      DARK_TILE:      "darktile",
-      DARK_TILE2:     "darktile2",
-      DARK_TILE3:     "darktile3",
-      DARK_TILE4:     "darktile4",
-      CAVE_WALL:      "cavewall",
-      MUD:            "mud",
-      MUD2:           "mud2",
-      MUD3:           "mud3",
-      LAVA:           "lava",
-      MAGMA:          "magma",
-      BRIMSTONE:      "brimstone",
-      BRIMSTONE2:     "brimstone2",
-      WHITESAND:      "whitesand",
-      DESERTDUNE2:    "desertdune2",
-      DESERTSAND:     "desertsand",
-      DESERTDUNE:     "desertdune",
-      DESERTROCK:     "desertrock",
-      SHRUB1:         "shrub1",
-      SHRUB2:         "shrub2",
-      SHRUB3:         "shrub3"
+      // Some “generic” references we’ll pick from randomly 
+      // in generation steps. We store them as string keys; 
+      // the code loads them from the new folder structure. 
+      
+      // Grass variants (grass/trees)
+      GRASS_1:       "tiles/grass/grasstile1",
+      GRASS_2:       "tiles/grass/grasstile2",
+      GRASS_3:       "tiles/grass/grasstile3",
+      GRASS_4:       "tiles/grass/grasstile4",
+      GRASS_5:       "tiles/grass/grasstile5",
+      TREE_1:        "tiles/grass/grasstree1",
+      TREE_2:        "tiles/grass/grasstree2",
+
+      // Dirt variants
+      DIRT_1:        "tiles/dirt/dirt1",
+      DIRT_2:        "tiles/dirt/dirt2",
+      DIRT_3:        "tiles/dirt/dirt3",
+
+      // Desert (sand/dunes/cacti, etc.)
+      SAND_1:        "tiles/desert/sand1",
+      SAND_2:        "tiles/desert/sand2",
+      SAND_3:        "tiles/desert/sand3",
+      DUNE_1:        "tiles/desert/dune1",
+      CACTUS_1:      "tiles/desert/cactus1",
+      CACTUS_2:      "tiles/desert/cactus2",
+
+      // Water
+      WATER:         "tiles/water/water",
+      WATERROCKS:    "tiles/water/waterrocks",
+      SWAMP:         "tiles/water/swamp",
+      WHITESAND:     "tiles/water/whitesand",  // for beaches
+
+      // Cavern
+      CAVE_1:        "tiles/cavern/cave1",
+      CAVE_2:        "tiles/cavern/cave2",
+      CAVE_WALL:     "tiles/buildings/walls/caveWall", // or could use cavern/caveWall if you prefer
+      SOLID_ROCK:    "tiles/cavern/caveRockLarge",
+
+      // Volcanic
+      LAVA_1:        "tiles/vulcanic/lava1",
+      LAVA_2:        "tiles/vulcanic/lava2",
+      MAGMA:         "tiles/vulcanic/magma",
+      BRIMSTONE1:    "tiles/vulcanic/brimstone",
+      BRIMSTONE2:    "tiles/vulcanic/brimstone2",
+      LAVASTONE1:    "tiles/vulcanic/lavastone1",
+
+      // 'Stone' for roads or mountains
+      ROAD_STONE:    "tiles/dirt/roadDirt",     // We can still call it 'stone road' but use a file here
+      ROAD_DIRT:     "tiles/dirt/dirtTile",
+      WOOD_PLANKS:   "tiles/buildings/floors/woodfloor", // for bridging water
+
+      // Additional shrubs etc. (we can reuse some from dirt folder)
+      SHRUB_1:       "tiles/dirt/shrub1",
+      SHRUB_2:       "tiles/dirt/shrub2",
+      SHRUB_3:       "tiles/dirt/shrub3"
     };
 
-    /**
-     * For easier hooking in the new multi-tile approach (like multiple tree or grass textures),
-     * we define some "variant arrays." When the code sees a "TREE" or "GRASS", we can randomly pick 
-     * from a set of new assets (like treetiles, grasstiles, etc.).
-     */
-    const tileVariants = {
-      // foresty trees
-      FOREST_TREES: [
-        "treetiles/trees1.png",
-        "treetiles/trees2.png",
-        "treetiles/trees3.png",
-        "treetiles/trees4.png",
-        "treetiles/trees5.png"
-      ],
-      // grass base
-      GRASS_VARIANTS: [
-        "grasstiles/grasstile1.png",
-        "grasstiles/grasstile2.png",
-        "grasstiles/grasstile3.png",
-        "grasstiles/grasstile4.png",
-        "grasstiles/grasstile5.png"
-      ],
-      // single, scattered tree in grass
-      GRASS_SCATTER_TREES: [
-        "grasstiles/grasstree1.png",
-        "grasstiles/grasstree2.png"
-      ],
-      // new desert variants
-      DESERT_VARIANTS: [
-        "deserttiles/desertflat.png",
-        "deserttiles/desertflat2.png",
-        "deserttiles/desertrock1.png",
-        "deserttiles/desertrock2.png",
-        "deserttiles/desertrock3.png",
-        "deserttiles/desertrock4.png"
-      ],
-      // bricks/cobbles for building walls
-      BUILDING_WALLS: [
-        "brick1.png",
-        "brick2.png",
-        "brick3.png",
-        "brick4.png",
-        "brick5.png",
-        "cobble1.png",
-        "cobble2.png",
-        "cobble3.png",
-        "cobble4.png",
-        "cobblestone.png" // keep the original as well
-      ],
-      // random dark tiles for volcanic area
-      VOLCANIC_DARKS: [
-        "darktile.png",
-        "darktile2.png",
-        "darktile3.png",
-        "darktile4.png"
-      ]
-    };
+    // Building walls
+    const BUILDING_WALLS = [
+      "tiles/buildings/walls/brick1",
+      "tiles/buildings/walls/brick2",
+      "tiles/buildings/walls/cobble1",
+      "tiles/buildings/walls/cobble2",
+      "tiles/buildings/walls/stoneBlock",
+      "tiles/buildings/walls/darkStoneBlock"
+    ];
 
-    /**
-     * We store the actual <Image> objects by *filename*, rather than separate keys. 
-     * So tileTextures["treetiles/trees1.png"] => <Image> object
-     */
-    const tileTextures = {};
-    const occupantSpritesMap = {};
+    // Building floors
+    const BUILDING_FLOORS = [
+      "tiles/buildings/floors/marble1",
+      "tiles/buildings/floors/marble2",
+      "tiles/buildings/floors/marble3",
+      "tiles/buildings/floors/marble4",
+      "tiles/buildings/floors/woodfloor",
+      "tiles/buildings/floors/PlainTileRubble1",
+      "tiles/buildings/floors/sandstonetile"
+    ];
+
+    // Building doors (we’ll pick at random)
+    const BUILDING_DOORS = [
+      "tiles/buildings/doors/doorWood1",
+      "tiles/buildings/doors/doorWood2",
+      "tiles/buildings/doors/doorVault",
+      "tiles/buildings/doors/gateStone"
+    ];
+
+    // A helper for terrain picking. E.g. Grass => random among GRASS_1.._5
+    function pickRandomTileFrom(...tileKeys) {
+      const chosen = tileKeys[Math.floor(Math.random()*tileKeys.length)];
+      return TILE_TYPES[chosen];
+    }
+
+    // In practice, we’ll store the final “.png” path in mapData[y][x].type 
+    // so drawCell can load it directly. 
+
+    const tileTextures = {};       // to store loaded tile images
+    const occupantSpritesMap = {}; // to store occupant sprite images
 
     /*******************************************************
-     * HELPER FUNCTIONS
+     * getColorForTileType (fallback if no image found)
      *******************************************************/
-    function getColorForTileType(tileType) {
-      // fallback color, if needed
-      const baseTileColours = {
-        [TILE_TYPES.GRASS]:       "#9AE582",
-        [TILE_TYPES.TREE]:        "#7BC16E",
-        [TILE_TYPES.DIRT]:        "#C2A15F",
-        [TILE_TYPES.SAND]:        "#DDD593",
-        [TILE_TYPES.WATER]:       "#2B64CF",
-        [TILE_TYPES.ROAD_STONE]:  "#777777",
-        [TILE_TYPES.ROAD_DIRT]:   "#A37E4C",
-        [TILE_TYPES.STONE]:       "#AAAAAA",
-        [TILE_TYPES.WALL]:        "#8B4513",
-        [TILE_TYPES.FLOOR]:       "#555555",
-        [TILE_TYPES.DOOR]:        "#552200",
-        [TILE_TYPES.SOLID_STONE]: "#000000",
-        [TILE_TYPES.COBBLESTONE]: "#666666",
-        [TILE_TYPES.ANCIENT_TILE]:   "#897B42",
-        [TILE_TYPES.SANDSTONE_TILE]: "#d0c5a5",
-        [TILE_TYPES.MARBLE_1]:       "#f0f0f0",
-        [TILE_TYPES.MARBLE_2]:       "#efefef",
-        [TILE_TYPES.MARBLE_3]:       "#dddddd",
-        [TILE_TYPES.MARBLE_4]:       "#cccccc",
-        [TILE_TYPES.DARK_TILE]:      "#333333",
-        [TILE_TYPES.DARK_TILE2]:     "#2a2a2a",
-        [TILE_TYPES.DARK_TILE3]:     "#242424",
-        [TILE_TYPES.DARK_TILE4]:     "#1f1f1f",
-        [TILE_TYPES.CAVE_WALL]:      "#444444",
-        [TILE_TYPES.MUD]:            "#6f4f3c",
-        [TILE_TYPES.MUD2]:           "#6d4e3a",
-        [TILE_TYPES.MUD3]:           "#5e4030",
-        [TILE_TYPES.LAVA]:           "#cf3416",
-        [TILE_TYPES.MAGMA]:          "#aa2200",
-        [TILE_TYPES.BRIMSTONE]:      "#ff5500",
-        [TILE_TYPES.BRIMSTONE2]:     "#ee4400",
-        [TILE_TYPES.WHITESAND]:      "#f5f5da",
-        [TILE_TYPES.DESERTDUNE2]:    "#e3d7ad",
-        [TILE_TYPES.DESERTSAND]:     "#ede2ba",
-        [TILE_TYPES.DESERTDUNE]:     "#e0d198",
-        [TILE_TYPES.DESERTROCK]:     "#bca566",
-        [TILE_TYPES.SHRUB1]:         "#6da969",
-        [TILE_TYPES.SHRUB2]:         "#7bb37c",
-        [TILE_TYPES.SHRUB3]:         "#8ebd8a"
-      };
-      return baseTileColours[tileType] || "#FFFFFF";
-    }
-
-    // Find a key in TILE_TYPES by value (since we store them in tileTextures keyed by that "string").
-    function getKeyByValue(obj, val) {
-      return Object.keys(obj).find(key => obj[key] === val);
-    }
-
-    function pickRandom(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
+    function getColorForTileType(tilePath) {
+      // Just a random fallback
+      return "#999999";
     }
 
     /*******************************************************
-     * PRELOAD IMAGES
+     * occupant sprite preloading
      *******************************************************/
+    const occupantSpriteNames = [
+      "assassin","bat","berserker","brigand","chimera","cleric","cultist","darkguard","darkpriestess",
+      "demon","druid","edgelord","fallenangel","fighter","ghost","goblin","guardian","halfblood","imp",
+      "mage","ogre","orc","orcbandit","orcchief","orkshaman","orkfighter","paladin","priestess","ranger",
+      "rat","rogue","serpent","sorcerer","spider","spider2","warlock","wight","zombie"
+    ];
+
     function preloadImages(onComplete) {
-      // occupant sprite names (unchanged)
-      const occupantSpriteNames = [
-        "paladin","fighter","guardian","halfblood","berserker","assassin",
-        "warlock","sorcerer","priestess","cleric","druid","demon","mage",
-        "serpent","chimera","ogre","edgelord","fallenangel","darkpriestess",
-        "darkguard","cultist","goblin","spider","bat","zombie","orc",
-        "orcbandit","orcchief","orcshaman","orcfighter"
-      ];
+      // We'll gather all tile image paths from our tile references:
+      const allTilePaths = [];
+      for (const key in TILE_TYPES) {
+        allTilePaths.push(TILE_TYPES[key]);
+      }
+      // Add building walls, floors, doors:
+      BUILDING_WALLS.forEach(p => allTilePaths.push(p));
+      BUILDING_FLOORS.forEach(p => allTilePaths.push(p));
+      BUILDING_DOORS.forEach(p => allTilePaths.push(p));
 
-      // All existing tile values from TILE_TYPES
-      const allOldTilePaths = Object.values(TILE_TYPES).map(val => `resources/mapassets/${val}.png`);
+      // Convert them into unique set to avoid duplicates
+      const uniqueTilePaths = [...new Set(allTilePaths)];
 
-      // Our new variant arrays (like the entire tileVariants object)
-      const variantPaths = Object.values(tileVariants).flat().map(file => `resources/mapassets/${file}`);
-
-      // Combine them, ensuring no duplicates. 
-      // (We can keep it simple and just combine—duplicates won't break anything, they'll just reload once.)
-      const allTilePaths = [...allOldTilePaths, ...variantPaths];
-
-      // total to load is occupant sprites + tile images
-      const totalToLoad = allTilePaths.length + occupantSpriteNames.length;
+      const totalToLoad = uniqueTilePaths.length + occupantSpriteNames.length;
       let loadedCount = 0;
 
       function checkDone() {
@@ -443,19 +389,19 @@
         }
       }
 
-      // Load tile textures
-      allTilePaths.forEach(path => {
+      // load tile textures
+      uniqueTilePaths.forEach(path => {
         const img = new Image();
-        img.src = path; 
+        img.src = `resources/mapgen/mapassets/${path}.png`;
         img.onload = checkDone;
         img.onerror = checkDone;
         tileTextures[path] = img;
       });
 
-      // Load occupant sprites
+      // load occupant sprites
       occupantSpriteNames.forEach(spriteName => {
         const img = new Image();
-        img.src = `resources/mapassets/${spriteName}.png`;
+        img.src = `resources/mapgen/mapassets/sprites/${spriteName}.png`;
         img.onload = checkDone;
         img.onerror = checkDone;
         occupantSpritesMap[spriteName] = img;
@@ -464,12 +410,19 @@
 
     /*******************************************************
      * BIOME SETTINGS
+     * 
+     * Similar to old approach, but we now pick from new tile sets
      *******************************************************/
     function getMapSettings(theme) {
       switch(theme) {
         case "desert":
           return {
-            baseDist: { SAND: 0.6, DIRT: 0.2, STONE: 0.1, TREE: 0.0, GRASS: 0.1 },
+            baseDist: {
+              DESERT: 0.6, 
+              DIRT:   0.2,
+              GRASS:  0.1,
+              TREE:   0.1
+            },
             waterBodies: 1,
             waterMaxSize: 50,
             roads: 2,
@@ -479,7 +432,13 @@
           };
         case "city":
           return {
-            baseDist: { DIRT: 0.05, STONE: 0.2, GRASS: 0.15, TREE: 0.1 },
+            baseDist: {
+              DIRT: 0.25, 
+              GRASS: 0.2, 
+              TREE: 0.1,
+              DESERT: 0.1,
+              STONE: 0.35  // Maybe treat "STONE" as mountainous ground or paver
+            },
             waterBodies: 2,
             waterMaxSize: 80,
             roads: 8,
@@ -489,7 +448,12 @@
           };
         case "village":
           return {
-            baseDist: { GRASS: 0.4, DIRT: 0.3, STONE: 0.05, TREE: 0.2 },
+            baseDist: {
+              GRASS: 0.4,
+              DIRT:  0.3,
+              TREE:  0.2,
+              STONE: 0.1
+            },
             waterBodies: 2,
             waterMaxSize: 60,
             roads: 4,
@@ -499,7 +463,12 @@
           };
         case "grassland":
           return {
-            baseDist: { GRASS: 0.6, TREE: 0.2, DIRT: 0.1, STONE: 0.05 },
+            baseDist: {
+              GRASS: 0.6,
+              TREE:  0.2,
+              DIRT:  0.1,
+              STONE: 0.1
+            },
             waterBodies: 3,
             waterMaxSize: 120,
             roads: 4,
@@ -509,7 +478,12 @@
           };
         case "mountain":
           return {
-            baseDist: { STONE: 0.4, DIRT: 0.3, GRASS: 0.1, TREE: 0.05 },
+            baseDist: {
+              STONE: 0.4,
+              DIRT:  0.3,
+              GRASS: 0.1,
+              TREE:  0.2
+            },
             waterBodies: 1,
             waterMaxSize: 40,
             roads: 3,
@@ -519,7 +493,11 @@
           };
         case "forest":
           return {
-            baseDist: { TREE: 0.6, GRASS: 0.2, DIRT: 0.1, STONE: 0.05 },
+            baseDist: {
+              TREE:  0.6,
+              GRASS: 0.2,
+              DIRT:  0.2
+            },
             waterBodies: 3,
             waterMaxSize: 80,
             roads: 3,
@@ -539,8 +517,14 @@
           };
         case "volcanic":
           return {
-            // We'll keep a minimal baseDist for STONE, but it’ll be heavily transformed in decorateMap
-            baseDist: { STONE: 0.8, DIRT: 0.2 },
+            baseDist: {
+              // lumps of black stone, maybe some “dirt” lumps
+              STONE: 0.6, 
+              DIRT:  0.3, 
+              GRASS: 0.0,
+              TREE:  0.0,
+              DESERT:0.1
+            },
             waterBodies: 0,
             waterMaxSize: 0,
             roads: 1,
@@ -550,7 +534,12 @@
           };
         case "mudlands":
           return {
-            baseDist: { DIRT: 0.4, GRASS: 0.1, SAND: 0.1, STONE: 0.1, TREE: 0.3 },
+            baseDist: {
+              DIRT: 0.4,
+              GRASS: 0.2,
+              DESERT:0.1,
+              TREE: 0.3
+            },
             waterBodies: 3,
             waterMaxSize: 30,
             roads: 1,
@@ -560,7 +549,12 @@
           };
         default:
           return {
-            baseDist: { GRASS: 0.6, TREE: 0.2, DIRT: 0.1, STONE: 0.05 },
+            baseDist: {
+              GRASS: 0.6,
+              TREE:  0.2,
+              DIRT:  0.1,
+              STONE: 0.1
+            },
             waterBodies: 2,
             waterMaxSize: 60,
             roads: 4,
@@ -575,7 +569,7 @@
      * MAIN MAP GENERATION
      *******************************************************/
     function generateMap() {
-      occupantInHand = null; // reset occupant carrying
+      occupantInHand = null; 
       offsetX = 0;
       offsetY = 0;
       scale = 1.0;
@@ -597,168 +591,117 @@
         }
       }
 
-      // For non-cavern, possibly add buildings
       if (!settings.isCavern && style === "village" && settings.buildings > 0) {
         createBuildings(settings.buildings);
       }
 
-      // Decorate & refine the final map
       decorateMap(theme);
-
-      // Finally, draw
       drawMap();
     }
 
+    /*******************************************************
+     * initMap => distribute base terrain
+     *******************************************************/
     function initMap(dist) {
       mapData = [];
       for (let y = 0; y < GRID_HEIGHT; y++) {
         let row = [];
         for (let x = 0; x < GRID_WIDTH; x++) {
           const rand = Math.random();
-          let chosen = TILE_TYPES.GRASS;
+          let chosenKey = 'GRASS_1'; // default fallback
           let cumul = 0;
-          for (let t in dist) {
-            cumul += dist[t];
+          for (let cat in dist) {
+            cumul += dist[cat];
             if (rand < cumul) {
-              chosen = TILE_TYPES[t];
+              chosenKey = pickTileFromCategory(cat);
               break;
             }
           }
-          row.push({ type: chosen, occupant: null, variant: null });
+          row.push({ type: chosenKey, occupant: null });
         }
         mapData.push(row);
       }
     }
 
-    /**
-     * This function runs after the base map is laid out
-     * and modifies tiles to incorporate new assets, new random distributions,
-     * beaches around water, and so forth.
-     */
-    function decorateMap(theme) {
-      // 1) If there is water, create beaches (whitesand) around water edges
-      createBeaches();
-
-      // 2) Based on theme, add final touches
-      for (let y=0; y<GRID_HEIGHT; y++){
-        for (let x=0; x<GRID_WIDTH; x++){
-          const tile = mapData[y][x];
-
-          // FOREST => transform some trees into random "treetiles/treesX" 
-          // and maybe some grass into random grass tiles, etc.
-          if(theme === "forest") {
-            if(tile.type === TILE_TYPES.TREE){
-              // 50% chance we pick from the new FOREST_TREES
-              if(Math.random() < 0.5) {
-                tile.variant = pickRandom(tileVariants.FOREST_TREES);
-              }
-            } 
-            else if(tile.type === TILE_TYPES.GRASS) {
-              // some grass might remain old "grass", some might pick new variant
-              if(Math.random() < 0.6) {
-                tile.variant = pickRandom(tileVariants.GRASS_VARIANTS);
-              }
-            }
-          }
-
-          // VOLCANIC => reduce stone frequency, add more brimstone, lava, and dark tiles
-          else if(theme === "volcanic") {
-            if(tile.type === TILE_TYPES.STONE || tile.type === TILE_TYPES.DIRT) {
-              const r = Math.random();
-              if(r < 0.15) {
-                tile.type = TILE_TYPES.LAVA;
-              } else if(r < 0.30) {
-                tile.type = TILE_TYPES.MAGMA;
-              } else if(r < 0.65) {
-                tile.type = (Math.random() < 0.5) ? TILE_TYPES.BRIMSTONE : TILE_TYPES.BRIMSTONE2;
-              } else {
-                // Some fraction remain "dark tile" instead of plain old stone
-                tile.type = TILE_TYPES.DARK_TILE;
-                // We can add a random variant from the VOLCANIC_DARKS
-                tile.variant = pickRandom(tileVariants.VOLCANIC_DARKS);
-              }
-            }
-          }
-
-          // MUDLANDS => already done some in the base distribution, let's keep or do small random adjustments
-          else if(theme === "mudlands") {
-            if((tile.type === TILE_TYPES.DIRT || tile.type === TILE_TYPES.SAND) && Math.random() < 0.7) {
-              tile.type = pickRandom([TILE_TYPES.MUD, TILE_TYPES.MUD2, TILE_TYPES.MUD3]);
-            }
-          }
-
-          // DESERT => we can refine desert a bit with new desert variants
-          else if(theme === "desert") {
-            if(tile.type === TILE_TYPES.SAND) {
-              // 70% chance to pick a new desert tile
-              if(Math.random() < 0.7) {
-                tile.variant = pickRandom(tileVariants.DESERT_VARIANTS);
-              } 
-              // else it might get replaced with a classical desertdune or whitesand
-              else {
-                tile.type = pickRandom([
-                  TILE_TYPES.DESERTSAND, 
-                  TILE_TYPES.DESERTDUNE, 
-                  TILE_TYPES.DESERTDUNE2
-                ]);
-              }
-            }
-          }
-
-          // GRASSLAND => we can occasionally switch "grass" to a new grass tile or a scattered tree
-          else if(theme === "grassland") {
-            if(tile.type === TILE_TYPES.GRASS) {
-              // 50% chance to pick a random grass variant
-              if(Math.random() < 0.5) {
-                tile.variant = pickRandom(tileVariants.GRASS_VARIANTS);
-              }
-              // small chance for a random scattered tree tile
-              else if(Math.random() < 0.05) {
-                tile.variant = pickRandom(tileVariants.GRASS_SCATTER_TREES);
-              }
-            }
-          }
-
-          // Just as an example, for "city", "village", "mountain" we keep existing logic 
-          // but you could add minor variants if desired. 
-          // We do a small sprinkle for general "tree" => we can replace with new forest tiles or keep as is
-          else {
-            if(tile.type === TILE_TYPES.TREE && Math.random() < 0.2) {
-              tile.variant = pickRandom(tileVariants.FOREST_TREES);
-            }
-            if(tile.type === TILE_TYPES.GRASS && Math.random() < 0.2) {
-              tile.variant = pickRandom(tileVariants.GRASS_VARIANTS);
-            }
-          }
-        }
+    // A helper to pick from new tile sets by “logical category”:
+    function pickTileFromCategory(cat) {
+      switch(cat) {
+        case 'GRASS':
+          return pickRandom([
+            TILE_TYPES.GRASS_1, TILE_TYPES.GRASS_2, TILE_TYPES.GRASS_3,
+            TILE_TYPES.GRASS_4, TILE_TYPES.GRASS_5
+          ]);
+        case 'TREE':
+          return pickRandom([
+            TILE_TYPES.TREE_1, TILE_TYPES.TREE_2
+          ]);
+        case 'DIRT':
+          return pickRandom([
+            TILE_TYPES.DIRT_1, TILE_TYPES.DIRT_2, TILE_TYPES.DIRT_3
+          ]);
+        case 'DESERT':
+          return pickRandom([
+            TILE_TYPES.SAND_1, TILE_TYPES.SAND_2, TILE_TYPES.SAND_3,
+            TILE_TYPES.DUNE_1, TILE_TYPES.CACTUS_1, TILE_TYPES.CACTUS_2
+          ]);
+        case 'STONE':
+          // We can treat STONE as a chunk of “roadStone” or a random “lavastone,” or something else
+          return pickRandom([
+            TILE_TYPES.ROAD_STONE, TILE_TYPES.LAVASTONE1, TILE_TYPES.ROAD_DIRT
+          ]);
+        default:
+          // fallback
+          return TILE_TYPES.GRASS_1;
       }
     }
 
-    /**
-     * Creates beaches by turning some near-water tiles into WHITESAND 
-     * if they were grass, sand, or desert. Just a simple adjacency approach.
-     */
-    function createBeaches() {
-      let directions = [[1,0],[-1,0],[0,1],[0,-1]];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          if(mapData[y][x].type === TILE_TYPES.WATER) {
-            directions.forEach(d => {
-              let nx = x + d[0], ny = y + d[1];
-              if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
-                const neighbour = mapData[ny][nx];
-                if([
-                  TILE_TYPES.GRASS, TILE_TYPES.SAND, TILE_TYPES.DESERTSAND, 
-                  TILE_TYPES.DESERTDUNE, TILE_TYPES.DESERTDUNE2
-                ].includes(neighbour.type)) {
-                  // 70% chance to make it whitesand
-                  if(Math.random() < 0.7) {
-                    neighbour.type = TILE_TYPES.WHITESAND;
-                    neighbour.variant = null; 
-                  }
-                }
-              }
-            });
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    /*******************************************************
+     * decorateMap => further special-case modifications
+     *******************************************************/
+    function decorateMap(theme){
+      for (let y=0; y<GRID_HEIGHT; y++){
+        for (let x=0; x<GRID_WIDTH; x++){
+          const tile = mapData[y][x];
+          
+          // Some theming examples
+          if(theme === "forest") {
+            // Maybe occasionally swap a GRASS tile for shrub?
+            if (tile.type.includes("grasstile") && Math.random() < 0.3) {
+              tile.type = pickRandom([
+                TILE_TYPES.SHRUB_1, TILE_TYPES.SHRUB_2, TILE_TYPES.SHRUB_3
+              ]);
+            }
+          }
+          if(theme === "volcanic") {
+            // Turn some stone or dirt into lava
+            if (tile.type.includes("lavastone") || tile.type.includes("roadDirt")) {
+              let r = Math.random();
+              if(r < 0.15) tile.type = TILE_TYPES.LAVA_1;
+              else if(r < 0.25) tile.type = TILE_TYPES.LAVA_2;
+              else if(r < 0.35) tile.type = pickRandom([
+                TILE_TYPES.BRIMSTONE1, TILE_TYPES.BRIMSTONE2
+              ]);
+              else if(r < 0.45) tile.type = TILE_TYPES.MAGMA;
+            }
+          }
+          if(theme === "mudlands") {
+            // Make random dirt into swamp
+            if(tile.type.includes("dirt") && Math.random()<0.15){
+              tile.type = pickRandom([ TILE_TYPES.SWAMP, TILE_TYPES.WATERROCKS ]);
+            }
+          }
+          if(theme === "desert") {
+            // Possibly add some extra cacti or dunes
+            if(tile.type.includes("sand") && Math.random()<0.2){
+              tile.type = pickRandom([
+                TILE_TYPES.CACTUS_1, TILE_TYPES.CACTUS_2,
+                TILE_TYPES.DUNE_1
+              ]);
+            }
           }
         }
       }
@@ -905,11 +848,13 @@
         for(let x=0;x<GRID_WIDTH;x++){
           if(boolMap[y][x]){
             let r=Math.random();
-            if(r<0.03) row.push({type:TILE_TYPES.WATER, occupant:null, variant:null});
-            else if(r<0.15) row.push({type:TILE_TYPES.DIRT, occupant:null, variant:null});
-            else row.push({type:TILE_TYPES.STONE, occupant:null, variant:null});
+            // fill with random cave floor or small water pockets
+            if(r<0.03) row.push({type:TILE_TYPES.WATER, occupant:null});
+            else if(r<0.1) row.push({type:TILE_TYPES.CAVE_2, occupant:null});
+            else row.push({type:TILE_TYPES.CAVE_1, occupant:null});
           } else {
-            row.push({type:TILE_TYPES.SOLID_STONE, occupant:null, variant:null});
+            // solid stone
+            row.push({type:TILE_TYPES.SOLID_ROCK, occupant:null});
           }
         }
         mapData.push(row);
@@ -930,16 +875,19 @@
       while(stack.length && size<maxSize){
         const[cx,cy]=stack.pop();
         if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) continue;
-        if(mapData[cy][cx].type===TILE_TYPES.WATER) continue;
+        if(isWaterTile(mapData[cy][cx].type)) continue;
         if(Math.random()<0.2) continue;
         mapData[cy][cx].type=TILE_TYPES.WATER;
         size++;
         stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
     }
+    function isWaterTile(tileType){
+      return tileType===TILE_TYPES.WATER || tileType===TILE_TYPES.SWAMP || tileType===TILE_TYPES.WATERROCKS;
+    }
 
     /*******************************************************
-     * ROADS
+     * ROADS (+ potential bridging over water)
      *******************************************************/
     function createRoad(maxLength, minW, maxW) {
       let x,y;
@@ -962,20 +910,27 @@
         if(x<0||x>=GRID_WIDTH||y<0||y>=GRID_HEIGHT)break;
       }
     }
+
     function carveRoad(cx,cy,width){
       const r=Math.floor(width/2);
       for(let dy=-r;dy<=r;dy++){
         for(let dx=-r;dx<=r;dx++){
           let nx=cx+dx, ny=cy+dy;
           if(nx>=0&&nx<GRID_WIDTH&&ny>=0&&ny<GRID_HEIGHT){
-            mapData[ny][nx].type=(Math.random()<0.6)
-              ?TILE_TYPES.ROAD_STONE
-              :TILE_TYPES.ROAD_DIRT;
-            mapData[ny][nx].variant=null;
+            if(isWaterTile(mapData[ny][nx].type)) {
+              // Use wood planks for bridging over water
+              mapData[ny][nx].type = TILE_TYPES.WOOD_PLANKS;
+            } else {
+              // Road might be 'stone' or 'dirt'
+              mapData[ny][nx].type = (Math.random()<0.4) 
+                ? TILE_TYPES.ROAD_STONE
+                : TILE_TYPES.ROAD_DIRT;
+            }
           }
         }
       }
     }
+
     function getRandomDirection(prevDir){
       const dirs=[
         {dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}
@@ -985,7 +940,7 @@
     }
 
     /*******************************************************
-     * BUILDINGS (Village Generation)
+     * BUILDINGS
      *******************************************************/
     const buildingShapes = [
       {
@@ -1029,19 +984,10 @@
       }
     ];
 
-    // possible floors for buildings
-    const POSSIBLE_FLOORS = [
-      TILE_TYPES.MARBLE_1,
-      TILE_TYPES.MARBLE_2,
-      TILE_TYPES.MARBLE_3,
-      TILE_TYPES.MARBLE_4
-    ];
-
-    // We’ll pick from tileVariants.BUILDING_WALLS for building walls
     let chosenFloorTileForBuildings=null;
 
     function createBuildings(numBuildings){
-      chosenFloorTileForBuildings = pickRandom(POSSIBLE_FLOORS);
+      chosenFloorTileForBuildings = pickRandom(BUILDING_FLOORS);
       let attempts=0, placed=0;
       while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
@@ -1060,10 +1006,9 @@
           const val=shape.layout[y][x];
           if(val===1||val===0){
             const tileType=mapData[sy+y][sx+x].type;
-            if([
-              TILE_TYPES.WATER, TILE_TYPES.ROAD_STONE, TILE_TYPES.ROAD_DIRT, 
-              TILE_TYPES.SOLID_STONE, TILE_TYPES.LAVA, TILE_TYPES.MAGMA
-            ].includes(tileType)){
+            if(isWaterTile(tileType) || tileType.includes("lava") 
+               || tileType.includes("magma") || tileType.includes("brimstone")
+               || tileType.includes("caveRock") ){
               return false;
             }
           }
@@ -1081,6 +1026,7 @@
     function subdivideBuilding(localLayout){
       const h=localLayout.length; 
       const w=localLayout[0].length;
+      // vertical
       if(w>=7){
         let wx=Math.floor(w/2);
         for(let y=1;y<h-1;y++){
@@ -1089,6 +1035,7 @@
         let doorY=Math.floor(Math.random()*(h-2))+1;
         localLayout[doorY][wx]=2; // door placeholder
       }
+      // horizontal
       if(h>=7){
         let wy=Math.floor(h/2);
         for(let x=1;x<w-1;x++){
@@ -1106,7 +1053,7 @@
         if(isWallish(localLayout[0][x]) && hasExactlyTwoOrthWalls(localLayout,x,0)){
           candidates.push({px:x,py:0});
         }
-        if(isWallish(localLayout[h-1][x])&&hasExactlyTwoOrthWalls(localLayout,x,h-1)){
+        if(isWallish(localLayout[h-1][x]) && hasExactlyTwoOrthWalls(localLayout,x,h-1)){
           candidates.push({px:x,py:h-1});
         }
       }
@@ -1225,11 +1172,6 @@
         }
       }
     }
-
-    /**
-     * Stamps the building shape onto mapData. For walls, pick from tileVariants.BUILDING_WALLS.
-     * For floor, we use the chosenFloorTileForBuildings.
-     */
     function stampBuildingOntoMap(localLayout,sx,sy,floorTile){
       const h=localLayout.length;
       const w=localLayout[0].length;
@@ -1237,18 +1179,14 @@
         for(let x=0;x<w;x++){
           const val=localLayout[y][x];
           if(val===1){
-            // building wall
-            mapData[sy+y][sx+x].type = TILE_TYPES.WALL;
-            // pick random wall variant from building walls
-            mapData[sy+y][sx+x].variant = pickRandom(tileVariants.BUILDING_WALLS);
+            // pick random building wall
+            mapData[sy+y][sx+x].type = pickRandom(BUILDING_WALLS);
           } else if(val===0){
-            // building floor
+            // assigned floor
             mapData[sy+y][sx+x].type = floorTile;
-            mapData[sy+y][sx+x].variant = null;
           } else if(val===2){
             // door
-            mapData[sy+y][sx+x].type = TILE_TYPES.DOOR;
-            mapData[sy+y][sx+x].variant = null;
+            mapData[sy+y][sx+x].type = pickRandom(BUILDING_DOORS);
           }
         }
       }
@@ -1273,38 +1211,18 @@
       const px=gx*TILE_SIZE;
       const py=gy*TILE_SIZE;
 
-      // occupant?
       if(tile.occupant){
         drawOccupantSprite(ctx,tile.occupant,px,py);
-      } 
-      else {
-        // If tile.variant is set, that means we have a custom image path (like "treetiles/trees1.png")
-        if(tile.variant) {
-          const variantPath = `resources/mapassets/${tile.variant}`;
-          const tex = tileTextures[variantPath];
-          if(tex && tex.complete){
-            ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            // fallback fill
-            ctx.fillStyle = getColorForTileType(tile.type);
-            ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
-          }
-        }
-        else {
-          // otherwise we use the normal tile type
-          const tileKey = getKeyByValue(TILE_TYPES,tile.type);
-          const basePath = tileKey ? `resources/mapassets/${tile.type}.png` : null;
-          const tex = basePath ? tileTextures[basePath] : null;
-          if(tex && tex.complete){
-            ctx.drawImage(tex, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(tile.type);
-            ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
-          }
+      } else {
+        const path = tile.type;
+        const tex=tileTextures[path];
+        if(tex && tex.complete){
+          ctx.drawImage(tex,px,py,TILE_SIZE,TILE_SIZE);
+        } else {
+          ctx.fillStyle=getColorForTileType(path);
+          ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
         }
       }
-
-      // grid lines
       ctx.strokeStyle="rgba(0,0,0,0.3)";
       ctx.strokeRect(px,py,TILE_SIZE,TILE_SIZE);
     }
@@ -1315,7 +1233,6 @@
         if(spriteImg && spriteImg.complete){
           ctx.drawImage(spriteImg, px, py, TILE_SIZE, TILE_SIZE);
         } else {
-          // fallback occupant colour
           ctx.fillStyle="#999";
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
@@ -1327,7 +1244,7 @@
     }
 
     /*******************************************************
-     * MODE SELECTOR (Place, Delete, Move)
+     * MODE SELECTOR
      *******************************************************/
     function setMode(mode){
       currentMode = mode;
@@ -1337,26 +1254,22 @@
     }
 
     /*******************************************************
-     * CANVAS EVENTS => Occupant & Panning & Pinch
+     * CANVAS EVENTS (pointer, zoom, occupant placement)
      *******************************************************/
     const canvas = document.getElementById("mapCanvas");
     const mapWrapper = document.querySelector(".mapWrapper");
 
-    // Helper to apply transform
     function updateCanvasTransform(){
       canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
 
-    // CLICK => occupant logic depends on currentMode
     canvas.addEventListener("click",(e)=>{
-      // If we were dragging or pinching, skip occupant logic (avoid accidental clicks).
       if(isDragging || activePointers.size > 1) return;
 
       const wrapperRect = mapWrapper.getBoundingClientRect();
       const mouseXInWrapper = e.clientX - wrapperRect.left;
       const mouseYInWrapper = e.clientY - wrapperRect.top;
 
-      // Inverse transform
       const worldX = (mouseXInWrapper - offsetX) / scale;
       const worldY = (mouseYInWrapper - offsetY) / scale;
 
@@ -1402,7 +1315,6 @@
       }
     });
 
-    // DESKTOP WHEEL => Zoom
     canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       const wrapperRect = mapWrapper.getBoundingClientRect();
@@ -1428,34 +1340,25 @@
       updateCanvasTransform();
     }, { passive: false });
 
-    /*******************************************************
-     * PointerDown/Move/Up => Panning + Pinch Zoom
-     *******************************************************/
     canvas.addEventListener("pointerdown", (e) => {
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      // If only one pointer is down => we might drag
       if (activePointers.size === 1) {
         isDragging = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
       }
-      // If two pointers => we start pinch
       else if (activePointers.size === 2) {
         isDragging = false; 
         initialPinchDistance = getPinchDistance();
         initialPinchScale = scale;
       }
     });
-
     window.addEventListener("pointermove", (e) => {
       if (!activePointers.has(e.pointerId)) return;
 
-      const oldData = activePointers.get(e.pointerId);
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       if (activePointers.size === 1 && isDragging) {
-        // single-finger panning
         const dx = e.clientX - dragStartX;
         const dy = e.clientY - dragStartY;
         dragStartX = e.clientX;
@@ -1465,13 +1368,11 @@
         updateCanvasTransform();
       } 
       else if (activePointers.size === 2) {
-        // pinch zoom
         const newDist = getPinchDistance();
         const scaleRatio = newDist / initialPinchDistance;
         let newScale = initialPinchScale * scaleRatio;
         newScale = Math.min(Math.max(newScale, minScale), maxScale);
 
-        // We want to zoom around the midpoint of the two touches:
         const midpoint = getPinchMidpoint();
         const wrapperRect = mapWrapper.getBoundingClientRect();
         const midXInWrapper = midpoint.x - wrapperRect.left;
@@ -1488,7 +1389,6 @@
         e.preventDefault();
       }
     });
-
     window.addEventListener("pointerup", (e) => {
       activePointers.delete(e.pointerId);
       if (activePointers.size < 2) {
@@ -1498,7 +1398,6 @@
         isDragging = false;
       }
     });
-
     window.addEventListener("pointercancel", (e) => {
       activePointers.delete(e.pointerId);
       if (activePointers.size < 2) {
@@ -1508,7 +1407,6 @@
         isDragging = false;
       }
     });
-
     function getPinchDistance() {
       if (activePointers.size !== 2) return 0;
       const points = [...activePointers.values()];
