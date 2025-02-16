@@ -237,8 +237,10 @@
     const tileTextures = {};
     const occupantSpritesMap = {};
 
-    // Added "desertBoulder.png" and "junglerock1.png" references in logic below as scatter, 
-    // but we do NOT remove any existing references or assets.
+    /*
+      We added the four new tile types for any code references to "marbleCracked", "limestone1/2/3".
+      No paths changed, no assets removed.
+    */
 
     const tileAssetMapping = {
       // GRASS
@@ -290,7 +292,7 @@
       // DIRT
       "dirt": {
         folder: "dirt",
-        files: ["dirt1.png","dirt2.png","dirt3.png"] 
+        files: ["dirt1.png","dirt2.png","dirt3.png"]
       },
       "dirtCracked": {
         folder: "dirt",
@@ -365,7 +367,7 @@
         files: ["brimstone2.png"]
       },
 
-      // BUILDINGS
+      // BUILDINGS (walls, floors, etc.)
       "stone": {
         folder: "buildings/walls",
         files: ["stoneBlock.png"]
@@ -425,6 +427,28 @@
         folder: "buildings/floors",
         files: ["marble4.png"]
       },
+
+      /*
+        New explicit tile types so the code references them
+        correctly:
+      */
+      "marbleCracked": {
+        folder: "buildings/floors",
+        files: ["marbleCracked.png"]
+      },
+      "limestone1": {
+        folder: "buildings/walls",
+        files: ["limestone1.png"]
+      },
+      "limestone2": {
+        folder: "buildings/walls",
+        files: ["limestone2.png"]
+      },
+      "limestone3": {
+        folder: "buildings/walls",
+        files: ["limestone3.png"]
+      },
+
       "darktile": {
         folder: "buildings/walls",
         files: ["darktile1.png","darktile2.png","darktile3.png","darktile4.png"]
@@ -449,8 +473,7 @@
         files: []
       },
 
-      // A “scatterStoneGrass” tile referencing e.g. junglerock1.png 
-      // (we won't remove anything else, just add a new tile type):
+      // scatterStoneGrass = uses junglerock1.png for rock scatter
       "scatterStoneGrass": {
         folder: "jungle",
         files: ["junglerock1.png"]
@@ -498,6 +521,13 @@
         marble2:"#efefef",
         marble3:"#dddddd",
         marble4:"#cccccc",
+
+        // newly added fallback colours
+        marbleCracked:"#bbbbbb",
+        limestone1:"#a09e84",
+        limestone2:"#9b9679",
+        limestone3:"#908f72",
+
         darktile:"#333333",
         farmland:"#9fc648",
         cave_floor:"#6e6e6e",
@@ -560,7 +590,6 @@
     function getMapSettings(theme){
       switch(theme){
         case "desert":
-          // no grass in the distribution
           return {
             baseDist: { "sand":0.6, "dirtCracked":0.1, "dirt":0.1, "stone":0.1 },
             waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
@@ -632,6 +661,9 @@
       }
     }
 
+    /*******************************************************
+     * GENERATE MAP
+     *******************************************************/
     function generateMap(){
       occupantInHand=null;
       offsetX=0; offsetY=0; scale=1.0;
@@ -651,6 +683,7 @@
       } else {
         initMap(settings.baseDist);
 
+        // Water
         if(doWater){
           for(let i=0;i<settings.waterBodies;i++){
             if(theme==="volcanic"){
@@ -667,8 +700,9 @@
             }
           }
         }
+
+        // Roads
         if(doRoads){
-          // Up to 3 roads from edge to edge:
           const roadCount = Math.min(settings.roads, 3);
           for(let i=0;i<roadCount;i++){
             createRoadFromEdgeToEdge(theme);
@@ -676,20 +710,25 @@
         }
       }
 
+      // Buildings
       if(doBuildings && !settings.isCavern && settings.buildings>0){
         createBuildings(settings.buildings);
       }
 
+      // Decorate
       decorateBiome(theme);
 
+      // Fields
       if(doFields){
         createFields(3);
       }
+
+      // City Walls
       if(doCityWalls){
         createIrregularCityWalls(); 
       }
 
-      // If city => generate squares
+      // City squares
       if(theme==="city"){
         createCitySquares();
       }
@@ -697,6 +736,9 @@
       drawMap();
     }
 
+    /*******************************************************
+     * INIT MAP
+     *******************************************************/
     function initMap(dist){
       mapData=[];
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -719,19 +761,18 @@
     }
 
     /*******************************************************
-     * BIOME DECORATION & SCATTER
+     * BIOME DECORATION
      *******************************************************/
     function decorateBiome(theme){
       if(theme==="desert"){
         decorateDesert();
-      } 
-      else if(theme==="grassland" || theme==="forest" || theme==="mountain"){
-        // scatter some small rocks from the jungle folder
+      } else if(theme==="grassland" || theme==="forest" || theme==="mountain"){
         scatterGrassRocks(80); 
       }
     }
+
     function decorateDesert(){
-      // scatter cacti, palm, dune or boulder on top of sand/dirt/dirtCracked
+      // scatter cacti, palm, dune, boulder
       for(let i=0;i<250;i++){
         let x=Math.floor(Math.random()*GRID_WIDTH);
         let y=Math.floor(Math.random()*GRID_HEIGHT);
@@ -750,12 +791,12 @@
         }
       }
     }
+
     function scatterGrassRocks(num){
       for(let i=0;i<num;i++){
         let gx=Math.floor(Math.random()*GRID_WIDTH);
         let gy=Math.floor(Math.random()*GRID_HEIGHT);
         let c=mapData[gy][gx];
-        // If it's grass or dirt or stone, we can place a "scatterStoneGrass"
         if(["grass","dirt","stone"].includes(c.type) && Math.random()<0.2){
           c.type="scatterStoneGrass";
         }
@@ -776,6 +817,7 @@
       carveWideExits(largestMap,3);
       convertBoolMapToCavern(largestMap);
     }
+
     function randomBoolMap(chance){
       let out=[];
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -787,6 +829,7 @@
       }
       return out;
     }
+
     function doCAStep(bm){
       let newM=[];
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -800,6 +843,7 @@
       }
       return newM;
     }
+
     function countFloorNeighbours(bm,x,y){
       let c=0;
       for(let dy=-1;dy<=1;dy++){
@@ -813,6 +857,7 @@
       }
       return c;
     }
+
     function keepLargestRegion(bm){
       let visited=[];
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -860,6 +905,7 @@
       }
       return { largestMap,largestRegion:bestRegion };
     }
+
     function carveWideExits(boolMap,width){
       let needed=2;
       while(needed>0){
@@ -867,6 +913,7 @@
         needed--;
       }
     }
+
     function carveRandomWideTunnel(boolMap,w){
       let tries=0,cx,cy;
       while(tries<300){
@@ -879,6 +926,7 @@
       let ey=Math.floor(Math.random()*GRID_HEIGHT);
       carveCorridor(boolMap,cx,cy,ex,ey,w);
     }
+
     function carveCorridor(boolMap,x1,y1,x2,y2,w){
       let steps=0;
       while((x1!==x2||y1!==y2)&&steps<9999){
@@ -889,6 +937,7 @@
       }
       carveCircle(boolMap,x1,y1,w);
     }
+
     function carveCircle(boolMap,cx,cy,r){
       for(let dy=-r;dy<=r;dy++){
         for(let dx=-r;dx<=r;dx++){
@@ -901,6 +950,7 @@
         }
       }
     }
+
     function convertBoolMapToCavern(bm){
       mapData=[];
       for(let y=0;y<GRID_HEIGHT;y++){
@@ -924,11 +974,13 @@
       let sy=Math.floor(Math.random()*GRID_HEIGHT);
       floodFillFluid(sx,sy,maxSize,"water");
     }
+
     function createLavaBody(maxSize){
       let sx=Math.floor(Math.random()*GRID_WIDTH);
       let sy=Math.floor(Math.random()*GRID_HEIGHT);
       floodFillFluid(sx,sy,maxSize,"lava");
     }
+
     function floodFillFluid(sx,sy,maxSize,tileType){
       let stack=[[sx,sy]];
       let size=0;
@@ -942,6 +994,7 @@
         stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
     }
+
     function createMeanderingRiver(maxLength, fluid="water"){
       let edges=["top","bottom","left","right"];
       let chosen=edges[Math.floor(Math.random()*edges.length)];
@@ -960,6 +1013,7 @@
         x+=dir.dx; y+=dir.dy;
       }
     }
+
     function pickRiverDir(edge){
       switch(edge){
         case "top":    return {dx: Math.random()<0.5?1:-1, dy:1};
@@ -969,6 +1023,7 @@
         default:       return {dx:0,dy:1};
       }
     }
+
     function turnSlightly(dir){
       const leftTurn={
         "1,0":{dx:0,dy:-1},"-1,0":{dx:0,dy:1},
@@ -987,19 +1042,21 @@
     /*******************************************************
      * ROADS
      *******************************************************/
-    // Original createRoad function remains, 
-    // but we add createRoadFromEdgeToEdge so roads truly cross the map:
+    /*
+      The newly introduced approach to create roads crossing from an edge to another, 
+      bridging water/lava with "woodfloor," plus the older method.
+    */
+
     function createRoadFromEdgeToEdge(theme){
-      // pick random edges
       let edgeList = ["top","bottom","left","right"];
       let startEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
       let endEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
-      // ensure different edge if possible
       let tries=0;
       while(endEdge===startEdge && tries<10){
         endEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
         tries++;
       }
+
       let sx, sy, ex, ey;
       switch(startEdge){
         case "top":    sx=Math.floor(Math.random()*GRID_WIDTH); sy=0; break;
@@ -1017,9 +1074,7 @@
     }
 
     function carveStraightRoad(theme, sx, sy, ex, ey){
-      // Bresenham line from (sx, sy) to (ex, ey). 
-      // If crossing water/lava => place "woodfloor" 
-      // else place roaddirt or some chance of limestone
+      // Bresenham line
       let dx=Math.abs(ex-sx), sxSign=sx<ex?1:-1;
       let dy=-Math.abs(ey-sy), sySign=sy<ey?1:-1;
       let err=dx+dy;
@@ -1032,17 +1087,14 @@
         if(e2<=dx){err+=dx;y+=sySign;}
       }
     }
+
     function carveRoadTile(theme, rx, ry){
       if(rx<0||ry<0||rx>=GRID_WIDTH||ry>=GRID_HEIGHT)return;
       let cell=mapData[ry][rx];
       if(cell.type==="water"||cell.type==="lava"){
-        // place "woodfloor" as bridge
         cell.type="woodfloor";
       } else {
-        // desert, snow, grassland => roaddirt
-        // small chance for limestone scatter
         if(Math.random()<0.05){
-          // pick one of: "limestone1", "limestone2", or "limestone3"
           const limestones=["limestone1","limestone2","limestone3"];
           cell.type = pickRandom(limestones);
         } else {
@@ -1051,7 +1103,7 @@
       }
     }
 
-    // Original function remains if needed for random roads:
+    // The old random approach to roads
     function createRoad(maxLength,minW,maxW){
       let x,y;
       if(Math.random()<0.5){
@@ -1071,6 +1123,7 @@
         if(x<0||x>=GRID_WIDTH||y<0||y>=GRID_HEIGHT)break;
       }
     }
+
     function carveRoadBand(cx,cy,width){
       const r=Math.floor(width/2);
       for(let dy=-r;dy<=r;dy++){
@@ -1078,7 +1131,6 @@
           let nx=cx+dx, ny=cy+dy;
           if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
             let c=mapData[ny][nx];
-            // if water => woodfloor, else roaddirt
             if(c.type==="water"||c.type==="lava"){
               c.type="woodfloor";
             } else {
@@ -1088,6 +1140,7 @@
         }
       }
     }
+
     function getRandomDir(prev){
       let ds=[{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}];
       if(prev&&Math.random()<0.6)return prev;
@@ -1097,10 +1150,8 @@
     /*******************************************************
      * BUILDINGS
      *******************************************************/
-    // We add two new multi-room shapes, but keep the old shapes intact.
-
+    // multi-room shapes plus older shapes
     const buildingShapes=[
-      // existing shapes
       { width:4,height:4, layout:[
         [1,1,1,1],
         [1,0,0,1],
@@ -1128,7 +1179,7 @@
         [1,0,0,0,0,0,1],
         [1,1,1,1,1,1,1]
       ]},
-      // new multi-room shape A
+      // multi-room expansions
       { width:8,height:6, layout:[
         [1,1,1,1,1,1,1,1],
         [1,0,0,1,0,0,0,1],
@@ -1137,7 +1188,6 @@
         [1,0,0,0,0,1,0,1],
         [1,1,1,1,1,1,1,1]
       ]},
-      // new multi-room shape B
       { width:9,height:7, layout:[
         [1,1,1,1,1,1,1,1,1],
         [1,0,0,0,0,0,0,0,1],
@@ -1148,6 +1198,7 @@
         [1,1,1,1,1,1,1,1,1]
       ]}
     ];
+
     const possibleFloors=["marble1","marble2","marble3","marble4"];
     let chosenFloorTile=null;
 
@@ -1165,6 +1216,7 @@
         }
       }
     }
+
     function canPlaceBuilding(sx,sy,shape){
       for(let y=0;y<shape.height;y++){
         for(let x=0;x<shape.width;x++){
@@ -1179,6 +1231,7 @@
       }
       return true;
     }
+
     function placeBuilding(sx,sy,shape){
       let localLayout=shape.layout.map(r=>r.slice());
       subdivideBuilding(localLayout);
@@ -1186,10 +1239,10 @@
       ensureAccessibility(localLayout);
       stampBuilding(localLayout,sx,sy);
     }
+
     function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
     function subdivideBuilding(lay){
-      // same approach as before
       const h=lay.length, w=lay[0].length;
       if(w>=7){
         let wx=Math.floor(w/2);
@@ -1208,6 +1261,7 @@
         lay[wy][doorX]=2;
       }
     }
+
     function placeExteriorDoor(lay){
       const h=lay.length, w=lay[0].length;
       let cands=[];
@@ -1229,7 +1283,9 @@
         }
       }
     }
+
     function isWallish(v){return v===1||v===2;}
+
     function hasExactlyTwoOrthWalls(lay,x,y){
       let up=(y>0)&&isWallish(lay[y-1][x]);
       let down=(y<lay.length-1)&&isWallish(lay[y+1][x]);
@@ -1238,6 +1294,7 @@
       let c=(up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
       return (c===2)&&((up&&down)||(left&&right));
     }
+
     function ensureAccessibility(lay){
       const floors=collectFloor(lay);
       if(!floors.length)return;
@@ -1269,6 +1326,7 @@
         forceInteriorDoor(lay,visited);
       }
     }
+
     function collectFloor(lay){
       let out=[];
       for(let y=0;y<lay.length;y++){
@@ -1279,6 +1337,7 @@
       }
       return out;
     }
+
     function collectDoorCoords(lay){
       let out=[];
       for(let y=0;y<lay.length;y++){
@@ -1288,9 +1347,11 @@
       }
       return out;
     }
+
     function onPerimeter(lay,x,y){
       return (x===0||y===0||x===lay[0].length-1||y===lay.length-1);
     }
+
     function forceInteriorDoor(lay,visited){
       const h=lay.length,w=lay[0].length;
       for(let y=1;y<h-1;y++){
@@ -1316,6 +1377,7 @@
         }
       }
     }
+
     function stampBuilding(lay,sx,sy){
       for(let y=0;y<lay.length;y++){
         for(let x=0;x<lay[0].length;x++){
@@ -1332,22 +1394,18 @@
     }
 
     /*******************************************************
-     * CITY SQUARES - decorative floors
+     * CITY SQUARES
      *******************************************************/
     function createCitySquares(){
-      // We'll place 2-4 squares in random places. 4x4 to 6x6
       const squareCount = 2 + Math.floor(Math.random()*3);
       for(let i=0;i<squareCount;i++){
         let w=4 + Math.floor(Math.random()*3);
         let h=4 + Math.floor(Math.random()*3);
         let sx=Math.floor(Math.random()*(GRID_WIDTH - w));
         let sy=Math.floor(Math.random()*(GRID_HEIGHT- h));
-        // stamp a decorative pattern with e.g. marble1,2,3,Cracked
         for(let yy=sy; yy<sy+h; yy++){
           for(let xx=sx; xx<sx+w; xx++){
-            // skip if water or building wall or door
             if(["wall","door","negative"].includes(mapData[yy][xx].type)) continue;
-            // random floor pattern
             let r=Math.random();
             if(r<0.2){
               mapData[yy][xx].type="marbleCracked";
@@ -1453,6 +1511,7 @@
       const cell=mapData[gy][gx];
       const px=gx*TILE_SIZE, py=gy*TILE_SIZE;
 
+      // farmland with crop
       if(cell.type==="farmland" && cell.crop!==undefined){
         const farmlandImgs=tileTextures["farmland"];
         let chosen=farmlandImgs[cell.crop];
@@ -1463,6 +1522,7 @@
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
       }
+      // city walls with forced single texture
       else if(cell.type==="wall" && cell.chosenWallFile){
         const arr = tileTextures["wall"] || [];
         let forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
@@ -1473,6 +1533,7 @@
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
       }
+      // occupant or normal
       else if(!cell.occupant){
         let arr=tileTextures[cell.type]||[];
         let chosen=arr.length ? arr[Math.floor(Math.random()*arr.length)] : null;
@@ -1628,6 +1689,7 @@
       if(activePointers.size<2)initialPinchDistance=0;
       if(activePointers.size===0)isDragging=false;
     });
+
     function getPinchDistance(){
       if(activePointers.size!==2)return 0;
       const arr=[...activePointers.values()];
