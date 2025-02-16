@@ -85,6 +85,20 @@
       font-size: 1rem;
       user-select: none;
     }
+
+    /* Additional styling for sliders */
+    .sliderContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin: 0 10px;
+    }
+    .sliderContainer label {
+      margin: 3px 0;
+    }
+    .sliderContainer input[type='range'] {
+      width: 150px;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +111,7 @@
     <div class="controls">
       <label>
         Map Biome:
-        <select id="mapType">
+        <select id="mapType" onchange="setupSliders()">
           <option value="desert">Desert</option>
           <option value="city">City</option>
           <option value="grassland" selected>Grassland</option>
@@ -193,6 +207,11 @@
       <button class="mapButton" onclick="setMode('place')">Place</button>
       <button class="mapButton" onclick="setMode('delete')">Delete</button>
       <button class="mapButton" onclick="setMode('move')">Move</button>
+    </div>
+
+    <!-- NEW: a container that will hold our dynamic sliders -->
+    <div id="sliderControls" class="controls" style="flex-wrap: wrap; border: 1px solid #660000; border-radius: 4px; padding: 1rem;">
+      <!-- Sliders will appear here after calling setupSliders() -->
     </div>
 
     <div class="mapWrapper">
@@ -563,6 +582,8 @@
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
+    // We store these defaults in a function, but they will be overridden
+    // by slider values if the user adjusts them.
     function getMapSettings(theme){
       switch(theme){
         case "desert":
@@ -633,6 +654,120 @@
     }
 
     /*******************************************************
+     * SLIDER HANDLING (NEW)
+     *******************************************************/
+    // We'll store slider elements for easy access
+    let sliderCache = {};
+
+    function setupSliders() {
+      // Clear old sliders
+      const sliderContainer = document.getElementById("sliderControls");
+      sliderContainer.innerHTML = "";
+
+      // Identify selected theme
+      const theme = document.getElementById("mapType").value;
+      const settings = getMapSettings(theme);
+
+      // If it's a cavern, there's no baseDist or building roads etc. So skip.
+      if(settings.isCavern){
+        const msg = document.createElement("div");
+        msg.innerHTML = "<p>No sliders for caverns.</p>";
+        sliderContainer.appendChild(msg);
+        return;
+      }
+
+      // We'll make sliders for each baseDist entry:
+      const distKeys = Object.keys(settings.baseDist);
+      distKeys.forEach(tileType => {
+        const val = settings.baseDist[tileType];
+        // Create a container for this slider
+        const div = document.createElement("div");
+        div.className = "sliderContainer";
+
+        const label = document.createElement("label");
+        label.textContent = `${tileType} : ${val.toFixed(2)}`;
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = "1";
+        slider.step = "0.01";
+        slider.value = val;
+
+        // We'll update the label on input
+        slider.oninput = () => {
+          label.textContent = `${tileType} : ${slider.value}`;
+        };
+
+        // Store slider in a global object for later retrieval
+        sliderCache[tileType] = slider;
+
+        div.appendChild(label);
+        div.appendChild(slider);
+        sliderContainer.appendChild(div);
+      });
+
+      // Additional sliders for waterBodies, waterMaxSize, roads, roadMaxLength, buildings
+      // so the user can tweak them as well:
+      const paramSliders = [
+        { key: "waterBodies", min: 0, max: 10, step: 1 },
+        { key: "waterMaxSize", min: 0, max: 200, step: 5 },
+        { key: "roads", min: 0, max: 12, step: 1 },
+        { key: "roadMaxLength", min: 0, max: 200, step: 5 },
+        { key: "buildings", min: 0, max: 25, step: 1 },
+      ];
+
+      paramSliders.forEach(({key, min, max, step}) => {
+        const val = settings[key] || 0;
+        const div = document.createElement("div");
+        div.className = "sliderContainer";
+
+        const label = document.createElement("label");
+        label.textContent = `${key} : ${val}`;
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = min;
+        slider.max = max;
+        slider.step = step;
+        slider.value = val;
+
+        slider.oninput = () => {
+          label.textContent = `${key} : ${slider.value}`;
+        };
+
+        sliderCache[key] = slider;
+
+        div.appendChild(label);
+        div.appendChild(slider);
+        sliderContainer.appendChild(div);
+      });
+    }
+
+    // Overwrites the default baseDist with slider values if present
+    function applySlidersToSettings(settings){
+      if(settings.isCavern) return settings;
+
+      // baseDist
+      for(const tileType in settings.baseDist){
+        if(sliderCache[tileType]){
+          settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
+        }
+      }
+
+      // Then normal parameters
+      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings"];
+      paramKeys.forEach(k=>{
+        if(sliderCache[k]){
+          const v = parseFloat(sliderCache[k].value);
+          settings[k] = isNaN(v) ? settings[k] : v;
+        }
+      });
+
+      return settings;
+    }
+
+    /*******************************************************
      * MAP GENERATION
      *******************************************************/
     function generateMap(){
@@ -641,13 +776,16 @@
       updateCanvasTransform();
 
       const theme = document.getElementById("mapType").value;
+      let settings = getMapSettings(theme);
+
+      // NEW: apply any slider modifications to the defaults
+      settings = applySlidersToSettings(settings);
+
       const doBuildings = document.getElementById("buildingsCheck").checked;
       const doFields = document.getElementById("generateFields").checked;
       const doCityWalls = document.getElementById("cityWalls").checked;
       const doWater = document.getElementById("waterCheck").checked;
       const doRoads = document.getElementById("roadCheck").checked;
-
-      const settings = getMapSettings(theme);
 
       if(settings.isCavern){
         generateCavern();
@@ -1068,7 +1206,6 @@
       }
     }
 
-    // The critical small tweak:
     function carveRoadTile(theme, rx, ry){
       for(let dy=-1; dy<=1; dy++){
         for(let dx=-1; dx<=1; dx++){
@@ -1929,7 +2066,9 @@
       document.getElementById("occupantSprite").value="none";
     }
 
+    // Initialise sliders on page load, then preload images and generate
     window.onload=() => {
+      setupSliders();
       preloadImages(() => {
         generateMap();
       });
