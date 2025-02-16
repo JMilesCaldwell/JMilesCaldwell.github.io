@@ -1061,17 +1061,18 @@
 
     // UPDATED function for 2-tile-wide roads:
     function carveRoadTile(theme, rx, ry){
-      // Carve a small diamond shape (Manhattan distance <= 1) around (rx, ry)
+      // We'll carve a small diamond shape of radius 1 around (rx, ry).
       for(let dy=-1; dy<=1; dy++){
         for(let dx=-1; dx<=1; dx++){
           if(Math.abs(dx) + Math.abs(dy) <= 1){
             let nx = rx + dx;
             let ny = ry + dy;
             if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
-            let cell = mapData[ny][nx];
+            let cell=mapData[ny][nx];
             if(cell.type==="water"||cell.type==="lava"){
               cell.type="woodfloor";
             } else {
+              // small chance for limestone scatter
               if(Math.random()<0.05){
                 const limestones=["limestone1","limestone2","limestone3"];
                 cell.type = pickRandom(limestones);
@@ -1111,6 +1112,7 @@
           let nx=cx+dx, ny=cy+dy;
           if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
             let c=mapData[ny][nx];
+            // if water => woodfloor, else roaddirt
             if(c.type==="water"||c.type==="lava"){
               c.type="woodfloor";
             } else {
@@ -1129,7 +1131,7 @@
     /*******************************************************
      * BUILDINGS
      *******************************************************/
-    const buildingShapes = [
+    const buildingShapes=[
       // existing shapes
       { width:4,height:4, layout:[
         [1,1,1,1],
@@ -1144,8 +1146,9 @@
         [1,0,0,0,1],
         [1,1,1,1,1]
       ]},
-      { width:6,height:4, layout:[
+      { width:6,height:5, layout:[
         [1,1,1,1,1,1],
+        [1,0,0,0,0,1],
         [1,0,0,0,0,1],
         [1,0,0,0,0,1],
         [1,1,1,1,1,1]
@@ -1157,7 +1160,7 @@
         [1,0,0,0,0,0,1],
         [1,1,1,1,1,1,1]
       ]},
-      // new multi-room design A (8x6)
+      // new multi-room shape A
       { width:8,height:6, layout:[
         [1,1,1,1,1,1,1,1],
         [1,0,0,1,0,0,0,1],
@@ -1166,7 +1169,7 @@
         [1,0,0,0,0,1,0,1],
         [1,1,1,1,1,1,1,1]
       ]},
-      // new multi-room design B (9x7)
+      // new multi-room shape B
       { width:9,height:7, layout:[
         [1,1,1,1,1,1,1,1,1],
         [1,0,0,0,0,0,0,0,1],
@@ -1175,104 +1178,8 @@
         [1,0,0,1,0,1,0,0,1],
         [1,0,0,0,0,0,0,0,1],
         [1,1,1,1,1,1,1,1,1]
-      ]},
-      // L-shaped building (5x5)
-      { width:5,height:5, layout:[
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,1,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1]
-      ]},
-      // T-shaped building (7x5)
-      { width:7,height:5, layout:[
-        [0,1,1,1,1,1,0],
-        [1,1,0,0,0,1,1],
-        [1,0,0,0,0,0,1],
-        [1,1,0,0,0,1,1],
-        [0,1,1,1,1,1,0]
-      ]},
-      // U-shaped building (7x5)
-      { width:7,height:5, layout:[
-        [1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,1],
-        [1,0,1,1,1,0,1],
-        [1,0,0,0,0,0,1],
-        [1,1,1,0,1,1,1]
-      ]},
-      // Cross-shaped building (7x7)
-      { width:7,height:7, layout:[
-        [0,0,1,1,1,0,0],
-        [0,0,1,0,1,0,0],
-        [1,1,1,0,1,1,1],
-        [1,0,0,0,0,0,1],
-        [1,1,1,0,1,1,1],
-        [0,0,1,0,1,0,0],
-        [0,0,1,1,1,0,0]
-      ]},
-      // Irregular multi-room building (10x7)
-      { width:10,height:7, layout:[
-        [1,1,1,1,1,1,1,1,1,1],
-        [1,0,0,1,0,0,0,1,0,1],
-        [1,0,0,1,0,0,0,1,0,1],
-        [1,1,1,1,1,1,0,1,0,1],
-        [1,0,0,0,0,1,0,1,0,1],
-        [1,0,0,0,0,1,0,0,0,1],
-        [1,1,1,1,1,1,1,1,1,1]
-      ]},
-      // Building with a central courtyard (8x8)
-      { width:8,height:8, layout:[
-        [1,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,0,1],
-        [1,0,1,1,1,1,0,1],
-        [1,0,1,0,0,1,0,1],
-        [1,0,1,0,0,1,0,1],
-        [1,0,1,1,1,1,0,1],
-        [1,0,0,0,0,0,0,1],
-        [1,1,1,1,1,1,1,1]
-      ]},
-	    // 1. Irregular L-shaped building (6 columns x 5 rows)
-  { width: 6, height: 5, layout: [
-    [3, 3, 1, 1, 3, 3],
-    [3, 1, 0, 0, 1, 3],
-    [1, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 1],
-    [3, 1, 1, 1, 1, 3]
-  ]},
-  // 2. Diagonally cut building (7 columns x 5 rows)
-  { width: 7, height: 5, layout: [
-    [3, 1, 1, 1, 1, 1, 3],
-    [1, 0, 0, 0, 0, 1, 3],
-    [1, 0, 0, 0, 1, 3, 3],
-    [1, 0, 0, 0, 1, 3, 3],
-    [3, 1, 1, 1, 1, 1, 3]
-  ]},
-  // 3. Asymmetrical building (8 columns x 6 rows)
-  { width: 8, height: 6, layout: [
-    [3, 3, 1, 1, 1, 1, 3, 3],
-    [3, 1, 0, 0, 0, 1, 1, 3],
-    [1, 0, 0, 0, 0, 0, 1, 3],
-    [1, 0, 0, 0, 0, 0, 1, 3],
-    [3, 1, 0, 0, 0, 1, 1, 3],
-    [3, 3, 1, 1, 1, 1, 3, 3]
-  ]},
-  // 4. T-shaped building with a transparent right edge (9 columns x 5 rows)
-  { width: 9, height: 5, layout: [
-    [3, 1, 1, 1, 1, 1, 1, 1, 3],
-    [1, 0, 0, 0, 0, 0, 0, 1, 3],
-    [1, 0, 0, 3, 3, 3, 0, 1, 3],
-    [1, 0, 0, 0, 0, 0, 0, 1, 3],
-    [3, 1, 1, 1, 1, 1, 1, 1, 3]
-  ]},
-  // 5. Curved edge building missing a right corner (7 columns x 5 rows)
-  { width: 7, height: 5, layout: [
-    [1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 3, 3],
-    [1, 0, 0, 0, 0, 3, 3],
-    [1, 0, 0, 0, 0, 3, 3],
-    [1, 1, 1, 1, 1, 1, 1]
-  ]}
-];
+      ]}
+    ];
     const possibleFloors=["marble1","marble2","marble3","marble4"];
     let chosenFloorTile=null;
 
@@ -1294,7 +1201,7 @@
       for(let y=0;y<shape.height;y++){
         for(let x=0;x<shape.width;x++){
           const val=shape.layout[y][x];
-          if(val===1||val===0||val===2){
+          if(val===1||val===0){
             const t=mapData[sy+y][sx+x].type;
             if(["water","lava","roadstone","roaddirt","solidstone","magma","woodfloor"].includes(t)){
               return false;
@@ -1441,16 +1348,16 @@
         }
       }
     }
-    // Modified stampBuilding function: now a layout cell with value "3" is transparent.
+    // ***** MODIFIED FUNCTION: Each building now randomly picks a wall type *****
     function stampBuilding(lay,sx,sy){
+      // Choose a random wall type for this building:
+      const wallTypes = ["cobblestone", "limestone1", "limestone2", "limestone3", "darktile"];
+      const chosenWallType = wallTypes[Math.floor(Math.random() * wallTypes.length)];
       for(let y=0;y<lay.length;y++){
         for(let x=0;x<lay[0].length;x++){
           let val=lay[y][x];
-          if(val===3){
-            // Transparent block: do nothing, leave underlying tile unchanged.
-            continue;
-          } else if(val===1){
-            mapData[sy+y][sx+x].type="cobblestone";
+          if(val===1){
+            mapData[sy+y][sx+x].type = chosenWallType;
           } else if(val===0){
             mapData[sy+y][sx+x].type=chosenFloorTile;
           } else if(val===2){
