@@ -85,19 +85,33 @@
       font-size: 1rem;
       user-select: none;
     }
+
+    /* Additional styling for sliders */
+    .sliderContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin: 0 10px;
+    }
+    .sliderContainer label {
+      margin: 3px 0;
+    }
+    .sliderContainer input[type='range'] {
+      width: 150px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
     <p class="description">
-      "Generate caverns with thick tunnels, meandering rivers, farmland, city walls, jungle, snow, etc."
+      "Generate maps, place sprites, roll dice..."
     </p>
 
     <div class="controls">
       <label>
         Map Biome:
-        <select id="mapType">
+        <select id="mapType" onchange="setupSliders()">
           <option value="desert">Desert</option>
           <option value="city">City</option>
           <option value="grassland" selected>Grassland</option>
@@ -139,7 +153,13 @@
 
       <button class="mapButton" onclick="generateMap()">Generate Map</button>
 
-      <label>
+     <!-- A container that will hold our dynamic sliders -->
+    <div id="sliderControls" class="controls" style="flex-wrap: wrap; border: 1px solid #660000; border-radius: 4px; padding: 1rem;">
+      <!-- Sliders appear here via setupSliders() -->
+    </div>
+
+<br>
+     <label>
         Occupant Type:
         <select id="occupantType">
           <option value="none" selected>None</option>
@@ -194,7 +214,7 @@
       <button class="mapButton" onclick="setMode('delete')">Delete</button>
       <button class="mapButton" onclick="setMode('move')">Move</button>
     </div>
-
+      
     <div class="mapWrapper">
       <canvas id="mapCanvas" width="1000" height="1000"></canvas>
     </div>
@@ -202,7 +222,6 @@
     <div style="margin-top: 1rem;">
       <a href="index.html" class="mapButton">Home</a>
     </div>
-  </div>
 
   <script>
     /*******************************************************
@@ -563,6 +582,8 @@
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
+    // Original defaults, no forced caps here. We'll rely on code logic
+    // to handle extreme usage (like 100 buildings in a 50x50).
     function getMapSettings(theme){
       switch(theme){
         case "desert":
@@ -633,6 +654,110 @@
     }
 
     /*******************************************************
+     * SLIDER HANDLING
+     *******************************************************/
+    let sliderCache = {};
+
+    function setupSliders() {
+      const sliderContainer = document.getElementById("sliderControls");
+      sliderContainer.innerHTML = "";
+
+      const theme = document.getElementById("mapType").value;
+      const settings = getMapSettings(theme);
+
+      // If it's a cavern, skip
+      if(settings.isCavern){
+        const msg = document.createElement("div");
+        msg.innerHTML = "<p>No sliders for caverns.</p>";
+        sliderContainer.appendChild(msg);
+        return;
+      }
+
+      // Create a slider for each baseDist entry
+      const distKeys = Object.keys(settings.baseDist);
+      distKeys.forEach(tileType => {
+        const val = settings.baseDist[tileType];
+        const div = document.createElement("div");
+        div.className = "sliderContainer";
+
+        const label = document.createElement("label");
+        label.textContent = `${tileType} : ${val.toFixed(2)}`;
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = "1";
+        slider.step = "0.01";
+        slider.value = val;
+
+        slider.oninput = () => {
+          label.textContent = `${tileType} : ${slider.value}`;
+        };
+
+        sliderCache[tileType] = slider;
+
+        div.appendChild(label);
+        div.appendChild(slider);
+        sliderContainer.appendChild(div);
+      });
+
+      // Additional sliders for waterBodies, waterMaxSize, roads, roadMaxLength, buildings
+      // increased maximums:
+      const paramSliders = [
+        { key: "waterBodies",    min: 0,  max: 20, step: 1  },
+        { key: "waterMaxSize",   min: 0,  max: 500, step: 10 },
+        { key: "roads",          min: 0,  max: 20, step: 1  },
+        { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
+        { key: "buildings",      min: 0,  max: 50, step: 1  },
+      ];
+
+      paramSliders.forEach(({key, min, max, step}) => {
+        const val = settings[key] || 0;
+        const div = document.createElement("div");
+        div.className = "sliderContainer";
+
+        const label = document.createElement("label");
+        label.textContent = `${key} : ${val}`;
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = min;
+        slider.max = max;
+        slider.step = step;
+        slider.value = val;
+
+        slider.oninput = () => {
+          label.textContent = `${key} : ${slider.value}`;
+        };
+
+        sliderCache[key] = slider;
+
+        div.appendChild(label);
+        div.appendChild(slider);
+        sliderContainer.appendChild(div);
+      });
+    }
+
+    function applySlidersToSettings(settings){
+      if(settings.isCavern) return settings;
+      // baseDist
+      for(const tileType in settings.baseDist){
+        if(sliderCache[tileType]){
+          settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
+        }
+      }
+      // other numeric parameters
+      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings"];
+      paramKeys.forEach(k=>{
+        if(sliderCache[k]){
+          const v = parseFloat(sliderCache[k].value);
+          settings[k] = isNaN(v) ? settings[k] : v;
+        }
+      });
+      return settings;
+    }
+
+    /*******************************************************
      * MAP GENERATION
      *******************************************************/
     function generateMap(){
@@ -641,13 +766,14 @@
       updateCanvasTransform();
 
       const theme = document.getElementById("mapType").value;
+      let settings = getMapSettings(theme);
+      settings = applySlidersToSettings(settings);
+
       const doBuildings = document.getElementById("buildingsCheck").checked;
       const doFields = document.getElementById("generateFields").checked;
       const doCityWalls = document.getElementById("cityWalls").checked;
       const doWater = document.getElementById("waterCheck").checked;
       const doRoads = document.getElementById("roadCheck").checked;
-
-      const settings = getMapSettings(theme);
 
       if(settings.isCavern){
         generateCavern();
@@ -684,6 +810,14 @@
         createIrregularCityWalls(); 
       }
 
+      // REMOVE the forced max of 3 roads:
+      if(doRoads && !settings.isCavern){
+        for(let i=0; i<settings.roads; i++){
+          createRoadFromEdgeToEdge(theme);
+        }
+      }
+
+      // Building is subject to space constraints, but no forced small cap
       if(doBuildings && !settings.isCavern && settings.buildings>0){
         createBuildings(settings.buildings);
       }
@@ -696,13 +830,6 @@
 
       if(theme==="city"){
         createCitySquares();
-      }
-
-      if(doRoads && !settings.isCavern){
-        const roadCount = Math.min(settings.roads, 3);
-        for(let i=0;i<roadCount;i++){
-          createRoadFromEdgeToEdge(theme);
-        }
       }
 
       if(theme==="coastal"){
@@ -1026,7 +1153,7 @@
     }
 
     /*******************************************************
-     * ROADS
+     * ROADS (no forced capping now)
      *******************************************************/
     function createRoadFromEdgeToEdge(theme){
       const edgeList = ["top","bottom","left","right"];
@@ -1053,7 +1180,6 @@
       carveStraightRoad(theme, sx, sy, ex, ey);
     }
 
-    // *** CHANGED *** so that in "coastal" maps, water remains water
     function carveStraightRoad(theme, sx, sy, ex, ey){
       let dx=Math.abs(ex-sx), sxSign=sx<ex?1:-1;
       let dy=-Math.abs(ey-sy), sySign=sy<ey?1:-1;
@@ -1068,7 +1194,6 @@
       }
     }
 
-    // The critical small tweak:
     function carveRoadTile(theme, rx, ry){
       for(let dy=-1; dy<=1; dy++){
         for(let dx=-1; dx<=1; dx++){
@@ -1085,7 +1210,6 @@
               }
             }
             else {
-              // Otherwise normal road logic
               if(Math.random()<0.05){
                 const limestones=["limestone1","limestone2","limestone3"];
                 cell.type=limestones[Math.floor(Math.random()*limestones.length)];
@@ -1237,8 +1361,12 @@
     function createBuildings(numBuildings){
       const possibleFloors=["marble1","marble2","marble3","marble4"];
       chosenFloorTile = possibleFloors[Math.floor(Math.random()*possibleFloors.length)];
+      
+      // Loosen the attempts logic so higher slider values get a better chance:
+      // We'll go up to some bigger ceiling, e.g. 10,000 attempts max.
       let attempts=0, placed=0;
-      while(placed<numBuildings && attempts<numBuildings*50){
+      const maxAttempts = 10000; 
+      while(placed<numBuildings && attempts<maxAttempts){
         attempts++;
         const shape = buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
         const sx=Math.floor(Math.random()*(GRID_WIDTH-shape.width));
@@ -1929,7 +2057,9 @@
       document.getElementById("occupantSprite").value="none";
     }
 
+    // Initialise sliders on page load, then preload images and generate
     window.onload=() => {
+      setupSliders();
       preloadImages(() => {
         generateMap();
       });
