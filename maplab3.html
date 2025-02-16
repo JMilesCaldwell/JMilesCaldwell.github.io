@@ -498,7 +498,7 @@
         dirt: "#C2A15F",
         dirtCracked:"#b28a66",
         mud:"#6f4f3c",
-        sand: "#DDD593",
+        sand:"#DDD593",
         cactus: "#228b22",
         desertPalm: "#507f30",
         dune: "#d2c58c",
@@ -595,8 +595,9 @@
     function getMapSettings(theme){
       switch(theme){
         case "desert":
+          // Removed 'stone' from distribution; sum to 1.0
           return {
-            baseDist: { "sand":0.6, "dirtCracked":0.1, "dirt":0.1, "stone":0.1 },
+            baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
             waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
           };
         case "city":
@@ -629,19 +630,22 @@
             waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false
           };
         case "mudlands":
+          // Emphasise mud & swamp
           return {
-            baseDist:{ "dirt":0.4,"grass":0.1,"sand":0.1,"stone":0.1,"tree":0.3 },
+            baseDist:{ "mud":0.5, "dirt":0.2, "swamp":0.3 },
             waterBodies:3, waterMaxSize:30, roads:1, roadMaxLength:20, buildings:2, isCavern:false
           };
         case "coastal":
+          // No random water, we’ll carve a coastline ourselves
           return {
-            baseDist:{ "grass":0.3, "dirt":0.2, "sand":0.3, "water":0.2 },
-            waterBodies:2, waterMaxSize:70, roads:3, roadMaxLength:50, buildings:6, isCavern:false
+            baseDist:{ "grass":0.4, "dirt":0.3, "sand":0.3 },
+            waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false
           };
         case "riverlands":
+          // Remove random water from distribution; we’ll create one big meandering river
           return {
-            baseDist:{ "grass":0.4,"dirt":0.2,"water":0.3,"tree":0.1 },
-            waterBodies:1, waterMaxSize:100, roads:4, roadMaxLength:60, buildings:7, isCavern:false
+            baseDist:{ "grass":0.5,"dirt":0.3,"tree":0.2 },
+            waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false
           };
         case "swamp":
           return {
@@ -688,23 +692,36 @@
       } else {
         initMap(settings.baseDist);
 
-        if(doWater){
-          for(let i=0; i<settings.waterBodies; i++){
-            if(theme==="volcanic"){
-              createLavaBody(settings.waterMaxSize);
-            } else {
-              createWaterBody(settings.waterMaxSize);
+        // Custom coastline or big river for certain themes:
+        if(theme==="coastal"){
+          // forcibly skip random water bodies and do a coastline
+          createCoastLine();
+        }
+        else if(theme==="riverlands" && doWater){
+          // forcibly skip random water bodies, do one large river
+          createMeanderingRiver(settings.roadMaxLength, "water", 2); // radius=2 for a "huge" river
+        }
+        else {
+          // normal water if doWater is checked
+          if(doWater){
+            for(let i=0; i<settings.waterBodies; i++){
+              if(theme==="volcanic"){
+                createLavaBody(settings.waterMaxSize);
+              } else {
+                createWaterBody(settings.waterMaxSize);
+              }
             }
-          }
-          // meandering river
-          if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
-            if(theme==="volcanic"){
-              createMeanderingRiver(settings.roadMaxLength, "lava");
-            } else {
-              createMeanderingRiver(settings.roadMaxLength, "water");
+            // original meandering logic for some random cases
+            if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
+              if(theme==="volcanic"){
+                createMeanderingRiver(settings.roadMaxLength, "lava");
+              } else {
+                createMeanderingRiver(settings.roadMaxLength, "water");
+              }
             }
           }
         }
+
         if(doRoads){
           const roadCount = Math.min(settings.roads, 3);
           for(let i=0;i<roadCount;i++){
@@ -713,8 +730,7 @@
         }
       }
 
-      // *** CHANGED *** 
-      // Put city walls BEFORE we place buildings, so we can know the 'cityWallBounds' first
+      // Put city walls before placing buildings so we know the bounding box
       if(doCityWalls){
         createIrregularCityWalls(); 
       }
@@ -744,9 +760,8 @@
       for(let y=0; y<GRID_HEIGHT; y++){
         const row = [];
         for(let x=0; x<GRID_WIDTH; x++){
-          // *** ADDED *** We keep track of building occupancy
           const rand = Math.random();
-          let chosen = "grass";
+          let chosen = "grass"; // default fallback
           let cumul = 0;
           for(const t in dist){
             cumul += dist[t];
@@ -759,7 +774,7 @@
             type: chosen, 
             occupant: null,
             _chosenTileIndex: null,
-            hasBuilding: false // *** ADDED ***
+            hasBuilding: false
           });
         }
         mapData.push(row);
@@ -990,7 +1005,7 @@
       }
     }
 
-    function createMeanderingRiver(maxLength, fluid="water"){
+    function createMeanderingRiver(maxLength, fluid="water", r=1){
       const edges=["top","bottom","left","right"];
       const chosen=edges[Math.floor(Math.random()*edges.length)];
       let x=0, y=0;
@@ -1008,15 +1023,15 @@
       const steps=Math.floor(Math.random()*(maxLength/2)+maxLength/2);
       for(let i=0; i<steps; i++){
         if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) break;
-        carveRiverCircle(x,y,1,fluid);
+        carveRiverCircle(x,y,r,fluid);
         if(Math.random()<0.2) dir=turnSlightly(dir);
         x+=dir.dx; y+=dir.dy;
       }
     }
-    function carveRiverCircle(cx, cy, r, fluid){
-      for(let dy=-r; dy<=r; dy++){
-        for(let dx=-r; dx<=r; dx++){
-          if(dx*dx+dy*dy <= r*r){
+    function carveRiverCircle(cx, cy, radius, fluid){
+      for(let dy=-radius; dy<=radius; dy++){
+        for(let dx=-radius; dx<=radius; dx++){
+          if(dx*dx+dy*dy <= radius*radius){
             const nx=cx+dx, ny=cy+dy;
             if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
               mapData[ny][nx].type = fluid;
@@ -1212,7 +1227,7 @@
       { width: 6, height: 6, layout: [
           [1, 1, 1, 1, 1, 1],
           [1, 0, 3, 0, 0, 1],
-          [1, 0, 1, 3, 0, 1],
+          [1, 0, 1, 1, 0, 1],
           [1, 0, 3, 1, 0, 1],
           [1, 0, 0, 0, 0, 1],
           [1, 1, 1, 1, 1, 1]
@@ -1267,9 +1282,6 @@
         const shape = pickRandom(buildingShapes);
         const sx=Math.floor(Math.random()*(GRID_WIDTH-shape.width));
         const sy=Math.floor(Math.random()*(GRID_HEIGHT-shape.height));
-
-        // *** CHANGED *** Now canPlaceBuilding checks both collisions with existing buildings/walls
-        // and also whether it’s inside city walls if city walls are enabled.
         if(canPlaceBuilding(sx,sy,shape)){
           placeBuilding(sx,sy,shape);
           placed++;
@@ -1279,15 +1291,13 @@
 
     // *** CHANGED ***
     function canPlaceBuilding(sx,sy,shape){
-      // If cityWallBounds is set (meaning the user chose cityWalls), ensure building is mostly inside.
+      // If cityWallBounds is set (meaning the user chose cityWalls), ensure building is inside
       if(cityWallBounds) {
-        // Quick bounding-box check:
         const bx2 = sx + shape.width - 1;
         const by2 = sy + shape.height - 1;
         const cwX2 = cityWallBounds.x + cityWallBounds.w - 1;
         const cwY2 = cityWallBounds.y + cityWallBounds.h - 1;
 
-        // If the building extends outside that rectangle, fail:
         if(sx < cityWallBounds.x || sy < cityWallBounds.y ||
            bx2 > cwX2          || by2 > cwY2 ) {
           return false;
@@ -1299,11 +1309,9 @@
           const val=shape.layout[y][x];
           if(val===1||val===0){
             const cell=mapData[sy+y][sx+x];
-            // Already excludes roads, water, lava, etc. (existing code).
             if(["water","lava","roadstone","roaddirt","solidstone","magma","woodfloor"].includes(cell.type)){
               return false;
             }
-            // *** ADDED *** Don’t overlap walls or previously placed buildings
             if(cell.type==="wall" || cell.type==="door" || cell.type==="negative" || cell.hasBuilding){
               return false;
             }
@@ -1459,13 +1467,13 @@
           const cell = mapData[sy + y][sx + x];
           if (val === 1) {
             cell.type = chosenWallType;
-            cell.hasBuilding = true; // *** ADDED ***
+            cell.hasBuilding = true;
           } else if (val === 0) {
             cell.type = chosenFloorTile;
-            cell.hasBuilding = true; // *** ADDED ***
+            cell.hasBuilding = true;
           } else if (val === 2) {
             cell.type = "door";
-            cell.hasBuilding = true; // *** ADDED ***
+            cell.hasBuilding = true;
           } else if (val === 3) {
             // Transparent area
           }
@@ -1526,7 +1534,6 @@
     /*******************************************************
      * CITY WALLS
      *******************************************************/
-    // *** CHANGED *** We store a bounding rectangle so we know the area inside the walls:
     function createIrregularCityWalls(){
       const darkStoneWallFiles = [
         "darkStoneBlock.png",
@@ -1540,7 +1547,6 @@
       const startY = 2 + Math.floor(Math.random()*(GRID_HEIGHT - rectH -4));
       const thickness = 2 + Math.floor(Math.random()*2);
 
-      // *** ADDED *** store the bounding rectangle for building checks:
       cityWallBounds = {
         x: startX + thickness,
         y: startY + thickness,
@@ -1577,6 +1583,35 @@
         }
         cell.type="wall";
         cell.chosenWallFile = chosenFile;
+      }
+    }
+
+    /*******************************************************
+     * COASTLINE FUNCTION
+     *******************************************************/
+    function createCoastLine(){
+      // Decide top or bottom coast
+      const coastAtTop = Math.random()<0.5;
+      // Let’s carve 6 rows of water, then 3 rows of sand
+      const waterHeight = 6;
+      const sandHeight = 3;
+      const startRow = coastAtTop ? 0 : (GRID_HEIGHT - waterHeight);
+      // Water first
+      for(let y=startRow; y<startRow+waterHeight; y++){
+        for(let x=0; x<GRID_WIDTH; x++){
+          if(y>=0 && y<GRID_HEIGHT){
+            mapData[y][x].type = "water";
+          }
+        }
+      }
+      // Then a band of sand
+      const sandStart = coastAtTop ? waterHeight : (startRow - sandHeight);
+      for(let y=sandStart; y<sandStart+sandHeight; y++){
+        for(let x=0; x<GRID_WIDTH; x++){
+          if(y>=0 && y<GRID_HEIGHT){
+            mapData[y][x].type = "sand";
+          }
+        }
       }
     }
 
