@@ -129,12 +129,11 @@
         Add City Walls
       </label>
 
-      <!-- Newly added checkboxes for water and roads -->
+      <!-- Water & Road toggles -->
       <label>
         <input type="checkbox" id="waterCheck" />
         Generate Water
       </label>
-
       <label>
         <input type="checkbox" id="roadCheck" />
         Generate Roads
@@ -239,11 +238,7 @@
     const tileTextures = {};
     const occupantSpritesMap = {};
 
-    /**
-     * Re-organised so that "dirtCracked" is not used randomly by "dirt".
-     * We add new types for desert scatter: cactus, desertPalm, dune, etc.
-     * We keep all old references, not removing anything, only adding or adjusting.
-     */
+    // NOTE: We have appended "ancientTile.png" to the "wall" array so city walls won't fall back
     const tileAssetMapping = {
       // GRASS
       "grass": {
@@ -295,9 +290,7 @@
       "dirt": {
         folder: "dirt",
         files: ["dirt1.png","dirt2.png","dirt3.png"] 
-        //  Removed "dirtCracked.png" from here so it won't appear randomly in non-desert
       },
-      // The cracked dirt specifically for deserts/barrens:
       "dirtCracked": {
         folder: "dirt",
         files: ["dirtCracked.png"]
@@ -379,7 +372,8 @@
           "cobble1.png","cobble2.png","cobble3.png","cobble4.png",
           "darkStoneBlock.png","darktile1.png","darktile2.png","darktile3.png","darktile4.png",
           "limestone1.png","limestone2.png","limestone3.png",
-          "caveWall.png"
+          "caveWall.png",
+          "ancientTile.png"  <!-- Appended so “ancientTile.png” is recognised -->
         ]
       },
       "floor": {
@@ -445,7 +439,6 @@
           "caveMoss1.png","caveMoss2.png","cavePool.png","cavePoolsmall.png","cavePuddle.png"
         ]
       },
-      // For cells that are out-of-bounds in caverns:
       "negative": {
         folder: "",
         files: []
@@ -456,7 +449,7 @@
       const fallback = {
         grass:"#9AE582",
         tree: "#2f6a16",
-        denseforest:"#1c3e0a", 
+        denseforest:"#1c3e0a",
         junglegrass:"#4a9142",
         junglemud:"#5a4d38",
         jungletree:"#335019",
@@ -551,12 +544,11 @@
      * MAP SETTINGS
      *******************************************************/
     function getMapSettings(theme){
-      // Note that 'waterBodies' might become 'lavaBodies' if volcanic, but we keep the same numeric fields.
+      // We set “volcanic” waterBodies=1 so that one lava body can appear if water is toggled on.
       switch(theme){
         case "desert":
-          // Incorporate a chance for cracked dirt too
           return {
-            baseDist: { "sand":0.6, "dirtCracked":0.1, "dirt":0.1, "stone":0.1, "tree":0.0 }, 
+            baseDist: { "sand":0.6, "dirtCracked":0.1, "dirt":0.1, "stone":0.1, "tree":0.0 },
             waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
           };
         case "city":
@@ -584,10 +576,11 @@
             baseDist:{}, waterBodies:0, waterMaxSize:0, roads:0, roadMaxLength:0, buildings:0, isCavern:true
           };
         case "volcanic":
-          // Insert small chance for cracked dirt if we like, e.g. 0.1
+          // changed waterBodies to 1 so at least one lava body can appear
           return {
             baseDist:{ "barrens":0.5, "lavastone":0.3, "brimstone":0.1, "dirtCracked":0.1 },
-            waterBodies:0, waterMaxSize:0, roads:1, roadMaxLength:20, buildings:2, isCavern:false
+            waterBodies:1, waterMaxSize:50,
+            roads:1, roadMaxLength:20, buildings:2, isCavern:false
           };
         case "mudlands":
           return {
@@ -647,11 +640,10 @@
       } else {
         initMap(settings.baseDist);
 
-        // Water bodies or lava, if enabled:
+        // Water bodies or lava, if enabled
         if(doWater){
           for(let i=0;i<settings.waterBodies;i++){
             if(theme==="volcanic"){
-              // use lava bodies
               createLavaBody(settings.waterMaxSize);
             } else {
               createWaterBody(settings.waterMaxSize);
@@ -667,7 +659,6 @@
           }
         }
 
-        // Roads, if enabled
         if(doRoads){
           for(let r=0;r<settings.roads;r++){
             createRoad(settings.roadMaxLength,2,3);
@@ -675,19 +666,15 @@
         }
       }
 
-      // building generation if checked
       if(doBuildings && !settings.isCavern && settings.buildings>0){
         createBuildings(settings.buildings);
       }
 
-      // desert scatter (cacti, palm, dunes, etc.) or other biome decorations:
       decorateBiome(theme);
 
-      // farmland
       if(doFields){
         createFields(3);
       }
-
       if(doCityWalls){
         createIrregularCityWalls(); 
       }
@@ -717,23 +704,19 @@
     }
 
     /*******************************************************
-     * DECORATE BIOME
+     * DECORATE BIOME (basic desert scatter, etc.)
      *******************************************************/
     function decorateBiome(theme){
-      // Minimal extra: if desert, scatter some cacti, palm, dune randomly on top of existing sand or dirtCracked.
       if(theme==="desert"){
         decorateDesert();
       }
-      // Additional expansions can be made for other biomes if needed.
     }
-
     function decorateDesert(){
-      // We'll do some random scattering of cacti/palms/dunes.
+      // scatter cacti, palm, dune on top of sand, dirtCracked, or dirt
       for(let i=0;i<250;i++){
         let x=Math.floor(Math.random()*GRID_WIDTH);
         let y=Math.floor(Math.random()*GRID_HEIGHT);
         let cell=mapData[y][x];
-        // only if it's sand or dirtCracked or dirt do we place scatter
         if(["sand","dirtCracked","dirt"].includes(cell.type)){
           let r=Math.random();
           if(r<0.1){
@@ -757,7 +740,6 @@
       for(let i=0;i<steps;i++){
         boolMap=doCAStep(boolMap);
       }
-      // keep largest region
       const { largestMap }=keepLargestRegion(boolMap);
       carveWideExits(largestMap,3);
       convertBoolMapToCavern(largestMap);
@@ -915,6 +897,7 @@
       let sy=Math.floor(Math.random()*GRID_HEIGHT);
       floodFillFluid(sx,sy,maxSize,"lava");
     }
+    // Reduced skip from 0.2 -> 0.1 so fluid expansions are more likely.
     function floodFillFluid(sx,sy,maxSize,tileType){
       let stack=[[sx,sy]];
       let size=0;
@@ -922,14 +905,12 @@
         let[cx,cy]=stack.pop();
         if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT)continue;
         if(mapData[cy][cx].type===tileType)continue;
-        // Random skip to avoid huge lumps
-        if(Math.random()<0.2)continue;
+        if(Math.random()<0.1)continue; // random skip
         mapData[cy][cx].type=tileType;
         size++;
         stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
     }
-
     function createMeanderingRiver(maxLength, fluid="water"){
       let edges=["top","bottom","left","right"];
       let chosen=edges[Math.floor(Math.random()*edges.length)];
@@ -1246,71 +1227,53 @@
     }
 
     /*******************************************************
-     * CITY WALLS (RECTANGULAR + IRREGULAR EDGES)
+     * CITY WALLS
      *******************************************************/
     function createIrregularCityWalls(){
-      // 1) Pick a random building wall material from the same walls used in buildings:
       const buildingWallFiles = [
         "brick1.png","brick2.png","brick3.png","brick4.png","brick5.png",
         "cobble1.png","cobble2.png","cobble3.png","cobble4.png",
         "darkStoneBlock.png","darktile1.png","darktile2.png","darktile3.png","darktile4.png",
         "limestone1.png","limestone2.png","limestone3.png","ancientTile.png"
       ];
-      // convert them to tile type keys — we'll just store the filename, then store it in cell's .customWall
-      // The draw routine will only see .type, but let's cheat a bit: we'll do the same approach as building code, i.e. we stamp "cobblestone" or "wall" but with forced single texture. 
-      // We'll store chosenFile in a global for the city walls stamp.
       let chosenWallFile = buildingWallFiles[Math.floor(Math.random()*buildingWallFiles.length)];
 
-      // 2) Approx half the map: define a rectangle
       const rectW = Math.floor(GRID_WIDTH/2);
       const rectH = Math.floor(GRID_HEIGHT/2);
       const startX = 2 + Math.floor(Math.random()*(GRID_WIDTH - rectW -4));
       const startY = 2 + Math.floor(Math.random()*(GRID_HEIGHT - rectH -4));
-      const thickness = 2 + Math.floor(Math.random()*2); // 2 or 3
+      const thickness = 2 + Math.floor(Math.random()*2);
 
-      // 3) Carve top, right, bottom, left in a loop
-      // We'll add small random offsets in the perpendicular direction for irregularity.
-      // Skip roads to leave a gate.
-      carveWallEdge(chosenWallFile, startX, startY, startX+rectW, startY, thickness, true);
-      carveWallEdge(chosenWallFile, startX+rectW, startY, startX+rectW, startY+rectH, thickness, false);
-      carveWallEdge(chosenWallFile, startX+rectW, startY+rectH, startX, startY+rectH, thickness, true);
-      carveWallEdge(chosenWallFile, startX, startY+rectH, startX, startY, thickness, false);
+      carveWallEdge(chosenWallFile, startX,        startY,        startX+rectW, startY,        thickness, true);
+      carveWallEdge(chosenWallFile, startX+rectW,  startY,        startX+rectW, startY+rectH,  thickness, false);
+      carveWallEdge(chosenWallFile, startX+rectW,  startY+rectH,  startX,       startY+rectH,  thickness, true);
+      carveWallEdge(chosenWallFile, startX,        startY+rectH,  startX,       startY,        thickness, false);
     }
 
     function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal){
-      // We'll walk from (x1,y1) to (x2,y2). For each step, set a band of 'wall' or skip if it's road
-      // Add small single-tile deviations. If horizontal, deviate y by ±1 occasionally; if vertical, deviate x by ±1
       let dx = (x2===x1)? 0 : (x2>x1?1:-1);
       let dy = (y2===y1)? 0 : (y2>y1?1:-1);
 
       let cx = x1, cy = y1;
       while(cx!==x2 || cy!==y2){
-        // random small offset
         let offset = (Math.random()<0.2)? (Math.random()<0.5?1:-1) : 0;
         carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
-
         cx += dx;
         cy += dy;
       }
-      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile); // final corner
+      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile); 
     }
 
     function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
-      // If horizontal, offset is applied to Y
-      // If vertical, offset is applied to X
-      // Then we do a thickness band
       for(let i=0;i<thickness;i++){
         let xx = baseX + (horizontal? 0 : i+offset);
         let yy = baseY + (horizontal? i+offset : 0);
         if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-        // skip if road => gate
         let t = mapData[yy][xx].type;
         if(t==="roadstone" || t==="roaddirt"){
-          continue; // skip, leaving gate
+          continue; 
         }
-        // set to "wall" but in a forced single texture. We'll override it below:
         mapData[yy][xx].type = "wall";
-        // We'll stash the chosen file in occupant or some custom field:
         mapData[yy][xx].chosenWallFile = chosenFile;
       }
     }
@@ -1333,7 +1296,7 @@
       const cell=mapData[gy][gx];
       const px=gx*TILE_SIZE, py=gy*TILE_SIZE;
 
-      // farmland with a particular crop index
+      // farmland with crop
       if(cell.type==="farmland" && cell.crop!==undefined){
         const farmlandImgs=tileTextures["farmland"];
         let chosen=farmlandImgs[cell.crop];
@@ -1344,23 +1307,19 @@
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
       }
-      // walls with forced single texture
+      // city walls with forced single texture
       else if(cell.type==="wall" && cell.chosenWallFile){
-        // We forcibly draw the single chosen file for the city wall
         const arr = tileTextures["wall"] || [];
-        // Find the Image object in arr that has .src ending in cell.chosenWallFile
         let forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
         if(forcedImg && forcedImg.complete){
           ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
         } else {
-          // fallback
           ctx.fillStyle=getColorForTileType("wall");
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
       }
       // occupant or normal
       else if(!cell.occupant){
-        // normal tile draw
         let arr=tileTextures[cell.type]||[];
         let chosen=arr.length ? arr[Math.floor(Math.random()*arr.length)] : null;
         if(chosen && chosen.complete){
@@ -1370,20 +1329,18 @@
           ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
         }
       } 
-      // occupant
       else {
         drawOccupantSprite(ctx, cell.occupant, px, py);
       }
 
-      // grid stroke
       ctx.strokeStyle="rgba(0,0,0,0.3)";
       ctx.strokeRect(px,py,TILE_SIZE,TILE_SIZE);
     }
 
     function drawOccupantSprite(ctx, occupant, px, py){
-      if(occupant.sprite&&occupant.sprite!=="none"){
+      if(occupant.sprite && occupant.sprite!=="none"){
         let spr=occupantSpritesMap[occupant.sprite];
-        if(spr&&spr.complete){
+        if(spr && spr.complete){
           ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
         } else {
           ctx.fillStyle="#999";
@@ -1421,9 +1378,11 @@
       const wx=(mx-offsetX)/scale, wy=(my-offsetY)/scale;
       const tx=Math.floor(wx/TILE_SIZE), ty=Math.floor(wy/TILE_SIZE);
       if(tx<0||ty<0||tx>=GRID_WIDTH||ty>=GRID_HEIGHT)return;
+
       const occupantType=document.getElementById("occupantType").value;
       const occupantSprite=document.getElementById("occupantSprite").value;
       const tile=mapData[ty][tx];
+
       switch(currentMode){
         case "delete":
           if(tile.occupant){
