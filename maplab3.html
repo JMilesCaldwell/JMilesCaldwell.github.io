@@ -91,7 +91,7 @@
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
     <p class="description">
-      "A terrain generator and virtual tabletop for role-playing games on the go."
+      "Generate caverns with thick tunnels, meandering rivers, farmland, city walls, jungle, snow, etc."
     </p>
 
     <div class="controls">
@@ -594,7 +594,7 @@
     function getMapSettings(theme){
       switch(theme){
         case "desert":
-          // Removed 'stone' from distribution; sum to 1.0
+          // Kept original desert changes
           return {
             baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
             waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
@@ -628,20 +628,14 @@
             baseDist:{ "barrens":0.5, "lavastone":0.3, "brimstone":0.1, "dirtCracked":0.1 },
             waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false
           };
-        case "mudlands":
-          // Emphasise mud & swamp
-          return {
-            baseDist:{ "mud":0.5, "dirt":0.2, "swamp":0.3 },
-            waterBodies:3, waterMaxSize:30, roads:1, roadMaxLength:20, buildings:2, isCavern:false
-          };
         case "coastal":
-          // No random water, we’ll carve a coastline ourselves
+          // No random water: we'll do coastline with whitesand
           return {
-            baseDist:{ "grass":0.4, "dirt":0.3, "sand":0.3 },
+            baseDist:{ "grass":0.6, "dirt":0.4 },
             waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false
           };
         case "riverlands":
-          // Remove random water from distribution; we’ll create one big meandering river
+          // One large river if doWater is toggled
           return {
             baseDist:{ "grass":0.5,"dirt":0.3,"tree":0.2 },
             waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false
@@ -693,12 +687,10 @@
 
         // Custom coastline or big river for certain themes:
         if(theme==="coastal"){
-          // forcibly skip random water bodies and do a coastline
-          createCoastLine();
+          createCoastLine(); // forcibly skip random water bodies, do coastline
         }
         else if(theme==="riverlands" && doWater){
-          // forcibly skip random water bodies, do one large river
-          createMeanderingRiver(settings.roadMaxLength, "water", 2); // radius=2 for a "huge" river
+          createMeanderingRiver(settings.roadMaxLength, "water", 2); 
         }
         else {
           // normal water if doWater is checked
@@ -710,7 +702,6 @@
                 createWaterBody(settings.waterMaxSize);
               }
             }
-            // original meandering logic for some random cases
             if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
               if(theme==="volcanic"){
                 createMeanderingRiver(settings.roadMaxLength, "lava");
@@ -720,16 +711,9 @@
             }
           }
         }
-
-        if(doRoads){
-          const roadCount = Math.min(settings.roads, 3);
-          for(let i=0;i<roadCount;i++){
-            createRoadFromEdgeToEdge(theme);
-          }
-        }
       }
 
-      // Put city walls before placing buildings so we know the bounding box
+      // Put city walls before placing buildings so we know bounding box
       if(doCityWalls){
         createIrregularCityWalls(); 
       }
@@ -1591,7 +1575,7 @@
     function createCoastLine(){
       // Decide top or bottom coast
       const coastAtTop = Math.random()<0.5;
-      // Let’s carve 6 rows of water, then 3 rows of sand
+      // Let’s carve 6 rows of water, then 3 rows of "whitesand" 
       const waterHeight = 6;
       const sandHeight = 3;
       const startRow = coastAtTop ? 0 : (GRID_HEIGHT - waterHeight);
@@ -1603,12 +1587,14 @@
           }
         }
       }
-      // Then a band of sand
+      // Then a band of beach (whitesand)
       const sandStart = coastAtTop ? waterHeight : (startRow - sandHeight);
       for(let y=sandStart; y<sandStart+sandHeight; y++){
         for(let x=0; x<GRID_WIDTH; x++){
           if(y>=0 && y<GRID_HEIGHT){
-            mapData[y][x].type = "sand";
+            mapData[y][x].type = "water"; // or "whitesand" within the same tile type
+            // Actually we want "whitesand", which is in "water" folder. We'll store in the cell as type "whitesand".
+            mapData[y][x].type = "whitesand"; 
           }
         }
       }
