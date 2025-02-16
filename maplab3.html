@@ -114,7 +114,6 @@
         </select>
       </label>
 
-      <!-- New checkboxes for optional Water and Roads -->
       <label>
         <input type="checkbox" id="waterCheck" checked />
         Generate Water/Lava
@@ -124,7 +123,6 @@
         <input type="checkbox" id="roadsCheck" checked />
         Generate Roads
       </label>
-      <!-- End of new water & roads checkboxes -->
 
       <label>
         <input type="checkbox" id="buildingsCheck" />
@@ -209,9 +207,6 @@
   </div>
 
   <script>
-    /*******************************************************
-     * BASIC CONFIG & GLOBALS
-     *******************************************************/
     const TILE_SIZE = 20;
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
@@ -227,131 +222,121 @@
 
     let currentMode = 'place';
 
-    // Pan & Zoom
     let scale = 1.0, offsetX = 0, offsetY = 0;
     const minScale = 0.3, maxScale = 3.0;
     let isDragging = false, dragStartX = 0, dragStartY = 0;
     let activePointers = new Map();
     let initialPinchDistance = 0, initialPinchScale = 1.0;
 
-    /*******************************************************
-     * TILE TEXTURES
-     *******************************************************/
     const tileTextures = {};
     const occupantSpritesMap = {};
 
     /*
-      Revised tileAssetMapping to separate out "dirtCracked" from normal "dirt",
-      so that cracked dirt can be used in desert/vulcanic but not randomly in other biomes.
-      Also added placeholders for desert scatter items (cactus, palm, dunes, etc.).
-      Note: You can further refine distributions or create more tile types
-      if you want to ensure all sub-assets get used. This is an example structure.
+      Additional keys for separate wall/floor sets
+      so building walls and city walls never go blank.
     */
     const tileAssetMapping = {
-      "grass": {
+      grass: {
         folder: "grass",
         files: ["grasstile1.png","grasstile2.png","grasstile3.png","grasstile4.png","grasstile5.png"]
       },
-      "tree": {
+      tree: {
         folder: "grass",
         files: ["grasstree1.png","grasstree2.png"]
       },
-      "denseforest": {
+      denseforest: {
         folder: "forest",
         files: ["trees1.png","trees2.png","trees3.png","trees4.png","trees5.png"]
       },
-      "junglegrass": {
+      junglegrass: {
         folder: "jungle",
         files: ["jungleGrass.png"]
       },
-      "junglemud": {
+      junglemud: {
         folder: "jungle",
         files: ["junglemud1.png","junglemud2.png","junglemud3.png"]
       },
-      "jungletree": {
+      jungletree: {
         folder: "jungle",
         files: ["jungletree1.png","jungletree2.png","jungletree3.png","jungletree4.png"]
       },
-      "junglescatter": {
+      junglescatter: {
         folder: "jungle",
         files: ["jungleRoots.png","junglebush.png","junglebush2.png","junglefern.png","junglelog.png","junglelog2.png","junglevines.png"]
       },
-      "snow": {
+      snow: {
         folder: "snow",
         files: ["snow.png","powdersnow1.png","powdersnow2.png"]
       },
-      "ice": {
+      ice: {
         folder: "snow",
         files: ["ice1.png","ice2.png","blueice1.png","blueice2.png"]
       },
-      "snowtree": {
+      snowtree: {
         folder: "snow",
         files: ["snowTree.png"]
       },
-      "dirt": {
+      dirt: {
         folder: "dirt",
         files: ["dirt1.png","dirt2.png","dirt3.png"]
       },
-      "dirtcracked": {
+      dirtcracked: {
         folder: "dirt",
         files: ["dirtCracked.png"]
       },
-      "sand": {
+      sand: {
         folder: "desert",
         files: ["sand1.png","sand2.png","sand3.png"]
       },
-      /* Desert scatter types (cacti/palm trees/dunes). We'll do them in decorateBiome. */
-      "cactus": {
+      cactus: {
         folder: "desert",
         files: ["cactus1.png","cactus2.png","cactus3.png","cactus4.png","cactus5.png","cactus6.png"]
       },
-      "desertpalmtree": {
+      desertpalmtree: {
         folder: "desert",
         files: ["desertpalmtree1.png","desertpalmtree2.png","desertpalmtree3.png","desertpalmtree4.png","desertpalmtree5.png"]
       },
-      "desertscatter": {
+      desertscatter: {
         folder: "desert",
         files: ["desertBoulder.png","dune1.png","duneRocks1.png","duneRocks2.png","duneRocks3.png","sandRock.png"]
       },
-      "water": {
+      water: {
         folder: "water",
         files: ["water.png","waterrocks.png","waterrocks2.png","swamp.png","swamp2.png","whitesand.png"]
       },
-      "roadstone": {
+      roadstone: {
         folder: "buildings/floors",
         files: ["sandstonetile.png"]
       },
-      "roaddirt": {
+      roaddirt: {
         folder: "dirt",
         files: ["roadDirt.png"]
       },
-      "barrens": {
+      barrens: {
         folder: "vulcanic",
         files: ["barrens1.png","barrens2.png"]
       },
-      "lavastone": {
+      lavastone: {
         folder: "vulcanic",
         files: ["lavastone1.png","lavastone2.png","lavastone3.png","lavastone4.png","lavastone5.png"]
       },
-      /* We'll use these lava tiles in place of water for volcanic. */
-      "lava": {
+      lava: {
         folder: "vulcanic",
         files: ["lava1.png","lava2.png","lava3.png"]
       },
-      "magma": {
+      magma: {
         folder: "vulcanic",
         files: ["magma.png"]
       },
-      "brimstone": {
+      brimstone: {
         folder: "vulcanic",
         files: ["brimstone.png","brimstone2.png"]
       },
-      "stone": {
+      stone: {
         folder: "buildings/walls",
         files: ["stoneBlock.png"]
       },
-      /* For building walls – we store them all here, but we'll try to pick one type at a time */
-      "wall": {
+      wall: {
         folder: "buildings/walls",
         files: [
           "brick1.png","brick2.png","brick3.png","brick4.png","brick5.png",
@@ -360,7 +345,7 @@
           "limestone1.png","limestone2.png","limestone3.png","ancientTile.png","caveWall.png"
         ]
       },
-      "floor": {
+      floor: {
         folder: "buildings/floors",
         files: [
           "PlainTileRubble1.png","PlainTileRubble2.png","PlainTileRubble3.png","floorCastle.png",
@@ -368,38 +353,54 @@
           "tilerubble4.png","tilerubble5.png","woodfloor.png"
         ]
       },
-      "door": {
+      door: {
         folder: "buildings/doors",
         files: ["doorVault.png","doorWood1.png","doorWood2.png","gateStone.png","gateStone2.png","prisonBars.png","prisonGate.png"]
       },
-      "solidstone": {
+      solidstone: {
         folder: "cavern",
         files: ["caveRock.png","caveRockLarge.png"]
       },
-      "cave_floor": {
+      cave_floor: {
         folder: "cavern",
         files: [
           "cave1.png","cave2.png","caveBog.png","caveBones.png","caveCliff1.png","caveCliff2.png",
           "caveMoss1.png","caveMoss2.png","cavePool.png","cavePoolsmall.png","cavePuddle.png"
         ]
       },
-      "negative": {
+      negative: {
         folder: "",
         files: []
       },
-      "mud": {
+      mud: {
         folder: "dirt",
         files: ["dirtMud1.png","dirtMud2.png","dirtMud3.png"]
       },
-      "farmland": {
+      farmland: {
         folder: "farmland",
         files: ["corn.png","pumpkins.png","rye.png","sunflowers.png","vinyard.png","wheat.png"]
+      },
+      /*
+        Four new explicit keys for consistent building & city walls:
+      */
+      cobblestone: {
+        folder: "buildings/walls",
+        files: ["cobble1.png","cobble2.png","cobble3.png","cobble4.png"]
+      },
+      darktile: {
+        folder: "buildings/walls",
+        files: ["darktile1.png","darktile2.png","darktile3.png","darktile4.png","darkStoneBlock.png"]
+      },
+      limestone: {
+        folder: "buildings/walls",
+        files: ["limestone1.png","limestone2.png","limestone3.png"]
+      },
+      ancienttile: {
+        folder: "buildings/walls",
+        files: ["ancientTile.png"]
       }
     };
 
-    /*
-      To assign a default colour if an asset is missing or not loaded.
-    */
     function getColorForTileType(tt){
       const fallback = {
         grass:"#9AE582",
@@ -434,14 +435,15 @@
         cave_floor:"#6e6e6e",
         negative:"#000000",
         mud:"#6f4f3c",
-        farmland:"#9fc648"
+        farmland:"#9fc648",
+        cobblestone:"#999999",
+        darktile:"#444444",
+        limestone:"#bbb58a",
+        ancienttile:"#897B42"
       };
       return fallback[tt] || "#FFFFFF";
     }
 
-    /*******************************************************
-     * PRELOAD IMAGES
-     *******************************************************/
     function preloadImages(onComplete){
       const occupantSpriteNames = [
         "paladin","fighter","guardian","halfblood","berserker","assassin",
@@ -461,7 +463,6 @@
           onComplete();
         }
       }
-      // load tiles
       for(let tkey in tileAssetMapping){
         tileTextures[tkey] = [];
         const { folder, files } = tileAssetMapping[tkey];
@@ -476,7 +477,6 @@
           tileTextures[tkey].push(img);
         }
       }
-      // occupant sprites
       occupantSpriteNames.forEach(sp => {
         const img = new Image();
         img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
@@ -486,15 +486,11 @@
       });
     }
 
-    /*******************************************************
-     * MAP SETTINGS
-     *******************************************************/
     function getMapSettings(theme){
       switch(theme){
         case "desert":
-          // Weighted heavily to sand, some cracked dirt or normal dirt for variety
           return {
-            baseDist: { "sand":0.7, "dirtcracked":0.1, "dirt":0.1, "stone":0.05, "sand":0.05 },
+            baseDist: { sand:0.7, dirtcracked:0.1, dirt:0.1, stone:0.05, sand:0.05 },
             waterBodies:1,
             waterMaxSize:50,
             roads:2,
@@ -504,7 +500,7 @@
           };
         case "city":
           return {
-            baseDist: { "dirt":0.05,"stone":0.2,"grass":0.15,"tree":0.1 },
+            baseDist: { dirt:0.05, stone:0.2, grass:0.15, tree:0.1 },
             waterBodies:2,
             waterMaxSize:80,
             roads:8,
@@ -514,7 +510,7 @@
           };
         case "grassland":
           return {
-            baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
+            baseDist: { grass:0.6, tree:0.2, dirt:0.1, stone:0.05 },
             waterBodies:3,
             waterMaxSize:120,
             roads:4,
@@ -524,7 +520,7 @@
           };
         case "mountain":
           return {
-            baseDist: { "stone":0.4,"dirt":0.3,"grass":0.1,"tree":0.05 },
+            baseDist: { stone:0.4, dirt:0.3, grass:0.1, tree:0.05 },
             waterBodies:1,
             waterMaxSize:40,
             roads:3,
@@ -534,7 +530,7 @@
           };
         case "forest":
           return {
-            baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
+            baseDist: { denseforest:0.25, tree:0.3, grass:0.3, dirt:0.1, stone:0.05 },
             waterBodies:2,
             waterMaxSize:60,
             roads:2,
@@ -553,10 +549,9 @@
             isCavern:true
           };
         case "volcanic":
-          // no water, but we'll generate "lava" if water option is on
           return {
-            baseDist:{ "barrens":0.4, "lavastone":0.3, "brimstone":0.2, "dirtcracked":0.1 },
-            waterBodies:0, // We handle lava as "water" if toggled
+            baseDist:{ barrens:0.4, lavastone:0.3, brimstone:0.2, dirtcracked:0.1 },
+            waterBodies:0,
             waterMaxSize:80,
             roads:1,
             roadMaxLength:20,
@@ -565,7 +560,7 @@
           };
         case "mudlands":
           return {
-            baseDist:{ "dirt":0.4,"grass":0.1,"sand":0.1,"stone":0.1,"tree":0.3 },
+            baseDist:{ dirt:0.4, grass:0.1, sand:0.1, stone:0.1, tree:0.3 },
             waterBodies:3,
             waterMaxSize:30,
             roads:1,
@@ -575,7 +570,7 @@
           };
         case "coastal":
           return {
-            baseDist:{ "grass":0.3, "dirt":0.2, "sand":0.3, "water":0.2 },
+            baseDist:{ grass:0.3, dirt:0.2, sand:0.3, water:0.2 },
             waterBodies:2,
             waterMaxSize:70,
             roads:3,
@@ -585,7 +580,7 @@
           };
         case "riverlands":
           return {
-            baseDist:{ "grass":0.4,"dirt":0.2,"water":0.3,"tree":0.1 },
+            baseDist:{ grass:0.4, dirt:0.2, water:0.3, tree:0.1 },
             waterBodies:1,
             waterMaxSize:100,
             roads:4,
@@ -595,7 +590,7 @@
           };
         case "swamp":
           return {
-            baseDist:{ "dirt":0.3,"water":0.3,"grass":0.2,"tree":0.1,"mud":0.1 },
+            baseDist:{ dirt:0.3, water:0.3, grass:0.2, tree:0.1, mud:0.1 },
             waterBodies:2,
             waterMaxSize:80,
             roads:2,
@@ -605,7 +600,7 @@
           };
         case "jungle":
           return {
-            baseDist:{ "junglegrass":0.4, "junglemud":0.3, "jungletree":0.15, "junglescatter":0.15 },
+            baseDist:{ junglegrass:0.4, junglemud:0.3, jungletree:0.15, junglescatter:0.15 },
             waterBodies:3,
             waterMaxSize:60,
             roads:2,
@@ -615,7 +610,7 @@
           };
         case "snow":
           return {
-            baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
+            baseDist:{ snow:0.6, ice:0.3, snowtree:0.1 },
             waterBodies:2,
             waterMaxSize:40,
             roads:2,
@@ -625,7 +620,7 @@
           };
         default:
           return {
-            baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
+            baseDist:{ grass:0.6, tree:0.2, dirt:0.1, stone:0.05 },
             waterBodies:2,
             waterMaxSize:60,
             roads:4,
@@ -645,43 +640,32 @@
       const doBuildings = document.getElementById("buildingsCheck").checked;
       const doFields = document.getElementById("generateFields").checked;
       const doCityWalls = document.getElementById("cityWalls").checked;
-
-      // new toggles for water/lava and roads
       const doWater = document.getElementById("waterCheck").checked;
       const doRoads = document.getElementById("roadsCheck").checked;
 
       const settings = getMapSettings(theme);
 
-      // Cavern gets generated differently
       if(settings.isCavern){
         generateCavern();
       } else {
         initMap(settings.baseDist);
-
-        // only generate water if doWater
         if(doWater){
-          // For volcanic, we treat "water" calls as lava generation
           if(theme==="volcanic"){
             for(let i=0;i<3;i++){
-              // we can still keep waterBodies in settings, but produce lava
               createWaterBody(settings.waterMaxSize, "lava");
             }
-            // meandering lava "river"
-            if(Math.random()<0.3){ // random chance
+            if(Math.random()<0.3){
               createMeanderingRiver(settings.roadMaxLength, "lava");
             }
           } else {
             for(let i=0;i<settings.waterBodies;i++){
               createWaterBody(settings.waterMaxSize, "water");
             }
-            // chance for meandering river
             if(theme==="riverlands" || Math.random()<0.2){
               createMeanderingRiver(settings.roadMaxLength, "water");
             }
           }
         }
-
-        // only generate roads if doRoads
         if(doRoads){
           for(let r=0; r<settings.roads; r++){
             createRoad(settings.roadMaxLength, 2, 3);
@@ -689,22 +673,17 @@
         }
       }
 
-      // building generation if checked
       if(doBuildings && !settings.isCavern && settings.buildings>0){
         createBuildings(settings.buildings);
       }
-      // Decorate tiles depending on biome
       decorateBiome(theme);
 
-      // farmland
       if(doFields){
         createFields(3);
       }
-      // city walls
       if(doCityWalls){
         createCityWalls(doRoads);
       }
-
       drawMap();
     }
 
@@ -729,15 +708,8 @@
       }
     }
 
-    /*******************************************************
-     * BIOME DECORATION
-     * (Add cacti, palm trees etc. in desert,
-     *  or any extra scatter in other themes.)
-     *******************************************************/
     function decorateBiome(theme){
       if(theme==="desert"){
-        // For every tile that's "sand" or "dirtcracked",
-        // we have a small chance to replace it with cacti, palm, or desert scatter
         for(let y=0;y<GRID_HEIGHT;y++){
           for(let x=0;x<GRID_WIDTH;x++){
             let cell=mapData[y][x];
@@ -754,13 +726,8 @@
           }
         }
       }
-      // You could add expansions for other themes, e.g. forest
-      // or random lumps of denseforest, etc.
     }
 
-    /*******************************************************
-     * CAVERN GENERATION => WIDER TUNNELS
-     *******************************************************/
     function generateCavern(){
       let fillChance=0.52;
       let boolMap=randomBoolMap(fillChance);
@@ -912,10 +879,6 @@
       }
     }
 
-    /*******************************************************
-     * WATER / LAVA BODIES & RIVER
-     *******************************************************/
-    // Modified to accept "liquidType" as either "water" or "lava"
     function createWaterBody(maxSize, liquidType){
       let sx=Math.floor(Math.random()*GRID_WIDTH);
       let sy=Math.floor(Math.random()*GRID_HEIGHT);
@@ -934,7 +897,6 @@
         stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
     }
-    // Meandering river, or meandering lava
     function createMeanderingRiver(maxLength, liquidType){
       let edges=["top","bottom","left","right"];
       let chosen=edges[Math.floor(Math.random()*edges.length)];
@@ -977,9 +939,6 @@
       return dir;
     }
 
-    /*******************************************************
-     * ROADS
-     *******************************************************/
     function createRoad(maxLength,minW,maxW){
       let x,y;
       if(Math.random()<0.5){
@@ -1016,9 +975,6 @@
       return ds[Math.floor(Math.random()*ds.length)];
     }
 
-    /*******************************************************
-     * BUILDINGS
-     *******************************************************/
     const buildingShapes=[
       { width:4,height:4, layout:[
         [1,1,1,1],
@@ -1048,7 +1004,12 @@
         [1,1,1,1,1,1,1]
       ]}
     ];
-    const possibleFloors=["marble1","marble2","marble3","marble4","woodfloor","floorCastle","tilerubble4","tilerubble5"];
+
+    const possibleFloors=[
+      "marble1","marble2","marble3","marble4",
+      "woodfloor","floorCastle","tilerubble4","tilerubble5"
+    ];
+    let chosenFloorTile=null;
 
     function createBuildings(numBuildings){
       chosenFloorTile = possibleFloors[Math.floor(Math.random()*possibleFloors.length)];
@@ -1213,13 +1174,11 @@
         }
       }
     }
-    let chosenFloorTile=null;
     function stampBuilding(lay,sx,sy){
       for(let y=0;y<lay.length;y++){
         for(let x=0;x<lay[0].length;x++){
           let val=lay[y][x];
           if(val===1){
-            // building walls = "cobblestone" or some subset. For simplicity, let's pick "cobblestone".
             mapData[sy+y][sx+x].type="cobblestone";
           } else if(val===0){
             mapData[sy+y][sx+x].type=chosenFloorTile;
@@ -1230,9 +1189,6 @@
       }
     }
 
-    /*******************************************************
-     * FIELDS
-     *******************************************************/
     function createFields(numFields){
       for(let i=0;i<numFields;i++){
         let fw=3+Math.floor(Math.random()*5);
@@ -1250,62 +1206,37 @@
       }
     }
 
-    /*******************************************************
-     * REWORKED CITY WALLS => rectangle ~ half the map
-     * with slight deviation, 2-3 wide, skip roads as gates
-     *******************************************************/
     function createCityWalls(doRoads){
-      // pick a random building wall type once
-      // or simply do "cobblestone" as a standard.
       let cityWallType = pickOneWallType();
-      // define a bounding rectangle that encloses about half the map
       let margin = 5;
       let minX = margin, maxX = GRID_WIDTH - margin - 1;
       let minY = margin, maxY = GRID_HEIGHT - margin - 1;
-      // randomly shrink or shift it a bit
       minX += Math.floor(Math.random()*3);
       maxX -= Math.floor(Math.random()*3);
       minY += Math.floor(Math.random()*3);
       maxY -= Math.floor(Math.random()*3);
 
-      let wallWidth = 2 + Math.floor(Math.random()*2); // 2 or 3
+      let wallWidth = 2 + Math.floor(Math.random()*2);
 
-      // We'll carve the top, bottom, left, right edges, with slight random deviation in the perpendicular axis
-      // For horizontal edges, deviate y slightly. For vertical edges, deviate x slightly.
-
-      // top edge
       carveWallLineWithDeviation(minX, minY, maxX, minY, wallWidth, cityWallType, true, doRoads);
-      // bottom edge
       carveWallLineWithDeviation(minX, maxY, maxX, maxY, wallWidth, cityWallType, true, doRoads);
-      // left edge
       carveWallLineWithDeviation(minX, minY, minX, maxY, wallWidth, cityWallType, false, doRoads);
-      // right edge
       carveWallLineWithDeviation(maxX, minY, maxX, maxY, wallWidth, cityWallType, false, doRoads);
     }
 
-    // pick just one from the wall set to keep a consistent look
     function pickOneWallType(){
-      // We'll pick from "brickX", "cobbleX", "darkStoneBlock", "limestoneX", or "ancientTile" etc.
-      // But for simplicity, let's just pick from a smaller subset:
-      let candidates = ["cobblestone","darktile","limestone1","ancienttile"];
+      let candidates = ["cobblestone","darktile","limestone","ancienttile"];
       return candidates[Math.floor(Math.random()*candidates.length)];
     }
 
-    /*
-      For each segment, we move in a straight line from (x1,y1) to (x2,y2).
-      If horizontal, we slightly vary the y; if vertical, vary the x.
-      We'll place a band of 'cityWallType' that is 'width' thick, skipping any cell that is a road.
-    */
     function carveWallLineWithDeviation(x1,y1,x2,y2,width, cityWallType, isHorizontal, skipRoads){
       let x = x1, y = y1;
       let dx = (x2 > x1)?1:((x2<x1)?-1:0);
       let dy = (y2 > y1)?1:((y2<y1)?-1:0);
-      // Use Bresenham-like logic but with possible single-tile deviation
       let steps = (isHorizontal) ? Math.abs(x2 - x1) : Math.abs(y2 - y1);
-      let chanceDeviation = 0.3; // 30% chance to deviate up or down (horizontal) or left/right (vertical)
+      let chanceDeviation = 0.3;
 
       for(let i=0; i<=steps; i++){
-        // possibly deviate
         let rx = x, ry = y;
         if(Math.random() < chanceDeviation){
           if(isHorizontal){
@@ -1320,17 +1251,12 @@
       }
     }
 
-    /*
-      Carve a small "circle" (really a square in this grid sense) of cityWallType around (cx,cy).
-      Skip if tile is a road => leaves a gap as a gate.
-    */
     function carveWallCircle(cx,cy,r,cityWallType, skipRoads){
       for(let dy=-r; dy<=r; dy++){
         for(let dx=-r; dx<=r; dx++){
           let nx = cx+dx, ny = cy+dy;
           if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
             if(skipRoads && isRoad(mapData[ny][nx].type)){
-              // skip making walls on roads => forms gates
               continue;
             }
             mapData[ny][nx].type = cityWallType;
@@ -1342,9 +1268,6 @@
       return (t==="roadstone"||t==="roaddirt");
     }
 
-    /*******************************************************
-     * DRAWING
-     *******************************************************/
     function drawMap(){
       const canvas=document.getElementById("mapCanvas");
       const ctx=canvas.getContext("2d");
@@ -1362,30 +1285,26 @@
 
       if(cell.occupant){
         drawOccupantSprite(ctx, cell.occupant, px, py);
-      } else {
-        // farmland special case with an index
-        if(cell.type==="farmland" && cell.crop!==undefined){
-          const farmlandImgs=tileTextures["farmland"];
-          let chosen=farmlandImgs[cell.crop];
-          if(chosen&&chosen.complete){
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle=getColorForTileType("farmland");
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
+      } else if(cell.type==="farmland" && cell.crop!==undefined){
+        const farmlandImgs=tileTextures["farmland"];
+        let chosen=farmlandImgs[cell.crop];
+        if(chosen && chosen.complete){
+          ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
         } else {
-          // pick from the tileTextures array randomly:
-          let arr=tileTextures[cell.type]||[];
-          let chosen=null;
-          if(arr.length){
-            chosen = arr[Math.floor(Math.random()*arr.length)];
-          }
-          if(chosen && chosen.complete){
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle=getColorForTileType(cell.type);
-            ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
-          }
+          ctx.fillStyle=getColorForTileType("farmland");
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
+      } else {
+        let arr=tileTextures[cell.type]||[];
+        let chosen=null;
+        if(arr.length){
+          chosen = arr[Math.floor(Math.random()*arr.length)];
+        }
+        if(chosen && chosen.complete){
+          ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+        } else {
+          ctx.fillStyle=getColorForTileType(cell.type);
+          ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
         }
       }
       ctx.strokeStyle="rgba(0,0,0,0.3)";
@@ -1393,9 +1312,9 @@
     }
 
     function drawOccupantSprite(ctx, occupant, px, py){
-      if(occupant.sprite&&occupant.sprite!=="none"){
+      if(occupant.sprite && occupant.sprite!=="none"){
         let spr=occupantSpritesMap[occupant.sprite];
-        if(spr&&spr.complete){
+        if(spr && spr.complete){
           ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
         } else {
           ctx.fillStyle="#999";
@@ -1408,9 +1327,6 @@
       ctx.strokeRect(px+0.5,py+0.5,TILE_SIZE-1,TILE_SIZE-1);
     }
 
-    /*******************************************************
-     * MODE SELECTOR
-     *******************************************************/
     function setMode(mode){
       currentMode=mode;
       if(mode!=="move"){
@@ -1418,9 +1334,6 @@
       }
     }
 
-    /*******************************************************
-     * CANVAS EVENTS => occupant & panning & pinch
-     *******************************************************/
     const canvas=document.getElementById("mapCanvas");
     const mapWrapper=document.querySelector(".mapWrapper");
     function updateCanvasTransform(){
@@ -1534,17 +1447,11 @@
       return Math.sqrt(dx*dx + dy*dy);
     }
 
-    /*******************************************************
-     * CLEAR occupant
-     *******************************************************/
     function clearOccupantSelection(){
       document.getElementById("occupantType").value="none";
       document.getElementById("occupantSprite").value="none";
     }
 
-    /*******************************************************
-     * ON LOAD
-     *******************************************************/
     window.onload=()=>{
       preloadImages(()=>{
         generateMap();
