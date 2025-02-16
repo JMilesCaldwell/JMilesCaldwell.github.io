@@ -105,7 +105,6 @@
           <option value="forest">Forest</option>
           <option value="cavern">Cavern</option>
           <option value="volcanic">Volcanic</option>
-          <option value="mudlands">Mudlands</option>
           <option value="coastal">Coastal</option>
           <option value="riverlands">Riverlands</option>
           <option value="swamp">Swamp</option>
@@ -231,17 +230,19 @@
     let activePointers = new Map();
     let initialPinchDistance = 0, initialPinchScale = 1.0;
 
+    // City walls, building occupancy
+    let cityWallBounds = null;
+
     /*******************************************************
-     * TILE TEXTURES
+     * TILE TEXTURES & OCCUPANT SPRITES
      *******************************************************/
     const tileTextures = {};
     const occupantSpritesMap = {};
 
-    // Added "desertBoulder.png" and "junglerock1.png" references in logic below as scatter, 
-    // but we do NOT remove any existing references or assets.
-
+    // *** ADDED *** We define "marketscatter" referencing the new folder "scatter"
+    // which has: marketwares3.png, marketwares2.png, marketwares1.png, smalltent.png, marketstallx.png
+    // We'll insert it into the existing tileAssetMapping (which we keep wholly):
     const tileAssetMapping = {
-      // GRASS
       "grass": {
         folder: "grass",
         files: ["grasstile1.png","grasstile2.png","grasstile3.png","grasstile4.png","grasstile5.png"]
@@ -254,8 +255,6 @@
         folder: "forest",
         files: ["trees1.png","trees2.png","trees3.png","trees4.png","trees5.png"]
       },
-
-      // JUNGLE
       "junglegrass": {
         folder: "jungle",
         files: ["jungleGrass.png"]
@@ -272,8 +271,6 @@
         folder: "jungle",
         files: ["jungleRoots.png","junglebush.png","junglebush2.png","junglefern.png","junglelog.png","junglelog2.png","junglevines.png"]
       },
-
-      // SNOW
       "snow": {
         folder: "snow",
         files: ["snow.png","powdersnow1.png","powdersnow2.png"]
@@ -286,8 +283,6 @@
         folder: "snow",
         files: ["snowTree.png"]
       },
-
-      // DIRT
       "dirt": {
         folder: "dirt",
         files: ["dirt1.png","dirt2.png","dirt3.png"] 
@@ -300,8 +295,6 @@
         folder: "dirt",
         files: ["dirtMud1.png","dirtMud2.png","dirtMud3.png"]
       },
-
-      // DESERT & SCATTER
       "sand": {
         folder: "desert",
         files: ["sand1.png","sand2.png","sand3.png"]
@@ -322,14 +315,14 @@
         folder: "desert",
         files: ["desertBoulder.png"]
       },
-
-      // WATER, SWAMP
       "water": {
         folder: "water",
         files: ["water.png","waterrocks.png","waterrocks2.png","swamp.png","swamp2.png","whitesand.png"]
       },
-
-      // ROAD
+      "whitesand": {
+        folder: "water",
+        files: ["whitesand.png"]
+      },
       "roadstone": {
         folder: "buildings/floors",
         files: ["sandstonetile.png"]
@@ -338,8 +331,6 @@
         folder: "dirt",
         files: ["roadDirt.png"]
       },
-
-      // VOLCANIC
       "barrens": {
         folder: "vulcanic",
         files: ["barrens1.png","barrens2.png"]
@@ -364,8 +355,6 @@
         folder: "vulcanic",
         files: ["brimstone2.png"]
       },
-
-      // BUILDINGS
       "stone": {
         folder: "buildings/walls",
         files: ["stoneBlock.png"]
@@ -429,14 +418,10 @@
         folder: "buildings/walls",
         files: ["darktile1.png","darktile2.png","darktile3.png","darktile4.png"]
       },
-
-      // FARMLAND
       "farmland": {
         folder: "farmland",
         files: ["corn.png","pumpkins.png","rye.png","sunflowers.png","vinyard.png","wheat.png"]
       },
-
-      // CAVERNS
       "cave_floor": {
         folder: "cavern",
         files: [
@@ -448,14 +433,10 @@
         folder: "",
         files: []
       },
-
-      // A “scatterStoneGrass” tile referencing e.g. junglerock1.png 
       "scatterStoneGrass": {
         folder: "jungle",
         files: ["junglerock1.png"]
       },
-
-      // Keys referenced in code (for roads, squares):
       "limestone1": {
         folder: "buildings/walls",
         files: ["limestone1.png"]
@@ -475,107 +456,112 @@
       "marbleCracked": {
         folder: "buildings/floors",
         files: ["marbleCracked.png"]
+      },
+
+      // *** HERE IS THE NEW TILE TYPE FOR THE MARKET SCATTER
+      "marketscatter": {
+        folder: "scatter",
+        files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
       }
     };
 
+    // fallback colours remain identical
+    const fallbackColors = {
+      grass:"#9AE582",
+      tree: "#2f6a16",
+      denseforest:"#1c3e0a",
+      junglegrass:"#4a9142",
+      junglemud:"#5a4d38",
+      jungletree:"#335019",
+      junglescatter:"#466028",
+      snow:"#dee0f7",
+      ice:"#88c2f0",
+      snowtree:"#b1bacf",
+      dirt: "#C2A15F",
+      dirtCracked:"#b28a66",
+      mud:"#6f4f3c",
+      sand:"#DDD593",
+      cactus: "#228b22",
+      desertPalm: "#507f30",
+      dune: "#d2c58c",
+      desertBoulder:"#7f7b6c",
+      water:"#2B64CF",
+      whitesand:"#eeeecc",
+      roadstone:"#777777",
+      roaddirt:"#A37E4C",
+      barrens:"#5f5347",
+      lavastone:"#723d33",
+      lava:"#cf3416",
+      magma:"#aa2200",
+      brimstone:"#ff5500",
+      brimstone2:"#ee4400",
+      stone:"#AAAAAA",
+      wall:"#8B4513",
+      floor:"#666666",
+      door:"#552200",
+      solidstone:"#222222",
+      cobblestone:"#999999",
+      ancienttile:"#897B42",
+      sandstonetile:"#d0c5a5",
+      marble1:"#f0f0f0",
+      marble2:"#efefef",
+      marble3:"#dddddd",
+      marble4:"#cccccc",
+      darktile:"#333333",
+      farmland:"#9fc648",
+      cave_floor:"#6e6e6e",
+      negative:"#000000",
+      scatterStoneGrass:"#655c47",
+      limestone1:"#b6b699",
+      limestone2:"#b3b196",
+      limestone3:"#b0ae93",
+      woodfloor:"#775b3e",
+      marbleCracked:"#d6d6d6",
+      // newly added fallback for marketscatter
+      marketscatter:"#775b3e"
+    };
+
     function getColorForTileType(tt){
-      const fallback = {
-        grass:"#9AE582",
-        tree: "#2f6a16",
-        denseforest:"#1c3e0a",
-        junglegrass:"#4a9142",
-        junglemud:"#5a4d38",
-        jungletree:"#335019",
-        junglescatter:"#466028",
-        snow:"#dee0f7",
-        ice:"#88c2f0",
-        snowtree:"#b1bacf",
-        dirt: "#C2A15F",
-        dirtCracked:"#b28a66",
-        mud:"#6f4f3c",
-        sand: "#DDD593",
-        cactus: "#228b22",
-        desertPalm: "#507f30",
-        dune: "#d2c58c",
-        desertBoulder:"#7f7b6c",
-        water:"#2B64CF",
-        roadstone:"#777777",
-        roaddirt:"#A37E4C",
-        barrens:"#5f5347",
-        lavastone:"#723d33",
-        lava:"#cf3416",
-        magma:"#aa2200",
-        brimstone:"#ff5500",
-        brimstone2:"#ee4400",
-        stone:"#AAAAAA",
-        wall:"#8B4513",
-        floor:"#666666",
-        door:"#552200",
-        solidstone:"#222222",
-        cobblestone:"#999999",
-        ancienttile:"#897B42",
-        sandstonetile:"#d0c5a5",
-        marble1:"#f0f0f0",
-        marble2:"#efefef",
-        marble3:"#dddddd",
-        marble4:"#cccccc",
-        darktile:"#333333",
-        farmland:"#9fc648",
-        cave_floor:"#6e6e6e",
-        negative:"#000000",
-        scatterStoneGrass:"#655c47",
-        limestone1:"#b6b699",
-        limestone2:"#b3b196",
-        limestone3:"#b0ae93",
-        woodfloor:"#775b3e",
-        marbleCracked:"#d6d6d6"
-      };
-      return fallback[tt] || "#FFFFFF";
+      return fallbackColors[tt] || "#FFFFFF";
     }
 
-    /*******************************************************
-     * PRELOAD IMAGES
-     *******************************************************/
     function preloadImages(onComplete){
       const occupantSpriteNames = [
-        "paladin","fighter","guardian","halfblood","berserker","assassin",
-        "warlock","sorcerer","priestess","cleric","druid","demon","mage",
-        "serpent","chimera","ogre","edgelord","fallenangel","darkpriestess",
-        "darkguard","cultist","goblin","spider","bat","zombie","orc",
-        "orcbandit","orcchief","orcshaman","orcfighter"
+        "paladin","fighter","guardian","halfblood","berserker","assassin","warlock","sorcerer",
+        "priestess","cleric","druid","demon","mage","serpent","chimera","ogre","edgelord",
+        "fallenangel","darkpriestess","darkguard","cultist","goblin","spider","bat","zombie",
+        "orc","orcbandit","orcchief","orcshaman","orcfighter"
       ];
-      let totalToLoad=occupantSpriteNames.length;
-      for(let k in tileAssetMapping){
+      let totalToLoad = occupantSpriteNames.length;
+      for(const k in tileAssetMapping){
         totalToLoad += tileAssetMapping[k].files.length;
       }
-      let loadedCount=0;
-      function checkDone(){
+      let loadedCount = 0;
+      const checkDone = () => {
         loadedCount++;
-        if(loadedCount>=totalToLoad && onComplete){
+        if(loadedCount >= totalToLoad && onComplete){
           onComplete();
         }
-      }
-      // load tiles
-      for(let tkey in tileAssetMapping){
+      };
+      for(const tkey in tileAssetMapping){
         tileTextures[tkey] = [];
         const { folder, files } = tileAssetMapping[tkey];
         if(!files.length) continue;
-        for(let fname of files){
+        for(const fname of files){
           const img = new Image();
           img.src = folder
             ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
             : `resources/mapgen/mapassets/tiles/${fname}`;
-          img.onload=checkDone;
-          img.onerror=checkDone;
+          img.onload = checkDone;
+          img.onerror = checkDone;
           tileTextures[tkey].push(img);
         }
       }
-      // occupant sprites
       occupantSpriteNames.forEach(sp => {
         const img = new Image();
         img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
-        img.onload=checkDone;
-        img.onerror=checkDone;
+        img.onload = checkDone;
+        img.onerror = checkDone;
         occupantSpritesMap[sp] = img;
       });
     }
@@ -586,9 +572,8 @@
     function getMapSettings(theme){
       switch(theme){
         case "desert":
-          // no grass in the distribution
           return {
-            baseDist: { "sand":0.6, "dirtCracked":0.1, "dirt":0.1, "stone":0.1 },
+            baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
             waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
           };
         case "city":
@@ -620,20 +605,15 @@
             baseDist:{ "barrens":0.5, "lavastone":0.3, "brimstone":0.1, "dirtCracked":0.1 },
             waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false
           };
-        case "mudlands":
-          return {
-            baseDist:{ "dirt":0.4,"grass":0.1,"sand":0.1,"stone":0.1,"tree":0.3 },
-            waterBodies:3, waterMaxSize:30, roads:1, roadMaxLength:20, buildings:2, isCavern:false
-          };
         case "coastal":
           return {
-            baseDist:{ "grass":0.3, "dirt":0.2, "sand":0.3, "water":0.2 },
-            waterBodies:2, waterMaxSize:70, roads:3, roadMaxLength:50, buildings:6, isCavern:false
+            baseDist:{ "grass":0.6, "dirt":0.4 },
+            waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false
           };
         case "riverlands":
           return {
-            baseDist:{ "grass":0.4,"dirt":0.2,"water":0.3,"tree":0.1 },
-            waterBodies:1, waterMaxSize:100, roads:4, roadMaxLength:60, buildings:7, isCavern:false
+            baseDist:{ "grass":0.5,"dirt":0.3,"tree":0.2 },
+            waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false
           };
         case "swamp":
           return {
@@ -658,48 +638,56 @@
       }
     }
 
+    /*******************************************************
+     * MAP GENERATION
+     *******************************************************/
     function generateMap(){
-      occupantInHand=null;
+      occupantInHand = null;
       offsetX=0; offsetY=0; scale=1.0;
       updateCanvasTransform();
 
-      const theme=document.getElementById("mapType").value;
-      const doBuildings=document.getElementById("buildingsCheck").checked;
-      const doFields=document.getElementById("generateFields").checked;
-      const doCityWalls=document.getElementById("cityWalls").checked;
-      const doWater=document.getElementById("waterCheck").checked;
-      const doRoads=document.getElementById("roadCheck").checked;
+      const theme = document.getElementById("mapType").value;
+      const doBuildings = document.getElementById("buildingsCheck").checked;
+      const doFields = document.getElementById("generateFields").checked;
+      const doCityWalls = document.getElementById("cityWalls").checked;
+      const doWater = document.getElementById("waterCheck").checked;
+      const doRoads = document.getElementById("roadCheck").checked;
 
-      const settings=getMapSettings(theme);
+      const settings = getMapSettings(theme);
 
       if(settings.isCavern){
         generateCavern();
       } else {
         initMap(settings.baseDist);
 
-        if(doWater){
-          for(let i=0;i<settings.waterBodies;i++){
-            if(theme==="volcanic"){
-              createLavaBody(settings.waterMaxSize);
-            } else {
-              createWaterBody(settings.waterMaxSize);
+        if(theme==="coastal"){
+          createIrregularCoastLine();
+        }
+        else if(theme==="riverlands" && doWater){
+          createMeanderingRiver(settings.roadMaxLength, "water", 2);
+        }
+        else {
+          if(doWater){
+            for(let i=0; i<settings.waterBodies; i++){
+              if(theme==="volcanic"){
+                createLavaBody(settings.waterMaxSize);
+              } else {
+                createWaterBody(settings.waterMaxSize);
+              }
             }
-          }
-          if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
-            if(theme==="volcanic"){
-              createMeanderingRiver(settings.roadMaxLength, "lava");
-            } else {
-              createMeanderingRiver(settings.roadMaxLength, "water");
+            if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
+              if(theme==="volcanic"){
+                createMeanderingRiver(settings.roadMaxLength, "lava");
+              } else {
+                createMeanderingRiver(settings.roadMaxLength, "water");
+              }
             }
           }
         }
-        if(doRoads){
-          // Up to 3 roads from edge to edge:
-          const roadCount = Math.min(settings.roads, 3);
-          for(let i=0;i<roadCount;i++){
-            createRoadFromEdgeToEdge(theme);
-          }
-        }
+      }
+
+      if(doCityWalls){
+        createIrregularCityWalls(); 
       }
 
       if(doBuildings && !settings.isCavern && settings.buildings>0){
@@ -711,102 +699,71 @@
       if(doFields){
         createFields(3);
       }
-      if(doCityWalls){
-        createIrregularCityWalls(); 
-      }
 
-      // If city => generate squares
       if(theme==="city"){
         createCitySquares();
+      }
+
+      if(doRoads && !settings.isCavern){
+        const roadCount = Math.min(settings.roads, 3);
+        for(let i=0;i<roadCount;i++){
+          createRoadFromEdgeToEdge(theme);
+        }
+      }
+
+      if(theme==="coastal"){
+        scatterCoastalTrees(50);
+        createCoastalDocks(2);
       }
 
       drawMap();
     }
 
     function initMap(dist){
-      mapData=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        let row=[];
-        for(let x=0;x<GRID_WIDTH;x++){
-          const rand=Math.random();
-          let chosen="grass";
-          let cumul=0;
-          for(let t in dist){
-            cumul+=dist[t];
-            if(rand<cumul){
-              chosen=t; 
+      mapData = [];
+      for(let y=0; y<GRID_HEIGHT; y++){
+        const row = [];
+        for(let x=0; x<GRID_WIDTH; x++){
+          const rand = Math.random();
+          let chosen = "grass";
+          let cumul = 0;
+          for(const t in dist){
+            cumul += dist[t];
+            if(rand < cumul){
+              chosen = t; 
               break;
             }
           }
-          row.push({ type:chosen, occupant:null });
+          row.push({ 
+            type: chosen, 
+            occupant: null,
+            _chosenTileIndex: null,
+            hasBuilding: false
+          });
         }
         mapData.push(row);
       }
     }
 
     /*******************************************************
-     * BIOME DECORATION & SCATTER
-     *******************************************************/
-    function decorateBiome(theme){
-      if(theme==="desert"){
-        decorateDesert();
-      } 
-      else if(theme==="grassland" || theme==="forest" || theme==="mountain"){
-        // scatter some small rocks from the jungle folder
-        scatterGrassRocks(80); 
-      }
-    }
-    function decorateDesert(){
-      // scatter cacti, palm, dune or boulder on top of sand/dirt/dirtCracked
-      for(let i=0;i<250;i++){
-        let x=Math.floor(Math.random()*GRID_WIDTH);
-        let y=Math.floor(Math.random()*GRID_HEIGHT);
-        let cell=mapData[y][x];
-        if(["sand","dirtCracked","dirt"].includes(cell.type)){
-          let r=Math.random();
-          if(r<0.08){
-            cell.type="cactus";
-          } else if(r<0.12){
-            cell.type="desertPalm";
-          } else if(r<0.16){
-            cell.type="dune";
-          } else if(r<0.2){
-            cell.type="desertBoulder";
-          }
-        }
-      }
-    }
-    function scatterGrassRocks(num){
-      for(let i=0;i<num;i++){
-        let gx=Math.floor(Math.random()*GRID_WIDTH);
-        let gy=Math.floor(Math.random()*GRID_HEIGHT);
-        let c=mapData[gy][gx];
-        // If it's grass or dirt or stone, we can place a "scatterStoneGrass"
-        if(["grass","dirt","stone"].includes(c.type) && Math.random()<0.2){
-          c.type="scatterStoneGrass";
-        }
-      }
-    }
-
-    /*******************************************************
-     * CAVERN GENERATION
+     * CAVERN GEN
      *******************************************************/
     function generateCavern(){
-      let fillChance=0.52;
-      let boolMap=randomBoolMap(fillChance);
-      let steps=3;
-      for(let i=0;i<steps;i++){
-        boolMap=doCAStep(boolMap);
+      const fillChance = 0.52;
+      let boolMap = randomBoolMap(fillChance);
+      const steps = 3;
+      for(let i=0; i<steps; i++){
+        boolMap = doCAStep(boolMap);
       }
-      const { largestMap }=keepLargestRegion(boolMap);
+      const { largestMap } = keepLargestRegion(boolMap);
       carveWideExits(largestMap,3);
       convertBoolMapToCavern(largestMap);
     }
     function randomBoolMap(chance){
-      let out=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        let row=[];
-        for(let x=0;x<GRID_WIDTH;x++){
+      const out = [];
+      for(let y=0; y<GRID_HEIGHT; y++){
+        const row=[];
+        for(let x=0; x<GRID_WIDTH; x++){
           row.push(Math.random()<chance);
         }
         out.push(row);
@@ -814,13 +771,13 @@
       return out;
     }
     function doCAStep(bm){
-      let newM=[];
+      const newM=[];
       for(let y=0;y<GRID_HEIGHT;y++){
-        let row=[];
+        const row=[];
         for(let x=0;x<GRID_WIDTH;x++){
-          let n=countFloorNeighbours(bm,x,y);
-          let curr=bm[y][x];
-          row.push(curr?(n>=4):(n>=5));
+          const n = countFloorNeighbours(bm,x,y);
+          const curr = bm[y][x];
+          row.push(curr ? (n>=4) : (n>=5));
         }
         newM.push(row);
       }
@@ -828,11 +785,11 @@
     }
     function countFloorNeighbours(bm,x,y){
       let c=0;
-      for(let dy=-1;dy<=1;dy++){
-        for(let dx=-1;dx<=1;dx++){
-          if(dx===0&&dy===0)continue;
-          let nx=x+dx, ny=y+dy;
-          if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
+      for(let dy=-1; dy<=1; dy++){
+        for(let dx=-1; dx<=1; dx++){
+          if(dx===0 && dy===0) continue;
+          const nx=x+dx, ny=y+dy;
+          if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
             if(bm[ny][nx]) c++;
           }
         }
@@ -840,7 +797,7 @@
       return c;
     }
     function keepLargestRegion(bm){
-      let visited=[];
+      const visited=[];
       for(let y=0;y<GRID_HEIGHT;y++){
         visited[y]=new Array(GRID_WIDTH).fill(false);
       }
@@ -848,15 +805,15 @@
       for(let y=0;y<GRID_HEIGHT;y++){
         for(let x=0;x<GRID_WIDTH;x++){
           if(bm[y][x] && !visited[y][x]){
-            let queue=[[x,y]];
+            const queue=[[x,y]];
             visited[y][x]=true;
-            let regionCells=[[x,y]];
+            const regionCells=[[x,y]];
             let size=1;
             while(queue.length){
-              let[cx,cy]=queue.pop();
-              for(let[nx,ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]){
+              const [cx,cy] = queue.pop();
+              for(const [nx,ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]){
                 if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
-                  if(bm[ny][nx]&&!visited[ny][nx]){
+                  if(bm[ny][nx] && !visited[ny][nx]){
                     visited[ny][nx]=true;
                     queue.push([nx,ny]);
                     regionCells.push([nx,ny]);
@@ -872,11 +829,8 @@
           }
         }
       }
-      let largestMap=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        largestMap[y]=bm[y].slice();
-      }
-      let regSet=new Set(bestRegion.map(([xx,yy])=>`${xx},${yy}`));
+      const largestMap = bm.map(row=>row.slice());
+      const regSet = new Set(bestRegion.map(([xx,yy])=>`${xx},${yy}`));
       for(let y=0;y<GRID_HEIGHT;y++){
         for(let x=0;x<GRID_WIDTH;x++){
           if(largestMap[y][x] && !regSet.has(`${x},${y}`)){
@@ -884,7 +838,7 @@
           }
         }
       }
-      return { largestMap,largestRegion:bestRegion };
+      return { largestMap, largestRegion: bestRegion };
     }
     function carveWideExits(boolMap,width){
       let needed=2;
@@ -894,20 +848,20 @@
       }
     }
     function carveRandomWideTunnel(boolMap,w){
-      let tries=0,cx,cy;
+      let tries=0, cx,cy;
       while(tries<300){
         cx=Math.floor(Math.random()*GRID_WIDTH);
         cy=Math.floor(Math.random()*GRID_HEIGHT);
         if(boolMap[cy][cx]) break;
         tries++;
       }
-      let ex=Math.random()<0.5 ? 0 : GRID_WIDTH-1;
-      let ey=Math.floor(Math.random()*GRID_HEIGHT);
+      const ex = (Math.random()<0.5)? 0 : (GRID_WIDTH-1);
+      const ey = Math.floor(Math.random()*GRID_HEIGHT);
       carveCorridor(boolMap,cx,cy,ex,ey,w);
     }
     function carveCorridor(boolMap,x1,y1,x2,y2,w){
       let steps=0;
-      while((x1!==x2||y1!==y2)&&steps<9999){
+      while((x1!==x2||y1!==y2) && steps<9999){
         carveCircle(boolMap,x1,y1,w);
         if(x1<x2)x1++; else if(x1>x2)x1--;
         if(y1<y2)y1++; else if(y1>y2)y1--;
@@ -919,7 +873,7 @@
       for(let dy=-r;dy<=r;dy++){
         for(let dx=-r;dx<=r;dx++){
           if(dx*dx+dy*dy<=r*r){
-            let nx=cx+dx, ny=cy+dy;
+            const nx=cx+dx, ny=cy+dy;
             if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
               boolMap[ny][nx]=true;
             }
@@ -930,12 +884,12 @@
     function convertBoolMapToCavern(bm){
       mapData=[];
       for(let y=0;y<GRID_HEIGHT;y++){
-        let row=[];
+        const row=[];
         for(let x=0;x<GRID_WIDTH;x++){
           if(bm[y][x]){
-            row.push({ type:"cave_floor", occupant:null });
+            row.push({ type:"cave_floor", occupant:null, _chosenTileIndex:null, hasBuilding:false });
           } else {
-            row.push({ type:"negative", occupant:null });
+            row.push({ type:"negative", occupant:null, _chosenTileIndex:null, hasBuilding:false });
           }
         }
         mapData.push(row);
@@ -943,84 +897,147 @@
     }
 
     /*******************************************************
-     * WATER / LAVA BODIES & RIVER
+     * WATER / LAVA BODIES
      *******************************************************/
     function createWaterBody(maxSize){
-      let sx=Math.floor(Math.random()*GRID_WIDTH);
-      let sy=Math.floor(Math.random()*GRID_HEIGHT);
-      floodFillFluid(sx,sy,maxSize,"water");
+      createFluidBody(maxSize,"water");
     }
     function createLavaBody(maxSize){
-      let sx=Math.floor(Math.random()*GRID_WIDTH);
-      let sy=Math.floor(Math.random()*GRID_HEIGHT);
-      floodFillFluid(sx,sy,maxSize,"lava");
+      createFluidBody(maxSize,"lava");
+    }
+    function createFluidBody(maxSize,tileType){
+      const sx=Math.floor(Math.random()*GRID_WIDTH);
+      const sy=Math.floor(Math.random()*GRID_HEIGHT);
+      floodFillFluid(sx, sy, maxSize, tileType);
     }
     function floodFillFluid(sx,sy,maxSize,tileType){
-      let stack=[[sx,sy]];
+      const stack=[[sx,sy]];
       let size=0;
       while(stack.length && size<maxSize){
-        let[cx,cy]=stack.pop();
-        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT)continue;
-        if(mapData[cy][cx].type===tileType)continue;
-        if(Math.random()<0.1)continue;
+        const [cx,cy] = stack.pop();
+        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) continue;
+        if(mapData[cy][cx].type===tileType) continue;
+        if(Math.random()<0.1) continue;
         mapData[cy][cx].type=tileType;
         size++;
         stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
       }
     }
-    function createMeanderingRiver(maxLength, fluid="water"){
-      let edges=["top","bottom","left","right"];
-      let chosen=edges[Math.floor(Math.random()*edges.length)];
-      let x=0,y=0;
-      if(chosen==="top"){ x=Math.floor(Math.random()*GRID_WIDTH); y=0; }
-      else if(chosen==="bottom"){ x=Math.floor(Math.random()*GRID_WIDTH); y=GRID_HEIGHT-1; }
-      else if(chosen==="left"){ x=0; y=Math.floor(Math.random()*GRID_HEIGHT); }
-      else{ x=GRID_WIDTH-1; y=Math.floor(Math.random()*GRID_HEIGHT); }
+
+    /*******************************************************
+     * RIVERS
+     *******************************************************/
+    function createMeanderingRiver(maxLength, fluid="water", r=1){
+      const edges=["top","bottom","left","right"];
+      const chosen=edges[Math.floor(Math.random()*edges.length)];
+      let x=0, y=0;
+      if(chosen==="top"){
+        x=Math.floor(Math.random()*GRID_WIDTH); y=0;
+      } else if(chosen==="bottom"){
+        x=Math.floor(Math.random()*GRID_WIDTH); y=GRID_HEIGHT-1;
+      } else if(chosen==="left"){
+        x=0; y=Math.floor(Math.random()*GRID_HEIGHT);
+      } else {
+        x=GRID_WIDTH-1; y=Math.floor(Math.random()*GRID_HEIGHT);
+      }
 
       let dir=pickRiverDir(chosen);
-      let steps=Math.floor(Math.random()*(maxLength/2)+maxLength/2);
-      for(let i=0;i<steps;i++){
+      const steps=Math.floor(Math.random()*(maxLength/2)+maxLength/2);
+      for(let i=0; i<steps; i++){
         if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) break;
-        mapData[y][x].type=fluid;
+        carveRiverCircle(x,y,r,fluid);
         if(Math.random()<0.2) dir=turnSlightly(dir);
         x+=dir.dx; y+=dir.dy;
       }
     }
+    function carveRiverCircle(cx, cy, radius, fluid){
+      for(let dy=-radius; dy<=radius; dy++){
+        for(let dx=-radius; dx<=radius; dx++){
+          if(dx*dx+dy*dy <= radius*radius){
+            const nx=cx+dx, ny=cy+dy;
+            if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
+              mapData[ny][nx].type = fluid;
+            }
+          }
+        }
+      }
+    }
     function pickRiverDir(edge){
       switch(edge){
-        case "top":    return {dx: Math.random()<0.5?1:-1, dy:1};
-        case "bottom": return {dx: Math.random()<0.5?1:-1, dy:-1};
-        case "left":   return {dx:1, dy: Math.random()<0.5?1:-1};
-        case "right":  return {dx:-1,dy: Math.random()<0.5?1:-1};
+        case "top":    return {dx: (Math.random()<0.5?1:-1), dy:1};
+        case "bottom": return {dx: (Math.random()<0.5?1:-1), dy:-1};
+        case "left":   return {dx:1, dy: (Math.random()<0.5?1:-1)};
+        case "right":  return {dx:-1,dy: (Math.random()<0.5?1:-1)};
         default:       return {dx:0,dy:1};
       }
     }
     function turnSlightly(dir){
-      const leftTurn={
-        "1,0":{dx:0,dy:-1},"-1,0":{dx:0,dy:1},
-        "0,1":{dx:-1,dy:0},"0,-1":{dx:1,dy:0}
+      const leftTurn = {
+        "1,0":  {dx:0,dy:-1},
+        "-1,0": {dx:0,dy:1},
+        "0,1":  {dx:-1,dy:0},
+        "0,-1": {dx:1,dy:0}
       };
-      const rightTurn={
-        "1,0":{dx:0,dy:1},"-1,0":{dx:0,dy:-1},
-        "0,1":{dx:1,dy:0},"0,-1":{dx:-1,dy:0}
+      const rightTurn = {
+        "1,0":  {dx:0,dy:1},
+        "-1,0": {dx:0,dy:-1},
+        "0,1":  {dx:1,dy:0},
+        "0,-1": {dx:-1,dy:0}
       };
-      let key=`${dir.dx},${dir.dy}`;
+      const key = `${dir.dx},${dir.dy}`;
       if(Math.random()<0.5 && leftTurn[key]) return leftTurn[key];
       if(rightTurn[key]) return rightTurn[key];
       return dir;
     }
 
     /*******************************************************
+     * IRREGULAR COAST
+     *******************************************************/
+    function createIrregularCoastLine(){
+      const topCoast = Math.random()<0.5;
+      let coastY = topCoast
+        ? 2 + Math.floor(Math.random()*5)
+        : GRID_HEIGHT - 2 - Math.floor(Math.random()*5);
+
+      for(let x=0; x<GRID_WIDTH; x++){
+        if(topCoast){
+          for(let y=0; y<coastY; y++){
+            mapData[y][x].type="water";
+          }
+          for(let y=coastY; y<coastY+2; y++){
+            if(y>=0 && y<GRID_HEIGHT){
+              mapData[y][x].type="whitesand";
+            }
+          }
+        } else {
+          for(let y=GRID_HEIGHT-1; y>coastY; y--){
+            mapData[y][x].type="water";
+          }
+          for(let y=coastY; y>coastY-2; y--){
+            if(y>=0 && y<GRID_HEIGHT){
+              mapData[y][x].type="whitesand";
+            }
+          }
+        }
+        const direction = (Math.random()<0.5? -1: 1);
+        coastY += direction;
+        if(topCoast){
+          if(coastY<2) coastY=2;
+          if(coastY>GRID_HEIGHT-3) coastY=GRID_HEIGHT-3;
+        } else {
+          if(coastY>GRID_HEIGHT-2) coastY=GRID_HEIGHT-2;
+          if(coastY<2) coastY=2;
+        }
+      }
+    }
+
+    /*******************************************************
      * ROADS
      *******************************************************/
-    // Original createRoad function remains, 
-    // but we add createRoadFromEdgeToEdge so roads truly cross the map:
     function createRoadFromEdgeToEdge(theme){
-      // pick random edges
-      let edgeList = ["top","bottom","left","right"];
+      const edgeList = ["top","bottom","left","right"];
       let startEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
       let endEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
-      // ensure different edge if possible
       let tries=0;
       while(endEdge===startEdge && tries<10){
         endEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
@@ -1043,9 +1060,6 @@
     }
 
     function carveStraightRoad(theme, sx, sy, ex, ey){
-      // Bresenham line from (sx, sy) to (ex, ey). 
-      // If crossing water/lava => place "woodfloor" 
-      // else place roaddirt or some chance of limestone
       let dx=Math.abs(ex-sx), sxSign=sx<ex?1:-1;
       let dy=-Math.abs(ey-sy), sySign=sy<ey?1:-1;
       let err=dx+dy;
@@ -1053,29 +1067,26 @@
       while(true){
         carveRoadTile(theme, x, y);
         if(x===ex && y===ey) break;
-        let e2=2*err;
-        if(e2>=dy){err+=dy;x+=sxSign;}
-        if(e2<=dx){err+=dx;y+=sySign;}
+        const e2=2*err;
+        if(e2>=dy){err+=dy; x+=sxSign;}
+        if(e2<=dx){err+=dx; y+=sySign;}
       }
     }
 
-    // UPDATED function for 2-tile-wide roads:
     function carveRoadTile(theme, rx, ry){
-      // We'll carve a small diamond shape of radius 1 around (rx, ry).
       for(let dy=-1; dy<=1; dy++){
         for(let dx=-1; dx<=1; dx++){
           if(Math.abs(dx) + Math.abs(dy) <= 1){
-            let nx = rx + dx;
-            let ny = ry + dy;
+            const nx = rx + dx;
+            const ny = ry + dy;
             if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
-            let cell=mapData[ny][nx];
+            const cell=mapData[ny][nx];
             if(cell.type==="water"||cell.type==="lava"){
               cell.type="woodfloor";
             } else {
-              // small chance for limestone scatter
               if(Math.random()<0.05){
                 const limestones=["limestone1","limestone2","limestone3"];
-                cell.type = pickRandom(limestones);
+                cell.type = limestones[Math.floor(Math.random()*limestones.length)];
               } else {
                 cell.type="roaddirt";
               }
@@ -1085,54 +1096,10 @@
       }
     }
 
-    // Original function remains if needed for random roads:
-    function createRoad(maxLength,minW,maxW){
-      let x,y;
-      if(Math.random()<0.5){
-        x=Math.floor(Math.random()*GRID_WIDTH);
-        y=(Math.random()<0.5)?0:GRID_HEIGHT-1;
-      } else {
-        x=(Math.random()<0.5)?0:GRID_WIDTH-1;
-        y=Math.floor(Math.random()*GRID_HEIGHT);
-      }
-      let dir=getRandomDir();
-      let length=Math.floor(Math.random()*(maxLength/2)+maxLength/2);
-      let w=Math.floor(Math.random()*(maxW-minW+1))+minW;
-      for(let i=0;i<length;i++){
-        carveRoadBand(x,y,w);
-        x+=dir.dx; y+=dir.dy;
-        if(Math.random()<0.2) dir=getRandomDir(dir);
-        if(x<0||x>=GRID_WIDTH||y<0||y>=GRID_HEIGHT)break;
-      }
-    }
-    function carveRoadBand(cx,cy,width){
-      const r=Math.floor(width/2);
-      for(let dy=-r;dy<=r;dy++){
-        for(let dx=-r;dx<=r;dx++){
-          let nx=cx+dx, ny=cy+dy;
-          if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
-            let c=mapData[ny][nx];
-            // if water => woodfloor, else roaddirt
-            if(c.type==="water"||c.type==="lava"){
-              c.type="woodfloor";
-            } else {
-              c.type=(Math.random()<0.6)? "roadstone":"roaddirt";
-            }
-          }
-        }
-      }
-    }
-    function getRandomDir(prev){
-      let ds=[{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}];
-      if(prev&&Math.random()<0.6)return prev;
-      return ds[Math.floor(Math.random()*ds.length)];
-    }
-
     /*******************************************************
      * BUILDINGS
      *******************************************************/
     const buildingShapes=[
-      // existing shapes
       { width:4,height:4, layout:[
         [1,1,1,1],
         [1,0,0,1],
@@ -1160,7 +1127,6 @@
         [1,0,0,0,0,0,1],
         [1,1,1,1,1,1,1]
       ]},
-      // new multi-room shape A
       { width:8,height:6, layout:[
         [1,1,1,1,1,1,1,1],
         [1,0,0,1,0,0,0,1],
@@ -1169,7 +1135,6 @@
         [1,0,0,0,0,1,0,1],
         [1,1,1,1,1,1,1,1]
       ]},
-      // new multi-room shape B
       { width:9,height:7, layout:[
         [1,1,1,1,1,1,1,1,1],
         [1,0,0,0,0,0,0,0,1],
@@ -1178,17 +1143,102 @@
         [1,0,0,1,0,1,0,0,1],
         [1,0,0,0,0,0,0,0,1],
         [1,1,1,1,1,1,1,1,1]
+      ]},
+      { width: 5, height: 5, layout: [
+          [1, 1, 1, 1, 1],
+          [1, 0, 0, 0, 1],
+          [1, 0, 3, 0, 1],
+          [1, 0, 0, 0, 1],
+          [1, 1, 1, 1, 1]
+      ]},
+      { width: 5, height: 5, layout: [
+          [3, 3, 1, 1, 1],
+          [3, 1, 0, 0, 1],
+          [1, 1, 0, 0, 1],
+          [1, 0, 0, 0, 1],
+          [1, 1, 1, 1, 1]
+      ]},
+      { width: 7, height: 5, layout: [
+          [1, 1, 1, 1, 1, 1, 1],
+          [1, 3, 3, 3, 3, 3, 1],
+          [1, 0, 0, 0, 0, 0, 1],
+          [1, 0, 0, 0, 0, 0, 1],
+          [1, 1, 1, 1, 1, 1, 1]
+      ]},
+      { width: 7, height: 7, layout: [
+          [3, 3, 1, 1, 1, 3, 3],
+          [3, 3, 1, 0, 1, 3, 3],
+          [1, 1, 1, 0, 1, 1, 1],
+          [0, 0, 0, 0, 0, 0, 0],
+          [3, 3, 1, 0, 1, 3, 3],
+          [3, 3, 1, 0, 1, 3, 3],
+          [1, 1, 1, 1, 1, 1, 1]
+      ]},
+      { width: 7, height: 7, layout: [
+          [3, 3, 1, 3, 1, 3, 3],
+          [3, 3, 1, 3, 1, 3, 3],
+          [1, 1, 1, 0, 1, 1, 1],
+          [3, 3, 0, 0, 0, 3, 3],
+          [1, 1, 1, 0, 1, 1, 1],
+          [3, 3, 1, 3, 1, 3, 3],
+          [3, 3, 1, 3, 1, 3, 3]
+      ]},
+      { width: 6, height: 6, layout: [
+          [1, 1, 1, 1, 1, 1],
+          [1, 0, 3, 0, 0, 1],
+          [1, 0, 1, 1, 0, 1],
+          [1, 0, 3, 1, 0, 1],
+          [1, 0, 0, 0, 0, 1],
+          [1, 1, 1, 1, 1, 1]
+      ]},
+      { width: 8, height: 6, layout: [
+          [3, 1, 1, 1, 1, 1, 1, 3],
+          [1, 0, 0, 3, 0, 0, 1, 1],
+          [1, 0, 1, 1, 1, 0, 0, 1],
+          [1, 0, 1, 3, 1, 0, 0, 1],
+          [1, 0, 0, 0, 0, 0, 1, 1],
+          [3, 1, 1, 1, 1, 1, 1, 3]
+      ]},
+      { width: 9, height: 5, layout: [
+          [1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 0, 3, 0, 3, 0, 3, 0, 1],
+          [1, 0, 0, 0, 0, 0, 0, 0, 1],
+          [1, 0, 3, 0, 3, 0, 3, 0, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]},
+      { width: 10, height: 10, layout: [
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+          [1, 0, 3, 1, 0, 0, 1, 3, 0, 1],
+          [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+          [1, 1, 1, 1, 3, 3, 1, 1, 1, 1],
+          [1, 0, 0, 1, 3, 3, 1, 0, 0, 1],
+          [1, 0, 3, 1, 0, 0, 1, 3, 0, 1],
+          [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+          [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      ]},
+      { width: 8, height: 8, layout: [
+          [1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 0, 3, 0, 0, 3, 0, 1],
+          [1, 0, 3, 0, 0, 3, 0, 1],
+          [1, 1, 1, 3, 1, 1, 1, 1],
+          [1, 0, 3, 0, 0, 3, 0, 1],
+          [1, 0, 3, 0, 0, 3, 0, 1],
+          [1, 0, 0, 0, 0, 0, 0, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1]
       ]}
     ];
-    const possibleFloors=["marble1","marble2","marble3","marble4"];
+
     let chosenFloorTile=null;
 
     function createBuildings(numBuildings){
-      chosenFloorTile = pickRandom(possibleFloors);
+      const possibleFloors=["marble1","marble2","marble3","marble4"];
+      chosenFloorTile = possibleFloors[Math.floor(Math.random()*possibleFloors.length)];
       let attempts=0, placed=0;
       while(placed<numBuildings && attempts<numBuildings*50){
         attempts++;
-        const shape = pickRandom(buildingShapes);
+        const shape = buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
         const sx=Math.floor(Math.random()*(GRID_WIDTH-shape.width));
         const sy=Math.floor(Math.random()*(GRID_HEIGHT-shape.height));
         if(canPlaceBuilding(sx,sy,shape)){
@@ -1197,13 +1247,28 @@
         }
       }
     }
+
     function canPlaceBuilding(sx,sy,shape){
+      if(cityWallBounds) {
+        const bx2 = sx + shape.width - 1;
+        const by2 = sy + shape.height - 1;
+        const cwX2 = cityWallBounds.x + cityWallBounds.w - 1;
+        const cwY2 = cityWallBounds.y + cityWallBounds.h - 1;
+
+        if(sx < cityWallBounds.x || sy < cityWallBounds.y ||
+           bx2 > cwX2          || by2 > cwY2 ) {
+          return false;
+        }
+      }
       for(let y=0;y<shape.height;y++){
         for(let x=0;x<shape.width;x++){
           const val=shape.layout[y][x];
           if(val===1||val===0){
-            const t=mapData[sy+y][sx+x].type;
-            if(["water","lava","roadstone","roaddirt","solidstone","magma","woodfloor"].includes(t)){
+            const cell=mapData[sy+y][sx+x];
+            if(["water","lava","roadstone","roaddirt","solidstone","magma","woodfloor"].includes(cell.type)){
+              return false;
+            }
+            if(cell.type==="wall" || cell.type==="door" || cell.type==="negative" || cell.hasBuilding){
               return false;
             }
           }
@@ -1211,51 +1276,49 @@
       }
       return true;
     }
+
     function placeBuilding(sx,sy,shape){
-      let localLayout=shape.layout.map(r=>r.slice());
+      const localLayout=shape.layout.map(r=>r.slice());
       subdivideBuilding(localLayout);
       placeExteriorDoor(localLayout);
       ensureAccessibility(localLayout);
       stampBuilding(localLayout,sx,sy);
     }
-    function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
     function subdivideBuilding(lay){
-      // same approach as before
       const h=lay.length, w=lay[0].length;
       if(w>=7){
-        let wx=Math.floor(w/2);
+        const wx=Math.floor(w/2);
         for(let y=1;y<h-1;y++){
           lay[y][wx]=1;
         }
-        let doorY=Math.floor(Math.random()*(h-2))+1;
+        const doorY=Math.floor(Math.random()*(h-2))+1;
         lay[doorY][wx]=2;
       }
       if(h>=7){
-        let wy=Math.floor(h/2);
+        const wy=Math.floor(h/2);
         for(let x=1;x<w-1;x++){
           lay[wy][x]=1;
         }
-        let doorX=Math.floor(Math.random()*(w-2))+1;
+        const doorX=Math.floor(Math.random()*(w-2))+1;
         lay[wy][doorX]=2;
       }
     }
     function placeExteriorDoor(lay){
       const h=lay.length, w=lay[0].length;
-      let cands=[];
+      const cands=[];
       for(let x=1;x<w-1;x++){
-        if(isWallish(lay[0][x]) && hasExactlyTwoOrthWalls(lay,x,0))cands.push({px:x,py:0});
-        if(isWallish(lay[h-1][x]) && hasExactlyTwoOrthWalls(lay,x,h-1))cands.push({px:x,py:h-1});
+        if(isWallish(lay[0][x]) && hasExactlyTwoOrthWalls(lay,x,0)) cands.push({px:x,py:0});
+        if(isWallish(lay[h-1][x]) && hasExactlyTwoOrthWalls(lay,x,h-1)) cands.push({px:x,py:h-1});
       }
       for(let y=1;y<h-1;y++){
-        if(isWallish(lay[y][0]) && hasExactlyTwoOrthWalls(lay,0,y))cands.push({px:0,py:y});
-        if(isWallish(lay[y][w-1]) && hasExactlyTwoOrthWalls(lay,w-1,y))cands.push({px:w-1,py:y});
+        if(isWallish(lay[y][0]) && hasExactlyTwoOrthWalls(lay,0,y)) cands.push({px:0,py:y});
+        if(isWallish(lay[y][w-1]) && hasExactlyTwoOrthWalls(lay,w-1,y)) cands.push({px:w-1,py:y});
       }
       if(cands.length){
         let howMany=1+Math.floor(Math.random()*2);
-        for(let i=0;i<howMany&&cands.length;i++){
-          let idx=Math.floor(Math.random()*cands.length);
-          let chosen=cands[idx];
+        for(let i=0; i<howMany && cands.length; i++){
+          const idx=Math.floor(Math.random()*cands.length);
+          const chosen=cands[idx];
           lay[chosen.py][chosen.px]=2;
           cands.splice(idx,1);
         }
@@ -1263,11 +1326,11 @@
     }
     function isWallish(v){return v===1||v===2;}
     function hasExactlyTwoOrthWalls(lay,x,y){
-      let up=(y>0)&&isWallish(lay[y-1][x]);
-      let down=(y<lay.length-1)&&isWallish(lay[y+1][x]);
-      let left=(x>0)&&isWallish(lay[y][x-1]);
-      let right=(x<lay[0].length-1)&&isWallish(lay[y][x+1]);
-      let c=(up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
+      const up=(y>0)&&isWallish(lay[y-1][x]);
+      const down=(y<lay.length-1)&&isWallish(lay[y+1][x]);
+      const left=(x>0)&&isWallish(lay[y][x-1]);
+      const right=(x<lay[0].length-1)&&isWallish(lay[y][x+1]);
+      const c=(up?1:0)+(down?1:0)+(left?1:0)+(right?1:0);
       return (c===2)&&((up&&down)||(left&&right));
     }
     function ensureAccessibility(lay){
@@ -1275,20 +1338,20 @@
       if(!floors.length)return;
       const doors=collectDoorCoords(lay);
       if(!doors.length)return;
-      let mainDoor=doors.find(d=>onPerimeter(lay,d.x,d.y))||doors[0];
+      const mainDoor=doors.find(d=>onPerimeter(lay,d.x,d.y))||doors[0];
       if(!mainDoor)return;
 
-      let visited=new Set();
-      let queue=[{x:mainDoor.x,y:mainDoor.y}];
+      const visited=new Set();
+      const queue=[{x:mainDoor.x,y:mainDoor.y}];
       visited.add(`${mainDoor.x},${mainDoor.y}`);
 
       while(queue.length){
-        let {x,y}=queue.shift();
-        for(let[nx,ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){
+        const {x,y}=queue.shift();
+        for(const [nx,ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){
           if(nx<0||ny<0||nx>=lay[0].length||ny>=lay.length)continue;
-          let v=lay[ny][nx];
+          const v=lay[ny][nx];
           if(v===0||v===2){
-            let key=`${nx},${ny}`;
+            const key=`${nx},${ny}`;
             if(!visited.has(key)){
               visited.add(key);
               queue.push({x:nx,y:ny});
@@ -1296,23 +1359,23 @@
           }
         }
       }
-      let allVisited=floors.every(c=>visited.has(`${c.x},${c.y}`));
+      const allVisited=floors.every(c=>visited.has(`${c.x},${c.y}`));
       if(!allVisited){
         forceInteriorDoor(lay,visited);
       }
     }
     function collectFloor(lay){
-      let out=[];
+      const out=[];
       for(let y=0;y<lay.length;y++){
         for(let x=0;x<lay[0].length;x++){
-          let v=lay[y][x];
+          const v=lay[y][x];
           if(v===0||v===2) out.push({x,y});
         }
       }
       return out;
     }
     function collectDoorCoords(lay){
-      let out=[];
+      const out=[];
       for(let y=0;y<lay.length;y++){
         for(let x=0;x<lay[0].length;x++){
           if(lay[y][x]===2) out.push({x,y});
@@ -1328,19 +1391,19 @@
       for(let y=1;y<h-1;y++){
         for(let x=1;x<w-1;x++){
           if(lay[y][x]===1 && hasExactlyTwoOrthWalls(lay,x,y)){
-            let sides=[[1,0],[-1,0],[0,1],[0,-1]];
+            const sides=[[1,0],[-1,0],[0,1],[0,-1]];
             let visitedSide=false, unvisitedSide=false;
-            for(let s of sides){
-              let nx=x+s[0], ny=y+s[1];
+            for(const s of sides){
+              const nx=x+s[0], ny=y+s[1];
               if(nx>=0&&ny>=0&&nx<w&&ny<h){
-                let val=lay[ny][nx];
+                const val=lay[ny][nx];
                 if(val===0||val===2){
                   if(visited.has(`${nx},${ny}`)) visitedSide=true;
                   else unvisitedSide=true;
                 }
               }
             }
-            if(visitedSide&&unvisitedSide){
+            if(visitedSide && unvisitedSide){
               lay[y][x]=2;
               return;
             }
@@ -1348,48 +1411,77 @@
         }
       }
     }
-    function stampBuilding(lay,sx,sy){
-      for(let y=0;y<lay.length;y++){
-        for(let x=0;x<lay[0].length;x++){
-          let val=lay[y][x];
+    function stampBuilding(lay, sx, sy){
+      const chosenWallType = "cobblestone"; 
+      for(let y=0; y<lay.length; y++){
+        for(let x=0; x<lay[0].length; x++){
+          const val=lay[y][x];
+          const cell=mapData[sy + y][sx + x];
           if(val===1){
-            mapData[sy+y][sx+x].type="cobblestone";
+            cell.type = chosenWallType;
+            cell.hasBuilding = true;
           } else if(val===0){
-            mapData[sy+y][sx+x].type=chosenFloorTile;
+            cell.type = chosenFloorTile;
+            cell.hasBuilding = true;
           } else if(val===2){
-            mapData[sy+y][sx+x].type="door";
+            cell.type = "door";
+            cell.hasBuilding = true;
           }
         }
       }
     }
 
     /*******************************************************
-     * CITY SQUARES - decorative floors
+     * CITY SQUARES
      *******************************************************/
     function createCitySquares(){
-      // We'll place 2-4 squares in random places. 4x4 to 6x6
       const squareCount = 2 + Math.floor(Math.random()*3);
-      for(let i=0;i<squareCount;i++){
-        let w=4 + Math.floor(Math.random()*3);
-        let h=4 + Math.floor(Math.random()*3);
-        let sx=Math.floor(Math.random()*(GRID_WIDTH - w));
-        let sy=Math.floor(Math.random()*(GRID_HEIGHT- h));
-        // stamp a decorative pattern with e.g. marble1,2,3,Cracked
-        for(let yy=sy; yy<sy+h; yy++){
-          for(let xx=sx; xx<sx+w; xx++){
-            // skip if water or building wall or door
-            if(["wall","door","negative"].includes(mapData[yy][xx].type)) continue;
-            // random floor pattern
-            let r=Math.random();
-            if(r<0.2){
-              mapData[yy][xx].type="marbleCracked";
-            } else if(r<0.5){
-              mapData[yy][xx].type="marble1";
-            } else if(r<0.7){
-              mapData[yy][xx].type="marble2";
-            } else {
-              mapData[yy][xx].type="marble3";
-            }
+      let attempts=0, placed=0;
+      while(placed<squareCount && attempts<squareCount*20){
+        attempts++;
+        const w=4 + Math.floor(Math.random()*3);
+        const h=4 + Math.floor(Math.random()*3);
+        const sx=Math.floor(Math.random()*(GRID_WIDTH - w));
+        const sy=Math.floor(Math.random()*(GRID_HEIGHT - h));
+        if(!canPlacePlaza(sx,sy,w,h)) continue;
+        stampPlaza(sx,sy,w,h);
+        placed++;
+      }
+    }
+
+    function canPlacePlaza(sx,sy,w,h){
+      for(let y=sy; y<sy+h; y++){
+        for(let x=sx; x<sx+w; x++){
+          const t=mapData[y][x];
+          if(t.hasBuilding || t.type==="wall" || t.type==="door" 
+             || t.type==="negative"){
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    // *** ADDED *** We add a small chance to turn some plaza tiles
+    // into "marketscatter", using the new assets
+    function stampPlaza(sx,sy,w,h){
+      for(let yy=sy; yy<sy+h; yy++){
+        for(let xx=sx; xx<sx+w; xx++){
+          const cell=mapData[yy][xx];
+          if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" 
+             || cell.type==="negative") continue;
+
+          // First set to roaddirt or random limestone
+          if(Math.random()<0.2){
+            const limestones=["limestone1","limestone2","limestone3"];
+            cell.type = limestones[Math.floor(Math.random()*limestones.length)];
+          } else {
+            cell.type="roaddirt";
+          }
+
+          // Then 10% chance to place market scatter
+          if(Math.random()<0.1){
+            cell.type="marketscatter";
           }
         }
       }
@@ -1399,17 +1491,18 @@
      * FIELDS
      *******************************************************/
     function createFields(numFields){
-      for(let i=0;i<numFields;i++){
-        let fw=3+Math.floor(Math.random()*5);
-        let fh=3+Math.floor(Math.random()*5);
-        let sx=Math.floor(Math.random()*(GRID_WIDTH-fw));
-        let sy=Math.floor(Math.random()*(GRID_HEIGHT-fh));
-        let farmlandCount=tileAssetMapping["farmland"].files.length;
-        let cropIndex=Math.floor(Math.random()*farmlandCount);
+      for(let i=0; i<numFields; i++){
+        const fw=3+Math.floor(Math.random()*5);
+        const fh=3+Math.floor(Math.random()*5);
+        const sx=Math.floor(Math.random()*(GRID_WIDTH-fw));
+        const sy=Math.floor(Math.random()*(GRID_HEIGHT-fh));
+        const farmlandCount=tileAssetMapping["farmland"].files.length;
+        const cropIndex=Math.floor(Math.random()*farmlandCount);
         for(let yy=sy; yy<sy+fh; yy++){
           for(let xx=sx; xx<sx+fw; xx++){
-            mapData[yy][xx].type="farmland";
-            mapData[yy][xx].crop=cropIndex;
+            const c=mapData[yy][xx];
+            c.type="farmland";
+            c.crop=cropIndex;
           }
         }
       }
@@ -1419,13 +1512,11 @@
      * CITY WALLS
      *******************************************************/
     function createIrregularCityWalls(){
-      const buildingWallFiles = [
-        "brick1.png","brick2.png","brick3.png","brick4.png","brick5.png",
-        "cobble1.png","cobble2.png","cobble3.png","cobble4.png",
-        "darkStoneBlock.png","darktile1.png","darktile2.png","darktile3.png","darktile4.png",
-        "limestone1.png","limestone2.png","limestone3.png","ancientTile.png"
+      const darkStoneWallFiles = [
+        "darkStoneBlock.png",
+        "darktile1.png","darktile2.png","darktile3.png","darktile4.png"
       ];
-      let chosenWallFile = buildingWallFiles[Math.floor(Math.random()*buildingWallFiles.length)];
+      const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random()*darkStoneWallFiles.length)];
 
       const rectW = Math.floor(GRID_WIDTH/2);
       const rectH = Math.floor(GRID_HEIGHT/2);
@@ -1433,38 +1524,194 @@
       const startY = 2 + Math.floor(Math.random()*(GRID_HEIGHT - rectH -4));
       const thickness = 2 + Math.floor(Math.random()*2);
 
+      cityWallBounds = {
+        x: startX + thickness,
+        y: startY + thickness,
+        w: rectW - thickness*2,
+        h: rectH - thickness*2
+      };
+
       carveWallEdge(chosenWallFile, startX,        startY,        startX+rectW, startY,        thickness, true);
       carveWallEdge(chosenWallFile, startX+rectW,  startY,        startX+rectW, startY+rectH,  thickness, false);
       carveWallEdge(chosenWallFile, startX+rectW,  startY+rectH,  startX,       startY+rectH,  thickness, true);
       carveWallEdge(chosenWallFile, startX,        startY+rectH,  startX,       startY,        thickness, false);
     }
-
     function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal){
-      let dx = (x2===x1)? 0 : (x2>x1?1:-1);
-      let dy = (y2===y1)? 0 : (y2>y1?1:-1);
+      const dx = (x2===x1)? 0 : (x2>x1?1:-1);
+      const dy = (y2===y1)? 0 : (y2>y1?1:-1);
 
       let cx = x1, cy = y1;
       while(cx!==x2 || cy!==y2){
-        let offset = (Math.random()<0.2)? (Math.random()<0.5?1:-1) : 0;
+        const offset = (Math.random()<0.2)? (Math.random()<0.5?1:-1) : 0;
         carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
         cx += dx;
         cy += dy;
       }
       carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile); 
     }
-
     function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
       for(let i=0;i<thickness;i++){
-        let xx = baseX + (horizontal? 0 : i+offset);
-        let yy = baseY + (horizontal? i+offset : 0);
+        const xx = baseX + (horizontal? 0 : i+offset);
+        const yy = baseY + (horizontal? i+offset : 0);
         if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-        let t = mapData[yy][xx].type;
-        if(t==="roadstone" || t==="roaddirt" || t==="woodfloor"){
+        const cell = mapData[yy][xx];
+        if(cell.type==="roadstone" || cell.type==="roaddirt" || cell.type==="woodfloor"){
           continue; 
         }
-        mapData[yy][xx].type = "wall";
-        mapData[yy][xx].chosenWallFile = chosenFile;
+        cell.type="wall";
+        cell.chosenWallFile = chosenFile;
       }
+    }
+
+    /*******************************************************
+     * BIOME DECORATION
+     *******************************************************/
+    function decorateBiome(theme){
+      if(theme==="desert"){
+        decorateDesert();
+      } 
+      else if(theme==="grassland" || theme==="forest" || theme==="mountain"){
+        scatterGrassRocks(80); 
+      }
+    }
+    function decorateDesert(){
+      for(let i=0;i<250;i++){
+        const x=Math.floor(Math.random()*GRID_WIDTH);
+        const y=Math.floor(Math.random()*GRID_HEIGHT);
+        const cell=mapData[y][x];
+        if(["sand","dirtCracked","dirt"].includes(cell.type)){
+          const r=Math.random();
+          if(r<0.08){
+            cell.type="cactus";
+          } else if(r<0.12){
+            cell.type="desertPalm";
+          } else if(r<0.16){
+            cell.type="dune";
+          } else if(r<0.2){
+            cell.type="desertBoulder";
+          }
+        }
+      }
+    }
+    function scatterGrassRocks(num){
+      for(let i=0; i<num; i++){
+        const gx=Math.floor(Math.random()*GRID_WIDTH);
+        const gy=Math.floor(Math.random()*GRID_HEIGHT);
+        const c=mapData[gy][gx];
+        if(["grass","dirt","stone"].includes(c.type) && Math.random()<0.2){
+          c.type="scatterStoneGrass";
+        }
+      }
+    }
+
+    /*******************************************************
+     * COASTAL: TREES & DOCKS
+     *******************************************************/
+    function scatterCoastalTrees(count){
+      let placed=0, attempts=0;
+      while(placed<count && attempts<1000){
+        attempts++;
+        const x=Math.floor(Math.random()*GRID_WIDTH);
+        const y=Math.floor(Math.random()*GRID_HEIGHT);
+        const cell=mapData[y][x];
+        if(cell.type==="grass" && !cell.hasBuilding){
+          if(Math.random()<0.25){
+            cell.type="tree";
+            placed++;
+          }
+        }
+      }
+    }
+
+    function createCoastalDocks(numDocks){
+      let attempts=0, built=0;
+      while(built<numDocks && attempts<1000){
+        attempts++;
+        const x=Math.floor(Math.random()*GRID_WIDTH);
+        const y=Math.floor(Math.random()*GRID_HEIGHT);
+        if(!isLandEdge(x,y)) continue;
+        const dir = canFindConsecutiveWaterLine(x,y,10);
+        if(!dir) continue;
+        if(buildDock(x,y,dir,10)){
+          built++;
+        }
+      }
+    }
+    function isLandEdge(x,y){
+      const c=mapData[y][x];
+      if(["water","lava","negative"].includes(c.type)) return false;
+      if(c.hasBuilding) return false;
+      const nbrs=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]];
+      return nbrs.some(([nx,ny])=>{
+        if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) return false;
+        return (mapData[ny][nx].type==="water");
+      });
+    }
+    function canFindConsecutiveWaterLine(x,y,length){
+      const possibleDirs=[];
+      if(y>0 && mapData[y-1][x].type==="water") possibleDirs.push({dx:0,dy:-1});
+      if(y<GRID_HEIGHT-1 && mapData[y+1][x].type==="water") possibleDirs.push({dx:0,dy:1});
+      if(x>0 && mapData[y][x-1].type==="water") possibleDirs.push({dx:-1,dy:0});
+      if(x<GRID_WIDTH-1 && mapData[y][x+1].type==="water") possibleDirs.push({dx:1,dy:0});
+
+      for(const dir of possibleDirs){
+        let ccount=0, cx=x+dir.dx, cy=y+dir.dy;
+        while(ccount<length){
+          if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) break;
+          if(mapData[cy][cx].type!=="water") break;
+          cx+=dir.dx; cy+=dir.dy;
+          ccount++;
+        }
+        if(ccount>=length){
+          if(dir.dx!==0) return "horizontal"; 
+          else return "vertical";
+        }
+      }
+      return null;
+    }
+    function buildDock(x,y,orientation,len){
+      let dx=0, dy=0, foundLine=false;
+      if(orientation==="horizontal"){
+        if(x>0 && mapData[y][x-1].type==="water"){
+          dx=-1; dy=0; foundLine=true;
+        } else if(x<GRID_WIDTH-1 && mapData[y][x+1].type==="water"){
+          dx=1; dy=0; foundLine=true;
+        }
+      } else {
+        if(y>0 && mapData[y-1][x].type==="water"){
+          dx=0; dy=-1; foundLine=true;
+        } else if(y<GRID_HEIGHT-1 && mapData[y+1][x].type==="water"){
+          dx=0; dy=1; foundLine=true;
+        }
+      }
+      if(!foundLine) return false;
+
+      let sideX=0, sideY=0;
+      if(orientation==="horizontal"){
+        sideX=0; sideY=1;
+      } else {
+        sideX=1; sideY=0;
+      }
+
+      let cx=x, cy=y;
+      for(let i=0; i<len; i++){
+        cx+=dx; cy+=dy;
+        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) return false;
+        if(mapData[cy][cx].type!=="water") return false;
+      }
+
+      cx=x; cy=y;
+      for(let i=0; i<len; i++){
+        cx+=dx; cy+=dy;
+        mapData[cy][cx].type="woodfloor";
+        const sx=cx+sideX, sy=cy+sideY;
+        if(sx>=0&&sy>=0&&sx<GRID_WIDTH&&sy<GRID_HEIGHT){
+          if(mapData[sy][sx].type==="water"){
+            mapData[sy][sx].type="woodfloor";
+          }
+        }
+      }
+      return true;
     }
 
     /*******************************************************
@@ -1487,8 +1734,8 @@
 
       if(cell.type==="farmland" && cell.crop!==undefined){
         const farmlandImgs=tileTextures["farmland"];
-        let chosen=farmlandImgs[cell.crop];
-        if(chosen&&chosen.complete){
+        const chosen = farmlandImgs[cell.crop];
+        if(chosen && chosen.complete){
           ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
         } else {
           ctx.fillStyle=getColorForTileType("farmland");
@@ -1497,7 +1744,7 @@
       }
       else if(cell.type==="wall" && cell.chosenWallFile){
         const arr = tileTextures["wall"] || [];
-        let forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
+        const forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
         if(forcedImg && forcedImg.complete){
           ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
         } else {
@@ -1505,18 +1752,26 @@
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
       }
-      else if(!cell.occupant){
-        let arr=tileTextures[cell.type]||[];
-        let chosen=arr.length ? arr[Math.floor(Math.random()*arr.length)] : null;
-        if(chosen && chosen.complete){
-          ctx.drawImage(chosen,px,py,TILE_SIZE,TILE_SIZE);
+      else if(cell.occupant){
+        drawOccupantSprite(ctx, cell.occupant, px, py);
+      }
+      else {
+        const arr = tileTextures[cell.type] || [];
+        if(arr.length > 0){
+          if(cell._chosenTileIndex == null){
+            cell._chosenTileIndex = Math.floor(Math.random()*arr.length);
+          }
+          const chosen = arr[cell._chosenTileIndex];
+          if(chosen && chosen.complete){
+            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+          } else {
+            ctx.fillStyle=getColorForTileType(cell.type);
+            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          }
         } else {
           ctx.fillStyle=getColorForTileType(cell.type);
-          ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
-      } 
-      else {
-        drawOccupantSprite(ctx, cell.occupant, px, py);
       }
 
       ctx.strokeStyle="rgba(0,0,0,0.3)";
@@ -1525,45 +1780,50 @@
 
     function drawOccupantSprite(ctx, occupant, px, py){
       if(occupant.sprite && occupant.sprite!=="none"){
-        let spr=occupantSpritesMap[occupant.sprite];
+        const spr = occupantSpritesMap[occupant.sprite];
         if(spr && spr.complete){
           ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
         } else {
           ctx.fillStyle="#999";
-          ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
+      } else {
+        ctx.fillStyle="#999";
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
       }
-      let borderColor= occupantColours[occupant.type]||"#FF00FF";
+      const borderColor = occupantColours[occupant.type] || "#FF00FF";
       ctx.strokeStyle=borderColor;
       ctx.lineWidth=1;
-      ctx.strokeRect(px+0.5,py+0.5,TILE_SIZE-1,TILE_SIZE-1);
+      ctx.strokeRect(px+0.5, py+0.5, TILE_SIZE-1, TILE_SIZE-1);
     }
 
     /*******************************************************
      * MODE SELECTOR
      *******************************************************/
     function setMode(mode){
-      currentMode=mode;
+      currentMode = mode;
       if(mode!=="move"){
-        occupantInHand=null;
+        occupantInHand = null;
       }
     }
 
     /*******************************************************
-     * CANVAS EVENTS => occupant & panning & pinch
+     * CANVAS EVENTS (occupant, panning, pinch zoom)
      *******************************************************/
     const canvas=document.getElementById("mapCanvas");
     const mapWrapper=document.querySelector(".mapWrapper");
+
     function updateCanvasTransform(){
       canvas.style.transform=`translate(${offsetX}px,${offsetY}px) scale(${scale})`;
     }
-    canvas.addEventListener("click", e=>{
-      if(isDragging||activePointers.size>1)return;
+
+    canvas.addEventListener("click", (e) => {
+      if(isDragging || activePointers.size>1) return;
       const rect=mapWrapper.getBoundingClientRect();
-      const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+      const mx=e.clientX - rect.left, my=e.clientY - rect.top;
       const wx=(mx-offsetX)/scale, wy=(my-offsetY)/scale;
       const tx=Math.floor(wx/TILE_SIZE), ty=Math.floor(wy/TILE_SIZE);
-      if(tx<0||ty<0||tx>=GRID_WIDTH||ty>=GRID_HEIGHT)return;
+      if(tx<0||ty<0||tx>=GRID_WIDTH||ty>=GRID_HEIGHT) return;
 
       const occupantType=document.getElementById("occupantType").value;
       const occupantSprite=document.getElementById("occupantSprite").value;
@@ -1572,7 +1832,8 @@
       switch(currentMode){
         case "delete":
           if(tile.occupant){
-            tile.occupant=null; occupantInHand=null;
+            tile.occupant=null;
+            occupantInHand=null;
             drawCell(canvas.getContext("2d"),tx,ty);
           }
           break;
@@ -1592,14 +1853,14 @@
         case "place":
         default:
           occupantInHand=null;
-          if(occupantType==="none")return;
+          if(occupantType==="none") return;
           tile.occupant={type: occupantType, sprite: occupantSprite};
           drawCell(canvas.getContext("2d"),tx,ty);
           break;
       }
     });
 
-    canvas.addEventListener("wheel", e=>{
+    canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       const rect=mapWrapper.getBoundingClientRect();
       const mx=e.clientX-rect.left, my=e.clientY-rect.top;
@@ -1613,7 +1874,7 @@
       updateCanvasTransform();
     }, { passive:false });
 
-    canvas.addEventListener("pointerdown", e=>{
+    canvas.addEventListener("pointerdown", (e) => {
       activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(activePointers.size===1){
         isDragging=true;
@@ -1625,18 +1886,22 @@
         initialPinchScale=scale;
       }
     });
-    window.addEventListener("pointermove", e=>{
-      if(!activePointers.has(e.pointerId))return;
+
+    window.addEventListener("pointermove", (e) => {
+      if(!activePointers.has(e.pointerId)) return;
       activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       if(activePointers.size===1 && isDragging){
-        const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
-        dragStartX=e.clientX; dragStartY=e.clientY;
-        offsetX+=dx; offsetY+=dy;
+        const dx=e.clientX - dragStartX;
+        const dy=e.clientY - dragStartY;
+        dragStartX=e.clientX; 
+        dragStartY=e.clientY;
+        offsetX+=dx; 
+        offsetY+=dy;
         updateCanvasTransform();
       } else if(activePointers.size===2){
         const newDist=getPinchDistance();
         const scaleRatio=newDist/initialPinchDistance;
-        let newScale=initialPinchScale*scaleRatio;
+        let newScale=initialPinchScale * scaleRatio;
         newScale=Math.min(Math.max(newScale,minScale),maxScale);
         const rect=mapWrapper.getBoundingClientRect();
         const ps=[...activePointers.values()];
@@ -1650,36 +1915,29 @@
         e.preventDefault();
       }
     });
-    window.addEventListener("pointerup", e=>{
-      activePointers.delete(e.pointerId);
-      if(activePointers.size<2)initialPinchDistance=0;
-      if(activePointers.size===0)isDragging=false;
+    ["pointerup","pointercancel"].forEach(evtName => {
+      window.addEventListener(evtName, (e) => {
+        activePointers.delete(e.pointerId);
+        if(activePointers.size<2) initialPinchDistance=0;
+        if(activePointers.size===0) isDragging=false;
+      });
     });
-    window.addEventListener("pointercancel", e=>{
-      activePointers.delete(e.pointerId);
-      if(activePointers.size<2)initialPinchDistance=0;
-      if(activePointers.size===0)isDragging=false;
-    });
+
     function getPinchDistance(){
-      if(activePointers.size!==2)return 0;
+      if(activePointers.size!==2) return 0;
       const arr=[...activePointers.values()];
-      const dx=arr[0].x - arr[1].x, dy=arr[0].y - arr[1].y;
+      const dx=arr[0].x - arr[1].x;
+      const dy=arr[0].y - arr[1].y;
       return Math.sqrt(dx*dx + dy*dy);
     }
 
-    /*******************************************************
-     * CLEAR occupant
-     *******************************************************/
     function clearOccupantSelection(){
       document.getElementById("occupantType").value="none";
       document.getElementById("occupantSprite").value="none";
     }
 
-    /*******************************************************
-     * ON LOAD
-     *******************************************************/
-    window.onload=()=>{
-      preloadImages(()=>{
+    window.onload=() => {
+      preloadImages(() => {
         generateMap();
       });
     };
