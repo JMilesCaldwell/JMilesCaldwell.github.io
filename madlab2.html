@@ -455,11 +455,7 @@
         files: ["junglerock1.png"]
       },
 
-      /* 
-         FIXED MISSING KEYS
-         These keys are referenced in the code (roads, squares, etc.)
-         so they must exist as separate entries.
-      */
+      // Keys referenced in code (for roads, squares):
       "limestone1": {
         folder: "buildings/walls",
         files: ["limestone1.png"]
@@ -1062,20 +1058,29 @@
         if(e2<=dx){err+=dx;y+=sySign;}
       }
     }
+
+    // UPDATED function for 2-tile-wide roads:
     function carveRoadTile(theme, rx, ry){
-      if(rx<0||ry<0||rx>=GRID_WIDTH||ry>=GRID_HEIGHT)return;
-      let cell=mapData[ry][rx];
-      if(cell.type==="water"||cell.type==="lava"){
-        // place "woodfloor" as bridge
-        cell.type="woodfloor";
-      } else {
-        // desert, snow, grassland => roaddirt
-        // small chance for limestone scatter
-        if(Math.random()<0.05){
-          const limestones=["limestone1","limestone2","limestone3"];
-          cell.type = pickRandom(limestones);
-        } else {
-          cell.type="roaddirt";
+      // We'll carve a small diamond shape of radius 1 around (rx, ry).
+      for(let dy=-1; dy<=1; dy++){
+        for(let dx=-1; dx<=1; dx++){
+          if(Math.abs(dx) + Math.abs(dy) <= 1){
+            let nx = rx + dx;
+            let ny = ry + dy;
+            if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
+            let cell=mapData[ny][nx];
+            if(cell.type==="water"||cell.type==="lava"){
+              cell.type="woodfloor";
+            } else {
+              // small chance for limestone scatter
+              if(Math.random()<0.05){
+                const limestones=["limestone1","limestone2","limestone3"];
+                cell.type = pickRandom(limestones);
+              } else {
+                cell.type="roaddirt";
+              }
+            }
+          }
         }
       }
     }
