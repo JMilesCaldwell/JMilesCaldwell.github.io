@@ -239,9 +239,6 @@
     const tileTextures = {};
     const occupantSpritesMap = {};
 
-    // *** ADDED *** We define "marketscatter" referencing the new folder "scatter"
-    // which has: marketwares3.png, marketwares2.png, marketwares1.png, smalltent.png, marketstallx.png
-    // We'll insert it into the existing tileAssetMapping (which we keep wholly):
     const tileAssetMapping = {
       "grass": {
         folder: "grass",
@@ -457,15 +454,13 @@
         folder: "buildings/floors",
         files: ["marbleCracked.png"]
       },
-
-      // *** HERE IS THE NEW TILE TYPE FOR THE MARKET SCATTER
+      // Additional plaza scatter:
       "marketscatter": {
         folder: "scatter",
         files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
       }
     };
 
-    // fallback colours remain identical
     const fallbackColors = {
       grass:"#9AE582",
       tree: "#2f6a16",
@@ -517,7 +512,6 @@
       limestone3:"#b0ae93",
       woodfloor:"#775b3e",
       marbleCracked:"#d6d6d6",
-      // newly added fallback for marketscatter
       marketscatter:"#775b3e"
     };
 
@@ -664,7 +658,7 @@
           createIrregularCoastLine();
         }
         else if(theme==="riverlands" && doWater){
-          createMeanderingRiver(settings.roadMaxLength, "water", 2);
+          createMeanderingRiver(settings.roadMaxLength, "water", 2); 
         }
         else {
           if(doWater){
@@ -746,7 +740,7 @@
     }
 
     /*******************************************************
-     * CAVERN GEN
+     * CAVERN
      *******************************************************/
     function generateCavern(){
       const fillChance = 0.52;
@@ -897,7 +891,7 @@
     }
 
     /*******************************************************
-     * WATER / LAVA BODIES
+     * WATER / LAVA
      *******************************************************/
     function createWaterBody(maxSize){
       createFluidBody(maxSize,"water");
@@ -1059,6 +1053,7 @@
       carveStraightRoad(theme, sx, sy, ex, ey);
     }
 
+    // *** CHANGED *** so that in "coastal" maps, water remains water
     function carveStraightRoad(theme, sx, sy, ex, ey){
       let dx=Math.abs(ex-sx), sxSign=sx<ex?1:-1;
       let dy=-Math.abs(ey-sy), sySign=sy<ey?1:-1;
@@ -1073,20 +1068,27 @@
       }
     }
 
+    // The critical small tweak:
     function carveRoadTile(theme, rx, ry){
       for(let dy=-1; dy<=1; dy++){
         for(let dx=-1; dx<=1; dx++){
-          if(Math.abs(dx) + Math.abs(dy) <= 1){
-            const nx = rx + dx;
-            const ny = ry + dy;
+          if(Math.abs(dx)+Math.abs(dy)<=1){
+            const nx=rx+dx, ny=ry+dy;
             if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
             const cell=mapData[ny][nx];
+
+            // If the tile is water/lava:
             if(cell.type==="water"||cell.type==="lava"){
-              cell.type="woodfloor";
-            } else {
+              // If we are coastal, do not replace water => skip bridging
+              if(theme!=="coastal"){
+                cell.type="woodfloor";
+              }
+            }
+            else {
+              // Otherwise normal road logic
               if(Math.random()<0.05){
                 const limestones=["limestone1","limestone2","limestone3"];
-                cell.type = limestones[Math.floor(Math.random()*limestones.length)];
+                cell.type=limestones[Math.floor(Math.random()*limestones.length)];
               } else {
                 cell.type="roaddirt";
               }
@@ -1254,7 +1256,6 @@
         const by2 = sy + shape.height - 1;
         const cwX2 = cityWallBounds.x + cityWallBounds.w - 1;
         const cwY2 = cityWallBounds.y + cityWallBounds.h - 1;
-
         if(sx < cityWallBounds.x || sy < cityWallBounds.y ||
            bx2 > cwX2          || by2 > cwY2 ) {
           return false;
@@ -1432,7 +1433,7 @@
     }
 
     /*******************************************************
-     * CITY SQUARES
+     * CITY SQUARES + MARKET SCATTER
      *******************************************************/
     function createCitySquares(){
       const squareCount = 2 + Math.floor(Math.random()*3);
@@ -1448,38 +1449,31 @@
         placed++;
       }
     }
-
     function canPlacePlaza(sx,sy,w,h){
       for(let y=sy; y<sy+h; y++){
         for(let x=sx; x<sx+w; x++){
           const t=mapData[y][x];
-          if(t.hasBuilding || t.type==="wall" || t.type==="door" 
-             || t.type==="negative"){
+          if(t.hasBuilding || t.type==="wall" || t.type==="door" || t.type==="negative"){
             return false;
           }
         }
       }
       return true;
     }
-
-    // *** ADDED *** We add a small chance to turn some plaza tiles
-    // into "marketscatter", using the new assets
     function stampPlaza(sx,sy,w,h){
       for(let yy=sy; yy<sy+h; yy++){
         for(let xx=sx; xx<sx+w; xx++){
           const cell=mapData[yy][xx];
-          if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" 
-             || cell.type==="negative") continue;
+          if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" || cell.type==="negative") continue;
 
-          // First set to roaddirt or random limestone
+          // Base: roaddirt or a random limestone
           if(Math.random()<0.2){
             const limestones=["limestone1","limestone2","limestone3"];
             cell.type = limestones[Math.floor(Math.random()*limestones.length)];
           } else {
             cell.type="roaddirt";
           }
-
-          // Then 10% chance to place market scatter
+          // 10% chance to place market scatter
           if(Math.random()<0.1){
             cell.type="marketscatter";
           }
@@ -1622,7 +1616,6 @@
         }
       }
     }
-
     function createCoastalDocks(numDocks){
       let attempts=0, built=0;
       while(built<numDocks && attempts<1000){
@@ -1808,7 +1801,7 @@
     }
 
     /*******************************************************
-     * CANVAS EVENTS (occupant, panning, pinch zoom)
+     * CANVAS EVENTS => occupant, panning, pinch
      *******************************************************/
     const canvas=document.getElementById("mapCanvas");
     const mapWrapper=document.querySelector(".mapWrapper");
