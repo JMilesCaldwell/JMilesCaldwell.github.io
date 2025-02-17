@@ -567,8 +567,8 @@
         for(const fname of files){
           const img = new Image();
           img.src = folder
-            ? resources/mapgen/mapassets/tiles/${folder}/${fname}
-            : resources/mapgen/mapassets/tiles/${fname};
+            ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
+            : `resources/mapgen/mapassets/tiles/${fname}`;
           img.onload = checkDone;
           img.onerror = checkDone;
           tileTextures[tkey].push(img);
@@ -576,7 +576,7 @@
       }
       occupantSpriteNames.forEach(sp => {
         const img = new Image();
-        img.src = resources/mapgen/mapassets/sprites/${sp}.png;
+        img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
         img.onload = checkDone;
         img.onerror = checkDone;
         occupantSpritesMap[sp] = img;
@@ -698,7 +698,7 @@
         div.className = "sliderContainer";
 
         const label = document.createElement("label");
-        label.textContent = ${tileType} : ${val.toFixed(2)};
+        label.textContent = `${tileType} : ${val.toFixed(2)}`;
 
         const slider = document.createElement("input");
         slider.type = "range";
@@ -708,7 +708,7 @@
         slider.value = val;
 
         slider.oninput = () => {
-          label.textContent = ${tileType} : ${slider.value};
+          label.textContent = `${tileType} : ${slider.value}`;
         };
 
         sliderCache[tileType] = slider;
@@ -734,7 +734,7 @@
         div.className = "sliderContainer";
 
         const label = document.createElement("label");
-        label.textContent = ${key} : ${val};
+        label.textContent = `${key} : ${val}`;
 
         const slider = document.createElement("input");
         slider.type = "range";
@@ -744,7 +744,7 @@
         slider.value = val;
 
         slider.oninput = () => {
-          label.textContent = ${key} : ${slider.value};
+          label.textContent = `${key} : ${slider.value}`;
         };
 
         sliderCache[key] = slider;
@@ -968,10 +968,10 @@
         }
       }
       const largestMap = bm.map(row=>row.slice());
-      const regSet = new Set(bestRegion.map(([xx,yy])=>${xx},${yy}));
+      const regSet = new Set(bestRegion.map(([xx,yy])=>`${xx},${yy}`));
       for(let y=0;y<GRID_HEIGHT;y++){
         for(let x=0;x<GRID_WIDTH;x++){
-          if(largestMap[y][x] && !regSet.has(${x},${y})){
+          if(largestMap[y][x] && !regSet.has(`${x},${y}`)){
             largestMap[y][x]=false;
           }
         }
@@ -1122,7 +1122,7 @@
         "0,1":  {dx:1,dy:0},
         "0,-1": {dx:-1,dy:0}
       };
-      const key = ${dir.dx},${dir.dy};
+      const key = `${dir.dx},${dir.dy}`;
       if(Math.random()<0.5 && leftTurn[key]) return leftTurn[key];
       if(rightTurn[key]) return rightTurn[key];
       return dir;
@@ -1488,7 +1488,7 @@
 
       const visited=new Set();
       const queue=[{x:mainDoor.x,y:mainDoor.y}];
-      visited.add(${mainDoor.x},${mainDoor.y});
+      visited.add(`${mainDoor.x},${mainDoor.y}`);
 
       while(queue.length){
         const {x,y}=queue.shift();
@@ -1496,7 +1496,7 @@
           if(nx<0||ny<0||nx>=lay[0].length||ny>=lay.length)continue;
           const v=lay[ny][nx];
           if(v===0||v===2){
-            const key=${nx},${ny};
+            const key=`${nx},${ny}`;
             if(!visited.has(key)){
               visited.add(key);
               queue.push({x:nx,y:ny});
@@ -1504,7 +1504,7 @@
           }
         }
       }
-      const allVisited=floors.every(c=>visited.has(${c.x},${c.y}));
+      const allVisited=floors.every(c=>visited.has(`${c.x},${c.y}`));
       if(!allVisited){
         forceInteriorDoor(lay,visited);
       }
@@ -1543,7 +1543,7 @@
               if(nx>=0&&ny>=0&&nx<w&&ny<h){
                 const val=lay[ny][nx];
                 if(val===0||val===2){
-                  if(visited.has(${nx},${ny})) visitedSide=true;
+                  if(visited.has(`${nx},${ny}`)) visitedSide=true;
                   else unvisitedSide=true;
                 }
               }
@@ -1712,31 +1712,6 @@
         scatterGrassRocks(80); 
       }
     }
-    function scatterPalmsNearWater() {
-  // Iterate through every cell in the grid.
-  for (let y = 0; y < GRID_HEIGHT; y++) {
-    for (let x = 0; x < GRID_WIDTH; x++) {
-      // Only consider desert-like cells.
-      if (["sand", "dune"].includes(mapData[y][x].type)) {
-        // Check the four orthogonal neighbors for water.
-        const neighbors = [[x+1,y], [x-1,y], [x,y+1], [x,y-1]];
-        for (let [nx, ny] of neighbors) {
-          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
-            if (mapData[ny][nx].type === "water") {
-              // With a 20% chance, convert this desert cell to a palm tree.
-              if (Math.random() < 0.2) {
-                mapData[y][x].type = "desertPalm";
-              }
-              // Break after finding at least one water neighbor.
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
     // Function to create a palm oasis patch in the desert.
 function createPalmOasis() {
   // Choose a random centre for the oasis within the grid.
@@ -1830,15 +1805,11 @@ function decorateDesert(){
     }
   }
   
-  // Optionally add an oasis patch.
+  // Insert oasis patch generation with a 30% chance.
   if (Math.random() < 0.3) {
     createPalmOasis();
   }
-  
-  // Now, scatter additional palm trees near water.
-  scatterPalmsNearWater();
 }
-
 
     function scatterGrassRocks(num){
       for(let i=0; i<num; i++){
@@ -2103,7 +2074,7 @@ function decorateDesert(){
     const mapWrapper=document.querySelector(".mapWrapper");
 
     function updateCanvasTransform(){
-      canvas.style.transform=translate(${offsetX}px,${offsetY}px) scale(${scale});
+      canvas.style.transform=`translate(${offsetX}px,${offsetY}px) scale(${scale})`;
     }
 
     canvas.addEventListener("click", (e) => {
