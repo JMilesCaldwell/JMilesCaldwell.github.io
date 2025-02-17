@@ -583,6 +583,19 @@
       });
     }
 
+    function weightedRandomIndex(weights) {
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  let random = Math.random() * total;
+  for (let i = 0; i < weights.length; i++) {
+    if (random < weights[i]) {
+      return i;
+    }
+    random -= weights[i];
+  }
+  return weights.length - 1; // fallback in case of rounding errors
+}
+
+
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
@@ -1936,6 +1949,49 @@ function decorateDesert(){
       const cell=mapData[gy][gx];
       const px=gx*TILE_SIZE, py=gy*TILE_SIZE;
 
+      if(cell.type === "water") {
+  const arr = tileTextures["water"];
+  if(arr.length > 0){
+    if(cell._chosenTileIndex == null){
+      // Define custom weights: for example,
+      // plain water (water.png) gets a high weight,
+      // waterrocks and waterrocks2 get lower weights,
+      // and the remaining images get moderate weights.
+      const weights = [60, 10, 10, 5, 5, 10];
+      cell._chosenTileIndex = weightedRandomIndex(weights);
+    }
+    const chosen = arr[cell._chosenTileIndex];
+    if(chosen && chosen.complete){
+      ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType(cell.type);
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  } else {
+    ctx.fillStyle = getColorForTileType(cell.type);
+    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+  }
+} else {
+  // Existing logic for other cell types
+  const arr = tileTextures[cell.type] || [];
+  if(arr.length > 0){
+    if(cell._chosenTileIndex == null){
+      cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
+    }
+    const chosen = arr[cell._chosenTileIndex];
+    if(chosen && chosen.complete){
+      ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType(cell.type);
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  } else {
+    ctx.fillStyle = getColorForTileType(cell.type);
+    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+  }
+}
+
+      
       if(cell.type==="farmland" && cell.crop!==undefined){
         const farmlandImgs=tileTextures["farmland"];
         const chosen = farmlandImgs[cell.crop];
