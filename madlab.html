@@ -905,7 +905,7 @@
       const doCityWalls = document.getElementById("cityWalls").checked;
       const doWater = document.getElementById("waterCheck").checked;
       const doRoads = document.getElementById("roadCheck").checked;
-
+      reStampBuildings();
       // Initialise the map or cavern
       if(settings.isCavern){
         generateCavern();
@@ -1550,23 +1550,41 @@
 
     let chosenFloorTile=null;
 
-    function createBuildings(numBuildings){
-      const possibleFloors=["floor1"];
-      chosenFloorTile = possibleFloors[Math.floor(Math.random()*possibleFloors.length)];
+let buildingInstances = []; // Global array to store building info
+
+function createBuildings(numBuildings){
+  buildingInstances = []; // reset on each generation
+  const possibleFloors = ["floor1"];
+  chosenFloorTile = possibleFloors[Math.floor(Math.random()*possibleFloors.length)];
+  
+  let attempts = 0, placed = 0;
+  const maxAttempts = 10000; 
+  while(placed < numBuildings && attempts < maxAttempts){
+    attempts++;
+    const shape = buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
+    const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
+    const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
+    if(canPlaceBuilding(sx, sy, shape)){
+      // Clone the shape's layout
+      let localLayout = shape.layout.map(r => r.slice());
+      subdivideBuilding(localLayout);
+      placeExteriorDoor(localLayout);
+      ensureAccessibility(localLayout);
       
-      let attempts=0, placed=0;
-      const maxAttempts = 10000; 
-      while(placed<numBuildings && attempts<maxAttempts){
-        attempts++;
-        const shape = buildingShapes[Math.floor(Math.random()*buildingShapes.length)];
-        const sx=Math.floor(Math.random()*(GRID_WIDTH-shape.width));
-        const sy=Math.floor(Math.random()*(GRID_HEIGHT-shape.height));
-        if(canPlaceBuilding(sx,sy,shape)){
-          placeBuilding(sx,sy,shape);
-          placed++;
-        }
-      }
+      // Save this building's information for later re-stamping
+      buildingInstances.push({
+        layout: localLayout, // the modified layout including doors and walls
+        x: sx,
+        y: sy,
+        floorTile: chosenFloorTile // if needed later in stamping
+      });
+      
+      // Stamp the building now
+      stampBuilding(localLayout, sx, sy);
+      placed++;
     }
+  }
+}
 
     function canPlaceBuilding(sx,sy,shape){
       if(cityWallBounds) {
@@ -1596,6 +1614,16 @@
       return true;
     }
 
+    function reStampBuildings(){
+  // Loop over each saved building instance and reapply the stamp
+  buildingInstances.forEach(building => {
+    stampBuilding(building.layout, building.x, building.y);
+  });
+  // Redraw the map if necessary
+  drawMap();
+}
+
+    
     function placeBuilding(sx,sy,shape){
       const localLayout=shape.layout.map(r=>r.slice());
       subdivideBuilding(localLayout);
