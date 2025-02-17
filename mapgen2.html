@@ -154,14 +154,19 @@
       <br>
       <button class="mapButton" onclick="generateMap()">Generate Map</button>
       <br>
-     <!-- A container that will hold our dynamic sliders -->
-    <div id="sliderControls" class="controls" style="flex-wrap: wrap; border: 1px solid #660000; border-radius: 4px; padding: 1rem;">
+
+      <!-- Collapsible toggle button for sliders -->
+      <button class="mapButton" onclick="toggleSliders()">Toggle Sliders</button>
+    </div>
+
+    <!-- A container that will hold our dynamic sliders, now collapsible -->
+    <div id="sliderControls" class="controls" style="flex-wrap: wrap; border: 1px solid #660000; border-radius: 4px; padding: 1rem; display: block;">
       <!-- Sliders appear here via setupSliders() -->
     </div>
 
-
+    <div class="controls">
       <br>
-     <label>
+      <label>
         Occupant Type:
         <select id="occupantType">
           <option value="none" selected>None</option>
@@ -475,10 +480,19 @@
         folder: "buildings/floors",
         files: ["marbleCracked.png"]
       },
-      // Additional plaza scatter:
       "marketscatter": {
         folder: "scatter",
         files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
+      },
+
+      /* --- Newly added road tiles --- */
+      "roadcobble": {
+        folder: "buildings/floors",
+        files: ["roadcobble.png"]
+      },
+      "dirtroad": {
+        folder: "buildings/floors",
+        files: ["dirtroad.png"]
       }
     };
 
@@ -533,7 +547,11 @@
       limestone3:"#b0ae93",
       woodfloor:"#775b3e",
       marbleCracked:"#d6d6d6",
-      marketscatter:"#775b3e"
+      marketscatter:"#775b3e",
+
+      // fallback for new roads
+      roadcobble:"#705d52",
+      dirtroad:"#8b6a40"
     };
 
     function getColorForTileType(tt){
@@ -584,8 +602,6 @@
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
-    // Original defaults, no forced caps here. We'll rely on code logic
-    // to handle extreme usage (like 100 buildings in a 50x50).
     function getMapSettings(theme){
       switch(theme){
         case "desert":
@@ -704,7 +720,6 @@
       });
 
       // Additional sliders for waterBodies, waterMaxSize, roads, roadMaxLength, buildings
-      // increased maximums:
       const paramSliders = [
         { key: "waterBodies",    min: 0,  max: 20, step: 1  },
         { key: "waterMaxSize",   min: 0,  max: 500, step: 10 },
@@ -812,14 +827,12 @@
         createIrregularCityWalls(); 
       }
 
-      // REMOVE the forced max of 3 roads:
       if(doRoads && !settings.isCavern){
         for(let i=0; i<settings.roads; i++){
           createRoadFromEdgeToEdge(theme);
         }
       }
 
-      // Building is subject to space constraints, but no forced small cap
       if(doBuildings && !settings.isCavern && settings.buildings>0){
         createBuildings(settings.buildings);
       }
@@ -1155,7 +1168,7 @@
     }
 
     /*******************************************************
-     * ROADS (no forced capping now)
+     * ROADS
      *******************************************************/
     function createRoadFromEdgeToEdge(theme){
       const edgeList = ["top","bottom","left","right"];
@@ -1194,8 +1207,35 @@
         if(e2>=dy){err+=dy; x+=sxSign;}
         if(e2<=dx){err+=dx; y+=sySign;}
       }
+
+      // Small chance of a fork at the end of the road
+      if(Math.random()<0.2){
+        createRoadFork(theme, x, y);
+      }
     }
 
+    // A quick function for a short road fork
+    function createRoadFork(theme, forkX, forkY){
+      let length = 5 + Math.floor(Math.random()*5);
+      const directions = [
+        {dx:1, dy:0},
+        {dx:-1, dy:0},
+        {dx:0, dy:1},
+        {dx:0, dy:-1}
+      ];
+      const dir = directions[Math.floor(Math.random()*directions.length)];
+      let cx = forkX, cy = forkY;
+      for(let i=0; i<length; i++){
+        cx += dir.dx;
+        cy += dir.dy;
+        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) break;
+        carveRoadTile(theme, cx, cy);
+      }
+    }
+
+    // Updated road tile carving function:
+    // Now, with a 5% chance, the tile is set to "roadcobble" (random scattering),
+    // otherwise the tile is set to "dirtroad" (the main road texture).
     function carveRoadTile(theme, rx, ry){
       for(let dy=-1; dy<=1; dy++){
         for(let dx=-1; dx<=1; dx++){
@@ -1203,20 +1243,16 @@
             const nx=rx+dx, ny=ry+dy;
             if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
             const cell=mapData[ny][nx];
-
-            // If the tile is water/lava:
             if(cell.type==="water"||cell.type==="lava"){
-              // If we are coastal, do not replace water => skip bridging
               if(theme!=="coastal"){
                 cell.type="woodfloor";
               }
             }
             else {
               if(Math.random()<0.05){
-                const limestones=["limestone1","limestone2","limestone3"];
-                cell.type=limestones[Math.floor(Math.random()*limestones.length)];
+                cell.type="roadcobble";
               } else {
-                cell.type="roaddirt";
+                cell.type="dirtroad";
               }
             }
           }
@@ -1364,8 +1400,6 @@
       const possibleFloors=["marble1","marble2","marble3","marble4"];
       chosenFloorTile = possibleFloors[Math.floor(Math.random()*possibleFloors.length)];
       
-      // Loosen the attempts logic so higher slider values get a better chance:
-      // We'll go up to some bigger ceiling, e.g. 10,000 attempts max.
       let attempts=0, placed=0;
       const maxAttempts = 10000; 
       while(placed<numBuildings && attempts<maxAttempts){
@@ -1596,14 +1630,12 @@
           const cell=mapData[yy][xx];
           if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" || cell.type==="negative") continue;
 
-          // Base: roaddirt or a random limestone
           if(Math.random()<0.2){
             const limestones=["limestone1","limestone2","limestone3"];
             cell.type = limestones[Math.floor(Math.random()*limestones.length)];
           } else {
             cell.type="roaddirt";
           }
-          // 10% chance to place market scatter
           if(Math.random()<0.1){
             cell.type="marketscatter";
           }
@@ -1624,6 +1656,7 @@
         const cropIndex=Math.floor(Math.random()*farmlandCount);
         for(let yy=sy; yy<sy+fh; yy++){
           for(let xx=sx; xx<sx+fw; xx++){
+            if(yy<0||xx<0||yy>=GRID_HEIGHT||xx>=GRID_WIDTH) continue;
             const c=mapData[yy][xx];
             c.type="farmland";
             c.crop=cropIndex;
@@ -1803,7 +1836,7 @@
       } else {
         if(y>0 && mapData[y-1][x].type==="water"){
           dx=0; dy=-1; foundLine=true;
-        } else if(y<GRID_HEIGHT-1 && mapData[y+1][x].type==="water"){
+        } else if(y<GRID_HEIGHT-1 && mapData[y][x+1].type==="water"){
           dx=0; dy=1; foundLine=true;
         }
       }
@@ -2057,6 +2090,16 @@
     function clearOccupantSelection(){
       document.getElementById("occupantType").value="none";
       document.getElementById("occupantSprite").value="none";
+    }
+
+    // Collapsible sliders panel
+    function toggleSliders(){
+      const sc = document.getElementById("sliderControls");
+      if(sc.style.display === "none"){
+        sc.style.display = "block";
+      } else {
+        sc.style.display = "none";
+      }
     }
 
     // Initialise sliders on page load, then preload images and generate
