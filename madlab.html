@@ -595,6 +595,46 @@
   return weights.length - 1; // fallback in case of rounding errors
 }
 
+    // This function checks all water cells and converts those that border non-water cells into beach (whitesand)
+// with the given probability.
+function generateBeaches(probability) {
+  let changed = false;
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      if (mapData[y][x].type === "water") {
+        // Check the four orthogonal neighbors.
+        const neighbors = [
+          [x + 1, y],
+          [x - 1, y],
+          [x, y + 1],
+          [x, y - 1]
+        ];
+        let isBorder = false;
+        for (const [nx, ny] of neighbors) {
+          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
+            // If any neighbor is not water, then this cell is on the border.
+            if (mapData[ny][nx].type !== "water") {
+              isBorder = true;
+              break;
+            }
+          }
+        }
+        if (isBorder && Math.random() < probability) {
+          mapData[y][x].type = "whitesand";
+          changed = true;
+        }
+      }
+    }
+  }
+  return changed;
+}
+
+// This function runs the beach-generation repeatedly (or "grows" the beach) for a given number of iterations.
+function growBeaches(probability, iterations) {
+  for (let i = 0; i < iterations; i++) {
+    generateBeaches(probability);
+  }
+}
 
     /*******************************************************
      * MAP SETTINGS
@@ -805,23 +845,29 @@
         }
         else {
           if(doWater){
-            for(let i=0; i<settings.waterBodies; i++){
-              if(theme==="volcanic"){
-                createLavaBody(settings.waterMaxSize);
-              } else {
-                createWaterBody(settings.waterMaxSize);
-              }
-            }
-            if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
-              if(theme==="volcanic"){
-                createMeanderingRiver(settings.roadMaxLength, "lava");
-              } else {
-                createMeanderingRiver(settings.roadMaxLength, "water");
-              }
-            }
-          }
-        }
-      }
+  for(let i = 0; i < settings.waterBodies; i++){
+    if(theme === "volcanic"){
+      createLavaBody(settings.waterMaxSize);
+    } else {
+      createWaterBody(settings.waterMaxSize);
+    }
+  }
+  // Only grow beaches if not volcanic (lava) theme.
+  if(theme !== "volcanic") {
+    growBeaches(0.4, 3);
+  }
+  
+  if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
+    if(theme==="volcanic"){
+      createMeanderingRiver(settings.roadMaxLength, "lava");
+    } else {
+      createMeanderingRiver(settings.roadMaxLength, "water");
+    }
+    if(theme !== "volcanic") {
+      growBeaches(0.4, 3);
+    }
+  }
+}
 
       if(doCityWalls){
         createIrregularCityWalls(); 
