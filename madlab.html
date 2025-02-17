@@ -1712,6 +1712,31 @@
         scatterGrassRocks(80); 
       }
     }
+    function scatterPalmsNearWater() {
+  // Iterate through every cell in the grid.
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      // Only consider desert-like cells.
+      if (["sand", "dune"].includes(mapData[y][x].type)) {
+        // Check the four orthogonal neighbors for water.
+        const neighbors = [[x+1,y], [x-1,y], [x,y+1], [x,y-1]];
+        for (let [nx, ny] of neighbors) {
+          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
+            if (mapData[ny][nx].type === "water") {
+              // With a 20% chance, convert this desert cell to a palm tree.
+              if (Math.random() < 0.2) {
+                mapData[y][x].type = "desertPalm";
+              }
+              // Break after finding at least one water neighbor.
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
     // Function to create a palm oasis patch in the desert.
 function createPalmOasis() {
   // Choose a random centre for the oasis within the grid.
@@ -1805,11 +1830,15 @@ function decorateDesert(){
     }
   }
   
-  // Insert oasis patch generation with a 30% chance.
+  // Optionally add an oasis patch.
   if (Math.random() < 0.3) {
     createPalmOasis();
   }
+  
+  // Now, scatter additional palm trees near water.
+  scatterPalmsNearWater();
 }
+
 
     function scatterGrassRocks(num){
       for(let i=0; i<num; i++){
