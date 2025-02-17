@@ -682,6 +682,31 @@
       }
       return weights.length - 1; 
     }
+    
+    function scatterPalmsNearWater() {
+  // Iterate through every cell in the grid.
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      // Only consider desert-like cells.
+      if (["sand", "dune"].includes(mapData[y][x].type)) {
+        // Check the four orthogonal neighbors for water.
+        const neighbors = [[x+1,y], [x-1,y], [x,y+1], [x,y-1]];
+        for (let [nx, ny] of neighbors) {
+          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
+            if (mapData[ny][nx].type === "water") {
+              // With a 20% chance, convert this desert cell to a palm tree.
+              if (Math.random() < 0.2) {
+                mapData[y][x].type = "desertPalm";
+              }
+              // Break after finding at least one water neighbor.
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
     /*******************************************************
      * MAP SETTINGS
@@ -1860,30 +1885,34 @@
       }
     }
 
-    // Desert decoration with optional oasis
-    function decorateDesert(){
-      for (let i = 0; i < 250; i++){
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        const cell = mapData[y][x];
-        if (["sand", "dirtCracked", "dirt"].includes(cell.type)){
-          const r = Math.random();
-          if (r < 0.08){
-            cell.type = "cactus";
-          } else if (r < 0.12){
-            cell.type = "desertPalm";
-          } else if (r < 0.16){
-            cell.type = "dune";
-          } else if (r < 0.2){
-            cell.type = "desertBoulder";
-          }
-        }
-      }
-      // Insert oasis patch generation with a 30% chance
-      if (Math.random() < 0.3) {
-        createPalmOasis();
+function decorateDesert(){
+  for (let i = 0; i < 250; i++){
+    const x = Math.floor(Math.random() * GRID_WIDTH);
+    const y = Math.floor(Math.random() * GRID_HEIGHT);
+    const cell = mapData[y][x];
+    if (["sand", "dirtCracked", "dirt"].includes(cell.type)){
+      const r = Math.random();
+      if (r < 0.08){
+        cell.type = "cactus";
+      } else if (r < 0.12){
+        cell.type = "desertPalm";
+      } else if (r < 0.16){
+        cell.type = "dune";
+      } else if (r < 0.2){
+        cell.type = "desertBoulder";
       }
     }
+  }
+  
+  // Optionally add an oasis patch.
+  if (Math.random() < 0.3) {
+    createPalmOasis();
+  }
+  
+  // Now, scatter additional palm trees near water.
+  scatterPalmsNearWater();
+}
+
     // Sample oasis creation
     function createPalmOasis(){
       const cx = Math.floor(Math.random() * GRID_WIDTH);
