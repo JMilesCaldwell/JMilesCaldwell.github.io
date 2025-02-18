@@ -1712,11 +1712,10 @@ function placeBuilding(sx, sy, shape) {
 
     function groupWallLines(newWalls, orientation) {
   const DOOR_PLACEMENT_PROBABILITY = 0.01; // Tunable chance
-  // Build a quick set keyed by position for all wall cells in this run
+  // Build a quick set for quick lookup of positions
   const newSet = new Set(newWalls.map(w => `${w.gx},${w.gy}`));
-
+  
   newWalls.forEach(w => {
-    // Build a run along one direction (horizontal or vertical)
     let run = [{ x: w.gx, y: w.gy, id: mapData[w.gy][w.gx].buildingId }];
     if (orientation === "horizontal") {
       let rx = w.gx + 1, ry = w.gy;
@@ -1736,23 +1735,26 @@ function placeBuilding(sx, sy, shape) {
       // Get the set of building IDs in this run
       const idSet = new Set(run.map(cell => cell.id));
       if (idSet.size > 1 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
-        // Since walls from two (or more) buildings are meeting,
-        // choose one cell to become the door.
-        // For alignment, you might choose the outermost cell:
-        let doorCell;
-        if (orientation === "horizontal") {
-          doorCell = run[run.length - 1]; // rightmost cell
-        } else {
-          doorCell = run[run.length - 1]; // bottommost cell
-        }
+        // Choose a door cell—in this example, we take the central cell of the run.
+        const doorIndex = Math.floor(run.length / 2);
+        const doorCell = run[doorIndex];
         if (mapData[doorCell.y][doorCell.x].type !== "door") {
           mapData[doorCell.y][doorCell.x].type = "door";
-          // Optionally, you could “remove” extra wall segments between the two buildings here.
         }
+        // Now, remove the extra wall segments between the two buildings.
+        // For each cell in the run, if its buildingId is different from that of the door cell,
+        // replace it with a floor tile (e.g. "floor1"). You might choose a different tile if desired.
+        run.forEach(cellInfo => {
+          if ((cellInfo.x !== doorCell.x || cellInfo.y !== doorCell.y) &&
+              mapData[cellInfo.y][cellInfo.x].buildingId !== mapData[doorCell.y][doorCell.x].buildingId) {
+            mapData[cellInfo.y][cellInfo.x].type = "floor1";
+          }
+        });
       }
     }
   });
 }
+
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
      *******************************************************/
