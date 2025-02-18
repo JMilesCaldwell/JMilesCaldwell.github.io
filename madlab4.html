@@ -2179,24 +2179,27 @@ function fillOctagonAtWallEnd(x, y, dir) {
 function isRoadLike(type) {
   return type === "roaddirt" || type === "roadstone" || type === "woodfloor";
 }
-    function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
-      for(let i=0;i<thickness;i++){
-        const xx = baseX + (horizontal? 0 : i+offset);
-        const yy = baseY + (horizontal? i+offset : 0);
-        if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-        const cell = mapData[yy][xx];
-        if(cell.type==="roadstone" || cell.type==="roaddirt" || cell.type==="woodfloor"){
-          continue; 
-        }
-        // For example, alternate based on (xx+yy) mod 3:
-if ((xx + yy) % 3 === 0) {
-  cell.type = "wall";
-  cell.chosenWallFile = "darkStoneBlock.png"; // Always use darkStoneBlock here
-} else {
-  cell.type = "wall";
-const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
-cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
+  for (let i = 0; i < thickness; i++) {
+    const xx = baseX + (horizontal ? 0 : i + offset);
+    const yy = baseY + (horizontal ? i + offset : 0);
+    if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
+    const cell = mapData[yy][xx];
+    if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") {
+      continue;
+    }
+    // For example, alternate based on (xx+yy) mod 3:
+    if ((xx + yy) % 3 === 0) {
+      cell.type = "wall";
+      cell.chosenWallFile = "darkStoneBlock.png"; // Always use darkStoneBlock here
+    } else {
+      cell.type = "wall";
+      const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
+      cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+    }
+  }
 }
+
 
     /*******************************************************
      * BIOME DECORATION
