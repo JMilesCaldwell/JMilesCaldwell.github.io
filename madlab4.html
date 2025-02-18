@@ -2111,19 +2111,74 @@ const groupDoorTypes = doorGroups.map(group => {
       carveWallEdge(chosenWallFile, startX+rectW,  startY+rectH,  startX,       startY+rectH,  thickness, true);
       carveWallEdge(chosenWallFile, startX,        startY+rectH,  startX,       startY,        thickness, false);
     }
-    function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal){
-      const dx = (x2===x1)? 0 : (x2>x1?1:-1);
-      const dy = (y2===y1)? 0 : (y2>y1?1:-1);
+   // Modified wall edge carving function that checks for an approaching road
+function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
+  const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
+  const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
 
-      let cx = x1, cy = y1;
-      while(cx!==x2 || cy!==y2){
-        const offset = (Math.random()<0.2)? (Math.random()<0.5?1:-1) : 0;
-        carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
-        cx += dx;
-        cy += dy;
+  let cx = x1, cy = y1;
+  while (cx !== x2 || cy !== y2) {
+    // Check the tile in the wall's advance direction:
+    const nextX = cx + dx, nextY = cy + dy;
+    if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
+      if (isRoadLike(mapData[nextY][nextX].type)) {
+        // If the next tile is a road, cap the wall with an octagon and exit.
+        fillOctagonAtWallEnd(cx, cy, { dx, dy });
+        return; // Exit without further wall carving.
       }
-      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile); 
     }
+    // Otherwise, continue normal wall carving.
+    const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
+    carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
+    cx += dx;
+    cy += dy;
+  }
+  // Carve the final tile, if reached.
+  carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
+}
+
+// Helper to cap the wall with an octagon.
+// The 'dir' object indicates the wall's advance direction (i.e. where the road lies).
+function fillOctagonAtWallEnd(x, y, dir) {
+  // Choose offsets that fill in an octagon, leaving a one-tile gap toward the road.
+  let offsets;
+  if (dir.dx === 1 && dir.dy === 0) {
+    // Road to the east; cap to the west.
+    offsets = [
+      [0, 0], [0, -1], [0, 1],
+      [-1, 0], [-1, -1], [-1, 1]
+    ];
+  } else if (dir.dx === -1 && dir.dy === 0) {
+    // Road to the west; cap to the east.
+    offsets = [
+      [0, 0], [0, -1], [0, 1],
+      [1, 0], [1, -1], [1, 1]
+    ];
+  } else if (dir.dx === 0 && dir.dy === 1) {
+    // Road to the south; cap to the north.
+    offsets = [
+      [0, 0], [-1, 0], [1, 0],
+      [0, -1], [-1, -1], [1, -1]
+    ];
+  } else if (dir.dx === 0 && dir.dy === -1) {
+    // Road to the north; cap to the south.
+    offsets = [
+      [0, 0], [-1, 0], [1, 0],
+      [0, 1], [-1, 1], [1, 1]
+    ];
+  }
+  // Set the selected cells to be wall tiles.
+  for (const [ox, oy] of offsets) {
+    const nx = x + ox, ny = y + oy;
+    if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+    mapData[ny][nx].type = "wall";
+  }
+}
+
+// You must have an isRoadLike helper that returns true if a tile type is considered a road:
+function isRoadLike(type) {
+  return type === "roaddirt" || type === "roadstone" || type === "woodfloor";
+}
     function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
       for(let i=0;i<thickness;i++){
         const xx = baseX + (horizontal? 0 : i+offset);
