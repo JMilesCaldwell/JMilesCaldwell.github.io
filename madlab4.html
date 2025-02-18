@@ -272,7 +272,8 @@
     const TILE_SIZE = 20;
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
-
+    const ROAD_BRIDGE_RADIUS = 2;  // This sets the radius for expanding road bridges
+    
     let mapData = [];
     let occupantInHand = null;
 
@@ -1352,29 +1353,40 @@
       return cells;
     }
 
-    function carveRoadTile(theme, rx, ry){
-      for(let dy=-1; dy<=1; dy++){
-        for(let dx=-1; dx<=1; dx++){
-          if(Math.abs(dx)+Math.abs(dy)<=1){
-            const nx=rx+dx, ny=ry+dy;
-            if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
-            const cell=mapData[ny][nx];
-            if(cell.type==="water"||cell.type==="lava"){
-              if(theme!=="coastal"){
-                cell.type="woodfloor";
+    function carveRoadTile(theme, rx, ry) {
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) <= 1) {
+        const nx = rx + dx, ny = ry + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        const cell = mapData[ny][nx];
+        if (cell.type === "water" || cell.type === "lava") {
+          if (theme !== "coastal") {
+            // Expand the wooden bridge effect in a radius
+            for (let rdy = -ROAD_BRIDGE_RADIUS; rdy <= ROAD_BRIDGE_RADIUS; rdy++) {
+              for (let rdx = -ROAD_BRIDGE_RADIUS; rdx <= ROAD_BRIDGE_RADIUS; rdx++) {
+                const bx = nx + rdx, by = ny + rdy;
+                if (bx < 0 || by < 0 || bx >= GRID_WIDTH || by >= GRID_HEIGHT) continue;
+                const bcell = mapData[by][bx];
+                if (bcell.type === "water" || bcell.type === "lava") {
+                  bcell.type = "woodfloor";
+                }
               }
             }
-            else {
-              if(Math.random()<0.05){
-                cell.type="roadstone";
-              } else {
-                cell.type="roaddirt";
-              }
-            }
+          }
+        } else {
+          // Maintain the normal road tile conversion
+          if (Math.random() < 0.05) {
+            cell.type = "roadstone";
+          } else {
+            cell.type = "roaddirt";
           }
         }
       }
     }
+  }
+}
+
 
     // -- ADDED/UPDATED: Meandering offshoot that avoids building floors
     function carveMeanderingOffshoot(theme, startX, startY, length){
