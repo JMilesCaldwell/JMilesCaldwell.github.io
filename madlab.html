@@ -1588,13 +1588,13 @@
         height: 9,
         layout: [
           [1,1,1,2,1,1,1],
-          [1,3,3,3,3,3,1],
-          [1,3,3,3,3,3,2],
-          [1,3,3,3,3,3,1], 
-          [1,3,3,3,3,3,1],
-          [1,3,3,3,3,3,1],
-          [1,3,3,3,3,3,1],
-          [1,3,3,3,3,3,1],
+          [1,3,3,4,3,3,1],
+          [1,3,4,4,4,3,2],
+          [1,3,4,3,4,3,1], 
+          [1,3,4,3,4,3,1],
+          [1,3,4,3,4,3,1],
+          [1,3,4,4,4,3,1],
+          [1,3,3,4,3,3,1],
           [1,1,1,2,1,1,1]
         ]
       }
@@ -1650,32 +1650,41 @@
       return true;
     }
 
-    function placeBuilding(sx,sy,shape){
-      for(let y=0; y<shape.height; y++){
-        for(let x=0; x<shape.width; x++){
-          const val=shape.layout[y][x];
-          const cell=mapData[sy + y][sx + x];
-          if(val===1){
-            cell.type = "cobblestone"; 
-            cell.hasBuilding = true;
-          } 
-          else if(val===0){
-            cell.type = chosenFloorTile;
-            cell.hasBuilding = true;
-          }
-          else if(val===2){
-            cell.type = "door";
-            cell.hasBuilding = true;
-          }
-else if(val===3){
-  // Mark this cell as a courtyard without changing its underlying terrain type.
-  cell.courtyard = true;
-  cell.hasBuilding = true;
+// Utility to get a road tile type—mimicking the logic in carveRoadTile:
+function getRoadTile() {
+  return Math.random() < 0.2 ? "roadstone" : "roaddirt";
 }
 
-        }
+function placeBuilding(sx, sy, shape) {
+  for (let y = 0; y < shape.height; y++) {
+    for (let x = 0; x < shape.width; x++) {
+      const val = shape.layout[y][x];
+      const cell = mapData[sy + y][sx + x];
+      if (val === 1) {
+        cell.type = "cobblestone"; 
+        cell.hasBuilding = true;
+      } 
+      else if (val === 0) {
+        cell.type = chosenFloorTile;
+        cell.hasBuilding = true;
+      }
+      else if (val === 2) {
+        cell.type = "door";
+        cell.hasBuilding = true;
+      }
+      else if (val === 3) {
+        // For a courtyard, leave the underlying terrain intact
+        cell.courtyard = true;
+        cell.hasBuilding = true;
+      }
+      else if (val === 4) {
+        // New: internal road within the building, using same mechanism as external roads.
+        cell.type = getRoadTile();
+        cell.hasBuilding = true;
       }
     }
+  }
+}
 
     // -- ADDED: If newly placed building shares a 5+ length wall segment with an old building, put a door in the 3rd tile
     function checkInterconnectedBuildings(sx,sy,shape){
