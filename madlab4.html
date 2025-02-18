@@ -1353,7 +1353,7 @@
       return cells;
     }
 
-    function carveRoadTile(theme, rx, ry) {
+function carveRoadTile(theme, rx, ry) {
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       if (Math.abs(dx) + Math.abs(dy) <= 1) {
@@ -1362,20 +1362,11 @@
         const cell = mapData[ny][nx];
         if (cell.type === "water" || cell.type === "lava") {
           if (theme !== "coastal") {
-            // Expand the wooden bridge effect in a radius
-            for (let rdy = -ROAD_BRIDGE_RADIUS; rdy <= ROAD_BRIDGE_RADIUS; rdy++) {
-              for (let rdx = -ROAD_BRIDGE_RADIUS; rdx <= ROAD_BRIDGE_RADIUS; rdx++) {
-                const bx = nx + rdx, by = ny + rdy;
-                if (bx < 0 || by < 0 || bx >= GRID_WIDTH || by >= GRID_HEIGHT) continue;
-                const bcell = mapData[by][bx];
-                if (bcell.type === "water" || bcell.type === "lava") {
-                  bcell.type = "woodfloor";
-                }
-              }
-            }
+            // When the road crosses a meandering river, simply convert that cell to wood.
+            cell.type = "woodfloor";
           }
         } else {
-          // Maintain the normal road tile conversion
+          // Otherwise, apply the standard road tile conversion.
           if (Math.random() < 0.05) {
             cell.type = "roadstone";
           } else {
