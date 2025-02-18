@@ -273,6 +273,7 @@
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
     const ROAD_BRIDGE_RADIUS = 2;  // This sets the radius for expanding road bridges
+    let BRIDGE_WIDTH = 1; // global variable controlling bridge width
     
     let mapData = [];
     let occupantInHand = null;
@@ -671,27 +672,37 @@
         case "desert":
           return {
             baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
-            waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5, isCavern:false
+            waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5,
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "city":
           return {
             baseDist: { "dirt":0.05,"stone":0.05,"grass":0.15,"tree":0.25 },
-            waterBodies:2, waterMaxSize:80, roads:3, roadMaxLength:80, buildings:15, isCavern:false
+            waterBodies:2, waterMaxSize:80, roads:3, roadMaxLength:80, buildings:15, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "grassland":
           return {
             baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
-            waterBodies:3, waterMaxSize:120, roads:2, roadMaxLength:60, buildings:6, isCavern:false
+            waterBodies:3, waterMaxSize:120, roads:2, roadMaxLength:60, buildings:6, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "mountain":
           return {
             baseDist: { "stone":0.1,"dirt":0.5,"grass":0.1,"tree":0.15 },
-            waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, isCavern:false
+            waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "forest":
           return {
             baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, isCavern:false
+            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "cavern":
           return {
@@ -700,37 +711,51 @@
         case "volcanic":
           return {
             baseDist:{ "barrens":0.5, "lavastone":0.35, "brimstone":0.1, "dirtCracked":0.05 },
-            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, isCavern:false
+            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "coastal":
           return {
             baseDist:{ "grass":0.6,"tree":0.2, "dirt":0.2 },
-            waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, isCavern:false
+            waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "riverlands":
           return {
             baseDist:{ "grass":0.5,"dirt":0.2,"tree":0.3 },
-            waterBodies:0, waterMaxSize:0, roads:1, roadMaxLength:60, buildings:7, isCavern:false
+            waterBodies:0, waterMaxSize:0, roads:1, roadMaxLength:60, buildings:7, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "swamp":
           return {
             baseDist:{ "dirt":0.1,"water":0.2,"grass":0.2,"tree":0.2,"mud":0.3 },
-            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, isCavern:false
+            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "jungle":
           return {
             baseDist:{ "junglegrass":0.2, "junglemud":0.3, "jungletree":0.35, "junglescatter":0.15 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, isCavern:false
+            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "snow":
           return {
             baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
-            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, isCavern:false
+            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         default:
           return {
             baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, isCavern:false
+            waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, 
+                bridgeWidth: 1, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
       }
     }
@@ -790,6 +815,7 @@
         { key: "roads",          min: 0,  max: 20, step: 1  },
         { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
         { key: "buildings",      min: 0,  max: 50, step: 1  },
+        { key: "bridgeWidth",    min: 1,  max: 5, step: 1  },  // new slider for bridge width
       ];
 
       paramSliders.forEach(({key, min, max, step}) => {
@@ -824,6 +850,11 @@
       for(const tileType in settings.baseDist){
         if(sliderCache[tileType]){
           settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
+          if (sliderCache["bridgeWidth"]) {
+  settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
+  BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
+}
+
         }
       }
       // other numeric parameters
@@ -1391,11 +1422,23 @@ function carveRoadTile(theme, rx, ry) {
         const cell = mapData[ny][nx];
         if (cell.type === "water" || cell.type === "lava") {
           if (theme !== "coastal") {
-            // When the road crosses a meandering river, simply convert that cell to wood.
-            cell.type = "woodfloor";
+            // Calculate the region radius based on BRIDGE_WIDTH.
+            // A slider value of 1 means no extra width (region radius 0),
+            // 2 means a 3x3 block (radius 1), 3 means a 5x5 block (radius 2), etc.
+            const regionRadius = BRIDGE_WIDTH - 1;
+            for (let rdy = -regionRadius; rdy <= regionRadius; rdy++) {
+              for (let rdx = -regionRadius; rdx <= regionRadius; rdx++) {
+                const bx = nx + rdx, by = ny + rdy;
+                if (bx < 0 || by < 0 || bx >= GRID_WIDTH || by >= GRID_HEIGHT) continue;
+                const bcell = mapData[by][bx];
+                if (bcell.type === "water" || bcell.type === "lava") {
+                  bcell.type = "woodfloor";
+                }
+              }
+            }
           }
         } else {
-          // Otherwise, apply the standard road tile conversion.
+          // Standard road conversion.
           if (Math.random() < 0.05) {
             cell.type = "roadstone";
           } else {
