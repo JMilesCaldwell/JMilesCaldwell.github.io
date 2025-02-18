@@ -880,7 +880,7 @@ function convertBridgeTile(x, y, visited) {
         { key: "roads",          min: 0,  max: 20, step: 1  },
         { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
         { key: "buildings",      min: 0,  max: 50, step: 1  },
-        { key: "bridgeWidth",    min: 1,  max: 5, step: 1  },  // new slider for bridge width
+        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },  
       ];
 
       paramSliders.forEach(({key, min, max, step}) => {
@@ -1508,10 +1508,11 @@ function carveRoadTile(theme, rx, ry) {
     }
   }
   
-  // Now, if this road tile is near water, convert it (and its neighbors) to wood.
-  if (hasWaterWithinRadius(rx, ry, 3)) {
-    convertBridgeTile(rx, ry, new Set());
-  }
+// Now, if bridge conversion is enabled (BRIDGE_WIDTH > 0) and this road tile is near water, convert it (and its neighbors) to wood.
+if (BRIDGE_WIDTH > 0 && hasWaterWithinRadius(rx, ry, 3)) {
+  convertBridgeTile(rx, ry, new Set());
+}
+
 }
 
 
