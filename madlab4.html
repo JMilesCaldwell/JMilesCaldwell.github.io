@@ -2056,27 +2056,31 @@ const groupDoorTypes = doorGroups.map(group => {
     }
 
     // -- ADDED
-    function canPlaceFarm(sx,sy,w,h){
-      for(let y=sy; y<sy+h; y++){
-        for(let x=sx; x<sx+w; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) return false;
-          const cell=mapData[y][x];
-          // If city walls is present, ensure farmland is inside or outside?
-          // Usually farmland might be outside city walls, but the requirement is that it not intersect.
-          if(cityWallBounds){
-            const withinWalls = insideRect(x,y,cityWallBounds);
-            if(withinWalls) return false; 
-          }
-          // forbid farmland on water, negative, walls, door, building floors
-          if(["water","lava","negative","wall","door","woodfloor","floor1","cobblestone",
-              "marble1","marble2","marble3","marble4","darktile","ancienttile","limestone1",
-              "limestone2","limestone3"].includes(cell.type) || cell.hasBuilding){
-            return false;
-          }
-        }
+ function canPlaceFarm(sx, sy, w, h) {
+  for (let y = sy; y < sy + h; y++) {
+    for (let x = sx; x < sx + w; x++) {
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) return false;
+      const cell = mapData[y][x];
+      // If city walls is present, ensure farmland is inside or outside?
+      // Usually farmland might be outside city walls, but the requirement is that it not intersect.
+      if (cityWallBounds) {
+        const withinWalls = insideRect(x, y, cityWallBounds);
+        if (withinWalls) return false; 
       }
-      return true;
+      // Now include road types in the forbidden list.
+      if (
+        ["water", "lava", "negative", "wall", "door", "woodfloor", "floor1", "cobblestone",
+         "marble1", "marble2", "marble3", "marble4", "darktile", "ancienttile", "limestone1",
+         "limestone2", "limestone3", "roaddirt", "roadstone"].includes(cell.type)
+         || cell.hasBuilding
+      ) {
+        return false;
+      }
     }
+  }
+  return true;
+}
+
 
     /*******************************************************
      * CITY WALLS
