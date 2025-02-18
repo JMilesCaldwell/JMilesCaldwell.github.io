@@ -1173,28 +1173,57 @@
         }
       }
     }
-    function createRandomSandyBeach(fluidType){
-      const fluidTiles = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          if(mapData[y][x].type === fluidType){
-            fluidTiles.push({x,y});
+    function createLinearSandyBeach(fluidType) {
+  // First, collect all water-edge cells: water cells with at least one non-water neighbor.
+  const edgeCells = [];
+  for (let y = 0; y < GRID_HEIGHT; y++){
+    for (let x = 0; x < GRID_WIDTH; x++){
+      if (mapData[y][x].type === fluidType) {
+        const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+        let isEdge = false;
+        for (let [dx, dy] of neighbors) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+          if (mapData[ny][nx].type !== fluidType) {
+            isEdge = true;
+            break;
           }
         }
-      }
-      if(!fluidTiles.length) return;
-      const pick = fluidTiles[Math.floor(Math.random()*fluidTiles.length)];
-      const radius = 2 + Math.floor(Math.random()*2);
-      for(let yy=pick.y-radius; yy<=pick.y+radius; yy++){
-        for(let xx=pick.x-radius; xx<=pick.x+radius; xx++){
-          if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-          const dx=xx-pick.x, dy=yy-pick.y;
-          if(dx*dx + dy*dy <= radius*radius){
-            mapData[yy][xx].type="whitesand";
-          }
+        if (isEdge) {
+          edgeCells.push({ x, y });
         }
       }
     }
+  }
+  
+  if (edgeCells.length === 0) return;
+  
+  // Randomly select a starting water-edge cell.
+  let current = edgeCells[Math.floor(Math.random() * edgeCells.length)];
+  
+  // Define how many steps the beach "walk" will take along the edge.
+  const steps = 5 + Math.floor(Math.random() * 6); // anywhere from 5 to 10 steps
+  
+  for (let i = 0; i < steps; i++){
+    // For the current edge cell, mark its non-water neighbors as beach.
+    const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (let [dx, dy] of neighbors) {
+      const nx = current.x + dx, ny = current.y + dy;
+      if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+      if (mapData[ny][nx].type !== fluidType) {
+        mapData[ny][nx].type = "whitesand";
+      }
+    }
+    // Look for adjacent edge cells to continue the walk.
+    const candidates = edgeCells.filter(cell => Math.abs(cell.x - current.x) <= 1 && Math.abs(cell.y - current.y) <= 1);
+    if (candidates.length > 0) {
+      current = candidates[Math.floor(Math.random() * candidates.length)];
+    } else {
+      break; // no further edge cells found; exit the loop.
+    }
+  }
+}
+
 
     /*******************************************************
      * RIVERS
