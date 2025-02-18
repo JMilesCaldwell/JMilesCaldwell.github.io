@@ -662,6 +662,38 @@
         }
       }
     }
+function hasWaterWithinRadius(x, y, radius) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+      const t = mapData[ny][nx].type;
+      if (t === "water" || t === "lava") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function convertBridgeTile(x, y, visited) {
+  const key = x + "," + y;
+  if (visited.has(key)) return;
+  visited.add(key);
+  const cell = mapData[y][x];
+  // Only process if it's a road tile that hasn't already been converted.
+  if (cell.type === "roaddirt" || cell.type === "roadstone") {
+    if (hasWaterWithinRadius(x, y, 3)) {
+      cell.type = "woodfloor";
+      // Propagate to immediate neighbors.
+      const neighbors = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (const [dx, dy] of neighbors) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        convertBridgeTile(nx, ny, visited);
+      }
+    }
+  }
+}
 
     /*******************************************************
      * MAP SETTINGS
@@ -844,28 +876,29 @@
       });
     }
 
-    function applySlidersToSettings(settings){
-      if(settings.isCavern) return settings;
-      for(const tileType in settings.baseDist){
-        if(sliderCache[tileType]){
-          settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
-          if (sliderCache["bridgeWidth"]) {
-  settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
-  BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
+function applySlidersToSettings(settings) {
+  if(settings.isCavern) return settings;
+  for(const tileType in settings.baseDist) {
+    if(sliderCache[tileType]){
+      settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
+    }
+  }
+  // Update other numeric parameters
+  const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings"];
+  paramKeys.forEach(k=>{
+    if(sliderCache[k]){
+      const v = parseFloat(sliderCache[k].value);
+      settings[k] = isNaN(v) ? settings[k] : v;
+    }
+  });
+  // Update bridgeWidth outside of the loop:
+  if (sliderCache["bridgeWidth"]) {
+    settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
+    BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
+  }
+  return settings;
 }
 
-        }
-      }
-      // other numeric parameters
-      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings"];
-      paramKeys.forEach(k=>{
-        if(sliderCache[k]){
-          const v = parseFloat(sliderCache[k].value);
-          settings[k] = isNaN(v) ? settings[k] : v;
-        }
-      });
-      return settings;
-    }
 
     function toggleSliders(){
       const panel = document.getElementById("sliderControls");
@@ -1413,40 +1446,20 @@
     }
 
 function carveRoadTile(theme, rx, ry) {
-  // Check if this road tile (or any cell in its 3x3 block) touches water/lava.
-  let touchesWater = false;
-  for (let dy = -1; dy <= 1 && !touchesWater; dy++) {
+  // Process the 3x3 block around the road tile.
+  for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
-      const nx = rx + dx, ny = ry + dy;
-      if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-      if (mapData[ny][nx].type === "water" || mapData[ny][nx].type === "lava") {
-        touchesWater = true;
-        break;
-      }
-    }
-  }
-  
-  if (touchesWater && theme !== "coastal") {
-    // Use the road tile's center to expand a block of wood.
-    const regionRadius = BRIDGE_WIDTH - 1; // BRIDGE_WIDTH of 1 => regionRadius 0 (no extra expansion)
-    for (let rdy = -regionRadius; rdy <= regionRadius; rdy++) {
-      for (let rdx = -regionRadius; rdx <= regionRadius; rdx++) {
-        const bx = rx + rdx, by = ry + rdy;
-        if (bx < 0 || by < 0 || bx >= GRID_WIDTH || by >= GRID_HEIGHT) continue;
-        // Only replace if it's water or lava.
-        if (mapData[by][bx].type === "water" || mapData[by][bx].type === "lava") {
-          mapData[by][bx].type = "woodfloor";
-        }
-      }
-    }
-  } else {
-    // If the road tile doesn't border water, perform the standard road conversion.
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        if (Math.abs(dx) + Math.abs(dy) <= 1) {
-          const nx = rx + dx, ny = ry + dy;
-          if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-          const cell = mapData[ny][nx];
+      if (Math.abs(dx) + Math.abs(dy) <= 1) {
+        const nx = rx + dx, ny = ry + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        const cell = mapData[ny][nx];
+        if (cell.type === "water" || cell.type === "lava") {
+          if (theme !== "coastal") {
+            // Convert this water cell (adjacent to the road) directly.
+            cell.type = "woodfloor";
+          }
+        } else {
+          // Standard road conversion.
           if (Math.random() < 0.05) {
             cell.type = "roadstone";
           } else {
@@ -1455,6 +1468,11 @@ function carveRoadTile(theme, rx, ry) {
         }
       }
     }
+  }
+  
+  // Now, if this road tile is near water, convert it (and its neighbors) to wood.
+  if (hasWaterWithinRadius(rx, ry, 3)) {
+    convertBridgeTile(rx, ry, new Set());
   }
 }
 
