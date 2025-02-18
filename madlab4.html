@@ -1710,11 +1710,46 @@ function placeBuilding(sx, sy, shape) {
       groupWallLines(newWalls,"vertical");
     }
 
-    function groupWallLines(newWalls, orientation) {
-  const DOOR_PLACEMENT_PROBABILITY = 0.01; // Tunable chance
-  // Build a quick set for quick lookup of positions
-  const newSet = new Set(newWalls.map(w => `${w.gx},${w.gy}`));
+    // direction: {dx, dy} representing the wall-run direction
+function mergeOpposingWallAtDoor(doorX, doorY, direction) {
+  // Calculate the cell on the "other side" of the door relative to the shared wall.
+  const oppX = doorX + direction.dx;
+  const oppY = doorY + direction.dy;
   
+  // Check boundaries.
+  if (oppX < 0 || oppY < 0 || oppX >= GRID_WIDTH || oppY >= GRID_HEIGHT) {
+    return;
+  }
+  
+  const neighbor = mapData[oppY][oppX];
+  
+  // Only merge if neighbor is a wall from the other building.
+  // Also, we want to leave at least one cell on the edge intact.
+  if (neighbor.type === "cobblestone" &&
+      neighbor.buildingId && mapData[doorY][doorX].buildingId &&
+      neighbor.buildingId !== mapData[doorY][doorX].buildingId) {
+    // Check if the neighbor is not at the very end of its building wall.
+    // For simplicity, assume that if the cell beyond the neighbor in the same direction
+    // is still a wall, then we are not at the edge.
+    const nextX = oppX + direction.dx;
+    const nextY = oppY + direction.dy;
+    if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
+      if (mapData[nextY][nextX].type === "cobblestone") {
+        // That means oppX, oppY is an "internal" wall cell between buildings.
+        neighbor.type = "floor1"; // replace it with a floor tile
+      }
+    } else {
+      // If next cell is out-of-bounds, it's an edge—so leave it intact.
+    }
+  }
+}
+
+
+function groupWallLines(newWalls, orientation) {
+  const DOOR_PLACEMENT_PROBABILITY = 0.01; // Tunable chance
+  // Build a quick set for quick lookup of positions.
+  const newSet = new Set(newWalls.map(w => `${w.gx},${w.gy}`));
+
   newWalls.forEach(w => {
     let run = [{ x: w.gx, y: w.gy, id: mapData[w.gy][w.gx].buildingId }];
     if (orientation === "horizontal") {
@@ -1723,24 +1758,47 @@ function placeBuilding(sx, sy, shape) {
         run.push({ x: rx, y: ry, id: mapData[ry][rx].buildingId });
         rx++;
       }
-    } else { // vertical
+      if (run.length >= 7 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
+        const doorIndex = 4; // fixed door position for a 7-cell run
+        const doorCell = run[doorIndex];
+        if (mapData[doorCell.y][doorCell.x].type !== "door") {
+          mapData[doorCell.y][doorCell.x].type = "door";
+          // For horizontal runs, assume the run extends to the right.
+          mergeOpposingWallAtDoor(doorCell.x, doorCell.y, { dx: 1, dy: 0 });
+          // Remove extra wall cells (except the door) if they belong to a different building.
+          run.forEach(cellInfo => {
+            if ((cellInfo.x !== doorCell.x || cellInfo.y !== doorCell.y) &&
+                mapData[cellInfo.y][cellInfo.x].buildingId !== mapData[doorCell.y][doorCell.x].buildingId) {
+              mapData[cellInfo.y][cellInfo.x].type = "floor1";
+            }
+          });
+        }
+      }
+    } else if (orientation === "vertical") {
       let rx = w.gx, ry = w.gy + 1;
       while (ry < GRID_HEIGHT && newSet.has(`${rx},${ry}`)) {
         run.push({ x: rx, y: ry, id: mapData[ry][rx].buildingId });
         ry++;
       }
-    }
-    // Only consider long runs (e.g. length >= 7) for inter-building connection
-    if (run.length >= 7) {
-      // Get the set of building IDs in this run
-      const idSet = new Set(run.map(cell => cell.id));
-      if (idSet.size > 1 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
-        // Choose a door cell—in this example, we take the central cell of the run.
-        const doorIndex = Math.floor(run.length / 2);
+      if (run.length >= 7 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
+        const doorIndex = 4; // fixed door position for a 7-cell run
         const doorCell = run[doorIndex];
         if (mapData[doorCell.y][doorCell.x].type !== "door") {
           mapData[doorCell.y][doorCell.x].type = "door";
+          // For vertical runs, assume the run goes downward.
+          mergeOpposingWallAtDoor(doorCell.x, doorCell.y, { dx: 0, dy: 1 });
+          run.forEach(cellInfo => {
+            if ((cellInfo.x !== doorCell.x || cellInfo.y !== doorCell.y) &&
+                mapData[cellInfo.y][cellInfo.x].buildingId !== mapData[doorCell.y][doorCell.x].buildingId) {
+              mapData[cellInfo.y][cellInfo.x].type = "floor1";
+            }
+          });
         }
+      }
+    }
+  });
+}
+
         // Now, remove the extra wall segments between the two buildings.
         // For each cell in the run, if its buildingId is different from that of the door cell,
         // replace it with a floor tile (e.g. "floor1"). You might choose a different tile if desired.
