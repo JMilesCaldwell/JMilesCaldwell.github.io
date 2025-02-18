@@ -1740,10 +1740,17 @@ function placeBuilding(sx, sy, shape) {
     }
   }
   
-  // Step 2: For each door group, pick a uniform door type.
-  // (Customize this array as desired.)
-  const availableDoorTypes = ["door"];
-const groupDoorTypes = doorGroups.map(() => "doorWood2");
+const availableDoorTypes = ["door"];
+const groupDoorTypes = doorGroups.map(group => {
+  if (group.length > 1) {
+    // For contiguous groups (double doors, etc.), force "doorWood2"
+    return "doorWood2";
+  } else {
+    // For isolated door cells, choose randomly from availableDoorTypes.
+    return availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
+  }
+});
+
   
   // Step 3: Place building cells.
   for (let y = 0; y < shape.height; y++) {
