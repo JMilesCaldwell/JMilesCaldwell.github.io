@@ -1615,8 +1615,6 @@
         const sy=Math.floor(Math.random()*(GRID_HEIGHT-shape.height));
         if(canPlaceBuilding(sx,sy,shape)){
           placeBuilding(sx,sy,shape);
-          // -- ADDED: check for adjacency to existing buildings for large wall overlaps
-          checkInterconnectedBuildings(sx,sy,shape);
           placed++;
         }
       }
@@ -1730,72 +1728,6 @@ function placeBuilding(sx, sy, shape) {
       }
     }
   }
-}
-
-    // -- ADDED: If newly placed building shares a 5+ length wall segment with an old building, put a door in the 3rd tile
-    function checkInterconnectedBuildings(sx,sy,shape){
-      // We'll gather each "wall cell" from the newly placed building
-      const newWalls = [];
-      for(let y=0; y<shape.height; y++){
-        for(let x=0; x<shape.width; x++){
-          if(shape.layout[y][x]===1){ // wall
-            newWalls.push({ gx: sx+x, gy: sy+y });
-          }
-        }
-      }
-      // Try to see if any row or column forms a run of >=5 with existing walls
-      // We'll do a naive approach: check each new wall cell's neighbours for old building walls in a line
-      // If we find >=5 consecutive overlap in a line, place a door in the 3rd cell if there's none
-      // (In the interest of brevity, we keep it simple.)
-      
-      // For each direction (horizontal/vertical), group consecutive
-      groupWallLines(newWalls,"horizontal");
-      groupWallLines(newWalls,"vertical");
-    }
-
-    function groupWallLines(newWalls, orientation) {
-  const DOOR_PLACEMENT_PROBABILITY = 0.01; // Tunable chance
-  // Build a quick set for quick lookup of positions
-  const newSet = new Set(newWalls.map(w => `${w.gx},${w.gy}`));
-  
-  newWalls.forEach(w => {
-    let run = [{ x: w.gx, y: w.gy, id: mapData[w.gy][w.gx].buildingId }];
-    if (orientation === "horizontal") {
-      let rx = w.gx + 1, ry = w.gy;
-      while (rx < GRID_WIDTH && newSet.has(`${rx},${ry}`)) {
-        run.push({ x: rx, y: ry, id: mapData[ry][rx].buildingId });
-        rx++;
-      }
-    } else { // vertical
-      let rx = w.gx, ry = w.gy + 1;
-      while (ry < GRID_HEIGHT && newSet.has(`${rx},${ry}`)) {
-        run.push({ x: rx, y: ry, id: mapData[ry][rx].buildingId });
-        ry++;
-      }
-    }
-    // Only consider long runs (e.g. length >= 7) for inter-building connection
-    if (run.length >= 7) {
-      // Get the set of building IDs in this run
-      const idSet = new Set(run.map(cell => cell.id));
-      if (idSet.size > 1 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
-        // Choose a door cell—in this example, we take the central cell of the run.
-        const doorIndex = Math.floor(run.length / 2);
-        const doorCell = run[doorIndex];
-        if (mapData[doorCell.y][doorCell.x].type !== "door") {
-          mapData[doorCell.y][doorCell.x].type = "door";
-        }
-        // Now, remove the extra wall segments between the two buildings.
-        // For each cell in the run, if its buildingId is different from that of the door cell,
-        // replace it with a floor tile (e.g. "floor1"). You might choose a different tile if desired.
-        run.forEach(cellInfo => {
-          if ((cellInfo.x !== doorCell.x || cellInfo.y !== doorCell.y) &&
-              mapData[cellInfo.y][cellInfo.x].buildingId !== mapData[doorCell.y][doorCell.x].buildingId) {
-            mapData[cellInfo.y][cellInfo.x].type = "floor1";
-          }
-        });
-      }
-    }
-  });
 }
 
     /*******************************************************
