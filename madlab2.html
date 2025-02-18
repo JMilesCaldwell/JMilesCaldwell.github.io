@@ -272,7 +272,8 @@
     const TILE_SIZE = 20;
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
-
+    const ROAD_BRIDGE_RADIUS = 2;  // This sets the radius for expanding road bridges
+    
     let mapData = [];
     let occupantInHand = null;
 
@@ -381,6 +382,11 @@
         folder: "water",
         files: ["water.png","waterrocks.png","waterrocks2.png","swamp.png","swamp2.png","whitesand.png"]
       },
+      "doorWood2": {
+        folder: "buildings/doors",
+        files: ["doorWood2.png"]
+      },
+
       "whitesand": {
         folder: "water",
         files: ["whitesand.png"]
@@ -665,22 +671,22 @@
         case "desert":
           return {
             baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
-            waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
+            waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5, isCavern:false
           };
         case "city":
           return {
-            baseDist: { "dirt":0.05,"stone":0.2,"grass":0.15,"tree":0.1 },
-            waterBodies:2, waterMaxSize:80, roads:8, roadMaxLength:80, buildings:15, isCavern:false
+            baseDist: { "dirt":0.05,"stone":0.05,"grass":0.15,"tree":0.25 },
+            waterBodies:2, waterMaxSize:80, roads:3, roadMaxLength:80, buildings:15, isCavern:false
           };
         case "grassland":
           return {
             baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
-            waterBodies:3, waterMaxSize:120, roads:4, roadMaxLength:60, buildings:6, isCavern:false
+            waterBodies:3, waterMaxSize:120, roads:2, roadMaxLength:60, buildings:6, isCavern:false
           };
         case "mountain":
           return {
-            baseDist: { "stone":0.4,"dirt":0.3,"grass":0.1,"tree":0.05 },
-            waterBodies:1, waterMaxSize:40, roads:3, roadMaxLength:50, buildings:4, isCavern:false
+            baseDist: { "stone":0.1,"dirt":0.5,"grass":0.1,"tree":0.15 },
+            waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, isCavern:false
           };
         case "forest":
           return {
@@ -693,27 +699,27 @@
           };
         case "volcanic":
           return {
-            baseDist:{ "barrens":0.5, "lavastone":0.3, "brimstone":0.1, "dirtCracked":0.1 },
-            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false
+            baseDist:{ "barrens":0.5, "lavastone":0.35, "brimstone":0.1, "dirtCracked":0.05 },
+            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, isCavern:false
           };
         case "coastal":
           return {
-            baseDist:{ "grass":0.6, "dirt":0.4 },
-            waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false
+            baseDist:{ "grass":0.6,"tree":0.2, "dirt":0.2 },
+            waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, isCavern:false
           };
         case "riverlands":
           return {
-            baseDist:{ "grass":0.5,"dirt":0.3,"tree":0.2 },
-            waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false
+            baseDist:{ "grass":0.5,"dirt":0.2,"tree":0.3 },
+            waterBodies:0, waterMaxSize:0, roads:1, roadMaxLength:60, buildings:7, isCavern:false
           };
         case "swamp":
           return {
-            baseDist:{ "dirt":0.3,"water":0.3,"grass":0.2,"tree":0.1,"mud":0.1 },
+            baseDist:{ "dirt":0.1,"water":0.2,"grass":0.2,"tree":0.2,"mud":0.3 },
             waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, isCavern:false
           };
         case "jungle":
           return {
-            baseDist:{ "junglegrass":0.4, "junglemud":0.3, "jungletree":0.15, "junglescatter":0.15 },
+            baseDist:{ "junglegrass":0.2, "junglemud":0.3, "jungletree":0.35, "junglescatter":0.15 },
             waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, isCavern:false
           };
         case "snow":
@@ -724,7 +730,7 @@
         default:
           return {
             baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:4, roadMaxLength:60, buildings:6, isCavern:false
+            waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, isCavern:false
           };
       }
     }
@@ -1116,9 +1122,9 @@
       } else {
         createFluidBody(maxSize,"water");
       }
-      if(Math.random()<0.15){
-        createRandomSandyBeach("water");
-      }
+      if(Math.random()<0.35){
+  createLinearSandyBeach("water");
+}
     }
     function createLavaBody(maxSize){
       createFluidBody(maxSize,"lava");
@@ -1167,28 +1173,57 @@
         }
       }
     }
-    function createRandomSandyBeach(fluidType){
-      const fluidTiles = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          if(mapData[y][x].type === fluidType){
-            fluidTiles.push({x,y});
+    function createLinearSandyBeach(fluidType) {
+  // First, collect all water-edge cells: water cells with at least one non-water neighbor.
+  const edgeCells = [];
+  for (let y = 0; y < GRID_HEIGHT; y++){
+    for (let x = 0; x < GRID_WIDTH; x++){
+      if (mapData[y][x].type === fluidType) {
+        const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+        let isEdge = false;
+        for (let [dx, dy] of neighbors) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+          if (mapData[ny][nx].type !== fluidType) {
+            isEdge = true;
+            break;
           }
         }
-      }
-      if(!fluidTiles.length) return;
-      const pick = fluidTiles[Math.floor(Math.random()*fluidTiles.length)];
-      const radius = 2 + Math.floor(Math.random()*2);
-      for(let yy=pick.y-radius; yy<=pick.y+radius; yy++){
-        for(let xx=pick.x-radius; xx<=pick.x+radius; xx++){
-          if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-          const dx=xx-pick.x, dy=yy-pick.y;
-          if(dx*dx + dy*dy <= radius*radius){
-            mapData[yy][xx].type="whitesand";
-          }
+        if (isEdge) {
+          edgeCells.push({ x, y });
         }
       }
     }
+  }
+  
+  if (edgeCells.length === 0) return;
+  
+  // Randomly select a starting water-edge cell.
+  let current = edgeCells[Math.floor(Math.random() * edgeCells.length)];
+  
+  // Define how many steps the beach "walk" will take along the edge.
+  const steps = 5 + Math.floor(Math.random() * 6); // anywhere from 5 to 10 steps
+  
+  for (let i = 0; i < steps; i++){
+    // For the current edge cell, mark its non-water neighbors as beach.
+    const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (let [dx, dy] of neighbors) {
+      const nx = current.x + dx, ny = current.y + dy;
+      if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+      if (mapData[ny][nx].type !== fluidType) {
+        mapData[ny][nx].type = "whitesand";
+      }
+    }
+    // Look for adjacent edge cells to continue the walk.
+    const candidates = edgeCells.filter(cell => Math.abs(cell.x - current.x) <= 1 && Math.abs(cell.y - current.y) <= 1);
+    if (candidates.length > 0) {
+      current = candidates[Math.floor(Math.random() * candidates.length)];
+    } else {
+      break; // no further edge cells found; exit the loop.
+    }
+  }
+}
+
 
     /*******************************************************
      * RIVERS
@@ -1347,29 +1382,31 @@
       return cells;
     }
 
-    function carveRoadTile(theme, rx, ry){
-      for(let dy=-1; dy<=1; dy++){
-        for(let dx=-1; dx<=1; dx++){
-          if(Math.abs(dx)+Math.abs(dy)<=1){
-            const nx=rx+dx, ny=ry+dy;
-            if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
-            const cell=mapData[ny][nx];
-            if(cell.type==="water"||cell.type==="lava"){
-              if(theme!=="coastal"){
-                cell.type="woodfloor";
-              }
-            }
-            else {
-              if(Math.random()<0.05){
-                cell.type="roadstone";
-              } else {
-                cell.type="roaddirt";
-              }
-            }
+function carveRoadTile(theme, rx, ry) {
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) <= 1) {
+        const nx = rx + dx, ny = ry + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        const cell = mapData[ny][nx];
+        if (cell.type === "water" || cell.type === "lava") {
+          if (theme !== "coastal") {
+            // When the road crosses a meandering river, simply convert that cell to wood.
+            cell.type = "woodfloor";
+          }
+        } else {
+          // Otherwise, apply the standard road tile conversion.
+          if (Math.random() < 0.05) {
+            cell.type = "roadstone";
+          } else {
+            cell.type = "roaddirt";
           }
         }
       }
     }
+  }
+}
+
 
     // -- ADDED/UPDATED: Meandering offshoot that avoids building floors
     function carveMeanderingOffshoot(theme, startX, startY, length){
@@ -1700,12 +1737,60 @@ let nextBuildingId = 1; // global
 
 function placeBuilding(sx, sy, shape) {
   const buildingId = nextBuildingId++;
+  
+  // Step 1: Group contiguous door cells (value === 2) in the building shape.
+  const doorGroups = [];
+  const doorVisited = Array(shape.height)
+    .fill(0)
+    .map(() => Array(shape.width).fill(false));
+  
+  // Helper: DFS to group door cells.
+  function groupDoors(relX, relY, group) {
+    // Ensure the position is within bounds.
+    if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
+    if (doorVisited[relY][relX]) return;
+    if (shape.layout[relY][relX] !== 2) return;
+    
+    doorVisited[relY][relX] = true;
+    group.push({ x: relX, y: relY });
+    
+    // Check 4-connected neighbours.
+    groupDoors(relX + 1, relY, group);
+    groupDoors(relX - 1, relY, group);
+    groupDoors(relX, relY + 1, group);
+    groupDoors(relX, relY - 1, group);
+  }
+  
+  // Scan the shape to build door groups.
+  for (let y = 0; y < shape.height; y++) {
+    for (let x = 0; x < shape.width; x++) {
+      if (shape.layout[y][x] === 2 && !doorVisited[y][x]) {
+        const group = [];
+        groupDoors(x, y, group);
+        doorGroups.push(group);
+      }
+    }
+  }
+  
+const availableDoorTypes = ["door"];
+const groupDoorTypes = doorGroups.map(group => {
+  if (group.length > 1) {
+    // For contiguous groups (double doors, etc.), force "doorWood2"
+    return "doorWood2";
+  } else {
+    // For isolated door cells, choose randomly from availableDoorTypes.
+    return availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
+  }
+});
+
+  
+  // Step 3: Place building cells.
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
       if (val === 1) {
-        cell.type = "cobblestone"; 
+        cell.type = "cobblestone";
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
       } else if (val === 0) {
@@ -1713,11 +1798,23 @@ function placeBuilding(sx, sy, shape) {
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
       } else if (val === 2) {
-        cell.type = "door";
+        // Determine which door group this door belongs to.
+        let assignedType = null;
+        for (let i = 0; i < doorGroups.length; i++) {
+          if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
+            assignedType = groupDoorTypes[i];
+            break;
+          }
+        }
+        // Fallback if something goes amiss.
+        if (assignedType === null) {
+          assignedType = "door";
+        }
+        cell.type = assignedType;
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
       } else if (val === 3) {
-        // Courtyard: leave underlying terrain intact
+        // Courtyard: leave underlying terrain intact.
         cell.courtyard = true;
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
@@ -1729,6 +1826,7 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 }
+
 
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
