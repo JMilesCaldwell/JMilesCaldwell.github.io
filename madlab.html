@@ -1622,33 +1622,76 @@
       }
     }
 
-    function canPlaceBuilding(sx,sy,shape){
-      if(cityWallBounds) {
-        const bx2 = sx + shape.width - 1;
-        const by2 = sy + shape.height - 1;
-        const cwX2 = cityWallBounds.x + cityWallBounds.w - 1;
-        const cwY2 = cityWallBounds.y + cityWallBounds.h - 1;
-        if(sx < cityWallBounds.x || sy < cityWallBounds.y ||
-           bx2 > cwX2          || by2 > cwY2 ) {
+function canPlaceBuilding(sx, sy, shape){
+  // We’ll allow either 1- or 2-tile gap:
+  const margin = Math.random() < 0.5 ? 1 : 2;
+
+  // The building’s bounding box
+  const buildingWidth  = shape.width;
+  const buildingHeight = shape.height;
+
+  // The “outer” bounding box includes margins around the building
+  const x1 = sx - margin;
+  const y1 = sy - margin;
+  const x2 = sx + buildingWidth  - 1 + margin;
+  const y2 = sy + buildingHeight - 1 + margin;
+
+  // Check if our bounding box is still on the map
+  if (x1 < 0 || y1 < 0 || x2 >= GRID_WIDTH || y2 >= GRID_HEIGHT) {
+    return false;
+  }
+
+  // Check cityWalls, if present, so we don’t place outside the city
+  if(cityWallBounds) {
+    const cwX2 = cityWallBounds.x + cityWallBounds.w - 1;
+    const cwY2 = cityWallBounds.y + cityWallBounds.h - 1;
+    // If the entire building+margin isn't fully inside cityWallBounds, fail
+    if (
+      x1 < cityWallBounds.x || y1 < cityWallBounds.y ||
+      x2 > cwX2            || y2 > cwY2
+    ) {
+      return false;
+    }
+  }
+
+  // We must ensure none of the cells in this outer bounding box
+  // is part of another building or in the forbidden set.
+  for (let y = y1; y <= y2; y++){
+    for (let x = x1; x <= x2; x++){
+      const cell = mapData[y][x];
+      // If the cell is already flagged as building, that means
+      // we’re overlapping (or too close!) to another building.
+      if (cell.hasBuilding) {
+        return false;
+      }
+      // If the cell's terrain is something that doesn't allow building
+      // (like water, negative, roads, etc.), fail as well.
+      if (["water","lava","negative","wall","door","roadstone","roaddirt",
+           "solidstone","magma","woodfloor"].includes(cell.type)) {
+        return false;
+      }
+    }
+  }
+
+  // We have enough space, so let’s also check the shape's interior tiles
+  // to see if, e.g., we’re not building on top of water inside the shape.
+  for(let yy = 0; yy < shape.height; yy++){
+    for(let xx = 0; xx < shape.width; xx++){
+      const val = shape.layout[yy][xx];
+      if(val === 1 || val === 0 || val === 3){
+        const cell = mapData[sy + yy][sx + xx];
+        if (["water","lava","negative","wall","door","roadstone","roaddirt",
+             "solidstone","magma","woodfloor"].includes(cell.type)) {
           return false;
         }
       }
-      for(let y=0;y<shape.height;y++){
-        for(let x=0;x<shape.width;x++){
-          const val=shape.layout[y][x];
-          if(val===1||val===0||val===3){
-            const cell=mapData[sy+y][sx+x];
-            if(["water","lava","roadstone","roaddirt","solidstone","magma","woodfloor"].includes(cell.type)){
-              return false;
-            }
-            if(cell.type==="wall" || cell.type==="door" || cell.type==="negative" || cell.hasBuilding){
-              return false;
-            }
-          }
-        }
-      }
-      return true;
     }
+  }
+
+  // If we survived all checks, it’s fine
+  return true;
+}
+
 
 // Utility to get a road tile type—mimicking the logic in carveRoadTile:
 function getRoadTile() {
