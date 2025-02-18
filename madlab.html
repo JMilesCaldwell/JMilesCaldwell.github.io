@@ -1523,7 +1523,7 @@
           [1,0,0,0,1],
           [1,0,0,0,1],
           [1,0,0,0,1],
-          [1,0,0,0,1],  // '2' (door) on perimeter
+          [1,0,0,0,1], 
           [1,1,2,1,1]
         ]
       },
@@ -1535,7 +1535,7 @@
           [1,0,0,0,0,0,1],
           [1,0,0,0,0,0,1],
           [1,0,0,0,0,0,1],
-          [1,0,0,0,0,0,1], // door on perimeter
+          [1,0,0,0,0,0,1], 
           [1,0,0,0,0,0,1],
           [1,1,1,2,1,1,1]
         ]
@@ -1548,7 +1548,7 @@
           [1,0,0,0,0,0,0,0,1],
           [1,0,0,0,0,0,0,0,1],
           [1,0,0,0,0,0,0,0,2],
-          [1,0,0,0,0,0,0,0,1], // door on perimeter
+          [1,0,0,0,0,0,0,0,1], 
           [1,0,0,0,0,0,0,0,1],
           [1,1,1,1,2,1,1,1,1]
         ]
@@ -1655,7 +1655,10 @@ function getRoadTile() {
   return Math.random() < 0.2 ? "roadstone" : "roaddirt";
 }
 
+let nextBuildingId = 1; // global
+
 function placeBuilding(sx, sy, shape) {
+  const buildingId = nextBuildingId++;
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
@@ -1663,24 +1666,24 @@ function placeBuilding(sx, sy, shape) {
       if (val === 1) {
         cell.type = "cobblestone"; 
         cell.hasBuilding = true;
-      } 
-      else if (val === 0) {
+        cell.buildingId = buildingId;
+      } else if (val === 0) {
         cell.type = chosenFloorTile;
         cell.hasBuilding = true;
-      }
-      else if (val === 2) {
+        cell.buildingId = buildingId;
+      } else if (val === 2) {
         cell.type = "door";
         cell.hasBuilding = true;
-      }
-      else if (val === 3) {
-        // For a courtyard, leave the underlying terrain intact
+        cell.buildingId = buildingId;
+      } else if (val === 3) {
+        // Courtyard: leave underlying terrain intact
         cell.courtyard = true;
         cell.hasBuilding = true;
-      }
-      else if (val === 4) {
-        // New: internal road within the building, using same mechanism as external roads.
+        cell.buildingId = buildingId;
+      } else if (val === 4) {
         cell.type = getRoadTile();
         cell.hasBuilding = true;
+        cell.buildingId = buildingId;
       }
     }
   }
@@ -1707,49 +1710,49 @@ function placeBuilding(sx, sy, shape) {
       groupWallLines(newWalls,"vertical");
     }
 
-    function groupWallLines(newWalls, orientation){
-      const DOOR_PLACEMENT_PROBABILITY = 0.01; // 10% chance to insert extra doors in wall overlaps
-      // Build a quick set for quick lookup
-      const newSet = new Set(newWalls.map(w=>`${w.gx},${w.gy}`));
-      if(orientation==="horizontal"){
-        // for each new wall w, see how far left and right we can go with existing building walls
-        newWalls.forEach(w=>{
-          let run = [{x:w.gx,y:w.gy}];
-          // go right
-          let rx=w.gx+1, ry=w.gy;
-          while(rx<GRID_WIDTH && mapData[ry][rx].type==="cobblestone" && newSet.has(`${rx},${ry}`)){
-            run.push({x:rx,y:ry});
-            rx++;
-          }
-          if (run.length >= 7 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
-      const doorIndex = 4;
-      const dCell = run[doorIndex];
-      if (mapData[dCell.y][dCell.x].type !== "door") {
-    mapData[dCell.y][dCell.x].type = "door";
-  }
-}
+    function groupWallLines(newWalls, orientation) {
+  const DOOR_PLACEMENT_PROBABILITY = 0.01; // Tunable chance
+  // Build a quick set keyed by position for all wall cells in this run
+  const newSet = new Set(newWalls.map(w => `${w.gx},${w.gy}`));
 
-        });
-      } else {
-        // vertical
-        newWalls.forEach(w=>{
-          let run = [{x:w.gx,y:w.gy}];
-          let rx=w.gx, ry=w.gy+1;
-          while(ry<GRID_HEIGHT && mapData[ry][rx].type==="cobblestone" && newSet.has(`${rx},${ry}`)){
-            run.push({x:rx,y:ry});
-            ry++;
-          }
-          if(run.length>=5){
-            const doorIndex = 2;
-            const dCell = run[doorIndex];
-            if(mapData[dCell.y][dCell.x].type!=="door"){
-              mapData[dCell.y][dCell.x].type="door";
-            }
-          }
-        });
+  newWalls.forEach(w => {
+    // Build a run along one direction (horizontal or vertical)
+    let run = [{ x: w.gx, y: w.gy, id: mapData[w.gy][w.gx].buildingId }];
+    if (orientation === "horizontal") {
+      let rx = w.gx + 1, ry = w.gy;
+      while (rx < GRID_WIDTH && newSet.has(`${rx},${ry}`)) {
+        run.push({ x: rx, y: ry, id: mapData[ry][rx].buildingId });
+        rx++;
+      }
+    } else { // vertical
+      let rx = w.gx, ry = w.gy + 1;
+      while (ry < GRID_HEIGHT && newSet.has(`${rx},${ry}`)) {
+        run.push({ x: rx, y: ry, id: mapData[ry][rx].buildingId });
+        ry++;
       }
     }
-
+    // Only consider long runs (e.g. length >= 7) for inter-building connection
+    if (run.length >= 7) {
+      // Get the set of building IDs in this run
+      const idSet = new Set(run.map(cell => cell.id));
+      if (idSet.size > 1 && Math.random() < DOOR_PLACEMENT_PROBABILITY) {
+        // Since walls from two (or more) buildings are meeting,
+        // choose one cell to become the door.
+        // For alignment, you might choose the outermost cell:
+        let doorCell;
+        if (orientation === "horizontal") {
+          doorCell = run[run.length - 1]; // rightmost cell
+        } else {
+          doorCell = run[run.length - 1]; // bottommost cell
+        }
+        if (mapData[doorCell.y][doorCell.x].type !== "door") {
+          mapData[doorCell.y][doorCell.x].type = "door";
+          // Optionally, you could “remove” extra wall segments between the two buildings here.
+        }
+      }
+    }
+  });
+}
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
      *******************************************************/
