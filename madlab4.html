@@ -2781,12 +2781,37 @@ window.onload = () => {
     });
 
     // Print button event listener
-    document.getElementById('printBtn').addEventListener('click', function() {
-      window.print();
-    });
-  });
-};
-
+document.getElementById('printBtn').addEventListener('click', function() {
+  const canvas = document.getElementById('mapCanvas');
+  const dataUrl = canvas.toDataURL();
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Map</title>
+        <style>
+          @media print {
+            body { margin: 0; }
+            img { width: 100%; height: auto; }
+          }
+          body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${dataUrl}" alt="Generated Map"/>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+});
 
   </script>
 </body>
