@@ -17,11 +17,12 @@
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
+      overflow: hidden;
     }
     .container {
       max-width: 900px;
       margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0,0,0,0.8);
       padding: 1rem;
       border-radius: 10px;
     }
@@ -36,11 +37,11 @@
       background: #202020;
       width: 500px;
       height: 500px;
+      overflow: hidden;
     }
     canvas {
-      width: 500px;
-      height: 500px;
       image-rendering: pixelated;
+      /* The canvas will be transformed for zoom/pan */
     }
     .button {
       background-color: #8B0000;
@@ -60,7 +61,7 @@
   <div class="container">
     <h1>Procedural Interior Generator</h1>
     <p>
-      Generate a modular building interior with interconnected rooms, corridors, and a neat cobblestone edge using your assets.
+      Generate a modular interior using your assets—with crates scattered inside, and enjoy zooming/panning.
     </p>
     <button class="button" onclick="generateInterior()">Generate Interior</button>
     <div class="mapWrapper">
@@ -72,7 +73,7 @@
     /***********************
      * ASSET PRELOADING
      ***********************/
-    // We reuse the asset names from your pre-existing code.
+    // Asset definitions matching your pre-existing code.
     const tileAssetMapping = {
       "floor1": {
         folder: "buildings/floors",
@@ -85,10 +86,13 @@
       "cobblestone": {
         folder: "buildings/walls",
         files: ["cobble1.png", "cobble2.png", "cobble3.png", "cobble4.png"]
+      },
+      "crate": {
+        folder: "scatter",
+        files: ["crate1.png", "crate2.png", "crate3.png", "crate4.png"]
       }
     };
 
-    // Global object to hold loaded images for each asset type.
     const tileTextures = {};
 
     function preloadAssets(callback) {
@@ -109,7 +113,7 @@
         const { folder, files } = tileAssetMapping[key];
         for (const fname of files) {
           const img = new Image();
-          // Adjust the path below to match your asset structure.
+          // Adjust path as needed.
           img.src = `resources/mapgen/mapassets/tiles/${folder}/${fname}`;
           img.onload = checkDone;
           img.onerror = checkDone;
@@ -118,7 +122,6 @@
       }
     }
 
-    // Returns a random image from the asset array for a given type.
     function getTileImage(type) {
       const imgs = tileTextures[type];
       if (imgs && imgs.length > 0) {
@@ -132,13 +135,14 @@
      ***********************/
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
-    const TILE_SIZE = 10; // each grid cell is 10x10 pixels on the offscreen canvas
+    const TILE_SIZE = 10; // offscreen pixel size
 
     // Cell types:
-    // "wall"  : uncarved (background black)
+    // "wall"  : untouched background (black)
     // "floor" : carved interior floor
-    // "door"  : connection tile
-    // "edge"  : floor tile that touches a wall; will be drawn as cobblestone
+    // "door"  : corridor-room connector
+    // "edge"  : floor tile adjacent to wall (will be drawn as cobblestone)
+    // "crate" : decorative crate placed on the floor
     let grid = [];
     let rooms = [];
 
@@ -155,7 +159,6 @@
     }
 
     function canPlaceRoom(x, y, w, h) {
-      // Leave a 1-tile margin so that room edges are clearly defined.
       for (let j = y - 1; j < y + h + 1; j++) {
         for (let i = x - 1; i < x + w + 1; i++) {
           if (i < 0 || j < 0 || i >= GRID_WIDTH || j >= GRID_HEIGHT) return false;
@@ -171,7 +174,6 @@
           grid[j][i] = "floor";
         }
       }
-      // Record room centre.
       const centerX = Math.floor(x + w / 2);
       const centerY = Math.floor(y + h / 2);
       rooms.push({ x: centerX, y: centerY });
@@ -220,7 +222,7 @@
       }
     }
 
-    // For every floor tile adjacent (cardinally) to a wall, mark it as an edge tile.
+    // Mark every floor tile bordering a wall as an "edge" tile.
     function applyRoomEdges() {
       for (let y = 0; y < GRID_HEIGHT; y++) {
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -239,6 +241,17 @@
       }
     }
 
+    // Scatter crates inside the interior: for floor cells (but not edge/door) apply a chance to convert to "crate"
+    function scatterCrates(chance = 0.1) {
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
+          if (grid[y][x] === "floor" && Math.random() < chance) {
+            grid[y][x] = "crate";
+          }
+        }
+      }
+    }
+
     function generateInterior() {
       initGrid();
 
@@ -247,8 +260,8 @@
       let attempts = 0;
       while (rooms.length < roomCount && attempts < 1000) {
         attempts++;
-        const w = 5 + Math.floor(Math.random() * 6); // width 5-10
-        const h = 5 + Math.floor(Math.random() * 6); // height 5-10
+        const w = 5 + Math.floor(Math.random() * 6);
+        const h = 5 + Math.floor(Math.random() * 6);
         const x = 1 + Math.floor(Math.random() * (GRID_WIDTH - w - 2));
         const y = 1 + Math.floor(Math.random() * (GRID_HEIGHT - h - 2));
         if (canPlaceRoom(x, y, w, h)) {
@@ -265,17 +278,24 @@
       }
 
       applyRoomEdges();
+      scatterCrates(0.1);
       drawInterior();
     }
 
     /***********************
-     * DRAWING
+     * DRAWING & ZOOMING
      ***********************/
-    function drawInterior() {
-      const canvas = document.getElementById("interiorCanvas");
-      const ctx = canvas.getContext("2d");
+    let scale = 1.0, offsetX = 0, offsetY = 0;
+    const minScale = 0.3, maxScale = 3.0;
+    let isDragging = false, dragStartX = 0, dragStartY = 0;
+    let activePointers = new Map();
+    let initialPinchDistance = 0, initialPinchScale = 1.0;
 
-      // Offscreen canvas for crisp pixel drawing.
+    function updateCanvasTransform() {
+      canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    }
+
+    function drawInterior() {
       const offscreen = document.createElement("canvas");
       offscreen.width = GRID_WIDTH * TILE_SIZE;
       offscreen.height = GRID_HEIGHT * TILE_SIZE;
@@ -285,22 +305,24 @@
         for (let x = 0; x < GRID_WIDTH; x++) {
           let cell = grid[y][x];
           let img = null;
-          // Use assets based on the cell type.
           if (cell === "floor") {
             img = getTileImage("floor1");
           } else if (cell === "door") {
             img = getTileImage("doorWood2");
           } else if (cell === "edge") {
             img = getTileImage("cobblestone");
+          } else if (cell === "crate") {
+            img = getTileImage("crate");
           }
           if (img && img.complete) {
             offCtx.drawImage(img, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           } else {
-            // Fallback colours (should not normally be seen)
+            // Fallback colours
             if (cell === "wall") offCtx.fillStyle = "#000";
             else if (cell === "floor") offCtx.fillStyle = "#888";
             else if (cell === "door") offCtx.fillStyle = "#A0522D";
             else if (cell === "edge") offCtx.fillStyle = "#707070";
+            else if (cell === "crate") offCtx.fillStyle = "#555";
             offCtx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           }
         }
@@ -325,12 +347,96 @@
       ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
     }
 
+    const canvas = document.getElementById("interiorCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Zoom and pan event listeners.
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomSpeed = 0.1;
+      let newScale = scale + (e.deltaY < 0 ? zoomSpeed : -zoomSpeed);
+      newScale = Math.min(Math.max(newScale, minScale), maxScale);
+
+      const rect = canvas.getBoundingClientRect();
+      const midX = rect.width / 2;
+      const midY = rect.height / 2;
+      const wx = (midX - offsetX) / scale;
+      const wy = (midY - offsetY) / scale;
+
+      offsetX = midX - wx * newScale;
+      offsetY = midY - wy * newScale;
+      scale = newScale;
+      updateCanvasTransform();
+    }, { passive: false });
+
+    canvas.addEventListener("pointerdown", (e) => {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activePointers.size === 1) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+      } else if (activePointers.size === 2) {
+        isDragging = false;
+        initialPinchDistance = getPinchDistance();
+        initialPinchScale = scale;
+      }
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activePointers.size === 1 && isDragging) {
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        offsetX += dx;
+        offsetY += dy;
+        updateCanvasTransform();
+      } else if (activePointers.size === 2) {
+        const newDist = getPinchDistance();
+        const scaleRatio = newDist / initialPinchDistance;
+        let newScale = initialPinchScale * scaleRatio;
+        newScale = Math.min(Math.max(newScale, minScale), maxScale);
+
+        const rect = canvas.getBoundingClientRect();
+        const pointers = Array.from(activePointers.values());
+        const midX = (pointers[0].x + pointers[1].x) / 2 - rect.left;
+        const midY = (pointers[0].y + pointers[1].y) / 2 - rect.top;
+        const wx = (midX - offsetX) / scale;
+        const wy = (midY - offsetY) / scale;
+        scale = newScale;
+        offsetX = midX - wx * newScale;
+        offsetY = midY - wy * newScale;
+        updateCanvasTransform();
+        e.preventDefault();
+      }
+    });
+
+    ["pointerup", "pointercancel"].forEach(evt => {
+      window.addEventListener(evt, (e) => {
+        activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) initialPinchDistance = 0;
+        if (activePointers.size === 0) isDragging = false;
+      });
+    });
+
+    function getPinchDistance() {
+      if (activePointers.size !== 2) return 0;
+      const arr = Array.from(activePointers.values());
+      const dx = arr[0].x - arr[1].x;
+      const dy = arr[0].y - arr[1].y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
     /***********************
      * INITIALISE
      ***********************/
     window.onload = () => {
       preloadAssets(() => {
+        // Generate the interior and update the canvas transform.
         generateInterior();
+        updateCanvasTransform();
       });
     };
   </script>
