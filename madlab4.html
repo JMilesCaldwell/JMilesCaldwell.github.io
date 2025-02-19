@@ -2763,12 +2763,17 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
     }
 
     // Initialise on load
-window.onload = () => {
+<script>
+window.onload = function() {
+  // Set up the sliders.
   setupSliders();
-  preloadImages(() => {
+  
+  // Preload all images, then generate the map and attach event listeners.
+  preloadImages(function() {
+    // Generate the procedural map.
     generateMap();
 
-    // Fullscreen button event listener
+    // Fullscreen button event listener.
     document.getElementById('fullscreenBtn').addEventListener('click', function() {
       const mapWrapper = document.querySelector('.mapWrapper');
       if (!document.fullscreenElement) {
@@ -2780,39 +2785,44 @@ window.onload = () => {
       }
     });
 
-    // Print button event listener
-document.getElementById('printBtn').addEventListener('click', function() {
-  const canvas = document.getElementById('mapCanvas');
-  const dataUrl = canvas.toDataURL();
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Print Map</title>
-        <style>
-          @media print {
-            body { margin: 0; }
-            img { width: 100%; height: auto; }
-          }
-          body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-          }
-        </style>
-      </head>
-      <body>
-        <img src="${dataUrl}" alt="Generated Map"/>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-});
+    // Print button event listener.
+    // This will open a new window containing just the canvas image.
+    document.getElementById('printBtn').addEventListener('click', function() {
+      const canvas = document.getElementById('mapCanvas');
+      const dataUrl = canvas.toDataURL();
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Map</title>
+            <style>
+              @media print {
+                body { margin: 0; }
+                img { width: 100%; height: auto; }
+              }
+              body {
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background: #202020;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${dataUrl}" alt="Generated Map" />
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    });
+  });
+};
+</script>
 
-  </script>
 </body>
 </html>
