@@ -20,7 +20,7 @@
       overflow: hidden;
     }
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 2rem auto;
       background: rgba(0,0,0,0.8);
       padding: 1rem;
@@ -35,13 +35,13 @@
       margin: 1rem auto;
       border: 2px solid #660000;
       background: #202020;
-      width: 500px;
-      height: 500px;
+      width: 1000px;
+      height: 1000px;
       overflow: hidden;
     }
     canvas {
       image-rendering: pixelated;
-      /* The canvas will be transformed for zoom/pan */
+      /* Will be transformed via JS for zoom/pan */
     }
     .button {
       background-color: #8B0000;
@@ -61,11 +61,11 @@
   <div class="container">
     <h1>Procedural Interior Generator</h1>
     <p>
-      Generate a modular interior using your assets—with crates scattered inside, and enjoy zooming/panning.
+      Generate a modular interior using your assets—with corridors 4 tiles wide (cobblestone walls and a 2‑tile floor), crates scattered inside, and full zoom/pan support.
     </p>
     <button class="button" onclick="generateInterior()">Generate Interior</button>
     <div class="mapWrapper">
-      <canvas id="interiorCanvas" width="500" height="500"></canvas>
+      <canvas id="interiorCanvas" width="1000" height="1000"></canvas>
     </div>
   </div>
 
@@ -73,7 +73,6 @@
     /***********************
      * ASSET PRELOADING
      ***********************/
-    // Asset definitions matching your pre-existing code.
     const tileAssetMapping = {
       "floor1": {
         folder: "buildings/floors",
@@ -113,7 +112,6 @@
         const { folder, files } = tileAssetMapping[key];
         for (const fname of files) {
           const img = new Image();
-          // Adjust path as needed.
           img.src = `resources/mapgen/mapassets/tiles/${folder}/${fname}`;
           img.onload = checkDone;
           img.onerror = checkDone;
@@ -133,16 +131,19 @@
     /***********************
      * INTERIOR GENERATOR
      ***********************/
+    // Adjusted resolution: 50x50 grid with TILE_SIZE=20 yields a 1000x1000 canvas.
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
-    const TILE_SIZE = 10; // offscreen pixel size
+    const TILE_SIZE = 20;
 
     // Cell types:
     // "wall"  : untouched background (black)
-    // "floor" : carved interior floor
-    // "door"  : corridor-room connector
-    // "edge"  : floor tile adjacent to wall (will be drawn as cobblestone)
-    // "crate" : decorative crate placed on the floor
+    // "floor" : interior room floor (used in room carving)
+    // "door"  : door tile connecting corridors & rooms
+    // "edge"  : floor tile adjacent to wall (used for room edges)
+    // "crate" : crate decoration (scattered on plain floor)
+    // For corridors, we'll use a specialized pattern: a 4‑tile–wide cross‐section:
+    // left and right columns: "edge" (cobblestone) ; centre two columns: "floor"
     let grid = [];
     let rooms = [];
 
@@ -159,6 +160,7 @@
     }
 
     function canPlaceRoom(x, y, w, h) {
+      // Leave a 1-tile margin.
       for (let j = y - 1; j < y + h + 1; j++) {
         for (let i = x - 1; i < x + w + 1; i++) {
           if (i < 0 || j < 0 || i >= GRID_WIDTH || j >= GRID_HEIGHT) return false;
@@ -179,39 +181,49 @@
       rooms.push({ x: centerX, y: centerY });
     }
 
+    // Instead of the old corridor functions, we now define ones that carve a 4-tile wide corridor.
+    // For horizontal corridors: we fill rows (centerRow - 1, centerRow, centerRow+1, centerRow+2)
+    // with leftmost and rightmost as "edge", centre as "floor".
+    function carveHorizontalCorridor(x1, x2, centerRow) {
+      const start = Math.min(x1, x2);
+      const end = Math.max(x1, x2);
+      for (let x = start; x <= end; x++) {
+        if (centerRow - 1 >= 0) grid[centerRow - 1][x] = "edge";
+        grid[centerRow][x] = "floor";
+        if (centerRow + 1 < GRID_HEIGHT) grid[centerRow + 1][x] = "floor";
+        if (centerRow + 2 < GRID_HEIGHT) grid[centerRow + 2][x] = "edge";
+      }
+    }
+
+    // For vertical corridors: fill columns (centerCol - 1, centerCol, centerCol+1, centerCol+2)
+    function carveVerticalCorridor(y1, y2, centerCol) {
+      const start = Math.min(y1, y2);
+      const end = Math.max(y1, y2);
+      for (let y = start; y <= end; y++) {
+        if (centerCol - 1 >= 0) grid[y][centerCol - 1] = "edge";
+        grid[y][centerCol] = "floor";
+        if (centerCol + 1 < GRID_WIDTH) grid[y][centerCol + 1] = "floor";
+        if (centerCol + 2 < GRID_WIDTH) grid[y][centerCol + 2] = "edge";
+      }
+    }
+
+    // Carve an L-shaped corridor by choosing orientation randomly.
     function carveCorridor(x1, y1, x2, y2) {
       if (Math.random() < 0.5) {
-        carveHorizontal(x1, x2, y1);
-        carveVertical(y1, y2, x2);
+        carveHorizontalCorridor(x1, x2, y1);
+        carveVerticalCorridor(y1, y2, x2);
       } else {
-        carveVertical(y1, y2, x1);
-        carveHorizontal(x1, x2, y2);
+        carveVerticalCorridor(y1, y2, x1);
+        carveHorizontalCorridor(x1, x2, y2);
       }
       placeDoorAt(x1, y1);
       placeDoorAt(x2, y2);
     }
 
-    function carveHorizontal(x1, x2, y) {
-      const start = Math.min(x1, x2);
-      const end = Math.max(x1, x2);
-      for (let i = start; i <= end; i++) {
-        grid[y][i] = "floor";
-      }
-    }
-
-    function carveVertical(y1, y2, x) {
-      const start = Math.min(y1, y2);
-      const end = Math.max(y1, y2);
-      for (let j = start; j <= end; j++) {
-        grid[j][x] = "floor";
-      }
-    }
-
+    // Simple door placement: if a floor cell borders a wall, mark it as door.
     function placeDoorAt(x, y) {
       if (grid[y][x] !== "floor") return;
-      const deltas = [
-        [1, 0], [-1, 0], [0, 1], [0, -1]
-      ];
+      const deltas = [ [1,0], [-1,0], [0,1], [0,-1] ];
       for (const [dx, dy] of deltas) {
         const nx = x + dx, ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
@@ -222,7 +234,7 @@
       }
     }
 
-    // Mark every floor tile bordering a wall as an "edge" tile.
+    // Mark every floor tile bordering a wall (or untouched area) as an "edge" tile.
     function applyRoomEdges() {
       for (let y = 0; y < GRID_HEIGHT; y++) {
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -241,7 +253,7 @@
       }
     }
 
-    // Scatter crates inside the interior: for floor cells (but not edge/door) apply a chance to convert to "crate"
+    // Scatter crates on plain floor (not in corridors/edges/doors)
     function scatterCrates(chance = 0.1) {
       for (let y = 0; y < GRID_HEIGHT; y++) {
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -254,21 +266,19 @@
 
     function generateInterior() {
       initGrid();
-
-      // Place 6-10 rooms.
+      // Place between 6 and 10 rooms.
       const roomCount = 6 + Math.floor(Math.random() * 5);
       let attempts = 0;
       while (rooms.length < roomCount && attempts < 1000) {
         attempts++;
-        const w = 5 + Math.floor(Math.random() * 6);
-        const h = 5 + Math.floor(Math.random() * 6);
+        const w = 5 + Math.floor(Math.random() * 6); // width 5-10
+        const h = 5 + Math.floor(Math.random() * 6); // height 5-10
         const x = 1 + Math.floor(Math.random() * (GRID_WIDTH - w - 2));
         const y = 1 + Math.floor(Math.random() * (GRID_HEIGHT - h - 2));
         if (canPlaceRoom(x, y, w, h)) {
           carveRoom(x, y, w, h);
         }
       }
-
       // Connect rooms in order (sorted by x-coordinate).
       rooms.sort((a, b) => a.x - b.x);
       for (let i = 1; i < rooms.length; i++) {
@@ -276,14 +286,13 @@
         const curr = rooms[i];
         carveCorridor(prev.x, prev.y, curr.x, curr.y);
       }
-
       applyRoomEdges();
       scatterCrates(0.1);
       drawInterior();
     }
 
     /***********************
-     * DRAWING & ZOOMING
+     * DRAWING & ZOOM/PAN
      ***********************/
     let scale = 1.0, offsetX = 0, offsetY = 0;
     const minScale = 0.3, maxScale = 3.0;
@@ -291,11 +300,15 @@
     let activePointers = new Map();
     let initialPinchDistance = 0, initialPinchScale = 1.0;
 
+    const canvas = document.getElementById("interiorCanvas");
+    const ctx = canvas.getContext("2d");
+
     function updateCanvasTransform() {
       canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
 
     function drawInterior() {
+      // Offscreen canvas at full resolution.
       const offscreen = document.createElement("canvas");
       offscreen.width = GRID_WIDTH * TILE_SIZE;
       offscreen.height = GRID_HEIGHT * TILE_SIZE;
@@ -317,7 +330,7 @@
           if (img && img.complete) {
             offCtx.drawImage(img, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           } else {
-            // Fallback colours
+            // Fallback colours.
             if (cell === "wall") offCtx.fillStyle = "#000";
             else if (cell === "floor") offCtx.fillStyle = "#888";
             else if (cell === "door") offCtx.fillStyle = "#A0522D";
@@ -347,10 +360,7 @@
       ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
     }
 
-    const canvas = document.getElementById("interiorCanvas");
-    const ctx = canvas.getContext("2d");
-
-    // Zoom and pan event listeners.
+    // Zoom with wheel.
     canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       const zoomSpeed = 0.1;
@@ -434,7 +444,6 @@
      ***********************/
     window.onload = () => {
       preloadAssets(() => {
-        // Generate the interior and update the canvas transform.
         generateInterior();
         updateCanvasTransform();
       });
