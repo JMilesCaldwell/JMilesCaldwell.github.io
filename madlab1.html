@@ -669,27 +669,32 @@
         case "desert":
           return {
             baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
-            waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false
+            waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false,
+        cliffChance: 0.05
           };
         case "city":
           return {
             baseDist: { "dirt":0.05,"stone":0.2,"grass":0.15,"tree":0.1 },
-            waterBodies:2, waterMaxSize:80, roads:8, roadMaxLength:80, buildings:15, isCavern:false
+            waterBodies:2, waterMaxSize:80, roads:8, roadMaxLength:80, buildings:15, isCavern:false,
+        cliffChance: 0.05
           };
         case "grassland":
           return {
             baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
-            waterBodies:3, waterMaxSize:120, roads:4, roadMaxLength:60, buildings:6, isCavern:false
+            waterBodies:3, waterMaxSize:120, roads:4, roadMaxLength:60, buildings:6, isCavern:false,
+        cliffChance: 0.05
           };
         case "mountain":
           return {
             baseDist: { "stone":0.4,"dirt":0.3,"grass":0.1,"tree":0.05 },
-            waterBodies:1, waterMaxSize:40, roads:3, roadMaxLength:50, buildings:4, isCavern:false
+            waterBodies:1, waterMaxSize:40, roads:3, roadMaxLength:50, buildings:4, isCavern:false,
+        cliffChance: 0.05
           };
         case "forest":
           return {
             baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, isCavern:false
+            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, isCavern:false,
+        cliffChance: 0.05
           };
         case "cavern":
           return {
@@ -698,32 +703,38 @@
         case "volcanic":
           return {
             baseDist:{ "barrens":0.5, "lavastone":0.3, "brimstone":0.1, "dirtCracked":0.1 },
-            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false
+            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false,
+        cliffChance: 0.05
           };
         case "coastal":
           return {
             baseDist:{ "grass":0.6, "dirt":0.4 },
-            waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false
+            waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false,
+        cliffChance: 0.05
           };
         case "riverlands":
           return {
             baseDist:{ "grass":0.5,"dirt":0.3,"tree":0.2 },
-            waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false
+            waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false,
+        cliffChance: 0.05
           };
         case "swamp":
           return {
             baseDist:{ "dirt":0.3,"water":0.3,"grass":0.2,"tree":0.1,"mud":0.1 },
-            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, isCavern:false
+            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, isCavern:false,
+        cliffChance: 0.05
           };
         case "jungle":
           return {
             baseDist:{ "junglegrass":0.4, "junglemud":0.3, "jungletree":0.15, "junglescatter":0.15 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, isCavern:false
+            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, isCavern:false,
+        cliffChance: 0.05
           };
         case "snow":
           return {
             baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
-            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, isCavern:false
+            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, isCavern:false,
+        cliffChance: 0.05
           };
         default:
           return {
@@ -788,6 +799,7 @@
         { key: "roads",          min: 0,  max: 20, step: 1  },
         { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
         { key: "buildings",      min: 0,  max: 50, step: 1  },
+        { key: "cliffChance",    min: 0,  max: 0.5, step: 0.01 }
       ];
 
       paramSliders.forEach(({key, min, max, step}) => {
@@ -825,7 +837,7 @@
         }
       }
       // other numeric parameters
-      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings"];
+      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings","cliffChance];
       paramKeys.forEach(k=>{
         if(sliderCache[k]){
           const v = parseFloat(sliderCache[k].value);
@@ -891,7 +903,11 @@
           }
         }
       }
-
+      // Retrieve cliff chance from the slider (defaulting to 0.1 if not set)
+const cliffChance = sliderCache["cliffChance"] ? parseFloat(sliderCache["cliffChance"].value) : 0.1;
+// Call the function to scatter cliffs.
+scatterCliffs(cliffChance);
+    }
       // City walls
       if(doCityWalls){
         createIrregularCityWalls(); 
