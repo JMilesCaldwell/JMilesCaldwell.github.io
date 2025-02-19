@@ -180,6 +180,10 @@
           Add City Walls
         </label>
         <label>
+       <input type="checkbox" id="cliffsCheck" />
+         Generate Cliffs
+       </label>
+        <label>
           <input type="checkbox" id="waterCheck" />
           Generate Water
         </label>
@@ -723,111 +727,120 @@ function convertBridgeTile(x, y, visited) {
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
-    function getMapSettings(theme){
-      switch(theme){
-        case "desert":
-          return {
-            baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
-            waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5,
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "city":
-          return {
-            baseDist: { "dirt":0.05,"stone":0.05,"grass":0.15,"tree":0.25 },
-            waterBodies:2, waterMaxSize:50, roads:3, roadMaxLength:80, buildings:15, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "grassland":
-          return {
-            baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:60, buildings:6, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "mountain":
-          return {
-            baseDist: { "stone":0.1,"dirt":0.5,"grass":0.1,"tree":0.15 },
-            waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "forest":
-          return {
-            baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "cavern":
-          return {
-            baseDist:{}, waterBodies:0, waterMaxSize:0, roads:0, roadMaxLength:0, buildings:0, isCavern:true
-          };
-        case "volcanic":
-          return {
-            baseDist:{ "barrens":0.5, "lavastone":0.35, "brimstone":0.1, "dirtCracked":0.05 },
-            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "coastal":
-          return {
-            baseDist:{ "grass":0.6,"tree":0.2, "dirt":0.2 },
-            waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "riverlands":
-          return {
-            baseDist:{ "grass":0.5,"dirt":0.2,"tree":0.3 },
-            waterBodies:1, waterMaxSize:200, roads:1, roadMaxLength:80, buildings:7, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "swamp":
-          return {
-            baseDist:{ "dirt":0.1,"water":0.2,"grass":0.2,"tree":0.2,"mud":0.3 },
-            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-          case "sakura":
-  return {
-    // Replace denseforest with sakura so the new assets are used
-    baseDist: { "sakura": 0.3, "nicebush": 0.2, "grass": 0.3, "sakuraFlower": 0.1, "stone": 0.1 },
-    waterBodies: 2,
-    waterMaxSize: 60,
-    roads: 1,
-    roadMaxLength: 50,
-    buildings: 2,
-    bridgeWidth: 1,
-    isCavern: false
-  };
-        case "jungle":
-          return {
-            baseDist:{ "junglegrass":0.2, "junglemud":0.3, "jungletree":0.35, "junglescatter":0.15 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "snow":
-          return {
-            baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
-            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        default:
-          return {
-            baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-      }
-    }
-
+   function getMapSettings(theme){
+  switch(theme){
+    case "desert":
+      return {
+        baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
+        waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5,
+        bridgeWidth: 0,
+        cliffCount: 0, // desert might not typically have cliffs
+        isCavern:false
+      };
+    case "city":
+      return {
+        baseDist: { "dirt":0.05,"stone":0.05,"grass":0.15,"tree":0.25 },
+        waterBodies:2, waterMaxSize:50, roads:3, roadMaxLength:80, buildings:15, 
+        bridgeWidth: 0,
+        cliffCount: 0, // City terrains usually have no cliffs
+        isCavern:false
+      };
+    case "grassland":
+      return {
+        baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
+        waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:60, buildings:6, 
+        bridgeWidth: 0,
+        cliffCount: 3, // A moderate value
+        isCavern:false
+      };
+    case "mountain":
+      return {
+        baseDist: { "stone":0.1,"dirt":0.5,"grass":0.1,"tree":0.15 },
+        waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, 
+        bridgeWidth: 0,
+        cliffCount: 8, // mountains often have cliffs
+        isCavern:false
+      };
+    case "forest":
+      return {
+        baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
+        waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, 
+        bridgeWidth: 0,
+        cliffCount: 2, // minimal cliffs in a forest
+        isCavern:false
+      };
+    // ... continue for other themes
+    case "volcanic":
+      return {
+        baseDist:{ "barrens":0.5, "lavastone":0.35, "brimstone":0.1, "dirtCracked":0.05 },
+        waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, 
+        bridgeWidth: 0,
+        cliffCount: 0, // volcanic terrains might not show these cliffs
+        isCavern:false
+      };
+    // For coastal, riverlands, swamp, sakura, jungle, snow, and default, assign suitable defaults:
+    case "coastal":
+      return {
+        baseDist:{ "grass":0.6,"tree":0.2, "dirt":0.2 },
+        waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, 
+        bridgeWidth: 0,
+        cliffCount: 4, // some coastal cliffs
+        isCavern:false
+      };
+    case "riverlands":
+      return {
+        baseDist:{ "grass":0.5,"dirt":0.2,"tree":0.3 },
+        waterBodies:1, waterMaxSize:200, roads:1, roadMaxLength:80, buildings:7, 
+        bridgeWidth: 0,
+        cliffCount: 3,
+        isCavern:false
+      };
+    case "swamp":
+      return {
+        baseDist:{ "dirt":0.1,"water":0.2,"grass":0.2,"tree":0.2,"mud":0.3 },
+        waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, 
+        bridgeWidth: 0,
+        cliffCount: 0,
+        isCavern:false
+      };
+    case "sakura":
+      return {
+        baseDist: { "sakura": 0.3, "nicebush": 0.2, "grass": 0.3, "sakuraFlower": 0.1, "stone": 0.1 },
+        waterBodies: 2,
+        waterMaxSize: 60,
+        roads: 1,
+        roadMaxLength: 50,
+        buildings: 2,
+        bridgeWidth: 1,
+        cliffCount: 2,
+        isCavern: false
+      };
+    case "jungle":
+      return {
+        baseDist:{ "junglegrass":0.2, "junglemud":0.3, "jungletree":0.35, "junglescatter":0.15 },
+        waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, 
+        bridgeWidth: 0,
+        cliffCount: 1,
+        isCavern:false
+      };
+    case "snow":
+      return {
+        baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
+        waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, 
+        bridgeWidth: 0,
+        cliffCount: 3,
+        isCavern:false
+      };
+    default:
+      return {
+        baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
+        waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, 
+        bridgeWidth: 0,
+        cliffCount: 3,
+        isCavern:false
+      };
+  }
+}
     /*******************************************************
      * SLIDER HANDLING
      *******************************************************/
@@ -971,10 +984,9 @@ if (sliderCache["cliffCount"]) {
       } else {
         initMap(settings.baseDist);
 
-          // NEW: Generate cliffs before water generation
-  if (settings.cliffCount && settings.cliffCount > 0) {
-    generateCliffs(settings.cliffCount);
-  }
+if(document.getElementById("cliffsCheck").checked && settings.cliffCount && settings.cliffCount > 0) {
+  generateCliffs(settings.cliffCount);
+}
 
         // Thematically shape water if any
         if(theme==="coastal"){
