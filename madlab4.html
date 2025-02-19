@@ -1339,52 +1339,48 @@ if (doBuildings && doRoads && !settings.isCavern) {
 }
 
 function generateCliffs(cliffCount) {
-  // For each cliff segment, carve an irregular, 9-tile long cliff.
   for (let i = 0; i < cliffCount; i++) {
-    // Choose a random starting point on the map that is not too close to the edges.
-    let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - 4));
-    let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - 4));
+    // Ensure the chain (9 tiles long) fits horizontally.
+    let startX = Math.floor(Math.random() * (GRID_WIDTH - 9));
+    // Choose a starting y that allows for vertical variation (avoiding the very top and bottom)
+    let startY = 1 + Math.floor(Math.random() * (GRID_HEIGHT - 2));
+    let currentY = startY;
+    let chainCoordinates = [];
     
-    // Ensure the starting tile is of a terrain that can host a cliff.
-    if (["water","lava","negative"].includes(mapData[startY][startX].type)) {
-      continue; // skip unsuitable locations
+    // Create a horizontal chain of 9 tiles with slight vertical variation
+    for (let j = 0; j < 9; j++) {
+      let x = startX + j;
+      // For each step (except the first) force a ±1 change in the y-axis
+      if (j > 0) {
+        let offset = (Math.random() < 0.5 ? -1 : 1);
+        // Prevent the chain from going off the grid
+        if (currentY <= 1) {
+          offset = 1;
+        } else if (currentY >= GRID_HEIGHT - 2) {
+          offset = -1;
+        }
+        currentY += offset;
+      }
+      chainCoordinates.push({ x, y: currentY });
     }
     
-    // Choose an initial random direction.
-    let directions = [{dx:1, dy:0}, {dx:-1, dy:0}, {dx:0, dy:1}, {dx:0, dy:-1}];
-    let dir = directions[Math.floor(Math.random() * directions.length)];
-    
-    // Carve out a cliff of fixed length (9 tiles) with slight curvature.
-    let x = startX, y = startY;
-    for (let step = 0; step < 9; step++) {
-      // Set the current tile to "cliffs". (This will be rendered using the cliffs asset.)
-      mapData[y][x].type = "cliffs";
-      
-      // Occasionally vary the direction slightly.
-      if (Math.random() < 0.3) {
-        // Slight left/right turn.
-        const turn = Math.random() < 0.5 ? {dx: -dir.dy, dy: dir.dx} : {dx: dir.dy, dy: -dir.dx};
-        // Blend the turn with the current direction.
-        dir = { dx: dir.dx + turn.dx * 0.5, dy: dir.dy + turn.dy * 0.5 };
-        // Normalize to one step direction.
-        if (Math.abs(dir.dx) > Math.abs(dir.dy)) {
-          dir.dy = 0;
-          dir.dx = (dir.dx > 0) ? 1 : -1;
-        } else {
-          dir.dx = 0;
-          dir.dy = (dir.dy > 0) ? 1 : -1;
-        }
+    // Prevent overlapping: if any tile in this chain is already set to "cliffs", skip this chain.
+    let valid = true;
+    for (const coord of chainCoordinates) {
+      if (mapData[coord.y][coord.x].type === "cliffs") {
+        valid = false;
+        break;
       }
-      
-      // Move to next tile.
-      x += dir.dx;
-      y += dir.dy;
-      
-      // Break if out-of-bounds.
-      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) break;
+    }
+    if (!valid) continue;
+    
+    // Place the chain on the map
+    for (const coord of chainCoordinates) {
+      mapData[coord.y][coord.x].type = "cliffs";
     }
   }
 }
+
 
     /*******************************************************
      * RIVERS
