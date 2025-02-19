@@ -1364,12 +1364,7 @@ function generateCliffs(cliffCount) {
     for (let j = 1; j < 9; j++) {
       let x = startX + j;
       // Decide offset: 80% chance of shifting by ±1, 20% chance of staying level.
-      let offset;
-      if (Math.random() < 0.8) {
-        offset = Math.random() < 0.5 ? -1 : 1;
-      } else {
-        offset = 0;
-      }
+      let offset = (Math.random() < 0.8) ? (Math.random() < 0.5 ? -1 : 1) : 0;
       // Prevent going out-of-bounds:
       if (currentY + offset < 1) {
         offset = 1;
@@ -1378,7 +1373,7 @@ function generateCliffs(cliffCount) {
       }
       currentY += offset;
       if (offset !== 0) nonZeroFound = true;
-      chainCoordinates.push({ x, y: currentY });
+      chainCoordinates.push({ x: x, y: currentY });
     }
     
     // Ensure that at least one vertical shift occurred; if not, force a random one.
@@ -1391,27 +1386,12 @@ function generateCliffs(cliffCount) {
       }
     }
     
-    // Check for overlapping in both the primary row and the row immediately above
+    // Check for overlapping in both the primary row and the row immediately above.
     let valid = true;
     for (const coord of chainCoordinates) {
-      if (mapData[coord.y][coord.x].type === "cliffs" ||
-          mapData[coord.y - 1][coord.x].type === "cliffs") {
-        valid = false;
-        break;
-      }
-    }
-    if (!valid) continue;
-
-    }
-  }
-}
-
-    
-    // Check for overlapping in both the primary row and the row immediately above
-    let valid = true;
-    for (const coord of chainCoordinates) {
-      // Ensure that the cell at currentY and the one above (currentY - 1) are free
-      if (mapData[coord.y][coord.x].type === "cliffs" ||
+      // Check that we don't try to access an invalid index.
+      if (coord.y - 1 < 0 ||
+          mapData[coord.y][coord.x].type === "cliffs" ||
           mapData[coord.y - 1][coord.x].type === "cliffs") {
         valid = false;
         break;
@@ -1419,14 +1399,13 @@ function generateCliffs(cliffCount) {
     }
     if (!valid) continue;
     
-    // Place the 2-tile-thick chain: fill both the chosen row and the row directly above
+    // Place the 2-tile–thick chain: fill both the chosen row and the row directly above.
     for (const coord of chainCoordinates) {
       mapData[coord.y][coord.x].type = "cliffs";
       mapData[coord.y - 1][coord.x].type = "cliffs";
     }
   }
 }
-
 
 
     /*******************************************************
