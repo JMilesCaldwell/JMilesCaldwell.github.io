@@ -153,6 +153,7 @@
             <option value="mountain">Mountain</option>
             <option value="forest">Forest</option>
             <option value="cavern">Cavern</option>
+             <option value="sakura">Sakura</option>
             <option value="volcanic">Volcanic</option>
             <option value="coastal">Coastal</option>
             <option value="riverlands">Riverlands</option>
@@ -186,6 +187,10 @@
           <input type="checkbox" id="roadCheck" />
           Generate Roads
         </label>
+          <label>
+    <input type="checkbox" id="scatterCratesCheck" />
+    Scatter Crates
+  </label>
       </div>
     </div>
 
@@ -272,7 +277,8 @@
     const TILE_SIZE = 20;
     const GRID_WIDTH = 50;
     const GRID_HEIGHT = 50;
-
+    let BRIDGE_WIDTH = 1; // global variable controlling bridge width
+    
     let mapData = [];
     let occupantInHand = null;
 
@@ -305,13 +311,26 @@
         folder: "grass",
         files: ["grasstile1.png","grasstile2.png","grasstile3.png","grasstile4.png","grasstile5.png"]
       },
-      "cliff": {
-       folder: "mountains",
-       files: ["cliff1.png", "cliff2.png", "cliff3.png", "cliff4.png"]
-      },
       "tree": {
         folder: "grass",
         files: ["grasstree1.png","grasstree2.png"]
+      },
+      "crate": {
+      folder: "scatter",
+      files: ["crate1.png", "crate2.png", "crate3.png", "crate4.png"]
+      },
+
+      "sakura": {
+       folder: "forest",
+       files: ["Sakura1.png", "Sakura2.png", "Sakura3.png", "Sakura4.png"]
+      },
+      "sakuraFlower": {
+       folder: "forest",
+       files: ["SakuraFlower.png"]
+      },
+       "nicebush": {
+       folder: "forest",
+       files: ["nicebush.png"]
       },
       "denseforest": {
         folder: "forest",
@@ -385,6 +404,11 @@
         folder: "water",
         files: ["water.png","waterrocks.png","waterrocks2.png","swamp.png","swamp2.png","whitesand.png"]
       },
+      "doorWood2": {
+        folder: "buildings/doors",
+        files: ["doorWood2.png"]
+      },
+
       "whitesand": {
         folder: "water",
         files: ["whitesand.png"]
@@ -423,7 +447,7 @@
       },
       "stone": {
         folder: "buildings/walls",
-        files: ["stoneBlock.png"]
+        files: ["stoneBlock.png", "stoneBlock2.png"]
       },
       "wall": {
         folder: "buildings/walls",
@@ -660,6 +684,38 @@
         }
       }
     }
+function hasWaterWithinRadius(x, y, radius) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+      const t = mapData[ny][nx].type;
+      if (t === "water" || t === "lava") {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function convertBridgeTile(x, y, visited) {
+  const key = x + "," + y;
+  if (visited.has(key)) return;
+  visited.add(key);
+  const cell = mapData[y][x];
+  // Only process if it's a road tile that hasn't already been converted.
+  if (cell.type === "roaddirt" || cell.type === "roadstone") {
+    if (hasWaterWithinRadius(x, y, 2)) {
+      cell.type = "woodfloor";
+      // Propagate to immediate neighbors.
+      const neighbors = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (const [dx, dy] of neighbors) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        convertBridgeTile(nx, ny, visited);
+      }
+    }
+  }
+}
 
     /*******************************************************
      * MAP SETTINGS
@@ -669,32 +725,37 @@
         case "desert":
           return {
             baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
-            waterBodies:2, waterMaxSize:50, roads:2, roadMaxLength:40, buildings:5, isCavern:false,
-        cliffChance: 0.05
+            waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5,
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "city":
           return {
-            baseDist: { "dirt":0.05,"stone":0.2,"grass":0.15,"tree":0.1 },
-            waterBodies:2, waterMaxSize:80, roads:8, roadMaxLength:80, buildings:15, isCavern:false,
-        cliffChance: 0.05
+            baseDist: { "dirt":0.05,"stone":0.05,"grass":0.15,"tree":0.25 },
+            waterBodies:2, waterMaxSize:50, roads:3, roadMaxLength:80, buildings:15, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "grassland":
           return {
             baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
-            waterBodies:3, waterMaxSize:120, roads:4, roadMaxLength:60, buildings:6, isCavern:false,
-        cliffChance: 0.05
+            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:60, buildings:6, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "mountain":
           return {
-            baseDist: { "stone":0.4,"dirt":0.3,"grass":0.1,"tree":0.05 },
-            waterBodies:1, waterMaxSize:40, roads:3, roadMaxLength:50, buildings:4, isCavern:false,
-        cliffChance: 0.05
+            baseDist: { "stone":0.1,"dirt":0.5,"grass":0.1,"tree":0.15 },
+            waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "forest":
           return {
             baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, isCavern:false,
-        cliffChance: 0.05
+            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "cavern":
           return {
@@ -702,44 +763,64 @@
           };
         case "volcanic":
           return {
-            baseDist:{ "barrens":0.5, "lavastone":0.3, "brimstone":0.1, "dirtCracked":0.1 },
-            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:2, isCavern:false,
-        cliffChance: 0.05
+            baseDist:{ "barrens":0.5, "lavastone":0.35, "brimstone":0.1, "dirtCracked":0.05 },
+            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "coastal":
           return {
-            baseDist:{ "grass":0.6, "dirt":0.4 },
-            waterBodies:0, waterMaxSize:0, roads:3, roadMaxLength:50, buildings:6, isCavern:false,
-        cliffChance: 0.05
+            baseDist:{ "grass":0.6,"tree":0.2, "dirt":0.2 },
+            waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "riverlands":
           return {
-            baseDist:{ "grass":0.5,"dirt":0.3,"tree":0.2 },
-            waterBodies:0, waterMaxSize:0, roads:4, roadMaxLength:60, buildings:7, isCavern:false,
-        cliffChance: 0.05
+            baseDist:{ "grass":0.5,"dirt":0.2,"tree":0.3 },
+            waterBodies:1, waterMaxSize:200, roads:1, roadMaxLength:80, buildings:7, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "swamp":
           return {
-            baseDist:{ "dirt":0.3,"water":0.3,"grass":0.2,"tree":0.1,"mud":0.1 },
-            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, isCavern:false,
-        cliffChance: 0.05
+            baseDist:{ "dirt":0.1,"water":0.2,"grass":0.2,"tree":0.2,"mud":0.3 },
+            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
+          case "sakura":
+  return {
+    // Replace denseforest with sakura so the new assets are used
+    baseDist: { "sakura": 0.3, "nicebush": 0.2, "grass": 0.3, "sakuraFlower": 0.1, "stone": 0.1 },
+    waterBodies: 2,
+    waterMaxSize: 60,
+    roads: 1,
+    roadMaxLength: 50,
+    buildings: 2,
+    bridgeWidth: 1,
+    isCavern: false
+  };
         case "jungle":
           return {
-            baseDist:{ "junglegrass":0.4, "junglemud":0.3, "jungletree":0.15, "junglescatter":0.15 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, isCavern:false,
-        cliffChance: 0.05
+            baseDist:{ "junglegrass":0.2, "junglemud":0.3, "jungletree":0.35, "junglescatter":0.15 },
+            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         case "snow":
           return {
             baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
-            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, isCavern:false,
-        cliffChance: 0.05
+            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
         default:
           return {
             baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:4, roadMaxLength:60, buildings:6, isCavern:false
+            waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, 
+                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
+            isCavern:false
           };
       }
     }
@@ -799,7 +880,7 @@
         { key: "roads",          min: 0,  max: 20, step: 1  },
         { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
         { key: "buildings",      min: 0,  max: 50, step: 1  },
-        { key: "cliffChance",    min: 0,  max: 0.5, step: 0.01 }
+        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },  
       ];
 
       paramSliders.forEach(({key, min, max, step}) => {
@@ -829,23 +910,29 @@
       });
     }
 
-    function applySlidersToSettings(settings){
-      if(settings.isCavern) return settings;
-      for(const tileType in settings.baseDist){
-        if(sliderCache[tileType]){
-          settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
-        }
-      }
-      // other numeric parameters
-      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings","cliffChance"];
-      paramKeys.forEach(k=>{
-        if(sliderCache[k]){
-          const v = parseFloat(sliderCache[k].value);
-          settings[k] = isNaN(v) ? settings[k] : v;
-        }
-      });
-      return settings;
+function applySlidersToSettings(settings) {
+  if(settings.isCavern) return settings;
+  for(const tileType in settings.baseDist) {
+    if(sliderCache[tileType]){
+      settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
     }
+  }
+  // Update other numeric parameters
+  const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings"];
+  paramKeys.forEach(k=>{
+    if(sliderCache[k]){
+      const v = parseFloat(sliderCache[k].value);
+      settings[k] = isNaN(v) ? settings[k] : v;
+    }
+  });
+  // Update bridgeWidth outside of the loop:
+  if (sliderCache["bridgeWidth"]) {
+    settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
+    BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
+  }
+  return settings;
+}
+
 
     function toggleSliders(){
       const panel = document.getElementById("sliderControls");
@@ -875,12 +962,7 @@
         generateCavern();
       } else {
         initMap(settings.baseDist);
-      
-              // Retrieve cliff chance from the slider (defaulting to 0.1 if not set)
-const cliffChance = sliderCache["cliffChance"] ? parseFloat(sliderCache["cliffChance"].value) : 0.05;
-// Call the function to scatter cliffs.
-scatterCliffs(cliffChance);
-    }
+
         // Thematically shape water if any
         if(theme==="coastal"){
           createIrregularCoastLine();
@@ -896,7 +978,7 @@ scatterCliffs(cliffChance);
               } else {
                 createWaterBody(settings.waterMaxSize);
               }
-  
+            }
             // Possibly create a river
             if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
               if(theme==="volcanic"){
@@ -921,15 +1003,19 @@ scatterCliffs(cliffChance);
         }
       }
 
-      // Buildings
-      if(doBuildings && !settings.isCavern && settings.buildings>0){
-        createBuildings(settings.buildings);
-      }
+// Buildings
+if (doBuildings && !settings.isCavern && settings.buildings > 0) {
+  createBuildings(settings.buildings);
+  // Now, if the scatterCrates checkbox is checked, scatter crates with a 10% chance.
+  if (document.getElementById("scatterCratesCheck").checked) {
+    scatterCrates(0.1);
+  }
+}
 
-      // Attempt to connect building doors to roads with a path
-      if(doBuildings && doRoads && !settings.isCavern){
-        connectBuildingDoorsToRoads();
-      }
+// Attempt to connect building doors to roads with a path
+if (doBuildings && doRoads && !settings.isCavern) {
+  connectBuildingDoorsToRoads();
+}
 
       // Biome decoration
       decorateBiome(theme);
@@ -1137,9 +1223,9 @@ scatterCliffs(cliffChance);
       } else {
         createFluidBody(maxSize,"water");
       }
-      if(Math.random()<0.15){
-        createRandomSandyBeach("water");
-      }
+      if(Math.random()<0.35){
+  createLinearSandyBeach("water");
+}
     }
     function createLavaBody(maxSize){
       createFluidBody(maxSize,"lava");
@@ -1188,28 +1274,57 @@ scatterCliffs(cliffChance);
         }
       }
     }
-    function createRandomSandyBeach(fluidType){
-      const fluidTiles = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          if(mapData[y][x].type === fluidType){
-            fluidTiles.push({x,y});
+    function createLinearSandyBeach(fluidType) {
+  // First, collect all water-edge cells: water cells with at least one non-water neighbor.
+  const edgeCells = [];
+  for (let y = 0; y < GRID_HEIGHT; y++){
+    for (let x = 0; x < GRID_WIDTH; x++){
+      if (mapData[y][x].type === fluidType) {
+        const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+        let isEdge = false;
+        for (let [dx, dy] of neighbors) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+          if (mapData[ny][nx].type !== fluidType) {
+            isEdge = true;
+            break;
           }
         }
-      }
-      if(!fluidTiles.length) return;
-      const pick = fluidTiles[Math.floor(Math.random()*fluidTiles.length)];
-      const radius = 2 + Math.floor(Math.random()*2);
-      for(let yy=pick.y-radius; yy<=pick.y+radius; yy++){
-        for(let xx=pick.x-radius; xx<=pick.x+radius; xx++){
-          if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-          const dx=xx-pick.x, dy=yy-pick.y;
-          if(dx*dx + dy*dy <= radius*radius){
-            mapData[yy][xx].type="whitesand";
-          }
+        if (isEdge) {
+          edgeCells.push({ x, y });
         }
       }
     }
+  }
+  
+  if (edgeCells.length === 0) return;
+  
+  // Randomly select a starting water-edge cell.
+  let current = edgeCells[Math.floor(Math.random() * edgeCells.length)];
+  
+  // Define how many steps the beach "walk" will take along the edge.
+  const steps = 5 + Math.floor(Math.random() * 6); // anywhere from 5 to 10 steps
+  
+  for (let i = 0; i < steps; i++){
+    // For the current edge cell, mark its non-water neighbors as beach.
+    const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (let [dx, dy] of neighbors) {
+      const nx = current.x + dx, ny = current.y + dy;
+      if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+      if (mapData[ny][nx].type !== fluidType) {
+        mapData[ny][nx].type = "whitesand";
+      }
+    }
+    // Look for adjacent edge cells to continue the walk.
+    const candidates = edgeCells.filter(cell => Math.abs(cell.x - current.x) <= 1 && Math.abs(cell.y - current.y) <= 1);
+    if (candidates.length > 0) {
+      current = candidates[Math.floor(Math.random() * candidates.length)];
+    } else {
+      break; // no further edge cells found; exit the loop.
+    }
+  }
+}
+
 
     /*******************************************************
      * RIVERS
@@ -1368,29 +1483,39 @@ scatterCliffs(cliffChance);
       return cells;
     }
 
-    function carveRoadTile(theme, rx, ry){
-      for(let dy=-1; dy<=1; dy++){
-        for(let dx=-1; dx<=1; dx++){
-          if(Math.abs(dx)+Math.abs(dy)<=1){
-            const nx=rx+dx, ny=ry+dy;
-            if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
-            const cell=mapData[ny][nx];
-            if(cell.type==="water"||cell.type==="lava"){
-              if(theme!=="coastal"){
-                cell.type="woodfloor";
-              }
-            }
-            else {
-              if(Math.random()<0.05){
-                cell.type="roadstone";
-              } else {
-                cell.type="roaddirt";
-              }
-            }
+function carveRoadTile(theme, rx, ry) {
+  // Process the 3x3 block around the road tile.
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) <= 1) {
+        const nx = rx + dx, ny = ry + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        const cell = mapData[ny][nx];
+        if (cell.type === "water" || cell.type === "lava") {
+          if (theme !== "coastal") {
+            // Convert this water cell (adjacent to the road) directly.
+            cell.type = "woodfloor";
+          }
+        } else {
+          // Standard road conversion.
+          if (Math.random() < 0.05) {
+            cell.type = "roadstone";
+          } else {
+            cell.type = "roaddirt";
           }
         }
       }
     }
+  }
+  
+// Now, if bridge conversion is enabled (BRIDGE_WIDTH > 0) and this road tile is near water, convert it (and its neighbors) to wood.
+if (BRIDGE_WIDTH > 0 && hasWaterWithinRadius(rx, ry, 3)) {
+  convertBridgeTile(rx, ry, new Set());
+}
+
+}
+
+
 
     // -- ADDED/UPDATED: Meandering offshoot that avoids building floors
     function carveMeanderingOffshoot(theme, startX, startY, length){
@@ -1721,12 +1846,60 @@ let nextBuildingId = 1; // global
 
 function placeBuilding(sx, sy, shape) {
   const buildingId = nextBuildingId++;
+  
+  // Step 1: Group contiguous door cells (value === 2) in the building shape.
+  const doorGroups = [];
+  const doorVisited = Array(shape.height)
+    .fill(0)
+    .map(() => Array(shape.width).fill(false));
+  
+  // Helper: DFS to group door cells.
+  function groupDoors(relX, relY, group) {
+    // Ensure the position is within bounds.
+    if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
+    if (doorVisited[relY][relX]) return;
+    if (shape.layout[relY][relX] !== 2) return;
+    
+    doorVisited[relY][relX] = true;
+    group.push({ x: relX, y: relY });
+    
+    // Check 4-connected neighbours.
+    groupDoors(relX + 1, relY, group);
+    groupDoors(relX - 1, relY, group);
+    groupDoors(relX, relY + 1, group);
+    groupDoors(relX, relY - 1, group);
+  }
+  
+  // Scan the shape to build door groups.
+  for (let y = 0; y < shape.height; y++) {
+    for (let x = 0; x < shape.width; x++) {
+      if (shape.layout[y][x] === 2 && !doorVisited[y][x]) {
+        const group = [];
+        groupDoors(x, y, group);
+        doorGroups.push(group);
+      }
+    }
+  }
+  
+const availableDoorTypes = ["door"];
+const groupDoorTypes = doorGroups.map(group => {
+  if (group.length > 1) {
+    // For contiguous groups (double doors, etc.), force "doorWood2"
+    return "doorWood2";
+  } else {
+    // For isolated door cells, choose randomly from availableDoorTypes.
+    return availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
+  }
+});
+
+  
+  // Step 3: Place building cells.
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
       if (val === 1) {
-        cell.type = "cobblestone"; 
+        cell.type = "cobblestone";
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
       } else if (val === 0) {
@@ -1734,11 +1907,23 @@ function placeBuilding(sx, sy, shape) {
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
       } else if (val === 2) {
-        cell.type = "door";
+        // Determine which door group this door belongs to.
+        let assignedType = null;
+        for (let i = 0; i < doorGroups.length; i++) {
+          if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
+            assignedType = groupDoorTypes[i];
+            break;
+          }
+        }
+        // Fallback if something goes amiss.
+        if (assignedType === null) {
+          assignedType = "door";
+        }
+        cell.type = assignedType;
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
       } else if (val === 3) {
-        // Courtyard: leave underlying terrain intact
+        // Courtyard: leave underlying terrain intact.
         cell.courtyard = true;
         cell.hasBuilding = true;
         cell.buildingId = buildingId;
@@ -1750,6 +1935,7 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 }
+
 
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
@@ -1785,17 +1971,64 @@ function placeBuilding(sx, sy, shape) {
           const cell=mapData[yy][xx];
           if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" || cell.type==="negative") continue;
           if(Math.random()<0.2){
-            const limestones=["limestone1","limestone2","limestone3"];
-            cell.type = limestones[Math.floor(Math.random()*limestones.length)];
+            cell.type = "roadstone";
           } else {
             cell.type="roaddirt";
           }
-          if(Math.random()<0.1){
+          if(Math.random()<0.15){
             cell.type="marketscatter";
           }
         }
       }
     }
+
+    /*******************************************************
+     * SCATTER CRATES
+     *******************************************************/
+    function scatterCrates(chance = 0.1) {
+  // Define neighbor offsets for an 8-neighbor check.
+  const deltas = [
+    [1, 0], [-1, 0], [0, 1], [0, -1],
+    [1, 1], [-1, -1], [1, -1], [-1, 1]
+  ];
+
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      const cell = mapData[y][x];
+
+      // Only consider cells that are not part of a building.
+      if (cell.hasBuilding) continue;
+
+      // Ensure this cell is not next to a door.
+      let doorNeighbor = false;
+      for (const [dx, dy] of deltas) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        if (mapData[ny][nx].type === "door") {
+          doorNeighbor = true;
+          break;
+        }
+      }
+      if (doorNeighbor) continue;
+
+      // Check if at least one neighbor is part of a building.
+      let adjacentBuilding = false;
+      for (const [dx, dy] of deltas) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        if (mapData[ny][nx].hasBuilding) {
+          adjacentBuilding = true;
+          break;
+        }
+      }
+
+      // If adjacent to a building, roll the chance to set this tile as a crate.
+      if (adjacentBuilding && Math.random() < chance) {
+        cell.type = "crate";
+      }
+    }
+  }
+}
 
     /*******************************************************
      * FIELDS
@@ -1822,27 +2055,31 @@ function placeBuilding(sx, sy, shape) {
     }
 
     // -- ADDED
-    function canPlaceFarm(sx,sy,w,h){
-      for(let y=sy; y<sy+h; y++){
-        for(let x=sx; x<sx+w; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) return false;
-          const cell=mapData[y][x];
-          // If city walls is present, ensure farmland is inside or outside?
-          // Usually farmland might be outside city walls, but the requirement is that it not intersect.
-          if(cityWallBounds){
-            const withinWalls = insideRect(x,y,cityWallBounds);
-            if(withinWalls) return false; 
-          }
-          // forbid farmland on water, negative, walls, door, building floors
-          if(["water","lava","negative","wall","door","woodfloor","floor1","cobblestone",
-              "marble1","marble2","marble3","marble4","darktile","ancienttile","limestone1",
-              "limestone2","limestone3"].includes(cell.type) || cell.hasBuilding){
-            return false;
-          }
-        }
+ function canPlaceFarm(sx, sy, w, h) {
+  for (let y = sy; y < sy + h; y++) {
+    for (let x = sx; x < sx + w; x++) {
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) return false;
+      const cell = mapData[y][x];
+      // If city walls is present, ensure farmland is inside or outside?
+      // Usually farmland might be outside city walls, but the requirement is that it not intersect.
+      if (cityWallBounds) {
+        const withinWalls = insideRect(x, y, cityWallBounds);
+        if (withinWalls) return false; 
       }
-      return true;
+      // Now include road types in the forbidden list.
+      if (
+        ["water", "lava", "negative", "wall", "door", "woodfloor", "floor1", "cobblestone",
+         "marble1", "marble2", "marble3", "marble4", "darktile", "ancienttile", "limestone1",
+         "limestone2", "limestone3", "roaddirt", "roadstone"].includes(cell.type)
+         || cell.hasBuilding
+      ) {
+        return false;
+      }
     }
+  }
+  return true;
+}
+
 
     /*******************************************************
      * CITY WALLS
@@ -1858,7 +2095,8 @@ function placeBuilding(sx, sy, shape) {
       const rectH = Math.floor(GRID_HEIGHT/2);
       const startX = 2 + Math.floor(Math.random()*(GRID_WIDTH - rectW -4));
       const startY = 2 + Math.floor(Math.random()*(GRID_HEIGHT - rectH -4));
-      const thickness = 2 + Math.floor(Math.random()*2);
+      const thickness = 1 + Math.floor(Math.random() * 1);
+
 
       cityWallBounds = {
         x: startX + thickness,
@@ -1872,32 +2110,95 @@ function placeBuilding(sx, sy, shape) {
       carveWallEdge(chosenWallFile, startX+rectW,  startY+rectH,  startX,       startY+rectH,  thickness, true);
       carveWallEdge(chosenWallFile, startX,        startY+rectH,  startX,       startY,        thickness, false);
     }
-    function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal){
-      const dx = (x2===x1)? 0 : (x2>x1?1:-1);
-      const dy = (y2===y1)? 0 : (y2>y1?1:-1);
+   // Modified wall edge carving function that checks for an approaching road
+function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
+  const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
+  const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
 
-      let cx = x1, cy = y1;
-      while(cx!==x2 || cy!==y2){
-        const offset = (Math.random()<0.2)? (Math.random()<0.5?1:-1) : 0;
-        carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
-        cx += dx;
-        cy += dy;
-      }
-      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile); 
-    }
-    function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
-      for(let i=0;i<thickness;i++){
-        const xx = baseX + (horizontal? 0 : i+offset);
-        const yy = baseY + (horizontal? i+offset : 0);
-        if(xx<0||yy<0||xx>=GRID_WIDTH||yy>=GRID_HEIGHT) continue;
-        const cell = mapData[yy][xx];
-        if(cell.type==="roadstone" || cell.type==="roaddirt" || cell.type==="woodfloor"){
-          continue; 
-        }
-        cell.type="wall";
-        cell.chosenWallFile = chosenFile;
+  let cx = x1, cy = y1;
+  while (cx !== x2 || cy !== y2) {
+    // Check the tile in the wall's advance direction:
+    const nextX = cx + dx, nextY = cy + dy;
+    if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
+      if (isRoadLike(mapData[nextY][nextX].type)) {
+        // If the next tile is a road, cap the wall with an octagon and exit.
+        fillOctagonAtWallEnd(cx, cy, { dx, dy });
+        return; // Exit without further wall carving.
       }
     }
+    // Otherwise, continue normal wall carving.
+    const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
+    carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
+    cx += dx;
+    cy += dy;
+  }
+  // Carve the final tile, if reached.
+  carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
+}
+
+// Helper to cap the wall with an octagon.
+// The 'dir' object indicates the wall's advance direction (i.e. where the road lies).
+function fillOctagonAtWallEnd(x, y, dir) {
+  // Choose offsets that fill in an octagon, leaving a one-tile gap toward the road.
+  let offsets;
+  if (dir.dx === 1 && dir.dy === 0) {
+    // Road to the east; cap to the west.
+    offsets = [
+      [0, 0], [0, -1], [0, 1],
+      [-1, 0], [-1, -1], [-1, 1]
+    ];
+  } else if (dir.dx === -1 && dir.dy === 0) {
+    // Road to the west; cap to the east.
+    offsets = [
+      [0, 0], [0, -1], [0, 1],
+      [1, 0], [1, -1], [1, 1]
+    ];
+  } else if (dir.dx === 0 && dir.dy === 1) {
+    // Road to the south; cap to the north.
+    offsets = [
+      [0, 0], [-1, 0], [1, 0],
+      [0, -1], [-1, -1], [1, -1]
+    ];
+  } else if (dir.dx === 0 && dir.dy === -1) {
+    // Road to the north; cap to the south.
+    offsets = [
+      [0, 0], [-1, 0], [1, 0],
+      [0, 1], [-1, 1], [1, 1]
+    ];
+  }
+  // Set the selected cells to be wall tiles.
+  for (const [ox, oy] of offsets) {
+    const nx = x + ox, ny = y + oy;
+    if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+    mapData[ny][nx].type = "wall";
+  }
+}
+
+// You must have an isRoadLike helper that returns true if a tile type is considered a road:
+function isRoadLike(type) {
+  return type === "roaddirt" || type === "roadstone" || type === "woodfloor";
+}
+function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
+  for (let i = 0; i < thickness; i++) {
+    const xx = baseX + (horizontal ? 0 : i + offset);
+    const yy = baseY + (horizontal ? i + offset : 0);
+    if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
+    const cell = mapData[yy][xx];
+    if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") {
+      continue;
+    }
+    // For example, alternate based on (xx+yy) mod 3:
+    if ((xx + yy) % 3 === 0) {
+      cell.type = "wall";
+      cell.chosenWallFile = "darkStoneBlock.png"; // Always use darkStoneBlock here
+    } else {
+      cell.type = "wall";
+      const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
+      cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+    }
+  }
+}
+
 
     /*******************************************************
      * BIOME DECORATION
