@@ -319,7 +319,10 @@
       folder: "scatter",
       files: ["crate1.png", "crate2.png", "crate3.png", "crate4.png"]
       },
-
+      "cliffs": {
+      folder: "mountains",
+      files: ["cliff1.png", "cliff2.png", "cliff3.png", "cliff4.png"]
+      },
       "sakura": {
        folder: "forest",
        files: ["Sakura1.png", "Sakura2.png", "Sakura3.png", "Sakura4.png"]
@@ -880,7 +883,8 @@ function convertBridgeTile(x, y, visited) {
         { key: "roads",          min: 0,  max: 20, step: 1  },
         { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
         { key: "buildings",      min: 0,  max: 50, step: 1  },
-        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },  
+        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },
+        { key: "cliffCount",     min: 0,  max: 15, step: 1  }
       ];
 
       paramSliders.forEach(({key, min, max, step}) => {
@@ -925,13 +929,17 @@ function applySlidersToSettings(settings) {
       settings[k] = isNaN(v) ? settings[k] : v;
     }
   });
-  // Update bridgeWidth outside of the loop:
-  if (sliderCache["bridgeWidth"]) {
-    settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
-    BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
-  }
+// Update bridgeWidth and new cliffCount
+if (sliderCache["bridgeWidth"]) {
+  settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
+  BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
+}
+if (sliderCache["cliffCount"]) {
+  settings.cliffCount = parseInt(sliderCache["cliffCount"].value);
+}
   return settings;
 }
+    
 
 
     function toggleSliders(){
@@ -962,6 +970,11 @@ function applySlidersToSettings(settings) {
         generateCavern();
       } else {
         initMap(settings.baseDist);
+
+          // NEW: Generate cliffs before water generation
+  if (settings.cliffCount && settings.cliffCount > 0) {
+    generateCliffs(settings.cliffCount);
+  }
 
         // Thematically shape water if any
         if(theme==="coastal"){
@@ -1325,6 +1338,53 @@ if (doBuildings && doRoads && !settings.isCavern) {
   }
 }
 
+function generateCliffs(cliffCount) {
+  // For each cliff segment, carve an irregular, 9-tile long cliff.
+  for (let i = 0; i < cliffCount; i++) {
+    // Choose a random starting point on the map that is not too close to the edges.
+    let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - 4));
+    let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - 4));
+    
+    // Ensure the starting tile is of a terrain that can host a cliff.
+    if (["water","lava","negative"].includes(mapData[startY][startX].type)) {
+      continue; // skip unsuitable locations
+    }
+    
+    // Choose an initial random direction.
+    let directions = [{dx:1, dy:0}, {dx:-1, dy:0}, {dx:0, dy:1}, {dx:0, dy:-1}];
+    let dir = directions[Math.floor(Math.random() * directions.length)];
+    
+    // Carve out a cliff of fixed length (9 tiles) with slight curvature.
+    let x = startX, y = startY;
+    for (let step = 0; step < 9; step++) {
+      // Set the current tile to "cliffs". (This will be rendered using the cliffs asset.)
+      mapData[y][x].type = "cliffs";
+      
+      // Occasionally vary the direction slightly.
+      if (Math.random() < 0.3) {
+        // Slight left/right turn.
+        const turn = Math.random() < 0.5 ? {dx: -dir.dy, dy: dir.dx} : {dx: dir.dy, dy: -dir.dx};
+        // Blend the turn with the current direction.
+        dir = { dx: dir.dx + turn.dx * 0.5, dy: dir.dy + turn.dy * 0.5 };
+        // Normalize to one step direction.
+        if (Math.abs(dir.dx) > Math.abs(dir.dy)) {
+          dir.dy = 0;
+          dir.dx = (dir.dx > 0) ? 1 : -1;
+        } else {
+          dir.dx = 0;
+          dir.dy = (dir.dy > 0) ? 1 : -1;
+        }
+      }
+      
+      // Move to next tile.
+      x += dir.dx;
+      y += dir.dy;
+      
+      // Break if out-of-bounds.
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) break;
+    }
+  }
+}
 
     /*******************************************************
      * RIVERS
