@@ -2840,8 +2840,25 @@ window.onload = () => {
 
     // Print button event listener
     document.getElementById('printBtn').addEventListener('click', function() {
-      window.print();
-    });
+  const canvas = document.getElementById('mapCanvas');
+  const dataUrl = canvas.toDataURL('image/png');
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Map</title>
+        <style>
+          body { margin: 0; padding: 0; }
+          img { width: 100%; display: block; }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        <img src="${dataUrl}" alt="Map Image" />
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+});
   });
 };
 
