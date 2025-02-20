@@ -2305,6 +2305,12 @@ function createIrregularCityWalls() {
     h: rectH - thickness * 2
   };
 
+  function placeTower(x, y) {
+  // Place the towersmall asset at (x,y)
+  mapData[y][x].type = "towersmall";
+  mapData[y][x]._chosenTileIndex = null; // Reset so the towersmall asset is used
+}
+
   // Carve each wall edge, ensuring the wall forms a complete rectangle.
   carveWallEdge(chosenWallFile, startX,        startY,        startX + rectW, startY,        thickness, true);
   carveWallEdge(chosenWallFile, startX + rectW,  startY,        startX + rectW, startY + rectH,  thickness, false);
@@ -2312,24 +2318,27 @@ function createIrregularCityWalls() {
   carveWallEdge(chosenWallFile, startX,        startY + rectH,  startX,       startY,        thickness, false);
 }
     function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
-      const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
-      const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
-      let cx = x1, cy = y1;
-      while (cx !== x2 || cy !== y2) {
-        const nextX = cx + dx, nextY = cy + dy;
-        if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
-          if (isRoadLike(mapData[nextY][nextX].type)) {
-            fillOctagonAtWallEnd(cx, cy, { dx, dy });
-            return;
-          }
-        }
-        const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
-        carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
-        cx += dx;
-        cy += dy;
+  const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
+  const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
+  let cx = x1, cy = y1;
+  while (cx !== x2 || cy !== y2) {
+    const nextX = cx + dx, nextY = cy + dy;
+    if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
+      if (isRoadLike(mapData[nextY][nextX].type)) {
+        // When a road is encountered, cap the edge with a tower.
+        placeTower(cx, cy);
+        return;
       }
-      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
     }
+    const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
+    carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
+    cx += dx;
+    cy += dy;
+  }
+  // At the end of the wall edge, place a tower instead of a normal wall tile.
+  placeTower(cx, cy);
+}
+
 
     function fillOctagonAtWallEnd(x, y, dir) {
       let offsets;
