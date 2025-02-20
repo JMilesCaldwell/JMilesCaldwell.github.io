@@ -1015,15 +1015,16 @@
       });
 
       // Additional sliders for numeric parameters
-      const paramSliders = [
-        { key: "waterBodies",    min: 0,  max: 20, step: 1  },
-        { key: "waterMaxSize",   min: 0,  max: 500, step: 10 },
-        { key: "roads",          min: 0,  max: 20, step: 1  },
-        { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
-        { key: "buildings",      min: 0,  max: 50, step: 1  },
-        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },
-        { key: "cliffCount",     min: 0,  max: 15, step: 1  }
-      ];
+const paramSliders = [
+  { key: "waterBodies",    min: 0,  max: 20, step: 1 },
+  { key: "waterMaxSize",   min: 0,  max: 500, step: 10 },
+  { key: "roads",          min: 0,  max: 20, step: 1 },
+  { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
+  { key: "buildings",      min: 0,  max: 50, step: 1 },
+  { key: "bridgeWidth",    min: 0,  max: 5, step: 1 },
+  { key: "cliffCount",     min: 0,  max: 15, step: 1 },
+  { key: "cityWallLength", min: 10, max: GRID_WIDTH, step: 1 } // New slider
+];
 
       paramSliders.forEach(({key, min, max, step}) => {
         const val = settings[key] || 0;
@@ -1074,6 +1075,9 @@
       }
       if (sliderCache["cliffCount"]) {
         settings.cliffCount = parseInt(sliderCache["cliffCount"].value);
+      }
+      if (sliderCache["cityWallLength"]) {
+  settings.cityWallLength = parseInt(sliderCache["cityWallLength"].value);
       }
       return settings;
     }
@@ -2231,32 +2235,52 @@
     /*******************************************************
      * CITY WALLS
      *******************************************************/
-    function createIrregularCityWalls(){
-      const darkStoneWallFiles = [
-        "darkStoneBlock.png",
-        "darktile1.png","darktile2.png","darktile3.png","darktile4.png"
-      ];
-      const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random()*darkStoneWallFiles.length)];
+    // Helper function to adjust a coordinate so that start + length doesn't exceed gridSize.
+function adjustWallPosition(start, length, gridSize) {
+  return (start + length > gridSize) ? gridSize - length : start;
+}
 
-      const rectW = Math.floor(GRID_WIDTH/2);
-      const rectH = Math.floor(GRID_HEIGHT/2);
-      const startX = 2 + Math.floor(Math.random()*(GRID_WIDTH - rectW -4));
-      const startY = 2 + Math.floor(Math.random()*(GRID_HEIGHT - rectH -4));
-      const thickness = 1 + Math.floor(Math.random() * 1);
+// Updated version of createIrregularCityWalls() with a cityWallLength slider integration.
+function createIrregularCityWalls() {
+  // Choose a wall texture from a set of dark stone files.
+  const darkStoneWallFiles = [
+    "darkStoneBlock.png",
+    "darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"
+  ];
+  const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
 
-      cityWallBounds = {
-        x: startX + thickness,
-        y: startY + thickness,
-        w: rectW - thickness*2,
-        h: rectH - thickness*2
-      };
+  // Use the new slider value for cityWallLength if available; otherwise, default to half the grid width.
+  const wallLength = sliderCache["cityWallLength"] ? parseInt(sliderCache["cityWallLength"].value) : Math.floor(GRID_WIDTH / 2);
+  
+  // Define the wall dimensions.
+  let rectW = wallLength;
+  let rectH = wallLength; // You may adjust proportions here if desired.
 
-      carveWallEdge(chosenWallFile, startX,        startY,        startX+rectW, startY,        thickness, true);
-      carveWallEdge(chosenWallFile, startX+rectW,  startY,        startX+rectW, startY+rectH,  thickness, false);
-      carveWallEdge(chosenWallFile, startX+rectW,  startY+rectH,  startX,       startY+rectH,  thickness, true);
-      carveWallEdge(chosenWallFile, startX,        startY+rectH,  startX,       startY,        thickness, false);
-    }
+  // Calculate initial starting positions with a margin.
+  let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - rectW - 4));
+  let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - rectH - 4));
 
+  // Adjust the starting coordinates so that the wall will fully fit within the grid.
+  startX = adjustWallPosition(startX, rectW, GRID_WIDTH);
+  startY = adjustWallPosition(startY, rectH, GRID_HEIGHT);
+
+  // Determine wall thickness (using your existing logic).
+  const thickness = 1 + Math.floor(Math.random() * 1);
+
+  // Define city wall bounds, taking the wall thickness into account.
+  cityWallBounds = {
+    x: startX + thickness,
+    y: startY + thickness,
+    w: rectW - thickness * 2,
+    h: rectH - thickness * 2
+  };
+
+  // Carve each wall edge, ensuring the wall forms a complete rectangle.
+  carveWallEdge(chosenWallFile, startX,        startY,        startX + rectW, startY,        thickness, true);
+  carveWallEdge(chosenWallFile, startX + rectW,  startY,        startX + rectW, startY + rectH,  thickness, false);
+  carveWallEdge(chosenWallFile, startX + rectW,  startY + rectH,  startX,       startY + rectH,  thickness, true);
+  carveWallEdge(chosenWallFile, startX,        startY + rectH,  startX,       startY,        thickness, false);
+}
     function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
       const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
       const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
