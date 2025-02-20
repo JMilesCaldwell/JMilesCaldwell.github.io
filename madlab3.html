@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  
   <title>Procedural Battle Map Generator</title>
 
   <link 
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
     rel="stylesheet"
   >
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 
   <style>
     body {
@@ -97,6 +99,23 @@
       border: 2px solid #660000;
       background: #202020;
     }
+	.fullscreenBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 10; /* Ensure it's above the canvas */
+  padding: 0.5rem 1rem;
+  font-family: 'Cinzel', serif;
+  background: #8B0000;
+  color: #FAF4E0;
+  border: 1px solid #660000;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.fullscreenBtn:hover {
+  background: #660000;
+}
     #mapCanvas {
       width: 1000px;
       height: 1000px;
@@ -180,6 +199,10 @@
           Add City Walls
         </label>
         <label>
+       <input type="checkbox" id="cliffsCheck" />
+         Generate Cliffs
+       </label>
+        <label>
           <input type="checkbox" id="waterCheck" />
           Generate Water
         </label>
@@ -262,13 +285,16 @@
     </div>
       
     <div class="mapWrapper">
+      <button id="fullscreenBtn" class="fullscreenBtn">Fullscreen</button>
       <canvas id="mapCanvas" width="1000" height="1000"></canvas>
-    </div>
+      </div>
 
-    <div style="margin-top: 1rem;">
-      <a href="index.html" class="mapButton">Home</a>
-    </div>
-  </div>
+
+<div style="margin-top: 1rem;">
+  <a href="index.html" class="mapButton">Home</a>
+  <button id="printBtn" class="mapButton">Print Map</button>
+</div>
+
 
   <script>
     /*******************************************************
@@ -319,7 +345,10 @@
       folder: "scatter",
       files: ["crate1.png", "crate2.png", "crate3.png", "crate4.png"]
       },
-
+      "cliffs": {
+      folder: "mountains",
+      files: ["cliff1.png", "cliff2.png", "cliff3.png", "cliff4.png"]
+      },
       "sakura": {
        folder: "forest",
        files: ["Sakura1.png", "Sakura2.png", "Sakura3.png", "Sakura4.png"]
@@ -720,110 +749,178 @@ function convertBridgeTile(x, y, visited) {
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
-    function getMapSettings(theme){
-      switch(theme){
-        case "desert":
-          return {
-            baseDist: { "sand":0.7, "dirtCracked":0.1, "dirt":0.2 },
-            waterBodies:2, waterMaxSize:50, roads:1, roadMaxLength:40, buildings:5,
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "city":
-          return {
-            baseDist: { "dirt":0.05,"stone":0.05,"grass":0.15,"tree":0.25 },
-            waterBodies:2, waterMaxSize:50, roads:3, roadMaxLength:80, buildings:15, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "grassland":
-          return {
-            baseDist: { "grass":0.6, "tree":0.2, "dirt":0.1, "stone":0.05 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:60, buildings:6, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "mountain":
-          return {
-            baseDist: { "stone":0.1,"dirt":0.5,"grass":0.1,"tree":0.15 },
-            waterBodies:1, waterMaxSize:40, roads:1, roadMaxLength:50, buildings:4, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "forest":
-          return {
-            baseDist: { "denseforest":0.25, "tree":0.3, "grass":0.3, "dirt":0.1, "stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:2, roadMaxLength:50, buildings:2, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "cavern":
-          return {
-            baseDist:{}, waterBodies:0, waterMaxSize:0, roads:0, roadMaxLength:0, buildings:0, isCavern:true
-          };
-        case "volcanic":
-          return {
-            baseDist:{ "barrens":0.5, "lavastone":0.35, "brimstone":0.1, "dirtCracked":0.05 },
-            waterBodies:1, waterMaxSize:50, roads:1, roadMaxLength:20, buildings:1, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "coastal":
-          return {
-            baseDist:{ "grass":0.6,"tree":0.2, "dirt":0.2 },
-            waterBodies:0, waterMaxSize:0, roads:2, roadMaxLength:50, buildings:4, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "riverlands":
-          return {
-            baseDist:{ "grass":0.5,"dirt":0.2,"tree":0.3 },
-            waterBodies:1, waterMaxSize:200, roads:1, roadMaxLength:80, buildings:7, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "swamp":
-          return {
-            baseDist:{ "dirt":0.1,"water":0.2,"grass":0.2,"tree":0.2,"mud":0.3 },
-            waterBodies:2, waterMaxSize:80, roads:2, roadMaxLength:40, buildings:3, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-          case "sakura":
-  return {
-    // Replace denseforest with sakura so the new assets are used
-    baseDist: { "sakura": 0.3, "nicebush": 0.2, "grass": 0.3, "sakuraFlower": 0.1, "stone": 0.1 },
-    waterBodies: 2,
-    waterMaxSize: 60,
-    roads: 1,
-    roadMaxLength: 50,
-    buildings: 2,
-    bridgeWidth: 1,
-    isCavern: false
-  };
-        case "jungle":
-          return {
-            baseDist:{ "junglegrass":0.2, "junglemud":0.3, "jungletree":0.35, "junglescatter":0.15 },
-            waterBodies:3, waterMaxSize:60, roads:2, roadMaxLength:40, buildings:3, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        case "snow":
-          return {
-            baseDist:{ "snow":0.6,"ice":0.3,"snowtree":0.1 },
-            waterBodies:2, waterMaxSize:40, roads:2, roadMaxLength:40, buildings:2, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-        default:
-          return {
-            baseDist:{ "grass":0.6,"tree":0.2,"dirt":0.1,"stone":0.05 },
-            waterBodies:2, waterMaxSize:60, roads:1, roadMaxLength:60, buildings:6, 
-                bridgeWidth: 0, // default bridge width (1 means 1x1, i.e. no expansion)
-            isCavern:false
-          };
-      }
-    }
+function getMapSettings(theme) {
+  switch(theme) {
+    case "desert":
+      return {
+        baseDist: { "sand": 0.7, "dirtCracked": 0.1, "dirt": 0.2 },
+        waterBodies: 2,
+        waterMaxSize: 50,
+        roads: 1,
+        roadMaxLength: 40,
+        buildings: 5,
+        bridgeWidth: 0, // default bridge width (0 means no bridge expansion)
+        cliffCount: 0,  // desert typically lacks cliffs
+        isCavern: false
+      };
+    case "city":
+      return {
+        baseDist: { "dirt": 0.05, "stone": 0.05, "grass": 0.15, "tree": 0.25 },
+        waterBodies: 2,
+        waterMaxSize: 50,
+        roads: 3,
+        roadMaxLength: 80,
+        buildings: 15,
+        bridgeWidth: 0,
+        cliffCount: 0,  // cities usually have flat terrain
+        isCavern: false
+      };
+    case "grassland":
+      return {
+        baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.1, "stone": 0.05 },
+        waterBodies: 3,
+        waterMaxSize: 60,
+        roads: 2,
+        roadMaxLength: 60,
+        buildings: 6,
+        bridgeWidth: 0,
+        cliffCount: 3,  // moderate cliff presence
+        isCavern: false
+      };
+    case "mountain":
+      return {
+        baseDist: { "stone": 0.1, "dirt": 0.5, "grass": 0.1, "tree": 0.15 },
+        waterBodies: 1,
+        waterMaxSize: 40,
+        roads: 1,
+        roadMaxLength: 50,
+        buildings: 4,
+        bridgeWidth: 0,
+        cliffCount: 8,  // mountains often have prominent cliffs
+        isCavern: false
+      };
+    case "forest":
+      return {
+        baseDist: { "denseforest": 0.25, "tree": 0.3, "grass": 0.3, "dirt": 0.1, "stone": 0.05 },
+        waterBodies: 2,
+        waterMaxSize: 60,
+        roads: 2,
+        roadMaxLength: 50,
+        buildings: 2,
+        bridgeWidth: 0,
+        cliffCount: 2,  // minimal cliffs in a forest setting
+        isCavern: false
+      };
+    case "cavern":
+      return {
+        baseDist: {},
+        waterBodies: 0,
+        waterMaxSize: 0,
+        roads: 0,
+        roadMaxLength: 0,
+        buildings: 0,
+        bridgeWidth: 0,
+        cliffCount: 0,
+        isCavern: true
+      };
+    case "volcanic":
+      return {
+        baseDist: { "barrens": 0.5, "lavastone": 0.35, "brimstone": 0.1, "dirtCracked": 0.05 },
+        waterBodies: 1,
+        waterMaxSize: 50,
+        roads: 1,
+        roadMaxLength: 20,
+        buildings: 1,
+        bridgeWidth: 0,
+        cliffCount: 0,  // volcanic terrains tend to be rugged but without defined cliffs
+        isCavern: false
+      };
+    case "coastal":
+      return {
+        baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.2 },
+        waterBodies: 0,
+        waterMaxSize: 0,
+        roads: 2,
+        roadMaxLength: 50,
+        buildings: 4,
+        bridgeWidth: 0,
+        cliffCount: 4,  // some coastal areas feature cliffs
+        isCavern: false
+      };
+    case "riverlands":
+      return {
+        baseDist: { "grass": 0.5, "dirt": 0.2, "tree": 0.3 },
+        waterBodies: 1,
+        waterMaxSize: 200,
+        roads: 1,
+        roadMaxLength: 80,
+        buildings: 7,
+        bridgeWidth: 0,
+        cliffCount: 3,
+        isCavern: false
+      };
+    case "swamp":
+      return {
+        baseDist: { "dirt": 0.1, "water": 0.2, "grass": 0.2, "tree": 0.2, "mud": 0.3 },
+        waterBodies: 2,
+        waterMaxSize: 80,
+        roads: 2,
+        roadMaxLength: 40,
+        buildings: 3,
+        bridgeWidth: 0,
+        cliffCount: 0,  // swamp terrains are usually flat
+        isCavern: false
+      };
+    case "sakura":
+      return {
+        baseDist: { "sakura": 0.3, "nicebush": 0.2, "grass": 0.3, "sakuraFlower": 0.1, "stone": 0.1 },
+        waterBodies: 2,
+        waterMaxSize: 60,
+        roads: 1,
+        roadMaxLength: 50,
+        buildings: 2,
+        bridgeWidth: 1,  // allows for a slight bridge expansion in sakura themes
+        cliffCount: 2,
+        isCavern: false
+      };
+    case "jungle":
+      return {
+        baseDist: { "junglegrass": 0.2, "junglemud": 0.3, "jungletree": 0.35, "junglescatter": 0.15 },
+        waterBodies: 3,
+        waterMaxSize: 60,
+        roads: 2,
+        roadMaxLength: 40,
+        buildings: 3,
+        bridgeWidth: 0,
+        cliffCount: 1,
+        isCavern: false
+      };
+    case "snow":
+      return {
+        baseDist: { "snow": 0.6, "ice": 0.3, "snowtree": 0.1 },
+        waterBodies: 2,
+        waterMaxSize: 40,
+        roads: 2,
+        roadMaxLength: 40,
+        buildings: 2,
+        bridgeWidth: 0,
+        cliffCount: 3,
+        isCavern: false
+      };
+    default:
+      return {
+        baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.1, "stone": 0.05 },
+        waterBodies: 2,
+        waterMaxSize: 60,
+        roads: 1,
+        roadMaxLength: 60,
+        buildings: 6,
+        bridgeWidth: 0,
+        cliffCount: 3,
+        isCavern: false
+      };
+  }
+}
 
     /*******************************************************
      * SLIDER HANDLING
@@ -880,7 +977,8 @@ function convertBridgeTile(x, y, visited) {
         { key: "roads",          min: 0,  max: 20, step: 1  },
         { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
         { key: "buildings",      min: 0,  max: 50, step: 1  },
-        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },  
+        { key: "bridgeWidth",    min: 0,  max: 5, step: 1  },
+        { key: "cliffCount",     min: 0,  max: 15, step: 1  }
       ];
 
       paramSliders.forEach(({key, min, max, step}) => {
@@ -925,13 +1023,17 @@ function applySlidersToSettings(settings) {
       settings[k] = isNaN(v) ? settings[k] : v;
     }
   });
-  // Update bridgeWidth outside of the loop:
-  if (sliderCache["bridgeWidth"]) {
-    settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
-    BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
-  }
+// Update bridgeWidth and new cliffCount
+if (sliderCache["bridgeWidth"]) {
+  settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
+  BRIDGE_WIDTH = settings.bridgeWidth; // update global bridge width
+}
+if (sliderCache["cliffCount"]) {
+  settings.cliffCount = parseInt(sliderCache["cliffCount"].value);
+}
   return settings;
 }
+    
 
 
     function toggleSliders(){
@@ -962,6 +1064,10 @@ function applySlidersToSettings(settings) {
         generateCavern();
       } else {
         initMap(settings.baseDist);
+
+if(document.getElementById("cliffsCheck").checked && settings.cliffCount && settings.cliffCount > 0) {
+  generateCliffs(settings.cliffCount);
+}
 
         // Thematically shape water if any
         if(theme==="coastal"){
@@ -1321,6 +1427,63 @@ if (doBuildings && doRoads && !settings.isCavern) {
       current = candidates[Math.floor(Math.random() * candidates.length)];
     } else {
       break; // no further edge cells found; exit the loop.
+    }
+  }
+}
+
+function generateCliffs(cliffCount) {
+  for (let i = 0; i < cliffCount; i++) {
+    // Ensure the chain (9 tiles long) fits horizontally.
+    let startX = Math.floor(Math.random() * (GRID_WIDTH - 9));
+    // Choose a starting y that allows vertical variation (avoid the very top)
+    let startY = 1 + Math.floor(Math.random() * (GRID_HEIGHT - 2));
+    let currentY = startY;
+    let chainCoordinates = [{ x: startX, y: currentY }];
+    let nonZeroFound = false;
+    
+    // Create a horizontal chain of 9 tiles with more random vertical variation.
+    for (let j = 1; j < 9; j++) {
+      let x = startX + j;
+      // Decide offset: 80% chance of shifting by ±1, 20% chance of staying level.
+      let offset = (Math.random() < 0.8) ? (Math.random() < 0.5 ? -1 : 1) : 0;
+      // Prevent going out-of-bounds:
+      if (currentY + offset < 1) {
+        offset = 1;
+      } else if (currentY + offset > GRID_HEIGHT - 1) {
+        offset = -1;
+      }
+      currentY += offset;
+      if (offset !== 0) nonZeroFound = true;
+      chainCoordinates.push({ x: x, y: currentY });
+    }
+    
+    // Ensure that at least one vertical shift occurred; if not, force a random one.
+    if (!nonZeroFound) {
+      const randomIndex = 1 + Math.floor(Math.random() * (chainCoordinates.length - 1));
+      if (chainCoordinates[randomIndex].y < GRID_HEIGHT - 1) {
+        chainCoordinates[randomIndex].y++;
+      } else {
+        chainCoordinates[randomIndex].y--;
+      }
+    }
+    
+    // Check for overlapping in both the primary row and the row immediately above.
+    let valid = true;
+    for (const coord of chainCoordinates) {
+      // Check that we don't try to access an invalid index.
+      if (coord.y - 1 < 0 ||
+          mapData[coord.y][coord.x].type === "cliffs" ||
+          mapData[coord.y - 1][coord.x].type === "cliffs") {
+        valid = false;
+        break;
+      }
+    }
+    if (!valid) continue;
+    
+    // Place the 2-tile–thick chain: fill both the chosen row and the row directly above.
+    for (const coord of chainCoordinates) {
+      mapData[coord.y][coord.x].type = "cliffs";
+      mapData[coord.y - 1][coord.x].type = "cliffs";
     }
   }
 }
@@ -2658,12 +2821,31 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenFile){
     }
 
     // Initialise on load
-    window.onload=() => {
-      setupSliders();
-      preloadImages(() => {
-        generateMap();
-      });
-    };
+window.onload = () => {
+  setupSliders();
+  preloadImages(() => {
+    generateMap();
+
+    // Fullscreen button event listener
+    document.getElementById('fullscreenBtn').addEventListener('click', function() {
+      const mapWrapper = document.querySelector('.mapWrapper');
+      if (!document.fullscreenElement) {
+        mapWrapper.requestFullscreen().catch(err => {
+          alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // Print button event listener
+    document.getElementById('printBtn').addEventListener('click', function() {
+      window.print();
+    });
+  });
+};
+
+
   </script>
 </body>
 </html>
