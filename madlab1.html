@@ -622,7 +622,16 @@
       "marketscatter": {
         folder: "scatter",
         files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
-      }
+      },
+      "well": {
+  folder: "misc",
+  files: ["well.png"]
+     },
+"towersmall": {
+  folder: "misc",
+  files: ["towersmall.png"]
+     }
+
     };
 
     const fallbackColors = {
@@ -1224,8 +1233,11 @@ const paramSliders = [
         createFields(3);
       }
 
-      if(theme==="city"){
-        createCitySquares();
+      if(theme === "city"){
+  createCitySquares();
+  scatterWells();
+}
+
       }
 
       if(theme==="coastal"){
@@ -2186,6 +2198,24 @@ const paramSliders = [
         }
       }
     }
+
+    function scatterWells(probability = 0.005) {
+  // Loop over every cell in the grid.
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      const cell = mapData[y][x];
+      // Exclude cells that are already occupied by walls, water, lava, cliffs, roads, buildings, or doors.
+      const forbiddenTypes = ["wall", "water", "lava", "cliffs", "door", "woodfloor", "roaddirt", "roadstone"];
+      if (cell.hasBuilding || forbiddenTypes.includes(cell.type)) continue;
+      // With a very small chance, place a well.
+      if (Math.random() < probability) {
+        cell.type = "well";
+        cell._chosenTileIndex = null; // Force a fresh texture pick from towersmall array in tileTextures["well"]
+      }
+    }
+  }
+}
+
 
     /*******************************************************
      * FIELDS
