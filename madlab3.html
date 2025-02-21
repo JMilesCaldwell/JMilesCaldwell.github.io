@@ -783,6 +783,20 @@
   }
 }
 
+function hasAdjacentRoad(x, y) {
+  const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+  for (const [dx, dy] of neighbors) {
+    const nx = x + dx, ny = y + dy;
+    if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
+      if (isRoadLike(mapData[ny][nx].type)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+    
 // Global tower placement function.
 function placeTower(x, y) {
   // Only override if within bounds.
@@ -2335,22 +2349,30 @@ function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
   let cx = x1, cy = y1;
   
   while (cx !== x2 || cy !== y2) {
+    // NEW: Check if the current cell is adjacent to a road.
+    if (hasAdjacentRoad(cx, cy)) {
+      placeTower(cx, cy);
+      return;
+    }
+    
+    // Existing check: if the NEXT cell is roadlike...
     const nextX = cx + dx, nextY = cy + dy;
     if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
       if (isRoadLike(mapData[nextY][nextX].type)) {
-        // At a gate: when a road is encountered, convert the current cell to a tower.
         placeTower(cx, cy);
         return;
       }
     }
-    // Carve the wall band unless this cell is already a tower.
+    
+    // Carve the wall band (if not already a tower)
     carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
     cx += dx;
     cy += dy;
   }
-  // End of the edge: ensure a tower is placed.
+  // At the very end, place a tower.
   placeTower(cx, cy);
 }
+
 
 function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile) {
   for (let i = 0; i < thickness; i++) {
