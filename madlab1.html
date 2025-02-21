@@ -2524,29 +2524,33 @@ function createIrregularCityWalls() {
         return (mapData[ny][nx].type==="water");
       });
     }
-    function canFindConsecutiveWaterLine(x,y,length){
-      const possibleDirs=[];
-      if(y>0 && mapData[y-1][x].type==="water") possibleDirs.push({dx:0,dy:-1});
-      if(y<GRID_HEIGHT-1 && mapData[y+1][x].type==="water") possibleDirs.push({dx:0,dy:1});
-      if(x>0 && mapData[y][x-1].type==="water") possibleDirs.push({dx:-1,dy:0});
-      if(x<GRID_WIDTH-1 && mapData[y][x+1].type==="water") possibleDirs.push({dx:1,dy:0});
+function canFindConsecutiveWaterLine(x, y, length) {
+  const possibleDirs = [];
+  if (y > 0 && mapData[y - 1][x].type === "water") possibleDirs.push({ dx: 0, dy: -1 });
+  if (y < GRID_HEIGHT - 1 && mapData[y + 1][x].type === "water") possibleDirs.push({ dx: 0, dy: 1 });
+  if (x > 0 && mapData[y][x - 1].type === "water") possibleDirs.push({ dx: -1, dy: 0 });
+  if (x < GRID_WIDTH - 1 && mapData[y][x + 1].type === "water") possibleDirs.push({ dx: 1, dy: 0 });
 
-      for(const dir of possibleDirs){
-        let ccount=0, cx=x+dir.dx, cy=y+dir.dy;
-        while(ccount<length){
-          if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) break;
-          if(mapData[ny][nx].type!=="water") break;
-          cx+=dir.dx; cy+=dir.dy;
-          ccount++;
-        }
-        // If ccount >= length => enough consecutive water
-        if(ccount>=length){
-          if(dir.dx!==0) return "horizontal";
-          else return "vertical";
-        }
-      }
-      return null;
+  for (const dir of possibleDirs) {
+    let ccount = 0,
+      cx = x + dir.dx,
+      cy = y + dir.dy;
+
+    while (ccount < length) {
+      if (cx < 0 || cy < 0 || cx >= GRID_WIDTH || cy >= GRID_HEIGHT) break;
+      if (mapData[cy][cx].type !== "water") break;
+      cx += dir.dx;
+      cy += dir.dy;
+      ccount++;
     }
+
+    if (ccount >= length) {
+      if (dir.dx !== 0) return "horizontal";
+      else return "vertical";
+    }
+  }
+  return null;
+}
     function buildDock(x,y,orientation,len){
       let dx=0, dy=0, foundLine=false;
       if(orientation==="horizontal"){
