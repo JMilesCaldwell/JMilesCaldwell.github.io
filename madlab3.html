@@ -2284,7 +2284,9 @@ function createIrregularCityWalls() {
   const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
 
   // Use the new slider value for cityWallLength if available; otherwise, default to half the grid width.
-  const wallLength = sliderCache["cityWallLength"] ? parseInt(sliderCache["cityWallLength"].value) : Math.floor(GRID_WIDTH / 2);
+  const wallLength = sliderCache["cityWallLength"] 
+    ? parseInt(sliderCache["cityWallLength"].value) 
+    : Math.floor(GRID_WIDTH / 2);
   
   // Define the wall dimensions.
   let rectW = wallLength;
@@ -2294,10 +2296,14 @@ function createIrregularCityWalls() {
   let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - rectW - 4));
   let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - rectH - 4));
 
-  // Adjust startX and startY so the wall fits and then set cityWallBounds:
+  // Define wall thickness.
+  const thickness = 1 + Math.floor(Math.random() * 1);  // Or set a fixed value if you prefer
+
+  // Adjust the starting coordinates so that the wall fits.
   startX = adjustWallPosition(startX, rectW, GRID_WIDTH);
   startY = adjustWallPosition(startY, rectH, GRID_HEIGHT);
   
+  // Set the city wall bounds taking thickness into account.
   cityWallBounds = {
     x: startX + thickness,
     y: startY + thickness,
@@ -2305,7 +2311,7 @@ function createIrregularCityWalls() {
     h: rectH - thickness * 2
   };
   
-  // Place towers at the four corners of the rectangle.
+  // Place towers at the four corners.
   placeTower(startX, startY);
   placeTower(startX + rectW, startY);
   placeTower(startX + rectW, startY + rectH);
@@ -2317,6 +2323,7 @@ function createIrregularCityWalls() {
   carveWallEdge(chosenWallFile, startX + rectW,  startY + rectH,  startX,       startY + rectH,  thickness, true);
   carveWallEdge(chosenWallFile, startX,        startY + rectH,  startX,       startY,        thickness, false);
 }
+
     
 function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
   const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
