@@ -913,7 +913,7 @@
             baseDist: { "dirt": 0.05, "stone": 0.05, "grass": 0.15, "tree": 0.25 },
             waterBodies: 2,
             waterMaxSize: 50,
-            roads: 3,
+            roads: 1,
             roadMaxLength: 80,
             buildings: 15,
             bridgeWidth: 0,
@@ -925,7 +925,7 @@
             baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.1, "stone": 0.05 },
             waterBodies: 3,
             waterMaxSize: 60,
-            roads: 2,
+            roads: 1,
             roadMaxLength: 60,
             buildings: 6,
             bridgeWidth: 0,
@@ -949,7 +949,7 @@
             baseDist: { "denseforest": 0.25, "tree": 0.3, "grass": 0.3, "dirt": 0.1, "stone": 0.05 },
             waterBodies: 2,
             waterMaxSize: 60,
-            roads: 2,
+            roads: 1,
             roadMaxLength: 50,
             buildings: 2,
             bridgeWidth: 0,
@@ -985,7 +985,7 @@
             baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.2 },
             waterBodies: 0,
             waterMaxSize: 0,
-            roads: 2,
+            roads: 1,
             roadMaxLength: 50,
             buildings: 4,
             bridgeWidth: 0,
@@ -1009,7 +1009,7 @@
             baseDist: { "dirt": 0.1, "water": 0.2, "grass": 0.2, "tree": 0.2, "mud": 0.3 },
             waterBodies: 2,
             waterMaxSize: 80,
-            roads: 2,
+            roads: 1,
             roadMaxLength: 40,
             buildings: 3,
             bridgeWidth: 0,
@@ -1033,7 +1033,7 @@
             baseDist: { "junglegrass": 0.2, "junglemud": 0.3, "jungletree": 0.35, "junglescatter": 0.15 },
             waterBodies: 3,
             waterMaxSize: 60,
-            roads: 2,
+            roads: 1,
             roadMaxLength: 40,
             buildings: 3,
             bridgeWidth: 0,
@@ -1045,7 +1045,7 @@
             baseDist: { "snow": 0.6, "ice": 0.3, "snowtree": 0.1 },
             waterBodies: 2,
             waterMaxSize: 40,
-            roads: 2,
+            roads: 1,
             roadMaxLength: 40,
             buildings: 2,
             bridgeWidth: 0,
@@ -1831,31 +1831,49 @@ if (theme === "city") {
       return cells;
     }
 
-    function carveRoadTile(theme, rx, ry) {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (Math.abs(dx) + Math.abs(dy) <= 1) {
-            const nx = rx + dx, ny = ry + dy;
-            if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-            const cell = mapData[ny][nx];
-            if (cell.type === "water" || cell.type === "lava") {
-              if (theme !== "coastal") {
-                cell.type = "woodfloor";
-              }
-            } else {
-              if (Math.random() < 0.05) {
-                cell.type = "roadstone";
-              } else {
-                cell.type = "roaddirt";
-              }
-            }
+   function carveRoadTile(theme, rx, ry) {
+  // Check the four cardinal directions.
+  const directions = [
+    { dx: 0, dy: -1 },
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 }
+  ];
+  directions.forEach(({dx, dy}) => {
+    const nx = rx + dx, ny = ry + dy;
+    if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) return;
+    const neighbor = mapData[ny][nx];
+    // If the neighbor is part of a city wall, stamp it as a tower.
+    if (neighbor.isCityWall && neighbor.type === "wall") {
+      neighbor.type = "towersmall";
+    }
+  });
+
+  // Now carve the road for the central cell.
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) <= 1) {
+        const nx = rx + dx, ny = ry + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        const cell = mapData[ny][nx];
+        // Do not overwrite a tower.
+        if (cell.type === "towersmall") continue;
+        if (cell.type === "water" || cell.type === "lava") {
+          if (theme !== "coastal") {
+            cell.type = "woodfloor";
           }
+        } else {
+          cell.type = Math.random() < 0.05 ? "roadstone" : "roaddirt";
         }
       }
-      if (BRIDGE_WIDTH > 0 && hasWaterWithinRadius(rx, ry, 3)) {
-        convertBridgeTile(rx, ry, new Set());
-      }
     }
+  }
+
+  if (BRIDGE_WIDTH > 0 && hasWaterWithinRadius(rx, ry, 3)) {
+    convertBridgeTile(rx, ry, new Set());
+  }
+}
+
 
     function carveMeanderingOffshoot(theme, startX, startY, length){
       const dirs = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}];
@@ -2451,25 +2469,29 @@ mapData[startY + rectH][startX].type = "towersmall";
       }
     }
 
-    function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile){
-      for (let i = 0; i < thickness; i++) {
-        const xx = baseX + (horizontal ? 0 : i + offset);
-        const yy = baseY + (horizontal ? i + offset : 0);
-        if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
-        const cell = mapData[yy][xx];
-        if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") {
-          continue;
-        }
-        if ((xx + yy) % 3 === 0) {
-          cell.type = "wall";
-          cell.chosenWallFile = "darkStoneBlock.png";
-        } else {
-          cell.type = "wall";
-          const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
-          cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
-        }
-      }
+    // In createIrregularCityWalls(), when carving a wall cell:
+function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile){
+  for (let i = 0; i < thickness; i++) {
+    const xx = baseX + (horizontal ? 0 : i + offset);
+    const yy = baseY + (horizontal ? i + offset : 0);
+    if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
+    const cell = mapData[yy][xx];
+    if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") {
+      continue;
     }
+    // Set the cell as a wall and mark it as part of the city wall.
+    if ((xx + yy) % 3 === 0) {
+      cell.type = "wall";
+      cell.chosenWallFile = "darkStoneBlock.png";
+    } else {
+      cell.type = "wall";
+      const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
+      cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+    }
+    cell.isCityWall = true; // Mark the cell as part of the city wall.
+  }
+}
+
 
     /*******************************************************
      * BIOME DECORATION
