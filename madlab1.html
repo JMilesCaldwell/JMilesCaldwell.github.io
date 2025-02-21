@@ -818,36 +818,39 @@
       }
     }
 
-    function stampTowersForRoadRegions() {
-  // Create a grid to track visited cells.
-  const visited = new Array(GRID_HEIGHT).fill(null).map(() => new Array(GRID_WIDTH).fill(false));
-  
-  // Flood-fill to collect a road region.
-  function floodFillRoad(x, y) {
-    const queue = [{ x, y }];
-    const region = [];
-    visited[y][x] = true;
-    while (queue.length) {
-      const { x, y } = queue.shift();
-      region.push({ x, y });
+  function stampTowersOnRoadBoundaries() {
+  // Loop over every cell.
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      // Only consider wall cells.
+      if (mapData[y][x].type !== "wall") continue;
+
+      // Check if this wall cell touches a road in one of the four cardinal directions.
       const neighbors = [
-        { x: x + 1, y },
-        { x: x - 1, y },
-        { x, y: y + 1 },
-        { x, y: y - 1 }
+        { dx: 0, dy: -1 },
+        { dx: 1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 }
       ];
-      neighbors.forEach(n => {
-        if (n.x >= 0 && n.x < GRID_WIDTH && n.y >= 0 && n.y < GRID_HEIGHT) {
-          if (!visited[n.y][n.x] &&
-              (mapData[n.y][n.x].type === "roaddirt" || mapData[n.y][n.x].type === "roadstone")) {
-            visited[n.y][n.x] = true;
-            queue.push(n);
-          }
+      let touchesRoad = false;
+      for (let { dx, dy } of neighbors) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+        if (mapData[ny][nx].type === "roaddirt" || mapData[ny][nx].type === "roadstone") {
+          touchesRoad = true;
+          break;
         }
-      });
+      }
+      
+      // Only stamp a tower if the wall cell touches a road AND
+      // it satisfies a spacing condition—for example, (x+y) mod 4 equals 0.
+      if (touchesRoad && ((x + y) % 4 === 0)) {
+        mapData[y][x].type = "towersmall";
+      }
     }
-    return region;
   }
+}
+
   
   // Process the grid to stamp towers.
   for (let y = 0; y < GRID_HEIGHT; y++) {
@@ -1307,7 +1310,7 @@ const paramSliders = [
   for (let i = 0; i < settings.roads; i++) {
     createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
   }
-  stampTowersForRoadRegions();
+  stampTowersOnRoadBoundaries();
 }
 
 
