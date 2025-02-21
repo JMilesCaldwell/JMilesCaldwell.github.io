@@ -818,6 +818,79 @@
       }
     }
 
+    function stampTowersForRoadRegions() {
+  // Create a grid to track visited cells.
+  const visited = new Array(GRID_HEIGHT).fill(null).map(() => new Array(GRID_WIDTH).fill(false));
+  
+  // Flood-fill to collect a road region.
+  function floodFillRoad(x, y) {
+    const queue = [{ x, y }];
+    const region = [];
+    visited[y][x] = true;
+    while (queue.length) {
+      const { x, y } = queue.shift();
+      region.push({ x, y });
+      const neighbors = [
+        { x: x + 1, y },
+        { x: x - 1, y },
+        { x, y: y + 1 },
+        { x, y: y - 1 }
+      ];
+      neighbors.forEach(n => {
+        if (n.x >= 0 && n.x < GRID_WIDTH && n.y >= 0 && n.y < GRID_HEIGHT) {
+          if (!visited[n.y][n.x] &&
+              (mapData[n.y][n.x].type === "roaddirt" || mapData[n.y][n.x].type === "roadstone")) {
+            visited[n.y][n.x] = true;
+            queue.push(n);
+          }
+        }
+      });
+    }
+    return region;
+  }
+  
+  // Process the grid to stamp towers.
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      if (!visited[y][x] &&
+         (mapData[y][x].type === "roaddirt" || mapData[y][x].type === "roadstone")) {
+        const region = floodFillRoad(x, y);
+        
+        // Compute bounding box for the road region.
+        let minX = GRID_WIDTH, maxX = 0, minY = GRID_HEIGHT, maxY = 0;
+        region.forEach(cell => {
+          if (cell.x < minX) minX = cell.x;
+          if (cell.x > maxX) maxX = cell.x;
+          if (cell.y < minY) minY = cell.y;
+          if (cell.y > maxY) maxY = cell.y;
+        });
+        
+        // Determine midpoints for each side.
+        const midX = Math.floor((minX + maxX) / 2);
+        const midY = Math.floor((minY + maxY) / 2);
+        
+        // Stamp tower on the top side.
+        if (minY > 0 && mapData[minY - 1][midX].type === "wall") {
+          mapData[minY - 1][midX].type = "towersmall";
+        }
+        // Stamp tower on the bottom side.
+        if (maxY < GRID_HEIGHT - 1 && mapData[maxY + 1][midX].type === "wall") {
+          mapData[maxY + 1][midX].type = "towersmall";
+        }
+        // Stamp tower on the left side.
+        if (minX > 0 && mapData[midY][minX - 1].type === "wall") {
+          mapData[midY][minX - 1].type = "towersmall";
+        }
+        // Stamp tower on the right side.
+        if (maxX < GRID_WIDTH - 1 && mapData[midY][maxX + 1].type === "wall") {
+          mapData[midY][maxX + 1].type = "towersmall";
+        }
+      }
+    }
+  }
+}
+
+
     /*******************************************************
      * MAP SETTINGS
      *******************************************************/
@@ -1229,6 +1302,14 @@ const paramSliders = [
           createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
         }
       }
+
+      if (doRoads && !settings.isCavern) {
+  for (let i = 0; i < settings.roads; i++) {
+    createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
+  }
+  stampTowersForRoadRegions();
+}
+
 
       // Buildings
       if (doBuildings && !settings.isCavern && settings.buildings > 0) {
