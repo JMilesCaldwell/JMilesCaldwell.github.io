@@ -622,16 +622,7 @@
       "marketscatter": {
         folder: "scatter",
         files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
-      },
-      "well": {
-  folder: "misc",
-  files: ["well.png"]
-     },
-"towersmall": {
-  folder: "misc",
-  files: ["towersmall.png"]
-     }
-
+      }
     };
 
     const fallbackColors = {
@@ -1233,11 +1224,8 @@ const paramSliders = [
         createFields(3);
       }
 
-      if(theme === "city"){
-  createCitySquares();
-  scatterWells();
-}
-
+      if(theme==="city"){
+        createCitySquares();
       }
 
       if(theme==="coastal"){
@@ -2199,24 +2187,6 @@ const paramSliders = [
       }
     }
 
-    function scatterWells(probability = 0.005) {
-  // Loop over every cell in the grid.
-  for (let y = 0; y < GRID_HEIGHT; y++) {
-    for (let x = 0; x < GRID_WIDTH; x++) {
-      const cell = mapData[y][x];
-      // Exclude cells that are already occupied by walls, water, lava, cliffs, roads, buildings, or doors.
-      const forbiddenTypes = ["wall", "water", "lava", "cliffs", "door", "woodfloor", "roaddirt", "roadstone"];
-      if (cell.hasBuilding || forbiddenTypes.includes(cell.type)) continue;
-      // With a very small chance, place a well.
-      if (Math.random() < probability) {
-        cell.type = "well";
-        cell._chosenTileIndex = null; // Force a fresh texture pick from towersmall array in tileTextures["well"]
-      }
-    }
-  }
-}
-
-
     /*******************************************************
      * FIELDS
      *******************************************************/
@@ -2311,36 +2281,25 @@ function createIrregularCityWalls() {
   carveWallEdge(chosenWallFile, startX + rectW,  startY + rectH,  startX,       startY + rectH,  thickness, true);
   carveWallEdge(chosenWallFile, startX,        startY + rectH,  startX,       startY,        thickness, false);
 }
-   
-  function placeTower(x, y) {
-  // Place the towersmall asset at (x,y)
-  mapData[y][x].type = "towersmall";
-  mapData[y][x]._chosenTileIndex = null; // Reset so the towersmall asset is used
-    
-}
-    
     function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
-  const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
-  const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
-  let cx = x1, cy = y1;
-  while (cx !== x2 || cy !== y2) {
-    const nextX = cx + dx, nextY = cy + dy;
-    if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
-      if (isRoadLike(mapData[nextY][nextX].type)) {
-        // When a road is encountered, cap the edge with a tower.
-        placeTower(cx, cy);
-        return;
+      const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
+      const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
+      let cx = x1, cy = y1;
+      while (cx !== x2 || cy !== y2) {
+        const nextX = cx + dx, nextY = cy + dy;
+        if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
+          if (isRoadLike(mapData[nextY][nextX].type)) {
+            fillOctagonAtWallEnd(cx, cy, { dx, dy });
+            return;
+          }
+        }
+        const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
+        carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
+        cx += dx;
+        cy += dy;
       }
+      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
     }
-    const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
-    carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
-    cx += dx;
-    cy += dy;
-  }
-  // At the end of the wall edge, place a tower instead of a normal wall tile.
-  placeTower(cx, cy);
-}
-
 
     function fillOctagonAtWallEnd(x, y, dir) {
       let offsets;
@@ -2535,34 +2494,29 @@ function createIrregularCityWalls() {
         return (mapData[ny][nx].type==="water");
       });
     }
-function canFindConsecutiveWaterLine(x, y, length) {
-  const possibleDirs = [];
-  if (y > 0 && mapData[y - 1][x].type === "water") possibleDirs.push({ dx: 0, dy: -1 });
-  if (y < GRID_HEIGHT - 1 && mapData[y + 1][x].type === "water") possibleDirs.push({ dx: 0, dy: 1 });
-  if (x > 0 && mapData[y][x - 1].type === "water") possibleDirs.push({ dx: -1, dy: 0 });
-  if (x < GRID_WIDTH - 1 && mapData[y][x + 1].type === "water") possibleDirs.push({ dx: 1, dy: 0 });
+    function canFindConsecutiveWaterLine(x,y,length){
+      const possibleDirs=[];
+      if(y>0 && mapData[y-1][x].type==="water") possibleDirs.push({dx:0,dy:-1});
+      if(y<GRID_HEIGHT-1 && mapData[y+1][x].type==="water") possibleDirs.push({dx:0,dy:1});
+      if(x>0 && mapData[y][x-1].type==="water") possibleDirs.push({dx:-1,dy:0});
+      if(x<GRID_WIDTH-1 && mapData[y][x+1].type==="water") possibleDirs.push({dx:1,dy:0});
 
-  for (const dir of possibleDirs) {
-    let ccount = 0,
-      cx = x + dir.dx,
-      cy = y + dir.dy;
-
-    while (ccount < length) {
-      if (cx < 0 || cy < 0 || cx >= GRID_WIDTH || cy >= GRID_HEIGHT) break;
-      if (mapData[cy][cx].type !== "water") break;
-      cx += dir.dx;
-      cy += dir.dy;
-      ccount++;
+      for(const dir of possibleDirs){
+        let ccount=0, cx=x+dir.dx, cy=y+dir.dy;
+        while(ccount<length){
+          if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) break;
+          if(mapData[ny][nx].type!=="water") break;
+          cx+=dir.dx; cy+=dir.dy;
+          ccount++;
+        }
+        // If ccount >= length => enough consecutive water
+        if(ccount>=length){
+          if(dir.dx!==0) return "horizontal";
+          else return "vertical";
+        }
+      }
+      return null;
     }
-
-    if (ccount >= length) {
-      if (dir.dx !== 0) return "horizontal";
-      else return "vertical";
-    }
-  }
-  return null;
-}
-
     function buildDock(x,y,orientation,len){
       let dx=0, dy=0, foundLine=false;
       if(orientation==="horizontal"){
