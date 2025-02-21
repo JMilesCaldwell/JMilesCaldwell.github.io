@@ -2643,23 +2643,32 @@ function canFindConsecutiveWaterLine(x, y, length) {
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
       } else {
-        const arr = tileTextures[cell.type] || [];
-        if(arr.length > 0){
-          if(cell._chosenTileIndex == null){
-            cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if(chosen && chosen.complete){
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
+ const arr = tileTextures[cell.type] || [];
+if (arr.length > 0) {
+  if (cell._chosenTileIndex == null) {
+    cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
+  }
+  const chosen = arr[cell._chosenTileIndex];
+  if (chosen && chosen.complete) {
+    // If rotation is defined, draw with rotation:
+    if (cell.rotation !== undefined) {
+      ctx.save();
+      ctx.translate(px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+      ctx.rotate(cell.rotation * Math.PI / 180);
+      ctx.drawImage(chosen, -TILE_SIZE / 2, -TILE_SIZE / 2, TILE_SIZE, TILE_SIZE);
+      ctx.restore();
+    } else {
+      ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+    }
+  } else {
+    ctx.fillStyle = getColorForTileType(cell.type);
+    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+  }
+} else {
+  ctx.fillStyle = getColorForTileType(cell.type);
+  ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+}
+
 
       if(cell.type==="farmland" && cell.crop!==undefined){
         const farmlandImgs=tileTextures["farmland"];
@@ -2762,16 +2771,21 @@ function canFindConsecutiveWaterLine(x, y, length) {
             drawCell(canvas.getContext("2d"),tx,ty);
           }
           break;
-        case "placeTile":
-          // *** ADDED: user is placing a tile from the tile menu
-          if(currentTileInHand){
-            tile.type = currentTileInHand;
-            tile._chosenTileIndex = null; // Force a fresh random texture pick
-            // Overwrite occupant as well, or remove occupant:
-            tile.occupant = null;
-            drawCell(canvas.getContext("2d"), tx, ty);
-          }
-          break;
+case "placeTile":
+  if (currentTileInHand) {
+    tile.type = currentTileInHand;
+    tile._chosenTileIndex = null; // Force a fresh random texture pick
+    tile.occupant = null;
+    // If the asset is our rotating tower, update its rotation:
+    if (currentTileInHand === "towermediumrotatable") {
+      tile.rotation = (tile.rotation !== undefined ? (tile.rotation + 90) % 360 : 90);
+    } else {
+      // Remove any previous rotation if not applicable.
+      delete tile.rotation;
+    }
+    drawCell(canvas.getContext("2d"), tx, ty);
+  }
+  break;
         case "place":
         default:
           occupantInHand=null;
