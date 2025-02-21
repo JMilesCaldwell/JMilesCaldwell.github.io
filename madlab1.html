@@ -622,7 +622,16 @@
       "marketscatter": {
         folder: "scatter",
         files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
-      }
+      },
+      "well": {
+       folder: "misc",
+       files: ["well.png"]
+      },
+      "towersmall": {
+       folder: "misc",
+       files: ["towersmall.png"]
+       }
+      
     };
 
     const fallbackColors = {
@@ -756,6 +765,24 @@
         }
       }
     }
+
+    function scatterWells(probability = 0.001) {
+  // Loop over every cell in the grid.
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      const cell = mapData[y][x];
+      // Define types where you don't want a well.
+      const forbiddenTypes = ["wall", "water", "lava", "cliffs", "door", "woodfloor", "roaddirt", "roadstone"];
+      if (cell.hasBuilding || forbiddenTypes.includes(cell.type)) continue;
+      // With a very small chance, change the cell's type to "well"
+      if (Math.random() < probability) {
+        cell.type = "well";
+        cell._chosenTileIndex = null; // reset so that the well image is freshly picked
+      }
+    }
+  }
+}
+
 
     function hasWaterWithinRadius(x, y, radius) {
       for (let dy = -radius; dy <= radius; dy++) {
