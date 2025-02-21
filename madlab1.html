@@ -817,30 +817,6 @@
         }
       }
     }
-    
-function stampTowersOnRoadIntersections() {
-  for (let y = 0; y < GRID_HEIGHT; y++) {
-    for (let x = 0; x < GRID_WIDTH; x++) {
-      if (mapData[y][x].type === "wall") {
-        const neighbors = [
-          { dx: 0, dy: -1 },
-          { dx: 1, dy: 0 },
-          { dx: 0, dy: 1 },
-          { dx: -1, dy: 0 }
-        ];
-        for (let {dx, dy} of neighbors) {
-          const nx = x + dx, ny = y + dy;
-          if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
-            if (mapData[ny][nx].type === "roaddirt" || mapData[ny][nx].type === "roadstone") {
-              mapData[y][x].type = "towersmall";
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-}
 
     /*******************************************************
      * MAP SETTINGS
@@ -1253,13 +1229,6 @@ const paramSliders = [
           createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
         }
       }
-      
-if (doRoads && !settings.isCavern) {
-  for (let i = 0; i < settings.roads; i++) {
-    createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
-  }
-  stampTowersOnRoadIntersections(); // Place towers on wall cells adjacent to roads
-}
 
       // Buildings
       if (doBuildings && !settings.isCavern && settings.buildings > 0) {
