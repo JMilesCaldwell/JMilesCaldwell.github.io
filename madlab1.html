@@ -2320,25 +2320,28 @@ function createIrregularCityWalls() {
   carveWallEdge(chosenWallFile, startX,        startY + rectH,  startX,       startY,        thickness, false);
 }
 
-    function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
-      const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
-      const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
-      let cx = x1, cy = y1;
-      while (cx !== x2 || cy !== y2) {
-        const nextX = cx + dx, nextY = cy + dy;
-        if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
-          if (isRoadLike(mapData[nextY][nextX].type)) {
-            fillOctagonAtWallEnd(cx, cy, { dx, dy });
-            return;
-          }
-        }
-        const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
-        carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
-        cx += dx;
-        cy += dy;
+   function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
+  const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
+  const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
+  let cx = x1, cy = y1;
+  while (cx !== x2 || cy !== y2) {
+    const nextX = cx + dx, nextY = cy + dy;
+    // If the NEXT cell is road-like, stamp a tower here.
+    if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
+      if (isRoadLike(mapData[nextY][nextX].type)) {
+        placeTower(cx, cy);
+        return; // Stop processing this edge.
       }
-      carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
     }
+    // Otherwise, carve the wall band at this cell.
+    const offset = (Math.random() < 0.2) ? (Math.random() < 0.5 ? 1 : -1) : 0;
+    carveWallBand(cx, cy, thickness, horizontal, offset, chosenWallFile);
+    cx += dx;
+    cy += dy;
+  }
+  // At the very end of the edge, carve the wall band.
+  carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
+}
 
     function fillOctagonAtWallEnd(x, y, dir) {
       let offsets;
