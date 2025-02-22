@@ -1393,7 +1393,67 @@ function scatterCrystalPatches() {
     createCrystalPatch(x, y, patchSize);
   }
 }
-	  
+
+	// MUSHROOM CIRCLES FOR CAVES
+	  // Function to grow a cluster (or circle) of caveshrooms from a seed cell
+function createCaveshroomCluster(seedX, seedY, clusterSize) {
+  if (mapData[seedY][seedX].type !== "cave_floor") return;
+  let count = 1;
+  mapData[seedY][seedX].type = "caveshrooms";
+  let clusterCells = [{ x: seedX, y: seedY }];
+
+  while (count < clusterSize && clusterCells.length > 0) {
+    const index = Math.floor(Math.random() * clusterCells.length);
+    const { x, y } = clusterCells[index];
+    // Define 4-direction neighbours for a circular-ish growth
+    const neighbours = [
+      { x: x + 1, y: y },
+      { x: x - 1, y: y },
+      { x: x, y: y + 1 },
+      { x: x, y: y - 1 }
+    ];
+    // Randomise the order for irregularity
+    neighbours.sort(() => Math.random() - 0.5);
+
+    let expanded = false;
+    for (const n of neighbours) {
+      if (n.x < 0 || n.y < 0 || n.x >= GRID_WIDTH || n.y >= GRID_HEIGHT) continue;
+      if (mapData[n.y][n.x].type === "cave_floor") {
+        mapData[n.y][n.x].type = "caveshrooms";
+        clusterCells.push({ x: n.x, y: n.y });
+        count++;
+        expanded = true;
+        break; // Grow one cell per iteration for controlled expansion
+      }
+    }
+    // If expansion from this cell fails, remove it from our candidate list
+    if (!expanded) {
+      clusterCells.splice(index, 1);
+    }
+  }
+}
+
+// Function to scatter caveshrooms throughout the cavern
+function scatterCaveshrooms() {
+  // Option 1: Place isolated caveshrooms randomly
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      if (mapData[y][x].type === "cave_floor" && Math.random() < 0.01) { // ~1% chance
+        mapData[y][x].type = "caveshrooms";
+      }
+    }
+  }
+  // Option 2: Create clusters of caveshrooms
+  const clusterCount = 3 + Math.floor(Math.random() * 4); // Between 3 and 6 clusters
+  for (let i = 0; i < clusterCount; i++) {
+    const x = Math.floor(Math.random() * GRID_WIDTH);
+    const y = Math.floor(Math.random() * GRID_HEIGHT);
+    if (mapData[y][x].type !== "cave_floor") continue;
+    const clusterSize = 3 + Math.floor(Math.random() * 8); // Cluster size between 3 and 10
+    createCaveshroomCluster(x, y, clusterSize);
+  }
+}
+  
 	  
   function generateCavern(){
       const fillChance = 0.52;
@@ -1406,6 +1466,7 @@ function scatterCrystalPatches() {
       carveWideExits(largestMap,3);
       convertBoolMapToCavern(largestMap);
 	  scatterCrystalPatches();
+	    scatterCaveshrooms();
     }
     function randomBoolMap(chance){
       const out = [];
