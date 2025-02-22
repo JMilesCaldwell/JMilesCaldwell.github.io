@@ -1339,7 +1339,63 @@ if (theme === "city") {
     /*******************************************************
      * CAVERN
      *******************************************************/
-    function generateCavern(){
+ 
+	  //CRYSTAL GENERATION HELPER FUNCTION
+	  // Function to grow a single crystal patch from a seed cell
+function createCrystalPatch(seedX, seedY, patchSize) {
+  if (mapData[seedY][seedX].type !== "cave_floor") return;
+  let count = 1;
+  mapData[seedY][seedX].type = "crystal";
+  let patchCells = [{x: seedX, y: seedY}];
+
+  while (count < patchSize && patchCells.length > 0) {
+    // Randomly pick a cell from the patch as the current expansion point
+    const index = Math.floor(Math.random() * patchCells.length);
+    const { x, y } = patchCells[index];
+
+    // Define potential neighbours (4-directionally)
+    const neighbours = [
+      { x: x + 1, y: y },
+      { x: x - 1, y: y },
+      { x: x, y: y + 1 },
+      { x: x, y: y - 1 }
+    ];
+    // Shuffle neighbours to add a touch of irregularity
+    neighbours.sort(() => Math.random() - 0.5);
+
+    let expanded = false;
+    for (const n of neighbours) {
+      if (n.x < 0 || n.y < 0 || n.x >= GRID_WIDTH || n.y >= GRID_HEIGHT) continue;
+      if (mapData[n.y][n.x].type === "cave_floor") {
+        mapData[n.y][n.x].type = "crystal";
+        patchCells.push({ x: n.x, y: n.y });
+        count++;
+        expanded = true;
+        break; // Add one cell per iteration for controlled growth
+      }
+    }
+    // If no expansion was possible, remove the cell from the candidate list
+    if (!expanded) {
+      patchCells.splice(index, 1);
+    }
+  }
+}
+
+// Function to scatter several crystal patches throughout the cavern
+function scatterCrystalPatches() {
+  // Determine a number of patches to create (adjust as you see fit)
+  const patchCount = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < patchCount; i++) {
+    const x = Math.floor(Math.random() * GRID_WIDTH);
+    const y = Math.floor(Math.random() * GRID_HEIGHT);
+    if (mapData[y][x].type !== "cave_floor") continue;
+    const patchSize = 3 + Math.floor(Math.random() * 19); // Between 3 and 21
+    createCrystalPatch(x, y, patchSize);
+  }
+}
+	  
+	  
+  function generateCavern(){
       const fillChance = 0.52;
       let boolMap = randomBoolMap(fillChance);
       const steps = 3;
@@ -1349,6 +1405,7 @@ if (theme === "city") {
       const { largestMap } = keepLargestRegion(boolMap);
       carveWideExits(largestMap,3);
       convertBoolMapToCavern(largestMap);
+	  scatterCrystalPatches();
     }
     function randomBoolMap(chance){
       const out = [];
