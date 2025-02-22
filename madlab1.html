@@ -1992,7 +1992,6 @@ function canCarveRoadAt(x, y) {
 
    function connectBuildingDoorsToRoads() {
   const doorCells = [];
-  // Look for both single and double door types
   for (let y = 0; y < GRID_HEIGHT; y++) {
     for (let x = 0; x < GRID_WIDTH; x++) {
       if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
@@ -2004,12 +2003,17 @@ function canCarveRoadAt(x, y) {
   doorCells.forEach(dc => {
     const path = findPathToRoad(dc.x, dc.y);
     if (path) {
-      for (const p of path) {
+      // Carve the road along the path,
+      // but ensure we don't overwrite a door cell at the destination.
+      for (let i = 0; i < path.length; i++) {
+        const p = path[i];
+        if (mapData[p.y][p.x].type === "door" || mapData[p.y][p.x].type === "doorWood2") continue;
         carveSingleRoadTile(p.x, p.y);
       }
     }
   });
 }
+
 
     function findPathToRoad(sx, sy){
       const visited = new Set();
@@ -2049,14 +2053,19 @@ function canCarveRoadAt(x, y) {
       return blocked.includes(cellType);
     }
 
-    function carveSingleRoadTile(x, y){
-      if(isRoadBlocked(mapData[y][x].type)) return;
-      if(Math.random()<0.2){
-        mapData[y][x].type = "roadstone";
-      } else {
-        mapData[y][x].type = "roaddirt";
-      }
-    }
+    function carveSingleRoadTile(x, y) {
+  // Do not overwrite door cells
+  if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
+    return;
+  }
+  if (isRoadBlocked(mapData[y][x].type)) return;
+  if (Math.random() < 0.2) {
+    mapData[y][x].type = "roadstone";
+  } else {
+    mapData[y][x].type = "roaddirt";
+  }
+}
+
 
     /*******************************************************
      * BUILDINGS
