@@ -185,8 +185,58 @@
       text-transform: lowercase;
       text-align: center;
     }
+	  /* NEW: Toolbar for Brush Modes */
+#toolbar {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 8px;
+  z-index: 100;
+}
+#toolbar button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 28px;
+  color: #FAF4E0;
+  margin: 5px;
+}
+#toolbar button:hover {
+  color: gold;
+}
+
+/* Tablet Optimization */
+@media (max-width: 768px) {
+  #toolbar {
+    top: 5px;
+    left: 5px;
+    padding: 5px;
+  }
+  #toolbar button {
+    font-size: 24px;
+    margin: 3px;
+  }
+}
+
   </style>
 </head>
+
+<!-- NEW: Toolbar for Brush Modes -->
+<div id="toolbar">
+  <button onclick="setBrushMode('single')" title="Single Tile">
+    <span class="material-symbols-outlined">check_box_outline_blank</span>
+  </button>
+  <button onclick="setBrushMode('multi')" title="Multi-Tile">
+    <span class="material-symbols-outlined">grid_on</span>
+  </button>
+  <button onclick="setBrushMode('scatter')" title="Scatter">
+    <span class="material-symbols-outlined">blur_on</span>
+  </button>
+</div>
+	
+	
 <body>
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
@@ -2879,6 +2929,45 @@ function canFindConsecutiveWaterLine(x, y, length) {
       }
     }
 
+// NEW: Brush Mode Logic
+let currentBrushMode = "single"; // Default mode
+
+function setBrushMode(mode) {
+  currentBrushMode = mode;
+  console.log("Brush mode set to:", mode);
+}
+
+// NEW: Tile Placement using Brush Modes
+function placeTile(x, y, selectedTile) {
+  switch (currentBrushMode) {
+    case "single":
+      mapData[y][x].type = selectedTile;
+      break;
+    case "multi":
+      // Place a 3x3 block centered on (x, y)
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (x + dx >= 0 && y + dy >= 0 && x + dx < GRID_WIDTH && y + dy < GRID_HEIGHT) {
+            mapData[y + dy][x + dx].type = selectedTile;
+          }
+        }
+      }
+      break;
+    case "scatter":
+      // Scatter 5 tiles randomly in a roughly 5x5 area around (x, y)
+      for (let i = 0; i < 5; i++) {
+        let randomX = x + Math.floor(Math.random() * 5) - 2;
+        let randomY = y + Math.floor(Math.random() * 5) - 2;
+        if (randomX >= 0 && randomY >= 0 && randomX < GRID_WIDTH && randomY < GRID_HEIGHT) {
+          mapData[randomY][randomX].type = selectedTile;
+        }
+      }
+      break;
+  }
+  drawMap(); // Redraw the map after placement
+}
+  
+	  
     /*******************************************************
      * CANVAS EVENTS => occupant, panning, pinch, ZOOM
      *******************************************************/
