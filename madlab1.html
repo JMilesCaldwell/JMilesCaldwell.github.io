@@ -1990,25 +1990,26 @@ function canCarveRoadAt(x, y) {
       return (px>=rect.x && py>=rect.y && px<(rect.x+rect.w) && py<(rect.y+rect.h));
     }
 
-    function connectBuildingDoorsToRoads(){
-      const doorCells = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          if(mapData[y][x].type==="door"){
-            doorCells.push({x,y});
-          }
-        }
+   function connectBuildingDoorsToRoads() {
+  const doorCells = [];
+  // Look for both single and double door types
+  for (let y = 0; y < GRID_HEIGHT; y++) {
+    for (let x = 0; x < GRID_WIDTH; x++) {
+      if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
+        doorCells.push({ x, y });
       }
-      if(!doorCells.length) return;
-      doorCells.forEach(dc=>{
-        const path = findPathToRoad(dc.x, dc.y);
-        if(path){
-          for(const p of path){
-            carveSingleRoadTile(p.x, p.y);
-          }
-        }
-      });
     }
+  }
+  if (!doorCells.length) return;
+  doorCells.forEach(dc => {
+    const path = findPathToRoad(dc.x, dc.y);
+    if (path) {
+      for (const p of path) {
+        carveSingleRoadTile(p.x, p.y);
+      }
+    }
+  });
+}
 
     function findPathToRoad(sx, sy){
       const visited = new Set();
