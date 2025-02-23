@@ -212,6 +212,7 @@
             <option value="swamp">Swamp</option>
             <option value="jungle">Jungle</option>
             <option value="snow">Snow</option>
+	  <option value="cavecity">Dungeon</option>
           </select>
         </label>
       </div>
@@ -1022,6 +1023,19 @@ function placeTower(x, y) {
 	    cityWallLength: 32,
             isCavern: false
           };
+case "cavecity":
+      return {
+        baseDist: {}, // not used for cave-based maps
+        waterBodies: 0,
+        waterMaxSize: 0,
+        roads: 0,
+        roadMaxLength: 0,
+        buildings: 5,       // default number of buildings to stamp in
+        bridgeWidth: 0,
+        cliffCount: 0,
+        cityWallLength: 0,
+        isCavern: true      // tells the generator to use cave methods
+	  };
         default:
           return {
             baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.1, "stone": 0.05 },
@@ -1225,8 +1239,12 @@ const paramSliders = [
       const doRoads = document.getElementById("roadCheck").checked;
 
       // Initialise the map or cavern
-      if(settings.isCavern){
-        generateCavern();
+       // Initialise the map based on biome type:
+  if(settings.isCavern){
+    if(theme === "cavecity"){
+      generateCaveCity();
+    } else {
+      generateCavern();
       } else {
         initMap(settings.baseDist);
 
@@ -1287,7 +1305,18 @@ const paramSliders = [
       if (doBuildings && doRoads && !settings.isCavern) {
         connectBuildingDoorsToRoads();
       }
-
+	    
+ if(doRoads && !settings.isCavern){
+    for(let i=0; i<settings.roads; i++){
+      createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
+    }
+  }
+  if(doBuildings && !settings.isCavern){
+    createBuildings(settings.buildings);
+    if(document.getElementById("scatterCratesCheck").checked){
+      scatterCrates(0.1);
+    }
+  }
       // Biome decoration
       decorateBiome(theme);
 
@@ -1605,6 +1634,56 @@ function scatterCaveshrooms() {
       }
     }
 
+	  // Generates a cave-based map, stamps in buildings, and carves a connecting outcrop.
+function generateCaveCity(){
+  // 1. Generate the cave using the cellular automata method
+  generateCavern();
+  
+  // 2. Stamp in buildings onto the cave layout.
+  // You can adjust the number as desired; here we use a fixed 5.
+  createBuildings(5);
+  
+  // 3. Carve a 3–5-tile wide cave outcrop that connects the buildings to the cave.
+  carveCaveOutcrop();
+}
+
+// Carves an outcrop from the cave into any building cells that border a cave floor.
+function carveCaveOutcrop(){
+  // Choose an outcrop width between 3 and 5 tiles.
+  const outcropWidth = 3 + Math.floor(Math.random() * 3); // yields 3, 4 or 5
+  // Iterate through every cell; if the cell is part of a building...
+  for(let y = 0; y < GRID_HEIGHT; y++){
+    for(let x = 0; x < GRID_WIDTH; x++){
+      if(mapData[y][x].hasBuilding){
+        // Check for any adjacent cave floor within the outcrop range.
+        let adjacentCave = false;
+        for(let dy = -outcropWidth; dy <= outcropWidth; dy++){
+          for(let dx = -outcropWidth; dx <= outcropWidth; dx++){
+            let nx = x + dx, ny = y + dy;
+            if(nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+            if(mapData[ny][nx].type === "cave_floor"){
+              adjacentCave = true;
+              break;
+            }
+          }
+          if(adjacentCave) break;
+        }
+        // If a cave cell is found nearby, carve an outcrop that intrudes into the building.
+        if(adjacentCave){
+          for(let dy = -outcropWidth; dy <= outcropWidth; dy++){
+            for(let dx = -outcropWidth; dx <= outcropWidth; dx++){
+              let nx = x + dx, ny = y + dy;
+              if(nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
+              // Set the cell to be part of the cave floor.
+              mapData[ny][nx].type = "cave_floor";
+              mapData[ny][nx].hasBuilding = false;
+            }
+          }
+        }
+      }
+    }
+  }
+}
     /*******************************************************
      * WATER / LAVA
      *******************************************************/
