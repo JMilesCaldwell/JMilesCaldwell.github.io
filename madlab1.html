@@ -2317,74 +2317,14 @@ function createBuildings(numBuildings) {
 
     let nextBuildingId = 1;
 
-// Mapping from numeric layout values (0–9) to letter keys.
-// (These comments describe what each value represents.)
-const numericToLetterMapping = {
-  "0": "B", // 0: Floor tile
-  "1": "A", // 1: Wall tile
-  "2": "C", // 2: Door (handled specially below)
-  "3": "D", // 3: Courtyard marker
-  "4": "E", // 4: Road tile
-  "5": "F", // 5: Marble floor
-  "6": "G", // 6: Dark stone/dark tile
-  "7": "H", // 7: Lava feature
-  "8": "I", // 8: Water feature
-  "9": "J"  // 9: Furnishings (e.g. chests)
-};
-
-// Mapping from letter keys to functions that assign the appropriate cell type.
-const buildingLayoutMapping = {
-  "A": function(cell) { 
-    // A: Wall tile. Theme-specific: use snowWall for snow, limestone for desert, otherwise cobblestone.
-    const theme = document.getElementById('mapType').value;
-    if (theme === 'snow') {
-      cell.type = 'snowWall';
-    } else if (theme === 'desert') {
-      cell.type = 'limestone';
-    } else {
-      cell.type = 'cobblestone';
-    }
-  },
-  "B": function(cell) { 
-    // B: Floor tile.
-    cell.type = chosenFloorTile;
-  },
-  "D": function(cell) { 
-    // D: Courtyard marker.
-    cell.courtyard = true;
-  },
-  "E": function(cell) { 
-    // E: Road tile.
-    cell.type = getRoadTile();
-  },
-  "F": function(cell) { 
-    // F: Marble floor.
-    cell.type = "marble";
-  },
-  "G": function(cell) { 
-    // G: Dark stone/dark tile.
-    cell.type = "darktile";
-  },
-  "H": function(cell) { 
-    // H: Lava feature.
-    cell.type = "lava";
-  },
-  "I": function(cell) { 
-    // I: Water feature.
-    cell.type = "water";
-  },
-  "J": function(cell) { 
-    // J: Furnishings (e.g., chests).
-    cell.type = "chests";
-  }
-};
-
 function placeBuilding(sx, sy, shape) {
   const buildingId = nextBuildingId++;
   const doorGroups = [];
-  const doorVisited = Array(shape.height).fill(0).map(() => Array(shape.width).fill(false));
+  const doorVisited = Array(shape.height)
+    .fill(0)
+    .map(() => Array(shape.width).fill(false));
 
-  // Group door cells together (cells with value 2 in the layout).
+  // Group door cells together
   function groupDoors(relX, relY, group) {
     if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
     if (doorVisited[relY][relX]) return;
@@ -2397,7 +2337,7 @@ function placeBuilding(sx, sy, shape) {
     groupDoors(relX, relY - 1, group);
   }
 
-  // Build door groups from the shape's layout.
+  // Build door groups from the shape's layout
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       if (shape.layout[y][x] === 2 && !doorVisited[y][x]) {
@@ -2408,7 +2348,7 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 
-  // Determine door type based on group size.
+  // Determine door type based on group size
   const availableDoorTypes = ["door"];
   const groupDoorTypes = doorGroups.map(group => {
     if (group.length > 1) {
@@ -2418,13 +2358,23 @@ function placeBuilding(sx, sy, shape) {
     }
   });
 
-  // Iterate over the building shape grid and assign cell types.
+  // Iterate over the shape's grid and assign cell types
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
-      if (val === 2) {
-        // For door cells, use door grouping logic.
+      if (val === 1) {
+    const theme = document.getElementById('mapType').value;
+  if (theme === 'snow') {
+    cell.type = 'snowWall';
+  } else if (theme === 'desert') {
+    cell.type = 'limestone';
+  } else {
+    cell.type = 'cobblestone';
+  }
+      } else if (val === 0) {
+        cell.type = chosenFloorTile;
+      } else if (val === 2) {
         let assignedType = null;
         for (let i = 0; i < doorGroups.length; i++) {
           if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
@@ -2436,20 +2386,31 @@ function placeBuilding(sx, sy, shape) {
           assignedType = "door";
         }
         cell.type = assignedType;
-      } else {
-        // For non-door cells, use the mapping object.
-        // Convert the numeric value to its corresponding letter key.
-        const letterKey = numericToLetterMapping[val.toString()];
-        if (letterKey && buildingLayoutMapping[letterKey]) {
-          buildingLayoutMapping[letterKey](cell);
-        }
+      } else if (val === 3) {
+        cell.courtyard = true;
+      } else if (val === 4) {
+        cell.type = getRoadTile();
+      } else if (val === 5) {
+        // New: Marble floor
+        cell.type = "marble";
+      } else if (val === 6) {
+        // New: Dark stone tiles
+        cell.type = "darktile";
+      } else if (val === 7) {
+        // New: Lava feature
+        cell.type = "lava";
+      } else if (val === 8) {
+        // New: Water feature
+        cell.type = "water";
+      } else if (val === 9) {
+        // New: Furnishings (e.g., chests)
+        cell.type = "chests";
       }
       cell.hasBuilding = true;
       cell.buildingId = buildingId;
     }
   }
 }
-
 
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
