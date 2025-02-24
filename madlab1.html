@@ -2374,35 +2374,35 @@ function shapeContainsUniqueAsset(shape, assetCode) {
 
 // Modified createBuildings function that checks for unique assets.
 function createBuildings(numBuildings) {
+  // Choose a floor asset for this map
+  const possibleFloors = ["floor1", "interiorfloors"];
+  chosenFloorTile = possibleFloors[Math.floor(Math.random() * possibleFloors.length)];
+
   let attempts = 0, placed = 0;
   const maxAttempts = 10000;
   while (placed < numBuildings && attempts < maxAttempts) {
     attempts++;
-    // Randomly pick a building shape.
     const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
 
-    // Example: if the shape contains a toilet (asset "J") and we've already placed one, skip it.
+    // Example: if the shape contains a toilet ("J") and we've already placed one, skip it.
     if (shapeContainsUniqueAsset(shape, "J") && uniqueBuildingAssets.toilet >= 1) {
       continue;
     }
 
-    // Determine a random position for the building.
     const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
     const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
 
-    // Only place the building if the area is clear.
     if (!canPlaceBuilding(sx, sy, shape)) continue;
 
-    // Place the building.
     placeBuilding(sx, sy, shape);
     placed++;
 
-    // Update the unique count if the building includes a unique asset.
     if (shapeContainsUniqueAsset(shape, "J")) {
       uniqueBuildingAssets.toilet++;
     }
   }
 }
+
 
 
 
