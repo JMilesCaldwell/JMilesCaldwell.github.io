@@ -2423,20 +2423,50 @@ function placeBuilding(sx, sy, shape) {
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
      *******************************************************/
-    function createCitySquares(){
-      const squareCount = 2 + Math.floor(Math.random()*3);
-      let attempts=0, placed=0;
-      while(placed<squareCount && attempts<squareCount*20){
-        attempts++;
-        const w=4 + Math.floor(Math.random()*3);
-        const h=4 + Math.floor(Math.random()*3);
-        const sx=Math.floor(Math.random()*(GRID_WIDTH - w));
-        const sy=Math.floor(Math.random()*(GRID_HEIGHT - h));
-        if(!canPlacePlaza(sx,sy,w,h)) continue;
-        stampPlaza(sx,sy,w,h);
-        placed++;
+    function connectPlazaToRoad(sx, sy, w, h) {
+  let borderCells = [];
+  // Collect border cells of the plaza.
+  for (let x = sx; x < sx + w; x++) {
+    borderCells.push({ x: x, y: sy });            // Top edge
+    borderCells.push({ x: x, y: sy + h - 1 });      // Bottom edge
+  }
+  for (let y = sy + 1; y < sy + h - 1; y++) {
+    borderCells.push({ x: sx, y: y });              // Left edge
+    borderCells.push({ x: sx + w - 1, y: y });        // Right edge
+  }
+  // Shuffle to randomise the starting point.
+  borderCells.sort(() => Math.random() - 0.5);
+
+  // Attempt to connect one of the border cells to a road.
+  for (const cell of borderCells) {
+    let path = findPathToRoad(cell.x, cell.y);
+    if (path) {
+      for (const p of path) {
+        carveSingleRoadTile(p.x, p.y);
       }
+      return true;  // Successful connection.
     }
+  }
+  return false;
+}
+
+	  
+function createCitySquares() {
+  const squareCount = 2 + Math.floor(Math.random() * 3);
+  let attempts = 0, placed = 0;
+  while (placed < squareCount && attempts < squareCount * 20) {
+    attempts++;
+    const w = 4 + Math.floor(Math.random() * 3);
+    const h = 4 + Math.floor(Math.random() * 3);
+    const sx = Math.floor(Math.random() * (GRID_WIDTH - w));
+    const sy = Math.floor(Math.random() * (GRID_HEIGHT - h));
+    if (!canPlacePlaza(sx, sy, w, h)) continue;
+    stampPlaza(sx, sy, w, h);
+    connectPlazaToRoad(sx, sy, w, h);  // Connect the plaza to the nearest road.
+    placed++;
+  }
+}
+
     function canPlacePlaza(sx,sy,w,h){
       for(let y=sy; y<sy+h; y++){
         for(let x=sx; x<sx+w; x++){
