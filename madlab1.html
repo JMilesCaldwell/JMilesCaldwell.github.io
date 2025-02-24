@@ -2054,7 +2054,7 @@ function canCarveRoadAt(x, y) {
       const blocked = [
         "negative","wall","water","lava","door",
         "floor1","cobblestone","marble1","marble2","marble3","marble4",
-        "darktile","ancienttile","limestone","limestone1","limestone2","limestone3"
+        "darktile","ancienttile","limestone","limestone1","limestone2","limestone3","snowWall"
       ];
       return blocked.includes(cellType);
     }
@@ -2340,8 +2340,13 @@ function placeBuilding(sx, sy, shape) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
       if (val === 1) {
-  const theme = document.getElementById('mapType').value;
-  cell.type = (theme === 'desert') ? 'limestone' : 'cobblestone';
+    const theme = document.getElementById('mapType').value;
+  if (theme === 'snow') {
+    cell.type = 'snowWall';
+  } else if (theme === 'desert') {
+    cell.type = 'limestone';
+  } else {
+    cell.type = 'cobblestone';
       } else if (val === 0) {
         cell.type = chosenFloorTile;
       } else if (val === 2) {
