@@ -2845,18 +2845,23 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFi
     const yy = baseY + (horizontal ? i + offset : 0);
     if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
     const cell = mapData[yy][xx];
-    // If this cell is already a tower, leave it.
+    
+    // Skip towers or road/woodfloor cells.
     if (cell.type === "towersmall") continue;
-    // Skip if it's a road or woodfloor.
     if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") continue;
-    // Set as a wall tile.
-    if ((xx + yy) % 3 === 0) {
-      cell.type = "wall";
-      cell.chosenWallFile = "darkStoneBlock.png";
+    
+    cell.type = "wall";
+    // Use the passed chosenWallFile if provided.
+    if (chosenWallFile) {
+      cell.chosenWallFile = chosenWallFile;
     } else {
-      cell.type = "wall";
-      const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
-      cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+      // Fallback to previous logic if no chosenWallFile is given.
+      if ((xx + yy) % 3 === 0) {
+        cell.chosenWallFile = "darkStoneBlock.png";
+      } else {
+        const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
+        cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+      }
     }
   }
 }
