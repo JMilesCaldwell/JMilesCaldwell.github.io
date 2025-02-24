@@ -640,9 +640,13 @@
         folder: "misc",
         files: ["sandstonefireplace.png", "simplefireplace.png","elaboratefireplace.png"]      
       },
-	    	      "smithing": {
+	    	      "anvil": {
         folder: "misc",
-        files: ["forge.png", "anvil.png"]      
+        files: ["anvil.png"]      
+	   },
+	    	      "forge": {
+        folder: "misc",
+        files: ["forge.png"]   
       },
       "TileRubble": {
         folder: "buildings/floors",
@@ -2139,14 +2143,16 @@ function canCarveRoadAt(x, y) {
   -----------------------
   A : Fireplace 
       // Renders a fireplace using the corresponding "fireplace" asset.
-  B : Smithing 
-      // Renders smithing-related assets (e.g. a forge or anvil) using the "smithing" asset.
+  B : Anvil 
+      // Renders an anvil.
   C : Beds 
       // Renders bed assets for sleeping quarters.
   D : Bookcases 
       // Renders bookcases (or similar furniture) using the "books" asset.
   E : Rugs 
       // Renders rugs using the "rugs" asset.
+  F : Rugs 
+      // Renders the "forge" asset.
 */
 
 	  
@@ -2239,8 +2245,8 @@ function canCarveRoadAt(x, y) {
         height: 9,
         layout: [
           [1,1,1,1,1,1,1,1],
-          [1,6,6,0,0,0,0,1],
-          [1,7,6,0,0,0,0,2],
+          [1,6,6,0,0,"F",0,1],
+          [1,7,6,0,"B",0,0,2],
           [1,6,6,0,0,0,0,1], 
           [1,1,1,1,2,1,1,1],
           [1,6,5,6,5,6,6,1],
@@ -2370,11 +2376,10 @@ function createBuildings(numBuildings) {
 function placeBuilding(sx, sy, shape) {
   const buildingId = nextBuildingId++;
   const doorGroups = [];
-  const doorVisited = Array(shape.height)
-    .fill(0)
-    .map(() => Array(shape.width).fill(false));
+  // Initialise a visited grid for door grouping.
+  const doorVisited = Array.from({ length: shape.height }, () => Array(shape.width).fill(false));
 
-  // Group door cells together
+  // Helper to recursively group door cells (value 2)
   function groupDoors(relX, relY, group) {
     if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
     if (doorVisited[relY][relX]) return;
@@ -2387,7 +2392,7 @@ function placeBuilding(sx, sy, shape) {
     groupDoors(relX, relY - 1, group);
   }
 
-  // Build door groups from the shape's layout
+  // Build door groups from the layout.
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       if (shape.layout[y][x] === 2 && !doorVisited[y][x]) {
@@ -2398,18 +2403,20 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 
-	const availableDoorTypes = ["door"];
-const groupDoorTypes = doorGroups.map(group => {
-  return group.length > 1 ? "doorWood2" : availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
-});
+  // Create an array of door types corresponding to each door group.
+  const availableDoorTypes = ["door"];
+  const groupDoorTypes = doorGroups.map(group =>
+    group.length > 1 ? "doorWood2" : availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)]
+  );
 
-  // Iterate over the shape's grid and assign cell types based on the layout values
+  // Iterate over each cell in the building shape.
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
+
       if (val === 1) {
-        // Outer wall – adjust by theme if desired
+        // Outer wall: pick texture based on current theme.
         const theme = document.getElementById('mapType').value;
         if (theme === 'snow') {
           cell.type = 'snowWall';
@@ -2419,9 +2426,10 @@ const groupDoorTypes = doorGroups.map(group => {
           cell.type = 'cobblestone';
         }
       } else if (val === 0) {
+        // Floor.
         cell.type = chosenFloorTile;
       } else if (val === 2) {
-        // Door tile: determine door type from grouped door cells
+        // Door cell: assign based on grouped door types.
         let assignedType = null;
         for (let i = 0; i < doorGroups.length; i++) {
           if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
@@ -2431,37 +2439,55 @@ const groupDoorTypes = doorGroups.map(group => {
         }
         cell.type = assignedType || "door";
       } else if (val === 3) {
+        // Courtyard marker.
         cell.courtyard = true;
       } else if (val === 4) {
+        // Road tile.
         cell.type = getRoadTile();
       } else if (val === 5) {
+        // Marble floor.
         cell.type = "marble";
       } else if (val === 6) {
+        // Dark tile.
         cell.type = "darktile";
       } else if (val === 7) {
+        // Lava feature.
         cell.type = "lava";
       } else if (val === 8) {
+        // Water feature.
         cell.type = "water";
       } else if (val === 9) {
+        // Chests.
         cell.type = "chests";
       }
-      // New feature codes using letter values:
-      else if (val === 'A') {
-        cell.type = "fireplace";   // Uses assets under "fireplace"
-      } else if (val === 'B') {
-        cell.type = "smithing";     // Uses assets under "smithing"
-      } else if (val === 'C') {
-        cell.type = "beds";         // Uses assets under "beds"
-      } else if (val === 'D') {
-        cell.type = "books";        // Uses assets under "books" (for bookcases)
-      } else if (val === 'E') {
-        cell.type = "rugs";         // Uses assets under "rugs"
+      // New alphabetical asset codes:
+      else if (val === "A") {
+        cell.type = "fireplace";
       }
+      // Split up smithing: "B" now for anvils...
+      else if (val === "B") {
+        cell.type = "anvil";
+      }
+      // ...and "F" for forges.
+      else if (val === "F") {
+        cell.type = "forge";
+      }
+      else if (val === "C") {
+        cell.type = "beds";
+      } else if (val === "D") {
+        cell.type = "books";
+      } else if (val === "E") {
+        cell.type = "rugs";
+      } else {
+        console.warn(`Unrecognized building shape value: ${val}`);
+      }
+      
       cell.hasBuilding = true;
       cell.buildingId = buildingId;
     }
   }
 }
+
 
 
     /*******************************************************
