@@ -2671,59 +2671,72 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFi
       scatterPalmsNearWater();
     }
 
-    function createPalmOasis(){
-      const cx = Math.floor(Math.random() * GRID_WIDTH);
-      const cy = Math.floor(Math.random() * GRID_HEIGHT);
-      const waterRadius = 2 + Math.floor(Math.random() * 3);
-      for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
-        for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          if(dx*dx + dy*dy <= waterRadius*waterRadius){
-            mapData[y][x].type = "water";
-          }
+   function createPalmOasis(){
+  const cx = Math.floor(Math.random() * GRID_WIDTH);
+  const cy = Math.floor(Math.random() * GRID_HEIGHT);
+  const waterRadius = 2 + Math.floor(Math.random() * 3);
+  
+  // Create the water circle, skipping cells with buildings.
+  for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
+    for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding) continue;  // Skip cells with buildings
+      const dx = x - cx, dy = y - cy;
+      if (dx * dx + dy * dy <= waterRadius * waterRadius){
+        mapData[y][x].type = "water";
+      }
+    }
+  }
+  
+  const beachRadius = waterRadius + 1;
+  // Create the beach area.
+  for (let y = cy - beachRadius; y <= cy + beachRadius; y++){
+    for (let x = cx - beachRadius; x <= cx + beachRadius; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding) continue;
+      const dx = x - cx, dy = y - cy;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > waterRadius * waterRadius && distSq <= beachRadius * beachRadius){
+        mapData[y][x].type = "whitesand";
+      }
+    }
+  }
+  
+  // Slightly randomise the water edge.
+  for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
+    for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding) continue;
+      const dx = x - cx, dy = y - cy;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > (waterRadius - 1) * (waterRadius - 1) && distSq <= waterRadius * waterRadius){
+        if (Math.random() < 0.3){
+          mapData[y][x].type = "water";
         }
       }
-      const beachRadius = waterRadius + 1;
-      for (let y = cy - beachRadius; y <= cy + beachRadius; y++){
-        for (let x = cx - beachRadius; x <= cx + beachRadius; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          const distSq = dx*dx + dy*dy;
-          if(distSq > waterRadius*waterRadius && distSq <= beachRadius*beachRadius){
-            mapData[y][x].type = "whitesand";
-          }
-        }
-      }
-      for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
-        for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          const distSq = dx*dx + dy*dy;
-          if(distSq > (waterRadius - 1)*(waterRadius - 1) && distSq <= waterRadius*waterRadius){
-            if(Math.random() < 0.3){
-              mapData[y][x].type = "water";
-            }
-          }
-        }
-      }
-      const palmStart = beachRadius + 1;
-      const palmEnd = beachRadius + 3;
-      for (let y = cy - palmEnd; y <= cy + palmEnd; y++){
-        for (let x = cx - palmEnd; x <= cx + palmEnd; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if(dist >= palmStart && dist <= palmEnd){
-            if(["sand","dune"].includes(mapData[y][x].type)){
-              if(Math.random()<0.4){
-                mapData[y][x].type = "desertPalm";
-              }
-            }
+    }
+  }
+  
+  // Place the desert palms, again skipping over buildings.
+  const palmStart = beachRadius + 1;
+  const palmEnd = beachRadius + 3;
+  for (let y = cy - palmEnd; y <= cy + palmEnd; y++){
+    for (let x = cx - palmEnd; x <= cx + palmEnd; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding) continue;
+      const dx = x - cx, dy = y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist >= palmStart && dist <= palmEnd){
+        if (["sand", "dune"].includes(mapData[y][x].type)){
+          if (Math.random() < 0.4){
+            mapData[y][x].type = "desertPalm";
           }
         }
       }
     }
+  }
+}
+
 
     function scatterGrassRocks(num){
       for(let i=0; i<num; i++){
