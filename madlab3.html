@@ -476,10 +476,6 @@
         folder: "cavern",
         files: ["crystal.png","crystal2.png","crystal3.png"]
       },
-	    "chests": {
-        folder: "scatter",
-        files: ["chest1.png", "chest2.png", "chest3.png", "chest4.png"]
-      },
       "sand": {
         folder: "desert",
         files: ["sand1.png","sand2.png","sand3.png"]
@@ -640,13 +636,34 @@
         folder: "buildings/floors",
         files: ["floorbricks1.png", "floorbricks2.png"]
       },
+	      "fireplace": {
+        folder: "misc",
+        files: ["sandstonefireplace.png", "simplefireplace.png","elaboratefireplace.png"]      
+      },
+	    	      "smithing": {
+        folder: "misc",
+        files: ["forge.png", "anvil.png"]      
+      },
       "TileRubble": {
         folder: "buildings/floors",
         files: ["PlainTileRubble1.png", "PlainTileRubble2.png", "PlainTileRubble3.png"]
 	   },
-	   "Tile": {
-        folder: "buildings/floors",
-        files: ["tile.png", "tile2.png"]
+	     "rugs": {
+        folder: "misc",
+        files: ["carpet1.png","carpet2.png"]
+		        },
+	     "books": {
+        folder: "misc",
+        files: ["bookcase.png","bookcase2.png","bookcase3.png"] 
+		           },
+	    "chests": {
+        folder: "scatter",
+        files: ["chest1.png", "chest2.png", "chest3.png", "chest4.png"]
+	            },
+      "beds": {
+        folder: "misc",
+        files: ["bed1.png","bed2.png","bed3.png","bed4.png"]
+
      }
 
     };
@@ -783,7 +800,7 @@
       }
     }
 
-    function scatterWells(probability = 0.005) {
+    function scatterWells(probability = 0.001) {
   // Loop over every cell in the grid.
   for (let y = 0; y < GRID_HEIGHT; y++) {
     for (let x = 0; x < GRID_WIDTH; x++) {
@@ -1167,44 +1184,55 @@ const paramSliders = [
     }
 
     // *** ADDED: tile menu setup + toggle ***
-    function setupTileMenu(){
-      const tileMenu = document.getElementById("tileMenu");
-      tileMenu.innerHTML = ""; // clear any existing entries
+   function setupTileMenu() {
+  const tileMenu = document.getElementById("tileMenu");
+  tileMenu.innerHTML = "";
 
-      // Create a tile "preview" for each tile type
-      for(const tileName in tileAssetMapping) {
-        // Skip "negative" or any with empty files if you like
-        if(tileName === "negative") continue;
+  // Loop over the tile assets (excluding 'negative' and 'none')
+  for (const tileName in tileAssetMapping) {
+    if (tileName === "negative" || tileName === "none") continue;
+    const files = tileAssetMapping[tileName].files;
+    if (!files || files.length === 0) continue;
 
-        const files = tileAssetMapping[tileName].files;
-        if(!files || files.length === 0) continue;
+    const tileDiv = document.createElement("div");
+    tileDiv.className = "tileItem";
 
-        const tileDiv = document.createElement("div");
-        tileDiv.className = "tileItem";
-
-        // The first image in tileTextures[tileName], if loaded
-        const previewImg = document.createElement("img");
-        if(tileTextures[tileName] && tileTextures[tileName].length > 0){
-          previewImg.src = tileTextures[tileName][0].src;
-        } else {
-          // fallback
-          previewImg.style.backgroundColor = getColorForTileType(tileName);
-        }
-        tileDiv.appendChild(previewImg);
-
-        const label = document.createElement("span");
-        label.textContent = tileName;
-        tileDiv.appendChild(label);
-
-        // On click, choose this tile type and switch to placeTile mode
-        tileDiv.addEventListener("click", () => {
-          currentTileInHand = tileName;
-          setMode("placeTile");
-        });
-
-        tileMenu.appendChild(tileDiv);
-      }
+    const previewImg = document.createElement("img");
+    if (tileTextures[tileName] && tileTextures[tileName].length > 0) {
+      previewImg.src = tileTextures[tileName][0].src;
+    } else {
+      previewImg.style.backgroundColor = getColorForTileType(tileName);
     }
+    tileDiv.appendChild(previewImg);
+
+    const label = document.createElement("span");
+    label.textContent = tileName;
+    tileDiv.appendChild(label);
+
+    tileDiv.addEventListener("click", () => {
+      currentTileInHand = tileName;
+      setMode("placeTile");
+    });
+
+    tileMenu.appendChild(tileDiv);
+  }
+
+  // Append the dedicated "None" button as the final tile
+  const noneTileDiv = document.createElement("div");
+  noneTileDiv.className = "tileItem none"; // Add a special class for styling
+  
+  const noneLabel = document.createElement("span");
+  noneLabel.textContent = "None";
+  noneTileDiv.appendChild(noneLabel);
+
+  noneTileDiv.addEventListener("click", () => {
+    currentTileInHand = null; // Clear any chosen tile
+    setMode("placeTile");     // Switch mode if needed
+  });
+
+  tileMenu.appendChild(noneTileDiv);
+}
+
 
     function toggleTileMenu(){
       const menu = document.getElementById("tileMenu");
@@ -2328,33 +2356,30 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 
-  // Determine door type based on group size
-  const availableDoorTypes = ["door"];
-  const groupDoorTypes = doorGroups.map(group => {
-    if (group.length > 1) {
-      return "doorWood2";
-    } else {
-      return availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
-    }
-  });
+	const availableDoorTypes = ["door"];
+const groupDoorTypes = doorGroups.map(group => {
+  return group.length > 1 ? "doorWood2" : availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
+});
 
-  // Iterate over the shape's grid and assign cell types
+  // Iterate over the shape's grid and assign cell types based on the layout values
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
       if (val === 1) {
-    const theme = document.getElementById('mapType').value;
-  if (theme === 'snow') {
-    cell.type = 'snowWall';
-  } else if (theme === 'desert') {
-    cell.type = 'limestone';
-  } else {
-    cell.type = 'cobblestone';
-  }
+        // Outer wall – adjust by theme if desired
+        const theme = document.getElementById('mapType').value;
+        if (theme === 'snow') {
+          cell.type = 'snowWall';
+        } else if (theme === 'desert') {
+          cell.type = 'limestone';
+        } else {
+          cell.type = 'cobblestone';
+        }
       } else if (val === 0) {
         cell.type = chosenFloorTile;
       } else if (val === 2) {
+        // Door tile: determine door type from grouped door cells
         let assignedType = null;
         for (let i = 0; i < doorGroups.length; i++) {
           if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
@@ -2362,29 +2387,33 @@ function placeBuilding(sx, sy, shape) {
             break;
           }
         }
-        if (assignedType === null) {
-          assignedType = "door";
-        }
-        cell.type = assignedType;
+        cell.type = assignedType || "door";
       } else if (val === 3) {
         cell.courtyard = true;
       } else if (val === 4) {
         cell.type = getRoadTile();
       } else if (val === 5) {
-        // New: Marble floor
         cell.type = "marble";
       } else if (val === 6) {
-        // New: Dark stone tiles
         cell.type = "darktile";
       } else if (val === 7) {
-        // New: Lava feature
         cell.type = "lava";
       } else if (val === 8) {
-        // New: Water feature
         cell.type = "water";
       } else if (val === 9) {
-        // New: Furnishings (e.g., chests)
         cell.type = "chests";
+      }
+      // New feature codes using letter values:
+      else if (val === 'A') {
+        cell.type = "fireplace";   // Uses assets under "fireplace"
+      } else if (val === 'B') {
+        cell.type = "smithing";     // Uses assets under "smithing"
+      } else if (val === 'C') {
+        cell.type = "beds";         // Uses assets under "beds"
+      } else if (val === 'D') {
+        cell.type = "books";        // Uses assets under "books" (for bookcases)
+      } else if (val === 'E') {
+        cell.type = "rugs";         // Uses assets under "rugs"
       }
       cell.hasBuilding = true;
       cell.buildingId = buildingId;
@@ -2392,23 +2421,54 @@ function placeBuilding(sx, sy, shape) {
   }
 }
 
+
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
      *******************************************************/
-    function createCitySquares(){
-      const squareCount = 2 + Math.floor(Math.random()*3);
-      let attempts=0, placed=0;
-      while(placed<squareCount && attempts<squareCount*20){
-        attempts++;
-        const w=4 + Math.floor(Math.random()*3);
-        const h=4 + Math.floor(Math.random()*3);
-        const sx=Math.floor(Math.random()*(GRID_WIDTH - w));
-        const sy=Math.floor(Math.random()*(GRID_HEIGHT - h));
-        if(!canPlacePlaza(sx,sy,w,h)) continue;
-        stampPlaza(sx,sy,w,h);
-        placed++;
+    function connectPlazaToRoad(sx, sy, w, h) {
+  let borderCells = [];
+  // Collect border cells of the plaza.
+  for (let x = sx; x < sx + w; x++) {
+    borderCells.push({ x: x, y: sy });            // Top edge
+    borderCells.push({ x: x, y: sy + h - 1 });      // Bottom edge
+  }
+  for (let y = sy + 1; y < sy + h - 1; y++) {
+    borderCells.push({ x: sx, y: y });              // Left edge
+    borderCells.push({ x: sx + w - 1, y: y });        // Right edge
+  }
+  // Shuffle to randomise the starting point.
+  borderCells.sort(() => Math.random() - 0.5);
+
+  // Attempt to connect one of the border cells to a road.
+  for (const cell of borderCells) {
+    let path = findPathToRoad(cell.x, cell.y);
+    if (path) {
+      for (const p of path) {
+        carveSingleRoadTile(p.x, p.y);
       }
+      return true;  // Successful connection.
     }
+  }
+  return false;
+}
+
+	  
+function createCitySquares() {
+  const squareCount = 2 + Math.floor(Math.random() * 3);
+  let attempts = 0, placed = 0;
+  while (placed < squareCount && attempts < squareCount * 20) {
+    attempts++;
+    const w = 4 + Math.floor(Math.random() * 3);
+    const h = 4 + Math.floor(Math.random() * 3);
+    const sx = Math.floor(Math.random() * (GRID_WIDTH - w));
+    const sy = Math.floor(Math.random() * (GRID_HEIGHT - h));
+    if (!canPlacePlaza(sx, sy, w, h)) continue;
+    stampPlaza(sx, sy, w, h);
+    connectPlazaToRoad(sx, sy, w, h);  // Connect the plaza to the nearest road.
+    placed++;
+  }
+}
+
     function canPlacePlaza(sx,sy,w,h){
       for(let y=sy; y<sy+h; y++){
         for(let x=sx; x<sx+w; x++){
