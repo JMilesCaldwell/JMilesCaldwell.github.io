@@ -636,17 +636,29 @@
         folder: "buildings/floors",
         files: ["floorbricks1.png", "floorbricks2.png"]
       },
-	      "fireplace": {
+	 "fireplace": {
         folder: "misc",
         files: ["sandstonefireplace.png", "simplefireplace.png","elaboratefireplace.png"]      
       },
-	    	      "anvil": {
+	"anvil": {
         folder: "misc",
-        files: ["anvil.png","anvil2.png"]      
+        files: ["anvil.png","anvil2.png","anvil3.png"]      
 	   },
-	    	      "forge": {
+	      "forge": {
         folder: "misc",
         files: ["forge.png"]   
+      },
+	"weaponrack": {
+        folder: "misc",
+        files: ["weaponrack.png","weaponrack2.png","weaponrack3.png"]   
+      },
+	"counter": {
+        folder: "misc",
+        files: ["counter.png"]   
+      },
+		"apothecary": {
+        folder: "misc",
+        files: ["apothecary.png"]   
       },
       "TileRubble": {
         folder: "buildings/floors",
@@ -2379,7 +2391,7 @@ function placeBuilding(sx, sy, shape) {
   // Initialise a visited grid for door grouping.
   const doorVisited = Array.from({ length: shape.height }, () => Array(shape.width).fill(false));
 
-  // Helper to recursively group door cells (value 2)
+  // Helper: recursively group adjacent door cells (value 2).
   function groupDoors(relX, relY, group) {
     if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
     if (doorVisited[relY][relX]) return;
@@ -2416,7 +2428,7 @@ function placeBuilding(sx, sy, shape) {
       const cell = mapData[sy + y][sx + x];
 
       if (val === 1) {
-        // Outer wall: pick texture based on current theme.
+        // Outer wall: choose texture based on current theme.
         const theme = document.getElementById('mapType').value;
         if (theme === 'snow') {
           cell.type = 'snowWall';
@@ -2426,10 +2438,10 @@ function placeBuilding(sx, sy, shape) {
           cell.type = 'cobblestone';
         }
       } else if (val === 0) {
-        // Floor.
+        // Floor tile.
         cell.type = chosenFloorTile;
       } else if (val === 2) {
-        // Door cell: assign based on grouped door types.
+        // Door: assign based on door grouping.
         let assignedType = null;
         for (let i = 0; i < doorGroups.length; i++) {
           if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
@@ -2442,42 +2454,39 @@ function placeBuilding(sx, sy, shape) {
         // Courtyard marker.
         cell.courtyard = true;
       } else if (val === 4) {
-        // Road tile.
         cell.type = getRoadTile();
       } else if (val === 5) {
-        // Marble floor.
         cell.type = "marble";
       } else if (val === 6) {
-        // Dark tile.
         cell.type = "darktile";
       } else if (val === 7) {
-        // Lava feature.
         cell.type = "lava";
       } else if (val === 8) {
-        // Water feature.
         cell.type = "water";
       } else if (val === 9) {
-        // Chests.
         cell.type = "chests";
       }
       // New alphabetical asset codes:
       else if (val === "A") {
         cell.type = "fireplace";
-      }
-      // Split up smithing: "B" now for anvils...
-      else if (val === "B") {
+      } else if (val === "B") {
         cell.type = "anvil";
-      }
-      // ...and "F" for forges.
-      else if (val === "F") {
+      } else if (val === "F") {
         cell.type = "forge";
-      }
-      else if (val === "C") {
+      } else if (val === "C") {
         cell.type = "beds";
       } else if (val === "D") {
         cell.type = "books";
       } else if (val === "E") {
         cell.type = "rugs";
+      }
+      // New codes using G, H, and I:
+      else if (val === "G") {
+        cell.type = "weaponrack";
+      } else if (val === "H") {
+        cell.type = "apothecary";
+      } else if (val === "I") {
+        cell.type = "counter";
       } else {
         console.warn(`Unrecognized building shape value: ${val}`);
       }
@@ -2487,6 +2496,7 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 }
+
 
 
 
