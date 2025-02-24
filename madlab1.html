@@ -2356,33 +2356,25 @@ function placeBuilding(sx, sy, shape) {
     }
   }
 
-  // Determine door type based on group size
-  const availableDoorTypes = ["door"];
-  const groupDoorTypes = doorGroups.map(group => {
-    if (group.length > 1) {
-      return "doorWood2";
-    } else {
-      return availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)];
-    }
-  });
-
-  // Iterate over the shape's grid and assign cell types
+  // Iterate over the shape's grid and assign cell types based on the layout values
   for (let y = 0; y < shape.height; y++) {
     for (let x = 0; x < shape.width; x++) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
       if (val === 1) {
-    const theme = document.getElementById('mapType').value;
-  if (theme === 'snow') {
-    cell.type = 'snowWall';
-  } else if (theme === 'desert') {
-    cell.type = 'limestone';
-  } else {
-    cell.type = 'cobblestone';
-  }
+        // Outer wall – adjust by theme if desired
+        const theme = document.getElementById('mapType').value;
+        if (theme === 'snow') {
+          cell.type = 'snowWall';
+        } else if (theme === 'desert') {
+          cell.type = 'limestone';
+        } else {
+          cell.type = 'cobblestone';
+        }
       } else if (val === 0) {
         cell.type = chosenFloorTile;
       } else if (val === 2) {
+        // Door tile: determine door type from grouped door cells
         let assignedType = null;
         for (let i = 0; i < doorGroups.length; i++) {
           if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
@@ -2390,35 +2382,40 @@ function placeBuilding(sx, sy, shape) {
             break;
           }
         }
-        if (assignedType === null) {
-          assignedType = "door";
-        }
-        cell.type = assignedType;
+        cell.type = assignedType || "door";
       } else if (val === 3) {
         cell.courtyard = true;
       } else if (val === 4) {
         cell.type = getRoadTile();
       } else if (val === 5) {
-        // New: Marble floor
         cell.type = "marble";
       } else if (val === 6) {
-        // New: Dark stone tiles
         cell.type = "darktile";
       } else if (val === 7) {
-        // New: Lava feature
         cell.type = "lava";
       } else if (val === 8) {
-        // New: Water feature
         cell.type = "water";
       } else if (val === 9) {
-        // New: Furnishings (e.g., chests)
         cell.type = "chests";
+      }
+      // New feature codes using letter values:
+      else if (val === 'A') {
+        cell.type = "fireplace";   // Uses assets under "fireplace"
+      } else if (val === 'B') {
+        cell.type = "smithing";     // Uses assets under "smithing"
+      } else if (val === 'C') {
+        cell.type = "beds";         // Uses assets under "beds"
+      } else if (val === 'D') {
+        cell.type = "books";        // Uses assets under "books" (for bookcases)
+      } else if (val === 'E') {
+        cell.type = "rugs";         // Uses assets under "rugs"
       }
       cell.hasBuilding = true;
       cell.buildingId = buildingId;
     }
   }
 }
+
 
     /*******************************************************
      * CITY SQUARES + MARKET SCATTER
