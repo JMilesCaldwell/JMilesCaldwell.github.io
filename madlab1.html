@@ -2355,24 +2355,55 @@ function canCarveRoadAt(x, y) {
 
     let chosenFloorTile=null;
 
+// Global object to track counts for unique building assets.
+const uniqueBuildingAssets = {
+  toilet: 0 // We only want one building that includes a toilet ("J")
+};
+
+// Helper function to check if a shape's layout contains a given unique asset code.
+function shapeContainsUniqueAsset(shape, assetCode) {
+  for (let y = 0; y < shape.height; y++) {
+    for (let x = 0; x < shape.width; x++) {
+      if (shape.layout[y][x] === assetCode) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Modified createBuildings function that checks for unique assets.
 function createBuildings(numBuildings) {
-  // Randomly choose a floor asset for this map from the alternatives.
-  const possibleFloors = ["floor1", "interiorfloors"];
-  chosenFloorTile = possibleFloors[Math.floor(Math.random() * possibleFloors.length)];
-  
   let attempts = 0, placed = 0;
   const maxAttempts = 10000;
   while (placed < numBuildings && attempts < maxAttempts) {
     attempts++;
+    // Randomly pick a building shape.
     const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
+
+    // Example: if the shape contains a toilet (asset "J") and we've already placed one, skip it.
+    if (shapeContainsUniqueAsset(shape, "J") && uniqueBuildingAssets.toilet >= 1) {
+      continue;
+    }
+
+    // Determine a random position for the building.
     const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
     const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
-    if (canPlaceBuilding(sx, sy, shape)) {
-      placeBuilding(sx, sy, shape);
-      placed++;
+
+    // Only place the building if the area is clear.
+    if (!canPlaceBuilding(sx, sy, shape)) continue;
+
+    // Place the building.
+    placeBuilding(sx, sy, shape);
+    placed++;
+
+    // Update the unique count if the building includes a unique asset.
+    if (shapeContainsUniqueAsset(shape, "J")) {
+      uniqueBuildingAssets.toilet++;
     }
   }
 }
+
 
 
     function canPlaceBuilding(sx, sy, shape){
