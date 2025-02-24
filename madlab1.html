@@ -1188,25 +1188,9 @@ const paramSliders = [
   const tileMenu = document.getElementById("tileMenu");
   tileMenu.innerHTML = "";
 
-  // Add a dedicated "None" button to clear tile selection
-  const noneTileDiv = document.createElement("div");
-  noneTileDiv.className = "tileItem";
-  
-  // You might style this differently if desired
-  const noneLabel = document.createElement("span");
-  noneLabel.textContent = "None";
-  noneTileDiv.appendChild(noneLabel);
-  
-  noneTileDiv.addEventListener("click", () => {
-    currentTileInHand = null; // Clear any chosen tile
-    setMode("placeTile");     // Switch mode if needed
-  });
-  
-  tileMenu.appendChild(noneTileDiv);
-
-  // Create a tile preview for each asset (excluding 'negative' and any dummy 'none' keys)
+  // Loop over the tile assets (excluding 'negative' and 'none')
   for (const tileName in tileAssetMapping) {
-    if (tileName === "negative" || tileName === "none") continue; // Skip these entries
+    if (tileName === "negative" || tileName === "none") continue;
     const files = tileAssetMapping[tileName].files;
     if (!files || files.length === 0) continue;
 
@@ -1232,7 +1216,23 @@ const paramSliders = [
 
     tileMenu.appendChild(tileDiv);
   }
+
+  // Append the dedicated "None" button as the final tile
+  const noneTileDiv = document.createElement("div");
+  noneTileDiv.className = "tileItem none"; // Add a special class for styling
+  
+  const noneLabel = document.createElement("span");
+  noneLabel.textContent = "None";
+  noneTileDiv.appendChild(noneLabel);
+
+  noneTileDiv.addEventListener("click", () => {
+    currentTileInHand = null; // Clear any chosen tile
+    setMode("placeTile");     // Switch mode if needed
+  });
+
+  tileMenu.appendChild(noneTileDiv);
 }
+
 
     function toggleTileMenu(){
       const menu = document.getElementById("tileMenu");
