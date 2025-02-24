@@ -427,6 +427,10 @@
       "junglescatter": {
         folder: "jungle",
         files: ["jungleRoots.png","junglebush.png","junglebush2.png","junglefern.png","junglelog.png","junglelog2.png","junglevines.png"]
+          },
+      "TileSnow": {
+        folder: "snow",
+        files: ["tileSnow1.png","tileSnow2.png"]
       },
       "snow": {
         folder: "snow",
@@ -443,6 +447,10 @@
       "ice": {
         folder: "snow",
         files: ["ice1.png","ice2.png","blueice1.png","blueice2.png"]
+	      },
+      "snowWall": {
+        folder: "snow",
+        files: ["snowwall1.png","snowwall2.png","snowwall3.png"]
       },
       "snowtree": {
         folder: "snow",
@@ -636,9 +644,9 @@
         folder: "buildings/floors",
         files: ["PlainTileRubble1.png", "PlainTileRubble2.png", "PlainTileRubble3.png"]
 	   },
-	   "TileSnow": {
+	   "Tile": {
         folder: "buildings/floors",
-        files: ["tilesnow.png", "tilesnow2.png"]
+        files: ["tile.png", "tile2.png"]
      }
 
     };
@@ -2050,7 +2058,7 @@ function canCarveRoadAt(x, y) {
       const blocked = [
         "negative","wall","water","lava","door",
         "floor1","cobblestone","marble1","marble2","marble3","marble4",
-        "darktile","ancienttile","limestone1","limestone2","limestone3"
+        "darktile","ancienttile","limestone","limestone1","limestone2","limestone3","snowWall"
       ];
       return blocked.includes(cellType);
     }
@@ -2336,7 +2344,14 @@ function placeBuilding(sx, sy, shape) {
       const val = shape.layout[y][x];
       const cell = mapData[sy + y][sx + x];
       if (val === 1) {
-        cell.type = "cobblestone";
+    const theme = document.getElementById('mapType').value;
+  if (theme === 'snow') {
+    cell.type = 'snowWall';
+  } else if (theme === 'desert') {
+    cell.type = 'limestone';
+  } else {
+    cell.type = 'cobblestone';
+  }
       } else if (val === 0) {
         cell.type = chosenFloorTile;
       } else if (val === 2) {
@@ -2656,59 +2671,72 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFi
       scatterPalmsNearWater();
     }
 
-    function createPalmOasis(){
-      const cx = Math.floor(Math.random() * GRID_WIDTH);
-      const cy = Math.floor(Math.random() * GRID_HEIGHT);
-      const waterRadius = 2 + Math.floor(Math.random() * 3);
-      for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
-        for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          if(dx*dx + dy*dy <= waterRadius*waterRadius){
-            mapData[y][x].type = "water";
-          }
+   function createPalmOasis(){
+  const cx = Math.floor(Math.random() * GRID_WIDTH);
+  const cy = Math.floor(Math.random() * GRID_HEIGHT);
+  const waterRadius = 2 + Math.floor(Math.random() * 3);
+  
+  // Create the water circle, skipping cells with buildings or roads.
+  for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
+    for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
+      const dx = x - cx, dy = y - cy;
+      if (dx * dx + dy * dy <= waterRadius * waterRadius){
+        mapData[y][x].type = "water";
+      }
+    }
+  }
+  
+  const beachRadius = waterRadius + 1;
+  // Create the beach area, again skipping cells with buildings or roads.
+  for (let y = cy - beachRadius; y <= cy + beachRadius; y++){
+    for (let x = cx - beachRadius; x <= cx + beachRadius; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
+      const dx = x - cx, dy = y - cy;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > waterRadius * waterRadius && distSq <= beachRadius * beachRadius){
+        mapData[y][x].type = "whitesand";
+      }
+    }
+  }
+  
+  // Randomise the water edge slightly.
+  for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
+    for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
+      const dx = x - cx, dy = y - cy;
+      const distSq = dx * dx + dy * dy;
+      if (distSq > (waterRadius - 1) * (waterRadius - 1) && distSq <= waterRadius * waterRadius){
+        if (Math.random() < 0.3){
+          mapData[y][x].type = "water";
         }
       }
-      const beachRadius = waterRadius + 1;
-      for (let y = cy - beachRadius; y <= cy + beachRadius; y++){
-        for (let x = cx - beachRadius; x <= cx + beachRadius; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          const distSq = dx*dx + dy*dy;
-          if(distSq > waterRadius*waterRadius && distSq <= beachRadius*beachRadius){
-            mapData[y][x].type = "whitesand";
-          }
-        }
-      }
-      for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
-        for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          const distSq = dx*dx + dy*dy;
-          if(distSq > (waterRadius - 1)*(waterRadius - 1) && distSq <= waterRadius*waterRadius){
-            if(Math.random() < 0.3){
-              mapData[y][x].type = "water";
-            }
-          }
-        }
-      }
-      const palmStart = beachRadius + 1;
-      const palmEnd = beachRadius + 3;
-      for (let y = cy - palmEnd; y <= cy + palmEnd; y++){
-        for (let x = cx - palmEnd; x <= cx + palmEnd; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx = x - cx, dy = y - cy;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if(dist >= palmStart && dist <= palmEnd){
-            if(["sand","dune"].includes(mapData[y][x].type)){
-              if(Math.random()<0.4){
-                mapData[y][x].type = "desertPalm";
-              }
-            }
+    }
+  }
+  
+  // Place the desert palms, avoiding buildings and roads.
+  const palmStart = beachRadius + 1;
+  const palmEnd = beachRadius + 3;
+  for (let y = cy - palmEnd; y <= cy + palmEnd; y++){
+    for (let x = cx - palmEnd; x <= cx + palmEnd; x++){
+      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
+      if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
+      const dx = x - cx, dy = y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist >= palmStart && dist <= palmEnd){
+        if (["sand", "dune"].includes(mapData[y][x].type)){
+          if (Math.random() < 0.4){
+            mapData[y][x].type = "desertPalm";
           }
         }
       }
     }
+  }
+}
+
 
     function scatterGrassRocks(num){
       for(let i=0; i<num; i++){
