@@ -276,52 +276,57 @@
     <!-- *** END *** -->
 
     <div class="controls">
-      <label>
-        Occupant Type:
-        <select id="occupantType">
-          <option value="none" selected>None</option>
-          <option value="player">Player</option>
-          <option value="enemy">Enemy</option>
-          <option value="npc">NPC</option>
-        </select>
-      </label>
-      <label>
-        Sprite:
-        <select id="occupantSprite">
-          <option value="none" selected>None</option>
-          <option value="paladin">paladin</option>
-          <option value="fighter">fighter</option>
-          <option value="guardian">guardian</option>
-          <option value="halfblood">halfblood</option>
-          <option value="berserker">berserker</option>
-          <option value="assassin">assassin</option>
-          <option value="warlock">warlock</option>
-          <option value="sorcerer">sorcerer</option>
-          <option value="priestess">priestess</option>
-          <option value="cleric">cleric</option>
-          <option value="druid">druid</option>
-          <option value="demon">demon</option>
-          <option value="mage">mage</option>
-          <option value="serpent">serpent</option>
-          <option value="chimera">chimera</option>
-          <option value="ogre">ogre</option>
-          <option value="edgelord">edgelord</option>
-          <option value="fallenangel">fallenangel</option>
-          <option value="darkpriestess">darkpriestess</option>
-          <option value="darkguard">darkguard</option>
-          <option value="cultist">cultist</option>
-          <option value="goblin">goblin</option>
-          <option value="spider">spider</option>
-          <option value="bat">bat</option>
-          <option value="zombie">zombie</option>
-          <option value="orc">orc</option>
-          <option value="orcbandit">orcbandit</option>
-          <option value="orcchief">orcchief</option>
-          <option value="orcshaman">orcshaman</option>
-          <option value="orcfighter">orcfighter</option>
-        </select>
-      </label>
-    </div>
+  <label>
+    Occupant Type:
+    <select id="occupantType">
+      <option value="none" selected>None</option>
+      <option value="player">Player</option>
+      <option value="enemy">Enemy</option>
+      <option value="npc">NPC</option>
+    </select>
+  </label>
+  <label>
+    Sprite:
+    <select id="occupantSprite">
+      <option value="none" selected>None</option>
+      <option value="paladin">paladin</option>
+      <option value="fighter">fighter</option>
+      <option value="guardian">guardian</option>
+      <option value="halfblood">halfblood</option>
+      <option value="berserker">berserker</option>
+      <option value="assassin">assassin</option>
+      <option value="warlock">warlock</option>
+      <option value="sorcerer">sorcerer</option>
+      <option value="priestess">priestess</option>
+      <option value="cleric">cleric</option>
+      <option value="druid">druid</option>
+      <option value="demon">demon</option>
+      <option value="mage">mage</option>
+      <option value="serpent">serpent</option>
+      <option value="chimera">chimera</option>
+      <option value="ogre">ogre</option>
+      <option value="edgelord">edgelord</option>
+      <option value="fallenangel">fallenangel</option>
+      <option value="darkpriestess">darkpriestess</option>
+      <option value="darkguard">darkguard</option>
+      <option value="cultist">cultist</option>
+      <option value="goblin">goblin</option>
+      <option value="spider">spider</option>
+      <option value="bat">bat</option>
+      <option value="zombie">zombie</option>
+      <option value="orc">orc</option>
+      <option value="orcbandit">orcbandit</option>
+      <option value="orcchief">orcchief</option>
+      <option value="orcshaman">orcshaman</option>
+      <option value="orcfighter">orcfighter</option>
+    </select>
+  </label>
+  <!-- New transparent container for the sprite preview -->
+  <div id="spritePreviewContainer" style="background: rgba(0, 0, 0, 0.5); padding: 5px; border-radius: 5px; display: inline-block; vertical-align: middle; margin-left: 10px;">
+    <img id="spritePreview" src="" alt="Sprite Preview" style="width: 50px; height: 50px; object-fit: contain; display: none;">
+  </div>
+</div>
+
 
     <div class="controls">
       <button class="mapButton" onclick="clearOccupantSelection()">Clear</button>
@@ -807,6 +812,7 @@
       });
     }
 
+    
     function weightedRandomIndex(weights) {
       const total = weights.reduce((sum, weight) => sum + weight, 0);
       let random = Math.random() * total;
@@ -3340,6 +3346,24 @@ function scatterCratesAroundCamp(sx, sy, shape) {
         setupTileMenu();
         generateMap();
 
+document.getElementById("occupantSprite").addEventListener("change", function() {
+  const sprite = this.value;
+  const previewImg = document.getElementById("spritePreview");
+  if (sprite === "none") {
+    previewImg.style.display = "none";
+    previewImg.src = "";
+  } else {
+    previewImg.style.display = "block";
+    if (occupantSpritesMap[sprite] && occupantSpritesMap[sprite].complete) {
+      previewImg.src = occupantSpritesMap[sprite].src;
+    } else {
+      // Optional: set a placeholder or leave it empty
+      previewImg.src = "";
+    }
+  }
+});
+
+        
         // Fullscreen button
         document.getElementById('fullscreenBtn').addEventListener('click', function() {
           const mapWrapper = document.querySelector('.mapWrapper');
