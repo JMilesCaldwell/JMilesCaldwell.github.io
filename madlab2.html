@@ -710,6 +710,22 @@
       "beds": {
         folder: "misc",
         files: ["bed1.png","bed2.png","bed3.png","bed4.png"]
+      },
+            "bottleshelf": {
+        folder: "misc",
+        files: ["barrelshelf.png","barrelshelf2.png"]
+      },
+      "barrelshelf": {
+        folder: "misc",
+        files: ["bottleshelf.png","bottleshelf2.png","bottleshelf3.png"]
+      },
+      "cabinet": {
+        folder: "misc",
+        files: ["kitchencabinet.png","cluttercabinet.png"]
+      },	
+      "kitchenblock": {
+        folder: "misc",
+        files: ["kitchenblock.png"]
       }
     };
 
@@ -2071,6 +2087,66 @@
     /*******************************************************
      * BUILDINGS
      *******************************************************/
+/* 
+  Building Shapes Asset Legend:
+  
+  Numerical Codes:
+  ----------------
+  1 : Outer Wall 
+      // Rendered as cobblestone, snowWall, or limestone depending on the current theme.
+  0 : Floor 
+      // Rendered using a chosen floor asset (e.g. "floor1" or "interiorfloors").
+  2 : Door 
+      // Processed into a door tile (either "door" or "doorWood2" after door grouping).
+  3 : Courtyard Flag 
+      // Used to mark interior courtyard areas; may trigger special decorations.
+  4 : Road Tile 
+      // A road segment; determined via getRoadTile() logic.
+  5 : Marble Floor 
+      // Renders a marble floor variant.
+  6 : Dark Tile 
+      // Renders a dark stone or dark tile texture.
+  7 : Lava Feature 
+      // Indicates a lava element integrated into the building.
+  8 : Water Feature 
+      // Indicates a water element integrated into the building.
+  9 : Chests 
+      // Used for furnishings such as chests.
+  
+  New Alphabetical Codes:
+  -----------------------
+  A : Fireplace 
+      // Renders a fireplace using the corresponding "fireplace" asset.
+  B : Anvil 
+      // Renders an anvil.
+  C : Beds 
+      // Renders bed assets for sleeping quarters.
+  D : Bookcases 
+      // Renders bookcases (or similar furniture) using the "books" asset.
+  E : Rugs 
+      // Renders rugs using the "rugs" asset.
+  F : Forge 
+      // Renders the "forge" asset.
+  G : Weapon rack 
+      // Renders rugs using the "weaponrack" asset.
+  H : apothecary 
+      // A cabinet full of potions.
+  I : Counter 
+      // For all your financial transactions.
+  J: Toilet
+     // For all your fecal transactions
+  K: Cabinet
+    // For storing food and stuffs
+  L: Kitchen block
+    // to cook said food on
+  M: barrelshelf
+    // to store oil, water, or much more likely, beer.
+  N: bottleshelf
+   //  A shelf for bottles, what else.
+
+*/
+
+
     const buildingShapes = [
       {
         width: 5,
@@ -2100,7 +2176,7 @@
         height: 7,
         layout: [
           [1,1,1,1,"A",1,1],
-          [1,0,2,0,0,"C",1],
+          [1,"K",2,0,0,"C",1],
           [1,1,1,0,0,0,1],
           [1,"D","D",0,0,0,1],
           [1,0,0,"E",0,0,1], 
@@ -2126,11 +2202,11 @@
         height: 9,
         layout: [
           [1,1,1,2,1,1],
-          [1,3,4,4,4,1],
+          [1,"M",4,4,4,1],
           [1,3,4,4,4,2],
           [1,3,3,4,3,1], 
           [1,1,1,2,1,1],
-          [1,5,6,5,6,1],
+          ["N","L",6,"K","K",1],
           [1,6,5,6,5,1],
           [1,5,6,5,6,1],
           [1,1,2,2,1,1]
@@ -2428,6 +2504,14 @@
             cell.type = "counter";
           } else if (val === "J") {
             cell.type = "toilet";
+          } else if (val === "K") {
+            cell.type = "cabinet";
+          } else if (val === "L") {
+            cell.type = "kitchenblock";
+          } else if (val === "M") {
+            cell.type = "barrelshelf";
+          } else if (val === "N") {
+            cell.type = "bottleshelf";
           } else {
             console.warn(`Unrecognized building shape value: ${val}`);
           }
