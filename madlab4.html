@@ -2948,8 +2948,17 @@
         height: 3,
         layout: [
           [0, "K", 0],
-          [0, 0, 0],
-          [0, "L", 0]
+          ["M", 0, 0],
+          [0, "L", "M"]
+        ]
+      },
+      {
+        width: 3,
+        height: 3,
+        layout: [
+          ["M", 0, "L"],
+          [0, "K", 0],
+          [0, "L", "M"]
         ]
       },
       {
@@ -2958,7 +2967,7 @@
         layout: [
           [0, "K", 0, 0],
           [0, 0, 0, 0],
-          ["L", 0, 0, 0],
+          ["L", 0, "M", 0],
           [0, 0, "K", 0]
         ]
       }
@@ -3006,23 +3015,26 @@
       return true;
     }
 
-    function placeCamp(sx, sy, shape) {
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
-          const val = shape.layout[y][x];
-          const cell = mapData[sy + y][sx + x];
-          if (val === 0) {
-            // Turn it into campsite ground
-            cell.type = "dirt";
-          } else if (val === "K") {
-            cell.type = "Yurt";
-          } else if (val === "L") {
-            cell.type = "campsite";
-          }
-          cell.hasBuilding = true; // treat camps as “buildings” for collision
-        }
+function placeCamp(sx, sy, shape) {
+  for (let y = 0; y < shape.height; y++) {
+    for (let x = 0; x < shape.width; x++) {
+      const val = shape.layout[y][x];
+      const cell = mapData[sy + y][sx + x];
+
+      if (val === 0) {
+        cell.type = "campsite";
+      } else if (val === "K") {
+        cell.type = "Yurt";
+      } else if (val === "L") {
+        cell.type = "campfire";
+      } else if (val === "M") {
+        cell.type = "crate";
       }
+      
+      cell.hasBuilding = true;
     }
+  }
+}
 
     /*******************************************************
      * DRAWING
