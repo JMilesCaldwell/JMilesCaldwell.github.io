@@ -2748,8 +2748,7 @@ function adjustWallPosition(start, length, gridSize) {
   return (start + length > gridSize) ? gridSize - length : start;
 }
 
-// Updated version of createIrregularCityWalls() with a cityWallLength slider integration.
-// Modified carveWallBand to accept a usePallisade flag.
+// Modified carveWallBand: set cell.type to "pallisade" when appropriate.
 function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile, usePallisade) {
   for (let i = 0; i < thickness; i++) {
     const xx = baseX + (horizontal ? 0 : i + offset);
@@ -2759,15 +2758,16 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFi
     if (cell.type === "towersmall") continue;
     if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") continue;
     
-    cell.type = "wall";
-    // Keep darkStoneBlock placement unchanged.
+    // Decide texture: keep darkStoneBlock in some cases, else use pallisade in special biomes.
     if ((xx + yy) % 3 === 0) {
+      cell.type = "wall";
       cell.chosenWallFile = "darkStoneBlock.png";
     } else {
-      // For jungle, forest and snow, use the pallisade asset.
       if (usePallisade) {
-        cell.chosenWallFile = "pallisade";
+        cell.type = "pallisade";  // Change the type so that drawing looks up the correct asset.
+        cell.chosenWallFile = "pallisade.png"; // Optional, for reference.
       } else {
+        cell.type = "wall";
         const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
         cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
       }
@@ -2775,7 +2775,7 @@ function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFi
   }
 }
 
-// Modified carveWallEdge to pass along the usePallisade flag.
+// The carveWallEdge function now passes along the usePallisade flag.
 function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal, usePallisade) {
   const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
   const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
@@ -2786,7 +2786,6 @@ function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal, us
       placeTower(cx, cy);
       return;
     }
-    
     const nextX = cx + dx, nextY = cy + dy;
     if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
       if (isRoadLike(mapData[nextY][nextX].type)) {
@@ -2794,7 +2793,6 @@ function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal, us
         return;
       }
     }
-    
     // Pass the usePallisade flag to carveWallBand.
     carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile, usePallisade);
     cx += dx;
@@ -2803,30 +2801,27 @@ function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal, us
   placeTower(cx, cy);
 }
 
-// Modified createIrregularCityWalls to determine the biome and set the flag.
+// In createIrregularCityWalls, determine whether to use pallisade.
 function createIrregularCityWalls() {
-  // Original dark stone options.
   const darkStoneWallFiles = [
     "darkStoneBlock.png",
     "darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"
   ];
   const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
   
-  // Determine the current biome/theme.
   const theme = document.getElementById('mapType').value;
-  // For jungle, forest, or snow biomes, enable pallisade texture for non-darkStoneBlock tiles.
   const usePallisade = (theme === "jungle" || theme === "forest" || theme === "snow");
   
-  // Define wall dimensions (using existing logic).
-  let rectW = sliderCache["cityWallLength"] ? parseInt(sliderCache["cityWallLength"].value) : Math.floor(GRID_WIDTH / 2);
-  let rectH = rectW; // Adjust proportions as needed.
+  let rectW = sliderCache["cityWallLength"] 
+    ? parseInt(sliderCache["cityWallLength"].value)
+    : Math.floor(GRID_WIDTH / 2);
+  let rectH = rectW;
   let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - rectW - 4));
   let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - rectH - 4));
   const thickness = 1 + Math.floor(Math.random() * 1);
   startX = adjustWallPosition(startX, rectW, GRID_WIDTH);
   startY = adjustWallPosition(startY, rectH, GRID_HEIGHT);
   
-  // Set city wall bounds.
   cityWallBounds = {
     x: startX + thickness,
     y: startY + thickness,
@@ -2834,18 +2829,17 @@ function createIrregularCityWalls() {
     h: rectH - thickness * 2
   };
   
-  // Place towers at the corners.
   placeTower(startX, startY);
   placeTower(startX + rectW - 1, startY);
   placeTower(startX + rectW - 1, startY + rectH - 1);
   placeTower(startX, startY + rectH - 1);
   
-  // Carve the wall edges, now passing the usePallisade flag.
   carveWallEdge(chosenWallFile, startX, startY, startX + rectW - 1, startY, thickness, true, usePallisade);
   carveWallEdge(chosenWallFile, startX + rectW - 1, startY, startX + rectW - 1, startY + rectH - 1, thickness, false, usePallisade);
   carveWallEdge(chosenWallFile, startX + rectW - 1, startY + rectH - 1, startX, startY + rectH - 1, thickness, true, usePallisade);
   carveWallEdge(chosenWallFile, startX, startY + rectH - 1, startX, startY, thickness, false, usePallisade);
 }
+
 
     /*******************************************************
      * BIOME DECORATION
@@ -3076,75 +3070,91 @@ function canFindConsecutiveWaterLine(x, y, length) {
       }
     }
 
-    function drawCell(ctx,gx,gy){
-      const cell=mapData[gy][gx];
-      const px=gx*TILE_SIZE, py=gy*TILE_SIZE;
+   function drawCell(ctx, gx, gy) {
+  const cell = mapData[gy][gx];
+  const px = gx * TILE_SIZE, py = gy * TILE_SIZE;
 
-      if(cell.type === "water") {
-        const arr = tileTextures["water"];
-        if(arr.length > 0){
-          if(cell._chosenTileIndex == null){
-            const weights = [60, 10, 10, 5, 5, 10];
-            cell._chosenTileIndex = weightedRandomIndex(weights);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if(chosen && chosen.complete){
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
+  if (cell.type === "pallisade") {
+    const arr = tileTextures["pallisade"] || [];
+    if (arr.length > 0) {
+      // With a single texture, we simply use the first element.
+      const chosen = arr[0];
+      if (chosen && chosen.complete) {
+        ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
       } else {
-        const arr = tileTextures[cell.type] || [];
-        if(arr.length > 0){
-          if(cell._chosenTileIndex == null){
-            cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if(chosen && chosen.complete){
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
+        ctx.fillStyle = getColorForTileType("pallisade");
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
       }
-
-      if(cell.type==="farmland" && cell.crop!==undefined){
-        const farmlandImgs=tileTextures["farmland"];
-        const chosen = farmlandImgs[cell.crop];
-        if(chosen && chosen.complete){
-          ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle=getColorForTileType("farmland");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else if(cell.type==="wall" && cell.chosenWallFile){
-        const arr = tileTextures["wall"] || [];
-        const forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
-        if(forcedImg && forcedImg.complete){
-          ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle=getColorForTileType("wall");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-
-      if(cell.occupant){
-        drawOccupantSprite(ctx, cell.occupant, px, py);
-      }
-
-      ctx.strokeStyle="rgba(0,0,0,0.3)";
-      ctx.strokeRect(px,py,TILE_SIZE,TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType("pallisade");
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
     }
+  } else if (cell.type === "water") {
+    const arr = tileTextures["water"] || [];
+    if (arr.length > 0) {
+      if (cell._chosenTileIndex == null) {
+        const weights = [60, 10, 10, 5, 5, 10];
+        cell._chosenTileIndex = weightedRandomIndex(weights);
+      }
+      const chosen = arr[cell._chosenTileIndex];
+      if (chosen && chosen.complete) {
+        ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = getColorForTileType(cell.type);
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+    } else {
+      ctx.fillStyle = getColorForTileType(cell.type);
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  } else if (cell.type === "wall" && cell.chosenWallFile) {
+    const arr = tileTextures["wall"] || [];
+    const forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
+    if (forcedImg && forcedImg.complete) {
+      ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType("wall");
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  } else if (cell.type === "farmland" && cell.crop !== undefined) {
+    const farmlandImgs = tileTextures["farmland"] || [];
+    const chosen = farmlandImgs[cell.crop];
+    if (chosen && chosen.complete) {
+      ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType("farmland");
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  } else {
+    // Default: use cell.type to index the texture collection.
+    const arr = tileTextures[cell.type] || [];
+    if (arr.length > 0) {
+      if (cell._chosenTileIndex == null) {
+        cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
+      }
+      const chosen = arr[cell._chosenTileIndex];
+      if (chosen && chosen.complete) {
+        ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = getColorForTileType(cell.type);
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+    } else {
+      ctx.fillStyle = getColorForTileType(cell.type);
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  }
+
+  // Draw occupant sprite if present.
+  if (cell.occupant) {
+    drawOccupantSprite(ctx, cell.occupant, px, py);
+  }
+
+  // Draw grid border.
+  ctx.strokeStyle = "rgba(0,0,0,0.3)";
+  ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+}
+
 
     function drawOccupantSprite(ctx, occupant, px, py){
       if(occupant.sprite && occupant.sprite!=="none"){
