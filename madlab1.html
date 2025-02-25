@@ -2749,71 +2749,44 @@ function adjustWallPosition(start, length, gridSize) {
 }
 
 // Updated version of createIrregularCityWalls() with a cityWallLength slider integration.
-function createIrregularCityWalls() {
-  // Choose a wall texture from a set of dark stone files.
-  const darkStoneWallFiles = [
-    "darkStoneBlock.png",
-    "darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"
-  ];
-  const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
-
-  // Use the new slider value for cityWallLength if available; otherwise, default to half the grid width.
-  const wallLength = sliderCache["cityWallLength"] 
-    ? parseInt(sliderCache["cityWallLength"].value) 
-    : Math.floor(GRID_WIDTH / 2);
-  
-  // Define the wall dimensions.
-  let rectW = wallLength;
-  let rectH = wallLength; // adjust proportions if desired
-
-  // Calculate initial starting positions with a margin.
-  let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - rectW - 4));
-  let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - rectH - 4));
-
-  // Define wall thickness.
-  const thickness = 1 + Math.floor(Math.random() * 1); // adjust as needed
-
-  // Adjust positions so the wall fits.
-  startX = adjustWallPosition(startX, rectW, GRID_WIDTH);
-  startY = adjustWallPosition(startY, rectH, GRID_HEIGHT);
-  
-  // Set the city wall bounds.
-  cityWallBounds = {
-    x: startX + thickness,
-    y: startY + thickness,
-    w: rectW - thickness * 2,
-    h: rectH - thickness * 2
-  };
-
-  // Place towers at the four corners.
-  // Use (startX, startY) and (startX+rectW-1, startY+rectH-1) so that these indices are inside the wall.
-  placeTower(startX, startY);
-  placeTower(startX + rectW - 1, startY);
-  placeTower(startX + rectW - 1, startY + rectH - 1);
-  placeTower(startX, startY + rectH - 1);
-  
-  // Now carve the wall edges.
-  carveWallEdge(chosenWallFile, startX,         startY,         startX + rectW - 1, startY,         thickness, true);
-  carveWallEdge(chosenWallFile, startX + rectW - 1, startY,         startX + rectW - 1, startY + rectH - 1, thickness, false);
-  carveWallEdge(chosenWallFile, startX + rectW - 1, startY + rectH - 1, startX,         startY + rectH - 1, thickness, true);
-  carveWallEdge(chosenWallFile, startX,         startY + rectH - 1, startX,         startY,         thickness, false);
+// Modified carveWallBand to accept a usePallisade flag.
+function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile, usePallisade) {
+  for (let i = 0; i < thickness; i++) {
+    const xx = baseX + (horizontal ? 0 : i + offset);
+    const yy = baseY + (horizontal ? i + offset : 0);
+    if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
+    const cell = mapData[yy][xx];
+    if (cell.type === "towersmall") continue;
+    if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") continue;
+    
+    cell.type = "wall";
+    // Keep darkStoneBlock placement unchanged.
+    if ((xx + yy) % 3 === 0) {
+      cell.chosenWallFile = "darkStoneBlock.png";
+    } else {
+      // For jungle, forest and snow, use the pallisade asset.
+      if (usePallisade) {
+        cell.chosenWallFile = "pallisade.png";
+      } else {
+        const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
+        cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
+      }
+    }
+  }
 }
 
-
-    
-function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
+// Modified carveWallEdge to pass along the usePallisade flag.
+function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal, usePallisade) {
   const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
   const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
   let cx = x1, cy = y1;
   
   while (cx !== x2 || cy !== y2) {
-    // NEW: Check if the current cell is adjacent to a road.
     if (hasAdjacentRoad(cx, cy)) {
       placeTower(cx, cy);
       return;
     }
     
-    // Existing check: if the NEXT cell is roadlike...
     const nextX = cx + dx, nextY = cy + dy;
     if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
       if (isRoadLike(mapData[nextY][nextX].type)) {
@@ -2822,38 +2795,57 @@ function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal) {
       }
     }
     
-    // Carve the wall band (if not already a tower)
-    carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile);
+    // Pass the usePallisade flag to carveWallBand.
+    carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile, usePallisade);
     cx += dx;
     cy += dy;
   }
-  // At the very end, place a tower.
   placeTower(cx, cy);
 }
 
-
-function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile) {
-  for (let i = 0; i < thickness; i++) {
-    const xx = baseX + (horizontal ? 0 : i + offset);
-    const yy = baseY + (horizontal ? i + offset : 0);
-    if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
-    const cell = mapData[yy][xx];
-    // If this cell is already a tower, leave it.
-    if (cell.type === "towersmall") continue;
-    // Skip if it's a road or woodfloor.
-    if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") continue;
-    // Set as a wall tile.
-    if ((xx + yy) % 3 === 0) {
-      cell.type = "wall";
-      cell.chosenWallFile = "darkStoneBlock.png";
-    } else {
-      cell.type = "wall";
-      const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
-      cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
-    }
-  }
+// Modified createIrregularCityWalls to determine the biome and set the flag.
+function createIrregularCityWalls() {
+  // Original dark stone options.
+  const darkStoneWallFiles = [
+    "darkStoneBlock.png",
+    "darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"
+  ];
+  const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
+  
+  // Determine the current biome/theme.
+  const theme = document.getElementById('mapType').value;
+  // For jungle, forest, or snow biomes, enable pallisade texture for non-darkStoneBlock tiles.
+  const usePallisade = (theme === "jungle" || theme === "forest" || theme === "snow");
+  
+  // Define wall dimensions (using existing logic).
+  let rectW = sliderCache["cityWallLength"] ? parseInt(sliderCache["cityWallLength"].value) : Math.floor(GRID_WIDTH / 2);
+  let rectH = rectW; // Adjust proportions as needed.
+  let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - rectW - 4));
+  let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - rectH - 4));
+  const thickness = 1 + Math.floor(Math.random() * 1);
+  startX = adjustWallPosition(startX, rectW, GRID_WIDTH);
+  startY = adjustWallPosition(startY, rectH, GRID_HEIGHT);
+  
+  // Set city wall bounds.
+  cityWallBounds = {
+    x: startX + thickness,
+    y: startY + thickness,
+    w: rectW - thickness * 2,
+    h: rectH - thickness * 2
+  };
+  
+  // Place towers at the corners.
+  placeTower(startX, startY);
+  placeTower(startX + rectW - 1, startY);
+  placeTower(startX + rectW - 1, startY + rectH - 1);
+  placeTower(startX, startY + rectH - 1);
+  
+  // Carve the wall edges, now passing the usePallisade flag.
+  carveWallEdge(chosenWallFile, startX, startY, startX + rectW - 1, startY, thickness, true, usePallisade);
+  carveWallEdge(chosenWallFile, startX + rectW - 1, startY, startX + rectW - 1, startY + rectH - 1, thickness, false, usePallisade);
+  carveWallEdge(chosenWallFile, startX + rectW - 1, startY + rectH - 1, startX, startY + rectH - 1, thickness, true, usePallisade);
+  carveWallEdge(chosenWallFile, startX, startY + rectH - 1, startX, startY, thickness, false, usePallisade);
 }
-
 
     /*******************************************************
      * BIOME DECORATION
