@@ -3248,20 +3248,23 @@ function drawOccupantSprite(ctx, occupant, px, py) {
           updateNameOverlay();
           }
           break;
-        case "move":
-          if(!occupantInHand){
-            if(tile.occupant){
-              occupantInHand=tile.occupant;
-              tile.occupant=null;
-              drawCell(canvas.getContext("2d"),tx,ty);
-          updateNameOverlay();
-            }
-          } else {
-            tile.occupant=occupantInHand;
-            occupantInHand=null;
-            drawCell(canvas.getContext("2d"),tx,ty);
-          }
-          break;
+case "move":
+  if (!occupantInHand) {
+    // Picking up occupant
+    if (tile.occupant) {
+      occupantInHand = tile.occupant;
+      tile.occupant = null;
+      drawCell(canvas.getContext("2d"), tx, ty);
+      updateNameOverlay(); // Already there
+    }
+  } else {
+    // Placing occupant
+    tile.occupant = occupantInHand;
+    occupantInHand = null;
+    drawCell(canvas.getContext("2d"), tx, ty);
+    **updateNameOverlay(); // <-- Make sure this is added**
+  }
+  break;
         case "placeTile":
           if(currentTileInHand){
             tile.type = currentTileInHand;
