@@ -348,10 +348,12 @@
     </div>
     
     <!-- The map / canvas wrapper -->
-    <div class="mapWrapper">
-      <button id="fullscreenBtn" class="fullscreenBtn">Fullscreen</button>
-      <canvas id="mapCanvas" width="1000" height="1000"></canvas>
-    </div>
+<div class="mapWrapper">
+  <button id="fullscreenBtn" class="fullscreenBtn">Fullscreen</button>
+  <canvas id="mapCanvas" width="1000" height="1000"></canvas>
+  <div id="nameOverlay" style="position:absolute;top:0;left:0;width:1000px;height:1000px;pointer-events:none;"></div>
+</div>
+
 
     <!-- Navigation and new Import/Export features -->
     <div style="margin-top: 1rem;">
@@ -3042,15 +3044,18 @@ function showOccupantNames() {
      * DRAWING
      *******************************************************/
     function drawMap(){
-      const canvas=document.getElementById("mapCanvas");
-      const ctx=canvas.getContext("2d");
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(let y=0;y<GRID_HEIGHT;y++){
-        for(let x=0;x<GRID_WIDTH;x++){
-          drawCell(ctx,x,y);
-        }
-      }
+  const canvas = document.getElementById("mapCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for(let y = 0; y < GRID_HEIGHT; y++){
+    for(let x = 0; x < GRID_WIDTH; x++){
+      drawCell(ctx, x, y);
     }
+  }
+  updateNameOverlay(); // Refresh the occupant names overlay.
+}
+
 
     function drawCell(ctx, gx, gy) {
   const cell = mapData[gy][gx];
@@ -3141,7 +3146,7 @@ function showOccupantNames() {
 }
 
 function drawOccupantSprite(ctx, occupant, px, py) {
-  // Draw the occupant sprite
+  // Draw the occupant sprite as before.
   if (occupant.sprite && occupant.sprite !== "none") {
     const spr = occupantSpritesMap[occupant.sprite];
     if (spr && spr.complete) {
@@ -3155,11 +3160,42 @@ function drawOccupantSprite(ctx, occupant, px, py) {
     ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
   }
   
-  // Draw border in the occupant type colour
+  // Draw a border around the sprite.
   const borderColor = occupantColours[occupant.type] || "#FF00FF";
   ctx.strokeStyle = borderColor;
   ctx.lineWidth = 1;
   ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+}
+
+    function updateNameOverlay(){
+  const overlay = document.getElementById("nameOverlay");
+  if(!overlay) return;
+  overlay.innerHTML = ""; // Clear previous name elements.
+  
+  for(let y = 0; y < GRID_HEIGHT; y++){
+    for(let x = 0; x < GRID_WIDTH; x++){
+      const cell = mapData[y][x];
+      if(cell.occupant && cell.occupant.name && showOccupantNames()){
+        const nameDiv = document.createElement("div");
+        nameDiv.textContent = cell.occupant.name;
+        nameDiv.style.position = "absolute";
+        nameDiv.style.whiteSpace = "nowrap";
+        nameDiv.style.font = "10px sans-serif";
+        // Use the occupant's colour or default.
+        nameDiv.style.color = occupantColours[cell.occupant.type] || "#FF00FF";
+        // Position the name centered below the sprite within the same cell.
+        nameDiv.style.left = (x * TILE_SIZE + TILE_SIZE/2) + "px";
+        // Position it just below the cell.
+        nameDiv.style.top = (y * TILE_SIZE + TILE_SIZE) + "px";
+        nameDiv.style.transform = "translate(-50%, 0)"; 
+        // Optionally, add a subtle text shadow for legibility.
+        nameDiv.style.textShadow = "1px 1px 2px black";
+        overlay.appendChild(nameDiv);
+      }
+    }
+  }
+}
+
   
   // Draw the occupant's name as an overlay inside the tile if enabled
   if (occupant.name && showOccupantNames()) {
@@ -3194,9 +3230,14 @@ function drawOccupantSprite(ctx, occupant, px, py) {
     const canvas=document.getElementById("mapCanvas");
     const mapWrapper=document.querySelector(".mapWrapper");
 
-    function updateCanvasTransform(){
-      canvas.style.transform=`translate(${offsetX}px,${offsetY}px) scale(${scale})`;
-    }
+   function updateCanvasTransform(){
+  canvas.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
+  const overlay = document.getElementById("nameOverlay");
+  if(overlay) {
+    overlay.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
+  }
+}
+
 
     canvas.addEventListener("click", (e) => {
       if(isDragging || activePointers.size>1) return;
