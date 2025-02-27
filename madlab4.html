@@ -2354,17 +2354,76 @@
       }
     }
 
-    // (Existing building shapes remain)
+/* 
+  Building Shapes Asset Legend:
+  
+  Numerical Codes:
+  ----------------
+  1 : Outer Wall 
+      // Rendered as cobblestone, snowWall, or limestone depending on the current theme.
+  0 : Floor 
+      // Rendered using a chosen floor asset (e.g. "floor1" or "interiorfloors").
+  2 : Door 
+      // Processed into a door tile (either "door" or "doorWood2" after door grouping).
+  3 : Courtyard Flag 
+      // Used to mark interior courtyard areas; may trigger special decorations.
+  4 : Road Tile 
+      // A road segment; determined via getRoadTile() logic.
+  5 : Marble Floor 
+      // Renders a marble floor variant.
+  6 : Dark Tile 
+      // Renders a dark stone or dark tile texture.
+  7 : Lava Feature 
+      // Indicates a lava element integrated into the building.
+  8 : Water Feature 
+      // Indicates a water element integrated into the building.
+  9 : Chests 
+      // Used for furnishings such as chests.
+  
+  New Alphabetical Codes:
+  -----------------------
+  A : Fireplace 
+      // Renders a fireplace using the corresponding "fireplace" asset.
+  B : Anvil 
+      // Renders an anvil.
+  C : Beds 
+      // Renders bed assets for sleeping quarters.
+  D : Bookcases 
+      // Renders bookcases (or similar furniture) using the "books" asset.
+  E : Rugs 
+      // Renders rugs using the "rugs" asset.
+  F : Forge 
+      // Renders the "forge" asset.
+  G : Weapon rack 
+      // Renders rugs using the "weaponrack" asset.
+  H : apothecary 
+      // A cabinet full of potions.
+  I : Counter 
+      // For all your financial transactions.
+*/
+
+	  
     const buildingShapes = [
       {
         width: 5,
         height: 6,
         layout: [
           [1,1,"A",1,1],
-          [1,"L",0,0,1],
+          [1,0,0,"C",1],
           [1,0,0,0,1],
           [1,0,"E",0,1],
-          [1,0,0,"C",1], 
+          [1,0,0,0,1], 
+          [1,1,2,1,1]
+        ]
+      },
+	              {
+        width: 5,
+        height:5,
+        layout: [
+          [1,1,"A",1,1],
+	  [1,9,0,0,1],	 	
+          [1,"C","E",0,1],
+          [1,0,0,"C",1],
           [1,1,2,1,1]
         ]
       },
@@ -2373,16 +2432,152 @@
         height: 7,
         layout: [
           [1,1,1,1,"A",1,1],
-          [1,"K",2,0,0,"C",1],
+          [1,0,2,0,0,"C",1],
           [1,1,1,0,0,0,1],
-          [1,"L","N",0,0,0,1],
+          [1,"D","D",0,0,0,1],
           [1,0,0,"E",0,0,1], 
           [1,0,0,0,0,0,1],
           [1,1,1,2,1,1,1]
         ]
       },
-      // Add your existing building shapes here...
+      {
+        width: 9,
+        height: 7,
+        layout: [
+          [1,1,1,1,1,1,1,1,1],
+          [1,"D","D","D","D","D","D","D",1],
+          [1,0,0,0,0,0,0,0,1],
+          [1,9,0,0,1,"A",1,0,2],
+          [1,0,"E",0,0,0,"E",0,1], 
+          [1,0,0,0,0,0,0,0,1],
+          [1,1,1,1,2,1,1,1,1]
+        ]
+      },
+      {
+        width: 7,
+        height: 9,
+        layout: [
+          [1,1,1,2,1,1],
+          [1,3,4,4,4,1],
+          [1,3,4,4,4,2],
+          [1,3,3,4,3,1], 
+          [1,1,1,2,1,1],
+          [1,5,6,5,6,1],
+          [1,6,5,6,5,1],
+          [1,5,6,5,6,1],
+          [1,1,2,2,1,1]
+        ]
+      },
+      {
+        width: 7,
+        height: 9,
+        layout: [
+          [1,1,2,1,1,1,1],
+          [1,"D",0,"D",1,4,3],
+          [1,0,0,0,1,4,1],
+          [1,"C",0,0,1,4,3], 
+          [1,0,0,0,2,4,1],
+          [1,0,0,0,1,4,3],
+          [1,0,0,"C",1,4,1],
+          [1,0,0,0,1,4,3],
+          [1,1,1,2,1,1,1]
+        ]
+      },
+      {
+        width: 8,
+        height: 9,
+        layout: [
+          [1,1,"A",1,1,1,1,1],
+          [1,"C",0,"C",1,0,0,1],
+          [1,0,"E",0,2,0,0,2],
+          [1,0,0,0,1,0,0,1], 
+          [1,1,2,1,1,1,1,1],
+          [1,1,5,6,5,6,1,1],
+          [1,5,6,5,6,5,6,1],
+          [1,6,5,6,5,6,5,1],
+          [1,1,1,2,2,1,1,1]
+        ]
+      },
+      {
+        width: 8,
+        height: 9,
+        layout: [
+          [1,1,1,1,1,1,1,1],
+          [1,6,6,0,0,"F",0,1],
+          [1,7,6,0,"B",0,0,2],
+          [1,6,6,0,0,0,0,1], 
+          [1,1,1,1,2,1,1,1],
+          [1,6,"G",6,5,"G",6,1],
+          [1,5,6,5,6,5,6,1],
+          [1,6,5,6,5,6,5,1],
+          [1,1,1,2,2,1,1,1]
+        ]
+      },
+      {
+        width: 5,
+        height:5,
+        layout: [
+          [3,3,3,3,3],
+	  [3,3,3,3,3],	 	
+          [1,1,1,1,1],
+          [1,"J",1,"J",1],
+          [1,2,1,2,1]
+        ]
+      },
+	          {
+        width: 5,
+        height:5,
+        layout: [
+          [1,1,1,1,1],
+	  [1,"C","E",0,1],	 	
+          [1,1,1,0,1],
+          [1,0,0,0,1],
+          [1,2,1,1,1]
+        ]
+      },
+	          {
+        width: 5,
+        height:5,
+        layout: [
+          [1,1,"A",1,1],
+	  [1,0,0,0,1],	 	
+          [1,"C","E",0,1],
+          [1,0,0,0,1],
+          [1,1,2,1,1]
+        ]
+      },
+      {
+        width: 7,
+        height: 9,
+        layout: [
+          [1,1,1,2,1,1,1],
+          [1,3,4,"F",4,3,1],
+          [1,3,4,4,4,3,2],
+          [1,1,1,2,1,1,1], 
+          [1,"G","G",0,"G",0,1],
+          [1,9,0,0,0,0,1],
+          [1,"I","I","I",0,0,1],
+          [1,0,0,0,0,0,1],
+          [1,1,1,2,1,1,1]
+        ]
+	           },
+      {
+        width: 9,
+        height: 9,
+        layout: [
+          [1,1,1,1,1,1,1,1,1],
+          [1,"H",0,"H",0,"H",0,"H",1],
+          [1,0,"E",0,"E",0,"E",0,2],
+          [1,0,0,0,0,0,0,0,1], 
+          [1,1,1,1,2,1,1,1,1],
+          [1,5,5,5,5,5,9,1,3],
+          [1,5,5,"I","I",5,5,1,3],
+          [1,5,5,5,5,5,5,1,3],
+          [1,1,1,2,2,1,1,1,3]
+        ] 
+      }
     ];
+
 
     function shapeContainsUniqueAsset(shape, assetCode) {
       for (let y = 0; y < shape.height; y++) {
@@ -2558,9 +2753,6 @@
 
     let nextBuildingId = 1;
 
-    /*******************************************************
-     * CITY SQUARES + MARKET SCATTER
-     *******************************************************/
     function createCitySquares() {
       const squareCount = 2 + Math.floor(Math.random() * 3);
       let attempts = 0, placed = 0;
@@ -2690,9 +2882,7 @@
       });
     }
 
-    /*******************************************************
-     * SCATTER CRATES
-     *******************************************************/
+
     function scatterCrates(chance = 0.1) {
       const deltas = [
         [1, 0], [-1, 0], [0, 1], [0, -1],
@@ -2728,9 +2918,6 @@
       }
     }
 
-    /*******************************************************
-     * FIELDS
-     *******************************************************/
     function createFields(numFields){
       for(let i=0; i<numFields; i++){
         const fw=3+Math.floor(Math.random()*5);
@@ -2757,7 +2944,7 @@
           const cell = mapData[y][x];
           if (cityWallBounds) {
             const withinWalls = insideRect(x, y, cityWallBounds);
-            // Optionally restrict farms inside/outside walls
+
           }
           if (
             ["water", "lava", "negative", "wall", "door", "woodfloor", "floor1", "cobblestone",
@@ -2775,9 +2962,6 @@
       return (px>=rect.x && py>=rect.y && px<(rect.x+rect.w) && py<(rect.y+rect.h));
     }
 
-    /*******************************************************
-     * CITY WALLS
-     *******************************************************/
     function createIrregularCityWalls() {
       const darkStoneWallFiles = [
         "darkStoneBlock.png",
@@ -2883,9 +3067,6 @@
       mapData[y][x]._chosenTileIndex = null;
     }
 
-    /*******************************************************
-     * BIOME DECORATION
-     *******************************************************/
     function decorateBiome(theme){
       if(theme==="desert"){
         decorateDesert();
@@ -3008,9 +3189,6 @@
       }
     }
 
-    /*******************************************************
-     * COASTAL: TREES & DOCKS
-     *******************************************************/
     function scatterCoastalTrees(count){
       let placed=0, attempts=0;
       while(placed<count && attempts<1000){
@@ -3108,9 +3286,6 @@
       return true;
     }
 
-    /*******************************************************
-     * CAMPS
-     *******************************************************/
     const campShapes = [
       {
         width: 3,
@@ -3192,7 +3367,7 @@
           }
           if (cityWallBounds) {
             const withinWalls = insideRect(sx + x, sy + y, cityWallBounds);
-            // Optionally restrict camps inside or outside the walls
+
           }
         }
       }
@@ -3216,9 +3391,6 @@
       }
     }
 
-    /*******************************************************
-     * DRAWING
-     *******************************************************/
     function drawMap(){
       const canvas = document.getElementById("mapCanvas");
       const ctx = canvas.getContext("2d");
@@ -3229,7 +3401,7 @@
           drawCell(ctx, x, y);
         }
       }
-      updateNameOverlay(); // Refresh occupant names
+      updateNameOverlay(); 
     }
 
     function drawCell(ctx, gx, gy) {
@@ -3310,12 +3482,10 @@
         }
       }
 
-      // Draw occupant sprite
-      if (cell.occupant) {
+       if (cell.occupant) {
         drawOccupantSprite(ctx, cell.occupant, px, py);
       }
 
-      // Draw grid border
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
     }
@@ -3364,9 +3534,7 @@
       }
     }
 
-    /*******************************************************
-     * MODE SELECTOR
-     *******************************************************/
+
     function setMode(mode){
       currentMode = mode;
       if(mode!=="move"){
@@ -3374,9 +3542,7 @@
       }
     }
 
-    /*******************************************************
-     * CANVAS EVENTS => occupant, panning, pinch, ZOOM
-     *******************************************************/
+
     const canvas=document.getElementById("mapCanvas");
     const mapWrapper=document.querySelector(".mapWrapper");
 
@@ -3411,7 +3577,7 @@
           break;
         case "move":
           if (!occupantInHand) {
-            // picking up occupant
+
             if (tile.occupant) {
               occupantInHand = tile.occupant;
               tile.occupant = null;
@@ -3419,7 +3585,7 @@
               updateNameOverlay();
             }
           } else {
-            // placing occupant
+
             tile.occupant = occupantInHand;
             occupantInHand = null;
             drawCell(canvas.getContext("2d"), tx, ty);
@@ -3530,9 +3696,6 @@
       document.getElementById("occupantSprite").value="none";
     }
 
-    /*******************************************************
-     * IMPORT/EXPORT as .vtt
-     *******************************************************/
     function exportMap() {
       const dataStr = JSON.stringify(mapData);
       const blob = new Blob([dataStr], { type: "text/plain" });
@@ -3561,16 +3724,12 @@
       reader.readAsText(file);
     }
 
-    /*******************************************************
-     * ON LOAD
-     *******************************************************/
     window.onload = () => {
       setupSliders();
       preloadImages(() => {
         setupTileMenu();
         generateMap();
 
-        // Sprite preview
         document.getElementById("occupantSprite").addEventListener("change", function() {
           const sprite = this.value;
           const previewImg = document.getElementById("spritePreview");
@@ -3587,7 +3746,6 @@
           }
         });
 
-        // Fullscreen button
         document.getElementById('fullscreenBtn').addEventListener('click', function() {
           const mapWrapper = document.querySelector('.mapWrapper');
           if (!document.fullscreenElement) {
@@ -3599,7 +3757,6 @@
           }
         });
 
-        // Print button
         document.getElementById('printBtn').addEventListener('click', function() {
           const canvas = document.getElementById('mapCanvas');
           const dataUrl = canvas.toDataURL('image/png');
@@ -3621,7 +3778,6 @@
           printWindow.document.close();
         });
 
-        // Export/Import
         document.getElementById("exportBtn").addEventListener("click", exportMap);
         const fileInput = document.getElementById("importFile");
         fileInput.addEventListener("change", handleFileImport);
