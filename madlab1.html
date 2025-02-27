@@ -865,46 +865,105 @@
       return fallbackColors[tt] || "#FFFFFF";
     }
 
-    function preloadImages(onComplete){
-      const occupantSpriteNames = [
-        "paladin","fighter","guardian","halfblood","berserker","assassin","warlock","sorcerer",
-        "priestess","cleric","druid","demon","mage","serpent","chimera","ogre","edgelord",
-        "fallenangel","darkpriestess","darkguard","cultist","goblin","spider","bat","zombie",
-        "orc","orcbandit","orcchief","orcshaman","orcfighter"
-      ];
-      let totalToLoad = occupantSpriteNames.length;
-      for(const k in tileAssetMapping){
-        totalToLoad += tileAssetMapping[k].files.length;
-      }
-      let loadedCount = 0;
-      const checkDone = () => {
-        loadedCount++;
-        if(loadedCount >= totalToLoad && onComplete){
-          onComplete();
-        }
-      };
-      for(const tkey in tileAssetMapping){
-        tileTextures[tkey] = [];
-        const { folder, files } = tileAssetMapping[tkey];
-        if(!files.length) continue;
-        for(const fname of files){
-          const img = new Image();
-          img.src = folder
-            ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
-            : `resources/mapgen/mapassets/tiles/${fname}`;
-          img.onload = checkDone;
-          img.onerror = checkDone;
-          tileTextures[tkey].push(img);
-        }
-      }
-      occupantSpriteNames.forEach(sp => {
-        const img = new Image();
-        img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
-        img.onload = checkDone;
-        img.onerror = checkDone;
-        occupantSpritesMap[sp] = img;
-      });
+    function preloadImages(onComplete) {
+  // Base sprite names already in use.
+  const occupantSpriteNames = [
+    "paladin", "fighter", "guardian", "halfblood", "berserker", "assassin", "warlock", "sorcerer",
+    "priestess", "cleric", "druid", "demon", "mage", "serpent", "chimera", "ogre", "edgelord",
+    "fallenangel", "darkpriestess", "darkguard", "cultist", "goblin", "spider", "bat", "zombie",
+    "orc", "orcbandit", "orcchief", "orcshaman", "orcfighter"
+  ];
+  
+  // Extended sprite names located in the sprites/spritesextended subfolder.
+  const extendedSpriteNames = [
+    "guard_human", "guard_elf", "fighter_human_f", "fighter_elf_dark_m", "druid_human_f",
+    "druid_elf", "cleric_human_f", "cleric_elf_f", "cleric_elf_dark", "battlemage_human_f",
+    "battlemage_elf_dark_f", "battlemage_elf", "bard_human_f", "barbarian_human_f",
+    "archmage_human_f", "archer_human_f", "archdruid_human_f", "guard_dwarf", "wizard_beard_green",
+    "mage_dark", "ranger_dark", "wizard_human_f", "wizard_elf_dark_m", "wizard_elf",
+    "witch_hunter_elf", "warlock_human_f", "sorcerer_human_f", "sorcerer_elf_f", "rogue_human_f",
+    "rogue_elf", "ranger_human_f", "ranger_elf_dark", "ranger_elf", "priestess_human_f",
+    "paladin_human_f", "paladin_angelic_f", "monk_human_f", "mage_elf", "knight_human_f"
+  ];
+
+function setupOccupantSpriteDropdown() {
+  const spriteSelect = document.getElementById("occupantSprite");
+  
+  // Create an optgroup for extended sprites.
+  const extendedOptGroup = document.createElement("optgroup");
+  extendedOptGroup.label = "Extended Sprites";
+  
+  // List of extended sprite names (without the .png extension).
+  const extendedSprites = [
+    "guard_human", "guard_elf", "fighter_human_f", "fighter_elf_dark_m", "druid_human_f",
+    "druid_elf", "cleric_human_f", "cleric_elf_f", "cleric_elf_dark", "battlemage_human_f",
+    "battlemage_elf_dark_f", "battlemage_elf", "bard_human_f", "barbarian_human_f",
+    "archmage_human_f", "archer_human_f", "archdruid_human_f", "guard_dwarf", "wizard_beard_green",
+    "mage_dark", "ranger_dark", "wizard_human_f", "wizard_elf_dark_m", "wizard_elf",
+    "witch_hunter_elf", "warlock_human_f", "sorcerer_human_f", "sorcerer_elf_f", "rogue_human_f",
+    "rogue_elf", "ranger_human_f", "ranger_elf_dark", "ranger_elf", "priestess_human_f",
+    "paladin_human_f", "paladin_angelic_f", "monk_human_f", "mage_elf", "knight_human_f"
+  ];
+  
+  extendedSprites.forEach(sprite => {
+    const option = document.createElement("option");
+    option.value = sprite;
+    option.textContent = sprite;
+    extendedOptGroup.appendChild(option);
+  });
+  
+  spriteSelect.appendChild(extendedOptGroup);
+}
+
+	    
+  // Calculate the total number of images to load.
+  let totalToLoad = occupantSpriteNames.length + extendedSpriteNames.length;
+  for (const k in tileAssetMapping) {
+    totalToLoad += tileAssetMapping[k].files.length;
+  }
+  let loadedCount = 0;
+  const checkDone = () => {
+    loadedCount++;
+    if (loadedCount >= totalToLoad && onComplete) {
+      onComplete();
     }
+  };
+
+  // Preload tile textures.
+  for (const tkey in tileAssetMapping) {
+    tileTextures[tkey] = [];
+    const { folder, files } = tileAssetMapping[tkey];
+    if (!files.length) continue;
+    for (const fname of files) {
+      const img = new Image();
+      img.src = folder
+        ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
+        : `resources/mapgen/mapassets/tiles/${fname}`;
+      img.onload = checkDone;
+      img.onerror = checkDone;
+      tileTextures[tkey].push(img);
+    }
+  }
+
+  // Load the base sprites.
+  occupantSpriteNames.forEach(sp => {
+    const img = new Image();
+    img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
+    img.onload = checkDone;
+    img.onerror = checkDone;
+    occupantSpritesMap[sp] = img;
+  });
+
+  // Load the extended sprites from the "sprites/spritesextended" subfolder.
+  extendedSpriteNames.forEach(sp => {
+    const img = new Image();
+    img.src = `resources/mapgen/mapassets/sprites/spritesextended/${sp}.png`;
+    img.onload = checkDone;
+    img.onerror = checkDone;
+    occupantSpritesMap[sp] = img;
+  });
+}
+
 
     function weightedRandomIndex(weights) {
       const total = weights.reduce((sum, weight) => sum + weight, 0);
