@@ -3053,92 +3053,92 @@ function showOccupantNames() {
     }
 
     function drawCell(ctx, gx, gy) {
-      const cell = mapData[gy][gx];
-      const px = gx * TILE_SIZE, py = gy * TILE_SIZE;
+  const cell = mapData[gy][gx];
+  const px = gx * TILE_SIZE, py = gy * TILE_SIZE;
 
-      // Special-case logic for certain tiles
-      if (cell.type === "pallisade") {
-        const arr = tileTextures["pallisade"] || [];
-        if (arr.length > 0) {
-          const chosen = arr[0];
-          if (chosen && chosen.complete) {
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType("pallisade");
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType("pallisade");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
+  // Draw the tile background (using image textures or fallback colour)
+  if (cell.type === "pallisade") {
+    const arr = tileTextures["pallisade"] || [];
+    if (arr.length > 0) {
+      const chosen = arr[0];
+      if (chosen && chosen.complete) {
+        ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = getColorForTileType("pallisade");
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
       }
-      else if (cell.type === "water") {
-        const arr = tileTextures["water"] || [];
-        if (arr.length > 0) {
-          if (cell._chosenTileIndex == null) {
-            const weights = [60, 10, 10, 5, 5, 10];
-            cell._chosenTileIndex = weightedRandomIndex(weights);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if (chosen && chosen.complete) {
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else if (cell.type === "wall" && cell.chosenWallFile) {
-        const arr = tileTextures["wall"] || [];
-        const forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
-        if (forcedImg && forcedImg.complete) {
-          ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = getColorForTileType("wall");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else if (cell.type === "farmland" && cell.crop !== undefined) {
-        const farmlandImgs = tileTextures["farmland"] || [];
-        const chosen = farmlandImgs[cell.crop];
-        if (chosen && chosen.complete) {
-          ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = getColorForTileType("farmland");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else {
-        const arr = tileTextures[cell.type] || [];
-        if (arr.length > 0) {
-          if (cell._chosenTileIndex == null) {
-            cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if (chosen && chosen.complete) {
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-
-      // occupant sprite
-      if (cell.occupant) {
-        drawOccupantSprite(ctx, cell.occupant, px, py);
-      }
-
-      // grid border
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType("pallisade");
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
     }
+  }
+  else if (cell.type === "water") {
+    const arr = tileTextures["water"] || [];
+    if (arr.length > 0) {
+      if (cell._chosenTileIndex == null) {
+        const weights = [60, 10, 10, 5, 5, 10];
+        cell._chosenTileIndex = weightedRandomIndex(weights);
+      }
+      const chosen = arr[cell._chosenTileIndex];
+      if (chosen && chosen.complete) {
+        ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = getColorForTileType(cell.type);
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+    } else {
+      ctx.fillStyle = getColorForTileType(cell.type);
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  }
+  else if (cell.type === "wall" && cell.chosenWallFile) {
+    const arr = tileTextures["wall"] || [];
+    const forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
+    if (forcedImg && forcedImg.complete) {
+      ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType("wall");
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  }
+  else if (cell.type === "farmland" && cell.crop !== undefined) {
+    const farmlandImgs = tileTextures["farmland"] || [];
+    const chosen = farmlandImgs[cell.crop];
+    if (chosen && chosen.complete) {
+      ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = getColorForTileType("farmland");
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  }
+  else {
+    const arr = tileTextures[cell.type] || [];
+    if (arr.length > 0) {
+      if (cell._chosenTileIndex == null) {
+        cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
+      }
+      const chosen = arr[cell._chosenTileIndex];
+      if (chosen && chosen.complete) {
+        ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = getColorForTileType(cell.type);
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+    } else {
+      ctx.fillStyle = getColorForTileType(cell.type);
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    }
+  }
+
+  // Draw occupant sprite (if any)
+  if (cell.occupant) {
+    drawOccupantSprite(ctx, cell.occupant, px, py);
+  }
+
+  // Draw grid border
+  ctx.strokeStyle = "rgba(0,0,0,0.3)";
+  ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+}
 
 function drawOccupantSprite(ctx, occupant, px, py) {
   // Draw the occupant sprite
@@ -3161,20 +3161,22 @@ function drawOccupantSprite(ctx, occupant, px, py) {
   ctx.lineWidth = 1;
   ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
   
-  // Draw the occupant's name below the sprite if available and if "Show Names" is checked.
+  // Draw the occupant's name as an overlay inside the tile if enabled
   if (occupant.name && showOccupantNames()) {
-    ctx.clearRect(px, py + TILE_SIZE, TILE_SIZE, 20);
     ctx.save();
-    ctx.font = "10px sans-serif";
+    ctx.font = "8px sans-serif";
+    const textHeight = 10; // Adjust as needed
+    // Draw a semi-transparent background for the text within the tile
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(px, py + TILE_SIZE - textHeight, TILE_SIZE, textHeight);
     ctx.fillStyle = borderColor;
     ctx.textAlign = "center";
     const textX = px + TILE_SIZE / 2;
-    const textY = py + TILE_SIZE + 10; // Adjust the Y-offset as needed.
+    const textY = py + TILE_SIZE - 2; // Slightly above the bottom edge
     ctx.fillText(occupant.name, textX, textY);
     ctx.restore();
   }
 }
-
 
     /*******************************************************
      * MODE SELECTOR
