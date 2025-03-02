@@ -3726,15 +3726,17 @@ function setupOccupantSpriteDropdown() {
             drawCell(canvas.getContext("2d"), tx, ty);
           }
           break;
-        case "place":
+       case "place":
 default:
   occupantInHand = null;
-  // We’ll skip if occupantColor is empty, though most color inputs won't return "none".
-  // If you have a default color, you can skip this check entirely.
-  if (!occupantColor) return;
-
+  
+  // occupantColour is "none"? Then bail out. Do nothing.
+  if (!occupantColor || occupantColor === "none") {
+    return;
+  }
+  
   tile.occupant = {
-    color: occupantColor,  // store colour in 'color'
+    color: occupantColor,
     sprite: occupantSprite,
     name: getOccupantName()
   };
@@ -3742,8 +3744,6 @@ default:
   drawCell(canvas.getContext("2d"), tx, ty);
   updateNameOverlay();
   break;
-      }
-    });
 
     canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
