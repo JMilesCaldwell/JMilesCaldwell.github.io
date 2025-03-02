@@ -287,14 +287,9 @@
   <!-- Occupant type + sprite controls -->
 <div class="controls">
   <label>
-    Occupant Type:
-    <select id="occupantType">
-      <option value="none" selected>None</option>
-      <option value="player">Player</option>
-      <option value="enemy">Enemy</option>
-      <option value="npc">NPC</option>
-    </select>
-  </label>
+  Occupant Colour:
+  <input type="color" id="occupantColor" value="#00FF00" style="vertical-align: middle;">
+</label>
   
   <label>
     Sprite:
@@ -499,12 +494,7 @@
     let mapData = [];
     let occupantInHand = null;
 
-    const occupantColours = {
-      player: "#00FF00",
-      enemy:  "#FF0000",
-      npc:    "#0000FF"
-    };
-
+   
     let currentMode = 'place';
 
     // track which tile the user wants to place from the tile menu
@@ -3623,23 +3613,27 @@ function setupOccupantSpriteDropdown() {
     }
 
     function drawOccupantSprite(ctx, occupant, px, py) {
-      if (occupant.sprite && occupant.sprite !== "none") {
-        const spr = occupantSpritesMap[occupant.sprite];
-        if (spr && spr.complete) {
-          ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = "#999";
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      } else {
-        ctx.fillStyle = "#999";
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-      }
-      const borderColor = occupantColours[occupant.type] || "#FF00FF";
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+  // Same logic for occupant.sprite:
+  if (occupant.sprite && occupant.sprite !== "none") {
+    const spr = occupantSpritesMap[occupant.sprite];
+    if (spr && spr.complete) {
+      ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
+    } else {
+      ctx.fillStyle = "#999";
+      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
     }
+  } else {
+    ctx.fillStyle = "#999";
+    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+  }
+
+  // Outline in occupant.color
+  const borderColor = occupant.color || "#FF00FF";
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+}
+
 
     function updateNameOverlay(){
       const overlay = document.getElementById("nameOverlay");
@@ -3655,7 +3649,7 @@ function setupOccupantSpriteDropdown() {
             nameDiv.style.position = "absolute";
             nameDiv.style.whiteSpace = "nowrap";
             nameDiv.style.font = "10px sans-serif";
-            nameDiv.style.color = occupantColours[cell.occupant.type] || "#FF00FF";
+            nameDiv.style.color = cell.occupant.color || "#FFF";
             nameDiv.style.left = (x * TILE_SIZE + TILE_SIZE/2) + "px";
             nameDiv.style.top = (y * TILE_SIZE + TILE_SIZE) + "px";
             nameDiv.style.transform = "translate(-50%, 0)";
@@ -3694,7 +3688,7 @@ function setupOccupantSpriteDropdown() {
       const tx=Math.floor(wx/TILE_SIZE), ty=Math.floor(wy/TILE_SIZE);
       if(tx<0||ty<0||tx>=GRID_WIDTH||ty>=GRID_HEIGHT) return;
 
-      const occupantType=document.getElementById("occupantType").value;
+      const occupantColor=document.getElementById("occupantColor").value;
       const occupantSprite=document.getElementById("occupantSprite").value;
       const tile=mapData[ty][tx];
 
@@ -3735,9 +3729,9 @@ function setupOccupantSpriteDropdown() {
         case "place":
         default:
           occupantInHand = null;
-          if (occupantType === "none") return;
+          if (occupantColor === "none") return;
           tile.occupant = {
-            type: occupantType,
+            type: occupantColor,
             sprite: occupantSprite,
             name: getOccupantName()
           };
@@ -3824,7 +3818,7 @@ function setupOccupantSpriteDropdown() {
     }
 
     function clearOccupantSelection(){
-      document.getElementById("occupantType").value="none";
+      document.getElementById("occupantColor").value="none";
       document.getElementById("occupantSprite").value="none";
     }
 
