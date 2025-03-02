@@ -192,6 +192,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
@@ -284,36 +285,35 @@
       </div>
     </div>
 
-  <!-- Occupant type + sprite controls -->
-<div class="controls">
-  <label>
-  Occupant Colour:
-  <input type="color" id="occupantColor" value="#00FF00" style="vertical-align: middle;">
-</label>
-  
-  <label>
-    Sprite:
-<select id="occupantSprite">
-  <option value="none" selected>None</option>
-</select>
-  </label>
-  
-  <label>
-    Name:
-    <input type="text" id="occupantName" placeholder="e.g. Sir Reginald" style="font-family: 'Cinzel', serif;">
-  </label>
-  
-  <label>
-    <input type="checkbox" id="showNameCheck" checked>
-    Show Names
-  </label>
-</div>
+    <!-- Occupant type + sprite controls -->
+    <div class="controls">
+      <label>
+        Occupant Colour:
+        <input type="color" id="occupantColor" value="#00FF00" style="vertical-align: middle;">
+      </label>
+      
+      <label>
+        Sprite:
+        <select id="occupantSprite">
+          <option value="none" selected>None</option>
+        </select>
+      </label>
+      
+      <label>
+        Name:
+        <input type="text" id="occupantName" placeholder="e.g. Sir Reginald" style="font-family: 'Cinzel', serif;">
+      </label>
+      
+      <label>
+        <input type="checkbox" id="showNameCheck" checked>
+        Show Names
+      </label>
+    </div>
 
-<!-- Sprite preview -->
-<div id="spritePreviewContainer" style="background: rgba(0, 0, 0, 0.5); padding: 5px; border-radius: 5px; display: inline-block; vertical-align: middle; margin-left: 10px;">
-  <img id="spritePreview" src="" alt="Sprite Preview" style="width: 50px; height: 50px; object-fit: contain; display: none;">
-</div>
-
+    <!-- Sprite preview -->
+    <div id="spritePreviewContainer" style="background: rgba(0, 0, 0, 0.5); padding: 5px; border-radius: 5px; display: inline-block; vertical-align: middle; margin-left: 10px;">
+      <img id="spritePreview" src="" alt="Sprite Preview" style="width: 50px; height: 50px; object-fit: contain; display: none;">
+    </div>
 
     <!-- Occupant mode buttons -->
     <div class="controls">
@@ -344,59 +344,11 @@
   <script>
     /*
       Building Shapes Asset Legend:
-
-      Numerical Codes:
-      
-      1: Outer Wall
-         - Rendered as cobblestone, snowWall, or limestone depending on the current theme.
-      
-      0: Floor
-         - Represents the interior floor using a chosen asset (e.g. "floor1" or "interiorfloors").
-      
-      2: Door
-         - Indicates door placements. Processed into door tiles (either "door" or "doorWood2" after door grouping).
-      
-      3: Courtyard Flag
-         - Marks interior courtyard areas; may trigger special decorations.
-      
-      4: Road Tile
-         - Denotes a road segment within the building’s footprint, determined by getRoadTile() logic.
-      
-      5: Marble Floor
-         - Renders a marble floor variant for a more opulent interior.
-      
-      6: Dark Tile
-         - Represents a dark stone or dark tile texture, often used for contrast or decorative flair.
-      
-      7: Lava Feature
-         - Indicates a lava element integrated into the building.
-      
-      8: Water Feature
-         - A water element incorporated within the building.
-      
-      9: Chests
-         - Furnishings such as chests, adding functional decor.
-      
-      Alphabetical Codes:
-      
-      A: Fireplace
-      B: Anvil
-      C: Beds
-      D: Bookcases
-      E: Rugs
-      F: Forge
-      G: Weapon Rack
-      H: Apothecary
-      I: Counter
-      J: Toilet
-      K: Cabinet
-      L: Kitchen Block
-      M: Barrelshelf
-      N: Bottleshelf
+      (omitted for brevity here, but left in the code below)
     */
 
     /*******************************************************
-     * BASIC CONFIG & GLOBALS
+     * 1) GLOBAL CONSTANTS & DATA STRUCTURES
      *******************************************************/
     const TILE_SIZE = 20;
     const GRID_WIDTH = 50;
@@ -405,11 +357,7 @@
     
     let mapData = [];
     let occupantInHand = null;
-
-   
     let currentMode = 'place';
-
-    // track which tile the user wants to place from the tile menu
     let currentTileInHand = null;
 
     // Pan & Zoom
@@ -419,16 +367,97 @@
     let activePointers = new Map();
     let initialPinchDistance = 0, initialPinchScale = 1.0;
 
-    // City walls, building occupancy
+    // City walls bounding box
     let cityWallBounds = null;
 
-    /*******************************************************
-     * TILE TEXTURES & OCCUPANT SPRITES
-     *******************************************************/
+    // We store tile textures & occupant sprites in these global objects
     const tileTextures = {};
     const occupantSpritesMap = {};
 
-    // Dictionary of tile assets
+    // The occupant sprite folders and filenames
+    const occupantSpriteFolders = {
+      catfolk: [
+        "catfolk_archer.png",
+        "catfolk_barkeep.png",
+        "catfolk_battlemage.png",
+        "catfolk_duelist.png",
+        "catfolk_ranger.png",
+        "catfolk_rogue.png",
+        "catfolk_spellsword.png",
+        "catfolk_wizard.png"
+      ],
+      celestial: [
+        "paladin_angelic_f.png"
+      ],
+      darkelf: [
+        "battlemage_elf_dark_f.png",
+        "cleric_elf_dark.png",
+        "fighter_elf_dark_m.png",
+        "mage_dark.png",
+        "ranger_elf_dark.png",
+        "wizard_elf_dark_m.png"
+      ],
+      dwarf: [
+        "cleric.png", "druid.png", "dwarf_cleric.png", "dwarf_fighter.png",
+        "dwarf_fighter2.png", "dwarf_priest.png", "dwarf_warrior.png",
+        "dwarf_wizard.png", "fighter.png", "guard_dwarf.png", "paladin.png",
+        "priestess.png", "ranger.png"
+      ],
+      elemental: [
+        "earth_elemental.png", "fire_elemental.png", "water_elemental.png",
+        "wind_elemental.png"
+      ],
+      elf: [
+        "battlemage_elf.png", "cleric_elf_f.png", "druid_elf.png", "guard_elf.png",
+        "mage_elf.png", "ranger_elf.png", "rogue_elf.png", "sorcerer_elf_f.png",
+        "witch_hunter_elf.png", "wizard_elf.png"
+      ],
+      gnome: [
+        "gnomeBard.png", "gnomeSorcerer.png", "gnomeWarlock.png", "gnomeWizard.png"
+      ],
+      goblin: [
+        "goblin_bard.png", "goblin_bard_2.png", "goblin_cleric.png", "goblin_commoner.png",
+        "goblin_fighter.png", "goblin_mage.png", "goblin_rogue.png", "goblin_shaman.png",
+        "goblin_sorcerer.png", "goblin_wizard.png"
+      ],
+      halfling: [
+        "halfling.png", "halfling2.png", "halfling3.png"
+      ],
+      human: [
+        "archdruid_human_f.png", "archer_human_f.png", "archmage_human_f.png",
+        "assassin.png", "barbarian_human_f.png", "bard_human_f.png",
+        "battlemage_human_f.png", "berserker.png", "brigand.png", "cleric_human_f.png",
+        "cultguard.png", "cultist.png", "cultleader.png", "cultpriestess.png",
+        "druid_human_f.png", "fighter_human_f.png", "guard_human.png", "knight_human_f.png",
+        "monk_human_f.png", "paladin_human_f.png", "priestess_human_f.png",
+        "rogue_human_f.png", "sorcerer.png", "sorcerer_human_f.png",
+        "warlock_human_f.png", "wizard_beard_green.png", "wizard_human_f.png"
+      ],
+      lizardfolk: [
+        "lizardm_chief.png", "lizardm_cleric.png", "lizardm_fighter.png", "lizardm_guard.png",
+        "lizardm_rogue.png", "lizardm_shaman.png", "lizardm_warlock.png", "lizardm_warrior.png"
+      ],
+      monsters: [
+        "aboleth.png", "bat.png", "beholder.png", "beholder2.png", "black_ooze.png",
+        "bugbear.png", "chimera.png", "gargoyle.png", "gelatinouscube.png",
+        "gibbering_mouther.png", "mimic.png", "mindflayer.png", "minotaur.png",
+        "ogre.png", "owlbear.png", "rat.png", "selkie.png", "serpent.png",
+        "slither.png", "spider2.png"
+      ],
+      orc: [
+        "orc.png", "orcbandit.png", "orcchief.png", "orkfighter.png", "orkshaman.png"
+      ],
+      tiefling: [
+        "tl_fighter.png", "tl_mage.png", "tl_ranger.png", "tl_rogue.png",
+        "tl_sorcerer.png", "tl_warlock.png"
+      ],
+      undead: [
+        "deathknight.png", "ghost.png", "ghoul.png", "mummy.png",
+        "wight.png", "zombie.png"
+      ]
+    };
+
+    // A dictionary describing the tile assets
     const tileAssetMapping = {
       "grass": {
         folder: "grass",
@@ -825,243 +854,82 @@
       marketscatter:"#775b3e"
     };
 
-    function getColorForTileType(tt){
-      return fallbackColors[tt] || "#FFFFFF";
-    }
-
-function preloadImages(onComplete) {
-  // Instead of a big tileAssetMapping block or occupantSpriteNames, 
-  // we’ll do the tile code as before, but occupant sprites are now in occupantSpriteFolders
-
-  // 1) Calculate number of tile textures to load as before
-  let totalToLoad = 0;
-  for (const tkey in tileAssetMapping) {
-    totalToLoad += tileAssetMapping[tkey].files.length;
-  }
-
-  // 2) Add occupant sprite count to totalToLoad
-  for (const folder in occupantSpriteFolders) {
-    totalToLoad += occupantSpriteFolders[folder].length;
-  }
-
-  let loadedCount = 0;
-  const checkDone = () => {
-    loadedCount++;
-    if (loadedCount >= totalToLoad && onComplete) {
-      onComplete();
-    }
-  };
-
-  // Preload tile textures (unchanged from your existing code)
-  for (const tkey in tileAssetMapping) {
-    tileTextures[tkey] = [];
-    const { folder, files } = tileAssetMapping[tkey];
-    for (const fname of files) {
-      const img = new Image();
-      img.src = folder
-        ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
-        : `resources/mapgen/mapassets/tiles/${fname}`;
-
-      img.onload = checkDone;
-      img.onerror = checkDone;
-      tileTextures[tkey].push(img);
-    }
-  }
-
-// A mapping of subfolder => array of sprite filenames
-const occupantSpriteFolders = {
-  catfolk: [
-    "catfolk_archer.png",
-    "catfolk_barkeep.png",
-    "catfolk_battlemage.png",
-    "catfolk_duelist.png",
-    "catfolk_ranger.png",
-    "catfolk_rogue.png",
-    "catfolk_spellsword.png",
-    "catfolk_wizard.png"
-  ],
-  celestial: [
-    "paladin_angelic_f.png"
-  ],
-  darkelf: [
-    "battlemage_elf_dark_f.png",
-    "cleric_elf_dark.png",
-    "fighter_elf_dark_m.png",
-    "mage_dark.png",
-    "ranger_elf_dark.png",
-    "wizard_elf_dark_m.png"
-  ],
-  dwarf: [
-    "cleric.png", "druid.png", "dwarf_cleric.png", "dwarf_fighter.png",
-    "dwarf_fighter2.png", "dwarf_priest.png", "dwarf_warrior.png",
-    "dwarf_wizard.png", "fighter.png", "guard_dwarf.png", "paladin.png",
-    "priestess.png", "ranger.png"
-  ],
-  elemental: [
-    "earth_elemental.png", "fire_elemental.png", "water_elemental.png",
-    "wind_elemental.png"
-  ],
-  elf: [
-    "battlemage_elf.png", "cleric_elf_f.png", "druid_elf.png", "guard_elf.png",
-    "mage_elf.png", "ranger_elf.png", "rogue_elf.png", "sorcerer_elf_f.png",
-    "witch_hunter_elf.png", "wizard_elf.png"
-  ],
-  gnome: [
-    "gnomeBard.png", "gnomeSorcerer.png", "gnomeWarlock.png", "gnomeWizard.png"
-  ],
-  goblin: [
-    "goblin_bard.png", "goblin_bard_2.png", "goblin_cleric.png", "goblin_commoner.png",
-    "goblin_fighter.png", "goblin_mage.png", "goblin_rogue.png", "goblin_shaman.png",
-    "goblin_sorcerer.png", "goblin_wizard.png"
-  ],
-  halfling: [
-    "halfling.png", "halfling2.png", "halfling3.png"
-  ],
-  human: [
-    "archdruid_human_f.png", "archer_human_f.png", "archmage_human_f.png",
-    "assassin.png", "barbarian_human_f.png", "bard_human_f.png",
-    "battlemage_human_f.png", "berserker.png", "brigand.png", "cleric_human_f.png",
-    "cultguard.png", "cultist.png", "cultleader.png", "cultpriestess.png",
-    "druid_human_f.png", "fighter_human_f.png", "guard_human.png", "knight_human_f.png",
-    "monk_human_f.png", "paladin_human_f.png", "priestess_human_f.png",
-    "rogue_human_f.png", "sorcerer.png", "sorcerer_human_f.png",
-    "warlock_human_f.png", "wizard_beard_green.png", "wizard_human_f.png"
-  ],
-  lizardfolk: [
-    "lizardm_chief.png", "lizardm_cleric.png", "lizardm_fighter.png", "lizardm_guard.png",
-    "lizardm_rogue.png", "lizardm_shaman.png", "lizardm_warlock.png", "lizardm_warrior.png"
-  ],
-  monsters: [
-    "aboleth.png", "bat.png", "beholder.png", "beholder2.png", "black_ooze.png",
-    "bugbear.png", "chimera.png", "gargoyle.png", "gelatinouscube.png",
-    "gibbering_mouther.png", "mimic.png", "mindflayer.png", "minotaur.png",
-    "ogre.png", "owlbear.png", "rat.png", "selkie.png", "serpent.png",
-    "slither.png", "spider2.png"
-  ],
-  orc: [
-    "orc.png", "orcbandit.png", "orcchief.png", "orkfighter.png", "orkshaman.png"
-  ],
-  tiefling: [
-    "tl_fighter.png", "tl_mage.png", "tl_ranger.png", "tl_rogue.png",
-    "tl_sorcerer.png", "tl_warlock.png"
-  ],
-  undead: [
-    "deathknight.png", "ghost.png", "ghoul.png", "mummy.png",
-    // "undead.txt" is obviously not an image, so skip it
-    "wight.png", "zombie.png"
-  ]
-};
-
-	
-	
-	
-  // Preload occupant sprites from the new subfolders
-  for (const folderName in occupantSpriteFolders) {
-    const fileList = occupantSpriteFolders[folderName];
-    for (const filename of fileList) {
-      const img = new Image();
-      img.src = `resources/mapgen/mapassets/sprites/${folderName}/${filename}`;
-      img.onload = checkDone;
-      img.onerror = checkDone;
-
-      // For occupantSpritesMap key, you might want to omit ".png"
-      const baseName = filename.replace(".png", "");
-      occupantSpritesMap[baseName] = img;
-    }
-  }
-}
-
-	
-
-function setupOccupantSpriteDropdown() {
-  const spriteSelect = document.getElementById("occupantSprite");
-  
-  // Create an optgroup for extended sprites.
-  const extendedOptGroup = document.createElement("optgroup");
-  extendedOptGroup.label = "Extended Sprites";
-  
-  // List of extended sprite names (without the .png extension).
-  const extendedSprites = [
-    "guard_human", "guard_elf", "fighter_human_f", "fighter_elf_dark_m", "druid_human_f",
-    "druid_elf", "cleric_human_f", "cleric_elf_f", "cleric_elf_dark", "battlemage_human_f",
-    "battlemage_elf_dark_f", "battlemage_elf", "bard_human_f", "barbarian_human_f",
-    "archmage_human_f", "archer_human_f", "archdruid_human_f", "guard_dwarf", "wizard_beard_green",
-    "mage_dark", "ranger_dark", "wizard_human_f", "wizard_elf_dark_m", "wizard_elf",
-    "witch_hunter_elf", "warlock_human_f", "sorcerer_human_f", "sorcerer_elf_f", "rogue_human_f",
-    "rogue_elf", "ranger_human_f", "ranger_elf_dark", "ranger_elf", "priestess_human_f",
-    "paladin_human_f", "paladin_angelic_f", "monk_human_f", "mage_elf", "knight_human_f"
-  ];
-  
-  extendedSprites.forEach(sprite => {
-    const option = document.createElement("option");
-    option.value = sprite;
-    option.textContent = sprite;
-    extendedOptGroup.appendChild(option);
-  });
-  
-  spriteSelect.appendChild(extendedOptGroup);
-}
-
-	    
-  // Calculate the total number of images to load.
-  let totalToLoad = occupantSpriteNames.length + extendedSpriteNames.length;
-  for (const k in tileAssetMapping) {
-    totalToLoad += tileAssetMapping[k].files.length;
-  }
-  let loadedCount = 0;
-  const checkDone = () => {
-    loadedCount++;
-    if (loadedCount >= totalToLoad && onComplete) {
-      onComplete();
-    }
-  };
-
-  // Preload tile textures.
-  for (const tkey in tileAssetMapping) {
-    tileTextures[tkey] = [];
-    const { folder, files } = tileAssetMapping[tkey];
-    if (!files.length) continue;
-    for (const fname of files) {
-      const img = new Image();
-      img.src = folder
-        ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
-        : `resources/mapgen/mapassets/tiles/${fname}`;
-      img.onload = checkDone;
-      img.onerror = checkDone;
-      tileTextures[tkey].push(img);
-    }
-  }
-
-  // Load the base sprites.
-  occupantSpriteNames.forEach(sp => {
-    const img = new Image();
-    img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
-    img.onload = checkDone;
-    img.onerror = checkDone;
-    occupantSpritesMap[sp] = img;
-  });
-
-  // Load the extended sprites from the "sprites/spritesextended" subfolder.
-  extendedSpriteNames.forEach(sp => {
-    const img = new Image();
-    img.src = `resources/mapgen/mapassets/sprites/spritesextended/${sp}.png`;
-    img.onload = checkDone;
-    img.onerror = checkDone;
-    occupantSpritesMap[sp] = img;
-  });
-}
-
-
-    function weightedRandomIndex(weights) {
-      const total = weights.reduce((sum, weight) => sum + weight, 0);
-      let random = Math.random() * total;
-      for (let i = 0; i < weights.length; i++) {
-        if (random < weights[i]) {
-          return i;
-        }
-        random -= weights[i];
+    /*******************************************************
+     * 2) PRELOAD IMAGES
+     *******************************************************/
+    function preloadImages(onComplete) {
+      // Count how many total tile textures + occupant sprites to load
+      let totalToLoad = 0;
+      for (const tkey in tileAssetMapping) {
+        totalToLoad += tileAssetMapping[tkey].files.length;
       }
-      return weights.length - 1; 
+      for (const folderName in occupantSpriteFolders) {
+        totalToLoad += occupantSpriteFolders[folderName].length;
+      }
+
+      let loadedCount = 0;
+      const checkDone = () => {
+        loadedCount++;
+        if (loadedCount >= totalToLoad && onComplete) {
+          onComplete();
+        }
+      };
+
+      // Preload tile textures
+      for (const tkey in tileAssetMapping) {
+        tileTextures[tkey] = [];
+        const { folder, files } = tileAssetMapping[tkey];
+        for (const fname of files) {
+          const img = new Image();
+          img.src = folder
+            ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
+            : `resources/mapgen/mapassets/tiles/${fname}`;
+          img.onload = checkDone;
+          img.onerror = checkDone;
+          tileTextures[tkey].push(img);
+        }
+      }
+
+      // Preload occupant sprites
+      for (const folderName in occupantSpriteFolders) {
+        const fileList = occupantSpriteFolders[folderName];
+        for (const filename of fileList) {
+          const img = new Image();
+          img.src = `resources/mapgen/mapassets/sprites/${folderName}/${filename}`;
+          img.onload = checkDone;
+          img.onerror = checkDone;
+          const baseName = filename.replace(".png", "");
+          occupantSpritesMap[baseName] = img;
+        }
+      }
+    }
+
+    /*******************************************************
+     * 3) BUILD THE OCCUPANT SPRITE <SELECT>
+     *******************************************************/
+    function populateOccupantSpriteSelect() {
+      const spriteSelect = document.getElementById("occupantSprite");
+      
+      // Start fresh by removing everything except the "none" option
+      while (spriteSelect.children.length > 1) {
+        spriteSelect.removeChild(spriteSelect.lastChild);
+      }
+
+      // For each subfolder, build an <optgroup> and fill it with <option>
+      for (const folderName in occupantSpriteFolders) {
+        const optGroup = document.createElement("optgroup");
+        optGroup.label = folderName; // e.g. "catfolk"
+
+        const fileList = occupantSpriteFolders[folderName];
+        for (const filename of fileList) {
+          const baseName = filename.replace(".png", "");
+          const option = document.createElement("option");
+          option.value = baseName;
+          option.textContent = baseName;
+          optGroup.appendChild(option);
+        }
+        spriteSelect.appendChild(optGroup);
+      }
     }
 
     /*******************************************************
@@ -1184,7 +1052,9 @@ function setupOccupantSpriteDropdown() {
       panel.classList.toggle("hidden");
     }
 
-    // tile menu setup + toggle
+    /*******************************************************
+     * TILE MENU SETUP + TOGGLE
+     *******************************************************/
     function setupTileMenu() {
       const tileMenu = document.getElementById("tileMenu");
       tileMenu.innerHTML = "";
@@ -1237,12 +1107,18 @@ function setupOccupantSpriteDropdown() {
       menu.classList.toggle("hidden");
     }
 
-    // Returns occupant name and check for occupant name display
+    /*******************************************************
+     * HELPERS
+     *******************************************************/
     function getOccupantName() {
       return document.getElementById("occupantName").value.trim();
     }
     function showOccupantNames() {
       return document.getElementById("showNameCheck").checked;
+    }
+
+    function getColorForTileType(tt){
+      return fallbackColors[tt] || "#FFFFFF";
     }
 
     /*******************************************************
@@ -1432,9 +1308,7 @@ function setupOccupantSpriteDropdown() {
             isDungeon: false
           };
         case "dungeon":
-          // NEW BIOME: Mixture of cave + building logic
           return {
-            // We’ll simply note that we have no baseDist for overworld tiles
             baseDist: {},
             isCavern: false,
             isDungeon: true
@@ -1476,7 +1350,6 @@ function setupOccupantSpriteDropdown() {
       const doRoads = document.getElementById("roadCheck").checked;
       const doCamps = document.getElementById("campsCheck").checked;
 
-      // Special generation paths
       if(settings.isCavern){
         generateCavern();
       }
@@ -1518,19 +1391,16 @@ function setupOccupantSpriteDropdown() {
           }
         }
 
-        // City walls
         if(doCityWalls){
           createIrregularCityWalls(); 
         }
 
-        // Roads
         if(doRoads){
           for(let i=0; i<settings.roads; i++){
             createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
           }
         }
 
-        // Buildings
         if (doBuildings && settings.buildings > 0) {
           createBuildings(settings.buildings);
           if (document.getElementById("scatterCratesCheck").checked) {
@@ -1543,27 +1413,22 @@ function setupOccupantSpriteDropdown() {
           connectBuildingDoorsToRoads();
         }
 
-        // Biome decoration
         decorateBiome(theme);
 
-        // Farms
         if(doFields){
           createFields(3);
         }
 
-        // city extras
         if (theme === "city") {
           createCitySquares();
           scatterWells();
         }
 
-        // Coastal extras
         if(theme==="coastal"){
           scatterCoastalTrees(50);
           createCoastalDocks(2);
         }
 
-        // Camps
         if(doCamps && settings.camps > 0){
           createCamps(settings.camps);
         }
@@ -1599,7 +1464,7 @@ function setupOccupantSpriteDropdown() {
     }
 
     /*******************************************************
-     * CAVERN
+     * CAVERN GENERATION
      *******************************************************/
     function generateCavern(){
       const fillChance = 0.52;
@@ -1751,8 +1616,6 @@ function setupOccupantSpriteDropdown() {
         mapData.push(row);
       }
     }
-
-    //CRYSTAL GENERATION
     function createCrystalPatch(seedX, seedY, patchSize) {
       if (mapData[seedY][seedX].type !== "cave_floor") return;
       let count = 1;
@@ -1796,8 +1659,6 @@ function setupOccupantSpriteDropdown() {
         createCrystalPatch(x, y, patchSize);
       }
     }
-
-    // MUSHROOMS
     function createCaveshroomCluster(seedX, seedY, clusterSize) {
       if (mapData[seedY][seedX].type !== "cave_floor") return;
       let count = 1;
@@ -1850,10 +1711,9 @@ function setupOccupantSpriteDropdown() {
     }
 
     /*******************************************************
-     * DUNGEON
+     * DUNGEON GENERATION
      *******************************************************/
     function generateDungeon(){
-      // 1) Generate random "cave" layout for negative space
       const fillChance = 0.55;
       let boolMap = randomBoolMap(fillChance);
       const steps = 3;
@@ -1864,14 +1724,13 @@ function setupOccupantSpriteDropdown() {
       carveWideExits(largestMap, 2);
       convertBoolMapToCavern(largestMap);
 
-      // 2) Place a few small "dungeon rooms" (square buildings) in the open cave_floor areas
-      placeDungeonRooms(8); // number of rooms
+      // 2) Place a few small "dungeon rooms" 
+      placeDungeonRooms(8);
 
-      // 3) Scatter some dungeon decorations: rubble floors, random stones, vines
+      // 3) Scatter some dungeon decorations
       scatterDungeonDecor();
     }
 
-    // Minimal furniture: mostly walls/floor/door and the occasional chest
     const dungeonRoomShapes = [
       {
         width: 4,
@@ -1920,7 +1779,6 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
-    // Reuse some building logic but require the underlying tiles to be "cave_floor".
     function canPlaceDungeonRoom(sx, sy, shape){
       const buildingWidth  = shape.width;
       const buildingHeight = shape.height;
@@ -1939,7 +1797,8 @@ function setupOccupantSpriteDropdown() {
       return true;
     }
 
-    // Simplified version of placeBuilding() that uses dungeon-specific logic
+    let nextBuildingId = 1;
+
     function placeBuildingShape(sx, sy, shape, context="normal"){
       const buildingId = nextBuildingId++;
       const doorGroups = [];
@@ -1979,7 +1838,6 @@ function setupOccupantSpriteDropdown() {
             cell.type = (context === "dungeon") ? "wall" : "cobblestone";
           } 
           else if (val === 0) {
-            // Use rubble floors for dungeon rooms
             cell.type = (context === "dungeon") ? "TileRubble" : "floor1";
           }
           else if (val === 2) {
@@ -2001,27 +1859,22 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
-    // Scatter extra dungeon decorations: replace random cave_floor with rubble, vines, stone
     function scatterDungeonDecor(){
       for(let y=0; y<GRID_HEIGHT; y++){
         for(let x=0; x<GRID_WIDTH; x++){
           const cell = mapData[y][x];
           if(cell.type==="cave_floor"){
             const r = Math.random();
-            // Some chance to become rubble
             if(r<0.05){
               cell.type = "TileRubble";
             }
-            // Or maybe a chunk of mossy stone
             else if(r<0.07){
               cell.type = "mossystone";
             }
-            // Or vines from the jungle scatter
             else if(r<0.08){
               cell.type = "junglescatter";
               cell._chosenTileIndex = tileTextures["junglescatter"].findIndex(img => img.src.includes("vines"));
               if(cell._chosenTileIndex < 0) {
-                // fallback pick
                 cell._chosenTileIndex = Math.floor(Math.random() * tileTextures["junglescatter"].length);
               }
             }
@@ -2132,6 +1985,9 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
+    /*******************************************************
+     * CLIFFS
+     *******************************************************/
     function generateCliffs(cliffCount) {
       for (let i = 0; i < cliffCount; i++) {
         let startX = Math.floor(Math.random() * (GRID_WIDTH - 9));
@@ -2312,7 +2168,6 @@ function setupOccupantSpriteDropdown() {
         case "right":  ex=GRID_WIDTH-1; ey=Math.floor(Math.random()*GRID_HEIGHT); break;
       }
       const pathCells = carveStraightRoad(theme, sx, sy, ex, ey);
-
       if(pathCells.length > 5 && Math.random() < 0.3){
         const pivot = pathCells[Math.floor(Math.random()*pathCells.length)];
         carveMeanderingOffshoot(theme, pivot.x, pivot.y, Math.floor(Math.random()*(maxLength/4))+5);
@@ -2470,37 +2325,7 @@ function setupOccupantSpriteDropdown() {
     /*******************************************************
      * BUILDINGS
      *******************************************************/
-    // Omitted building shape commentary for brevity.
-
-    let chosenFloorTile=null;
-    const uniqueBuildingAssets = {
-      toilet: 0
-    };
-
-    function createBuildings(numBuildings) {
-      const possibleFloors = ["floor1", "interiorfloors"];
-      chosenFloorTile = possibleFloors[Math.floor(Math.random() * possibleFloors.length)];
-
-      let attempts = 0, placed = 0;
-      const maxAttempts = 10000;
-      while (placed < numBuildings && attempts < maxAttempts) {
-        attempts++;
-        const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
-        if (shapeContainsUniqueAsset(shape, "J") && uniqueBuildingAssets.toilet >= 1) {
-          continue;
-        }
-        const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
-        const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
-        if (!canPlaceBuilding(sx, sy, shape)) continue;
-        placeBuilding(sx, sy, shape);
-        placed++;
-        if (shapeContainsUniqueAsset(shape, "J")) {
-          uniqueBuildingAssets.toilet++;
-        }
-      }
-    }
-
-/* 
+   /* 
   Building Shapes Asset Legend:
   
   Numerical Codes:
@@ -2735,6 +2560,31 @@ function setupOccupantSpriteDropdown() {
       }
     ];
 
+    let chosenFloorTile = null;
+    const uniqueBuildingAssets = { toilet: 0 };
+
+    function createBuildings(numBuildings) {
+      const possibleFloors = ["floor1", "interiorfloors"];
+      chosenFloorTile = possibleFloors[Math.floor(Math.random() * possibleFloors.length)];
+
+      let attempts = 0, placed = 0;
+      const maxAttempts = 10000;
+      while (placed < numBuildings && attempts < maxAttempts) {
+        attempts++;
+        const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
+        if (shapeContainsUniqueAsset(shape, "J") && uniqueBuildingAssets.toilet >= 1) {
+          continue;
+        }
+        const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
+        const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
+        if (!canPlaceBuilding(sx, sy, shape)) continue;
+        placeBuilding(sx, sy, shape);
+        placed++;
+        if (shapeContainsUniqueAsset(shape, "J")) {
+          uniqueBuildingAssets.toilet++;
+        }
+      }
+    }
 
     function shapeContainsUniqueAsset(shape, assetCode) {
       for (let y = 0; y < shape.height; y++) {
@@ -2908,74 +2758,26 @@ function setupOccupantSpriteDropdown() {
       return Math.random() < 0.2 ? "roadstone" : "roaddirt";
     }
 
-    let nextBuildingId = 1;
-
-    function createCitySquares() {
-      const squareCount = 2 + Math.floor(Math.random() * 3);
-      let attempts = 0, placed = 0;
-      while (placed < squareCount && attempts < squareCount * 20) {
-        attempts++;
-        const w = 4 + Math.floor(Math.random() * 3);
-        const h = 4 + Math.floor(Math.random() * 3);
-        const sx = Math.floor(Math.random() * (GRID_WIDTH - w));
-        const sy = Math.floor(Math.random() * (GRID_HEIGHT - h));
-        if (!canPlacePlaza(sx, sy, w, h)) continue;
-        stampPlaza(sx, sy, w, h);
-        connectPlazaToRoad(sx, sy, w, h);
-        placed++;
-      }
-    }
-
-    function canPlacePlaza(sx,sy,w,h){
-      for(let y=sy; y<sy+h; y++){
-        for(let x=sx; x<sx+w; x++){
-          const t=mapData[y][x];
-          if(t.hasBuilding || t.type==="wall" || t.type==="door" || t.type==="negative"){
-            return false;
+    function connectBuildingDoorsToRoads() {
+      const doorCells = [];
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
+          if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
+            doorCells.push({ x, y });
           }
         }
       }
-      return true;
-    }
-    function stampPlaza(sx,sy,w,h){
-      for(let yy=sy; yy<sy+h; yy++){
-        for(let xx=sx; xx<sx+w; xx++){
-          const cell=mapData[yy][xx];
-          if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" || cell.type==="negative") continue;
-          if(Math.random()<0.2){
-            cell.type = "roadstone";
-          } else {
-            cell.type="roaddirt";
-          }
-          if(Math.random()<0.15){
-            cell.type="marketscatter";
-          }
-        }
-      }
-    }
-
-    function connectPlazaToRoad(sx, sy, w, h) {
-      let borderCells = [];
-      for (let x = sx; x < sx + w; x++) {
-        borderCells.push({ x: x, y: sy });
-        borderCells.push({ x: x, y: sy + h - 1 });
-      }
-      for (let y = sy + 1; y < sy + h - 1; y++) {
-        borderCells.push({ x: sx, y: y });
-        borderCells.push({ x: sx + w - 1, y: y });
-      }
-      borderCells.sort(() => Math.random() - 0.5);
-
-      for (const cell of borderCells) {
-        let path = findPathToRoad(cell.x, cell.y);
+      if (!doorCells.length) return;
+      doorCells.forEach(dc => {
+        const path = findPathToRoad(dc.x, dc.y);
         if (path) {
-          for (const p of path) {
+          for (let i = 0; i < path.length; i++) {
+            const p = path[i];
+            if (mapData[p.y][p.x].type === "door" || mapData[p.y][p.x].type === "doorWood2") continue;
             carveSingleRoadTile(p.x, p.y);
           }
-          return true;
         }
-      }
-      return false;
+      });
     }
 
     function findPathToRoad(sx, sy){
@@ -3002,43 +2804,6 @@ function setupOccupantSpriteDropdown() {
       }
       return null;
     }
-
-    function scatterWells(probability = 0.001) {
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          const cell = mapData[y][x];
-          const forbiddenTypes = ["wall", "water", "lava", "cliffs", "door", "woodfloor", "roaddirt", "roadstone"];
-          if (cell.hasBuilding || forbiddenTypes.includes(cell.type)) continue;
-          if (Math.random() < probability) {
-            cell.type = "well";
-            cell._chosenTileIndex = null;
-          }
-        }
-      }
-    }
-
-    function connectBuildingDoorsToRoads() {
-      const doorCells = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
-            doorCells.push({ x, y });
-          }
-        }
-      }
-      if (!doorCells.length) return;
-      doorCells.forEach(dc => {
-        const path = findPathToRoad(dc.x, dc.y);
-        if (path) {
-          for (let i = 0; i < path.length; i++) {
-            const p = path[i];
-            if (mapData[p.y][p.x].type === "door" || mapData[p.y][p.x].type === "doorWood2") continue;
-            carveSingleRoadTile(p.x, p.y);
-          }
-        }
-      });
-    }
-
 
     function scatterCrates(chance = 0.1) {
       const deltas = [
@@ -3075,6 +2840,9 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
+    /*******************************************************
+     * FARMS
+     *******************************************************/
     function createFields(numFields){
       for(let i=0; i<numFields; i++){
         const fw=3+Math.floor(Math.random()*5);
@@ -3099,33 +2867,26 @@ function setupOccupantSpriteDropdown() {
         for (let x = sx; x < sx + w; x++) {
           if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) return false;
           const cell = mapData[y][x];
-          if (cityWallBounds) {
-            const withinWalls = insideRect(x, y, cityWallBounds);
-
-          }
-          if (
-            ["water", "lava", "negative", "wall", "door", "woodfloor", "floor1", "cobblestone",
-             "marble1", "marble2", "marble3", "marble4", "darktile", "ancienttile", "limestone1",
-             "limestone2", "limestone3", "roaddirt", "roadstone"].includes(cell.type)
-             || cell.hasBuilding
-          ) {
+          if (["water", "lava", "negative", "wall", "door", "woodfloor", "floor1", "cobblestone",
+               "marble1", "marble2", "marble3", "marble4", "darktile", "ancienttile", "limestone1",
+               "limestone2", "limestone3", "roaddirt", "roadstone"].includes(cell.type)
+             || cell.hasBuilding) {
             return false;
           }
         }
       }
       return true;
     }
-    function insideRect(px,py,rect){
-      return (px>=rect.x && py>=rect.y && px<(rect.x+rect.w) && py<(rect.y+rect.h));
-    }
 
+    /*******************************************************
+     * CITY WALLS
+     *******************************************************/
     function createIrregularCityWalls() {
       const darkStoneWallFiles = [
         "darkStoneBlock.png",
         "darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"
       ];
       const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
-      
       const theme = document.getElementById('mapType').value;
       const usePallisade = (theme === "jungle" || theme === "forest" || theme === "snow");
       
@@ -3224,6 +2985,9 @@ function setupOccupantSpriteDropdown() {
       mapData[y][x]._chosenTileIndex = null;
     }
 
+    /*******************************************************
+     * DECORATIONS
+     *******************************************************/
     function decorateBiome(theme){
       if(theme==="desert"){
         decorateDesert();
@@ -3334,7 +3098,6 @@ function setupOccupantSpriteDropdown() {
         }
       }
     }
-
     function scatterGrassRocks(num){
       for(let i=0; i<num; i++){
         const gx=Math.floor(Math.random()*GRID_WIDTH);
@@ -3346,6 +3109,94 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
+    /*******************************************************
+     * CITY EXTRAS
+     *******************************************************/
+    function createCitySquares() {
+      const squareCount = 2 + Math.floor(Math.random() * 3);
+      let attempts = 0, placed = 0;
+      while (placed < squareCount && attempts < squareCount * 20) {
+        attempts++;
+        const w = 4 + Math.floor(Math.random() * 3);
+        const h = 4 + Math.floor(Math.random() * 3);
+        const sx = Math.floor(Math.random() * (GRID_WIDTH - w));
+        const sy = Math.floor(Math.random() * (GRID_HEIGHT - h));
+        if (!canPlacePlaza(sx, sy, w, h)) continue;
+        stampPlaza(sx, sy, w, h);
+        connectPlazaToRoad(sx, sy, w, h);
+        placed++;
+      }
+    }
+
+    function canPlacePlaza(sx,sy,w,h){
+      for(let y=sy; y<sy+h; y++){
+        for(let x=sx; x<sx+w; x++){
+          const t=mapData[y][x];
+          if(t.hasBuilding || t.type==="wall" || t.type==="door" || t.type==="negative"){
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    function stampPlaza(sx,sy,w,h){
+      for(let yy=sy; yy<sy+h; yy++){
+        for(let xx=sx; xx<sx+w; xx++){
+          const cell=mapData[yy][xx];
+          if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" || cell.type==="negative") continue;
+          if(Math.random()<0.2){
+            cell.type = "roadstone";
+          } else {
+            cell.type="roaddirt";
+          }
+          if(Math.random()<0.15){
+            cell.type="marketscatter";
+          }
+        }
+      }
+    }
+
+    function connectPlazaToRoad(sx, sy, w, h) {
+      let borderCells = [];
+      for (let x = sx; x < sx + w; x++) {
+        borderCells.push({ x: x, y: sy });
+        borderCells.push({ x: x, y: sy + h - 1 });
+      }
+      for (let y = sy + 1; y < sy + h - 1; y++) {
+        borderCells.push({ x: sx, y: y });
+        borderCells.push({ x: sx + w - 1, y: y });
+      }
+      borderCells.sort(() => Math.random() - 0.5);
+
+      for (const cell of borderCells) {
+        let path = findPathToRoad(cell.x, cell.y);
+        if (path) {
+          for (const p of path) {
+            carveSingleRoadTile(p.x, p.y);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function scatterWells(probability = 0.001) {
+      for (let y = 0; y < GRID_HEIGHT; y++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
+          const cell = mapData[y][x];
+          const forbiddenTypes = ["wall", "water", "lava", "cliffs", "door", "woodfloor", "roaddirt", "roadstone"];
+          if (cell.hasBuilding || forbiddenTypes.includes(cell.type)) continue;
+          if (Math.random() < probability) {
+            cell.type = "well";
+            cell._chosenTileIndex = null;
+          }
+        }
+      }
+    }
+
+    /*******************************************************
+     * COASTAL EXTRAS
+     *******************************************************/
     function scatterCoastalTrees(count){
       let placed=0, attempts=0;
       while(placed<count && attempts<1000){
@@ -3396,7 +3247,7 @@ function setupOccupantSpriteDropdown() {
         let ccount = 0, cx = x + dir.dx, cy = y + dir.dy;
         while (ccount < length) {
           if (cx < 0 || cy < 0 || cx >= GRID_WIDTH || cy>=GRID_HEIGHT) break;
-          if (mapData[cy][cx].type !== "water") break;
+          if (mapData[ny][nx].type !== "water") break;
           cx += dir.dx;
           cy += dir.dy;
           ccount++;
@@ -3443,6 +3294,9 @@ function setupOccupantSpriteDropdown() {
       return true;
     }
 
+    /*******************************************************
+     * CAMPS
+     *******************************************************/
     const campShapes = [
       {
         width: 3,
@@ -3522,10 +3376,6 @@ function setupOccupantSpriteDropdown() {
           ) {
             return false;
           }
-          if (cityWallBounds) {
-            const withinWalls = insideRect(sx + x, sy + y, cityWallBounds);
-
-          }
         }
       }
       return true;
@@ -3548,6 +3398,9 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
+    /*******************************************************
+     * DRAWING
+     *******************************************************/
     function drawMap(){
       const canvas = document.getElementById("mapCanvas");
       const ctx = canvas.getContext("2d");
@@ -3563,9 +3416,10 @@ function setupOccupantSpriteDropdown() {
 
     function drawCell(ctx, gx, gy) {
       const cell = mapData[gy][gx];
-      const px = gx * TILE_SIZE, py = gy * TILE_SIZE;
+      const px = gx * TILE_SIZE;
+      const py = gy * TILE_SIZE;
 
-      // Draw tile
+      // Special case: pallisade
       if (cell.type === "pallisade") {
         const arr = tileTextures["pallisade"] || [];
         if (arr.length > 0) {
@@ -3621,6 +3475,7 @@ function setupOccupantSpriteDropdown() {
         }
       }
       else {
+        // General tile drawing
         const arr = tileTextures[cell.type] || [];
         if (arr.length > 0) {
           if (cell._chosenTileIndex == null) {
@@ -3639,7 +3494,8 @@ function setupOccupantSpriteDropdown() {
         }
       }
 
-       if (cell.occupant) {
+      // Occupant
+      if (cell.occupant) {
         drawOccupantSprite(ctx, cell.occupant, px, py);
       }
 
@@ -3647,28 +3503,35 @@ function setupOccupantSpriteDropdown() {
       ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
     }
 
-    function drawOccupantSprite(ctx, occupant, px, py) {
-  // Same logic for occupant.sprite:
-  if (occupant.sprite && occupant.sprite !== "none") {
-    const spr = occupantSpritesMap[occupant.sprite];
-    if (spr && spr.complete) {
-      ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
-    } else {
-      ctx.fillStyle = "#999";
-      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+    function weightedRandomIndex(weights) {
+      const total = weights.reduce((sum, weight) => sum + weight, 0);
+      let random = Math.random() * total;
+      for (let i = 0; i < weights.length; i++) {
+        if (random < weights[i]) {
+          return i;
+        }
+        random -= weights[i];
+      }
+      return weights.length - 1; 
     }
-  } else {
-    ctx.fillStyle = "#999";
-    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-  }
 
-  // Outline in occupant.color
-  const borderColor = occupant.color || "#FF00FF";
-  ctx.strokeStyle = borderColor;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
-}
-
+    function drawOccupantSprite(ctx, occupant, px, py) {
+      if (occupant.sprite && occupant.sprite !== "none") {
+        const spr = occupantSpritesMap[occupant.sprite];
+        if (spr && spr.complete) {
+          ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
+        } else {
+          ctx.fillStyle = "#999";
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
+      } else {
+        ctx.fillStyle = "#999";
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+      ctx.strokeStyle = occupant.color || "#FF00FF";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    }
 
     function updateNameOverlay(){
       const overlay = document.getElementById("nameOverlay");
@@ -3695,7 +3558,9 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
-
+    /*******************************************************
+     * UI INTERACTIONS
+     *******************************************************/
     function setMode(mode){
       currentMode = mode;
       if(mode!=="move"){
@@ -3703,9 +3568,8 @@ function setupOccupantSpriteDropdown() {
       }
     }
 
-
-    const canvas=document.getElementById("mapCanvas");
-    const mapWrapper=document.querySelector(".mapWrapper");
+    const canvas = document.getElementById("mapCanvas");
+    const mapWrapper = document.querySelector(".mapWrapper");
 
     function updateCanvasTransform(){
       canvas.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
@@ -3717,15 +3581,18 @@ function setupOccupantSpriteDropdown() {
 
     canvas.addEventListener("click", (e) => {
       if(isDragging || activePointers.size>1) return;
-      const rect=mapWrapper.getBoundingClientRect();
-      const mx=e.clientX - rect.left, my=e.clientY - rect.top;
-      const wx=(mx-offsetX)/scale, wy=(my-offsetY)/scale;
-      const tx=Math.floor(wx/TILE_SIZE), ty=Math.floor(wy/TILE_SIZE);
+      const rect = mapWrapper.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const wx = (mx-offsetX)/scale;
+      const wy = (my-offsetY)/scale;
+      const tx = Math.floor(wx/TILE_SIZE);
+      const ty = Math.floor(wy/TILE_SIZE);
       if(tx<0||ty<0||tx>=GRID_WIDTH||ty>=GRID_HEIGHT) return;
 
-      const occupantColor=document.getElementById("occupantColor").value;
-      const occupantSprite=document.getElementById("occupantSprite").value;
-      const tile=mapData[ty][tx];
+      const occupantColor = document.getElementById("occupantColor").value;
+      const occupantSprite = document.getElementById("occupantSprite").value;
+      const tile = mapData[ty][tx];
 
       switch(currentMode){
         case "delete":
@@ -3738,7 +3605,6 @@ function setupOccupantSpriteDropdown() {
           break;
         case "move":
           if (!occupantInHand) {
-
             if (tile.occupant) {
               occupantInHand = tile.occupant;
               tile.occupant = null;
@@ -3746,7 +3612,6 @@ function setupOccupantSpriteDropdown() {
               updateNameOverlay();
             }
           } else {
-
             tile.occupant = occupantInHand;
             occupantInHand = null;
             drawCell(canvas.getContext("2d"), tx, ty);
@@ -3761,26 +3626,22 @@ function setupOccupantSpriteDropdown() {
             drawCell(canvas.getContext("2d"), tx, ty);
           }
           break;
-       case "place":
-default:
-  occupantInHand = null;
-
-  // If there's no sprite selected, we do nothing—no occupant is placed.
-  if (occupantSprite === "none") {
-    return;
-  }
-
-  // Otherwise, we create an occupant with the chosen colour, sprite and name
-  tile.occupant = {
-    color: occupantColor,
-    sprite: occupantSprite,
-    name: getOccupantName()
-  };
-
-  drawCell(canvas.getContext("2d"), tx, ty);
-  updateNameOverlay();
-  break;
-
+        case "place":
+        default:
+          occupantInHand = null;
+          // If no sprite selected, do nothing
+          if (occupantSprite === "none") {
+            return;
+          }
+          // Otherwise place occupant
+          tile.occupant = {
+            color: occupantColor,
+            sprite: occupantSprite,
+            name: getOccupantName()
+          };
+          drawCell(canvas.getContext("2d"), tx, ty);
+          updateNameOverlay();
+          break;
       }
     });
 
@@ -3836,7 +3697,8 @@ default:
         const ps=[...activePointers.values()];
         const midX=(ps[0].x+ps[1].x)/2 - rect.left;
         const midY=(ps[0].y+ps[1].y)/2 - rect.top;
-        const wx=(midX-offsetX)/scale, wy=(midY-offsetY)/scale;
+        const wx=(midX-offsetX)/scale;
+        const wy=(midY-offsetY)/scale;
         scale=newScale;
         offsetX=midX - wx*newScale;
         offsetY=midY - wy*newScale;
@@ -3864,10 +3726,12 @@ default:
       document.getElementById("occupantSprite").value="none";
     }
 
+    /*******************************************************
+     * EXPORT / IMPORT
+     *******************************************************/
     function exportMap() {
       const dataStr = JSON.stringify(mapData);
       const blob = new Blob([dataStr], { type: "text/plain" });
-      
       const anchor = document.createElement("a");
       anchor.href = URL.createObjectURL(blob);
       anchor.download = "map.vtt"; 
@@ -3892,72 +3756,51 @@ default:
       reader.readAsText(file);
     }
 
+    /*******************************************************
+     * WINDOW ONLOAD
+     *******************************************************/
     window.onload = () => {
-  // Set up sliders
-  setupSliders();
-  // Preload images
-  preloadImages(() => {
-    setupTileMenu();
-    populateOccupantSpriteSelect();
-    generateMap();
+      // Set up sliders
+      setupSliders();
 
- function populateOccupantSpriteSelect() {
-  const spriteSelect = document.getElementById("occupantSprite");
-  
-  // Start fresh by removing any old child nodes, 
-  // leaving only the initial "none" option:
-  while (spriteSelect.children.length > 1) {
-    spriteSelect.removeChild(spriteSelect.lastChild);
-  }
+      // Preload all images
+      preloadImages(() => {
+        // Then set up the tile menu
+        setupTileMenu();
+        // Build occupant sprite dropdown
+        populateOccupantSpriteSelect();
+        // Finally generate the map
+        generateMap();
 
-  for (const folderName in occupantSpriteFolders) {
-    // Create optgroup
-    const optGroup = document.createElement("optgroup");
-    optGroup.label = folderName; // e.g. "catfolk"
+        // Sprite preview change handler
+        document.getElementById("occupantSprite").addEventListener("change", function() {
+          const sprite = this.value;
+          const previewImg = document.getElementById("spritePreview");
+          if (sprite === "none") {
+            previewImg.style.display = "none";
+            previewImg.src = "";
+          } else {
+            previewImg.style.display = "block";
+            if (occupantSpritesMap[sprite] && occupantSpritesMap[sprite].complete) {
+              previewImg.src = occupantSpritesMap[sprite].src;
+            } else {
+              previewImg.src = "";
+            }
+          }
+        });
 
-    const fileList = occupantSpriteFolders[folderName];
-    for (const filename of fileList) {
-      // strip off ".png" for the visible name
-      const baseName = filename.replace(".png", "");
-      const option = document.createElement("option");
-      option.value = baseName;  // matches occupantSpritesMap[baseName]
-      option.textContent = baseName;
-      optGroup.appendChild(option);
-    }
-    spriteSelect.appendChild(optGroup);
-  }
-}
-
-	  
-	  // Sprite preview change handler
-    document.getElementById("occupantSprite").addEventListener("change", function() {
-      const sprite = this.value;
-      const previewImg = document.getElementById("spritePreview");
-      if (sprite === "none") {
-        previewImg.style.display = "none";
-        previewImg.src = "";
-      } else {
-        previewImg.style.display = "block";
-        if (occupantSpritesMap[sprite] && occupantSpritesMap[sprite].complete) {
-          previewImg.src = occupantSpritesMap[sprite].src;
-        } else {
-          previewImg.src = "";
-        }
-      }
-    });
-
-
+        // Fullscreen button
         document.getElementById('fullscreenBtn').addEventListener('click', function() {
-          const mapWrapper = document.querySelector('.mapWrapper');
           if (!document.fullscreenElement) {
             mapWrapper.requestFullscreen().catch(err => {
-              alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+              alert(`Error enabling fullscreen mode: ${err.message} (${err.name})`);
             });
           } else {
             document.exitFullscreen();
           }
         });
 
+        // Print button
         document.getElementById('printBtn').addEventListener('click', function() {
           const canvas = document.getElementById('mapCanvas');
           const dataUrl = canvas.toDataURL('image/png');
@@ -3979,6 +3822,7 @@ default:
           printWindow.document.close();
         });
 
+        // Export & import
         document.getElementById("exportBtn").addEventListener("click", exportMap);
         const fileInput = document.getElementById("importFile");
         fileInput.addEventListener("change", handleFileImport);
