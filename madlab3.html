@@ -2,3928 +2,592 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  
-  <title>Procedural Battle Map Generator</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Caldwell's Repository - Comprehensive DM Screen</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png" />
   <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
-  >
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-
+  />
   <style>
+    /* GLOBAL STYLES */
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
-      background: url('resources/mapgen.png') no-repeat center center fixed;
+      background: url('resources/index.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
-      text-align: center;
-      overscroll-behavior: none;
     }
-    .container {
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 95vw;
+    a {
+      text-decoration: none;
+      color: #FAF4E0;
+      transition: background 0.3s ease, color 0.3s ease;
     }
-    h1, h2 {
+    a:hover {
+      background: #660000;
+      border-radius: 5px;
+    }
+    h1, h2, h3, h4 {
       font-family: 'Cinzel', serif;
       margin: 0.5rem 0;
     }
-    .description {
-      font-size: 1.2rem;
-      margin-top: 1rem;
+    p {
+      margin: 0.5rem 0 1rem;
+      line-height: 1.5;
     }
-    .controls {
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    li {
+      margin: 0.3rem 0;
+    }
+    
+    /* TOP NAVIGATION BAR */
+    .top-nav {
+      background: rgba(139, 0, 0, 0.85);
+      padding: 0.5rem;
       display: flex;
       justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 0.5rem auto;
-    }
-    .mapBiomeContainer,
-    .checkboxContainer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-      align-items: center;
-    }
-    .collapsibleContainer {
-      margin: 1rem 0;
-    }
-    .collapsibleContainer button {
-      font-family: 'Cinzel', serif;
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-bottom: 0.5rem;
-    }
-    .sliderGrid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      max-width: 600px;
-      margin: 0 auto;
-      justify-items: center;
-    }
-    @media (max-width: 600px) {
-      .sliderGrid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .sliderContainer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    .hidden {
-      display: none !important;
-    }
-    .mapWrapper {
-      width: 90vw;
-      max-width: 1000px;
-      height: 60vh;
-      max-height: 700px;
-      margin: 1rem auto;
-      overflow: hidden;
-      position: relative;
-      display: block;
-      border: 2px solid #660000;
-      background: #202020;
-    }
-
-    /* Ensure transform origin is top-left. */
-    .mapWrapper > canvas,
-    .mapWrapper > div#nameOverlay {
-      transform-origin: top left; 
-      position: absolute;
+      position: sticky;
       top: 0;
-      left: 0;
+      z-index: 100;
     }
-
-    .fullscreenBtn {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      z-index: 10; /* Ensure it's above the canvas */
+    .nav-menu {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-item {
+      position: relative;
+    }
+    .nav-item > a {
       padding: 0.5rem 1rem;
       font-family: 'Cinzel', serif;
-      background: #8B0000;
       color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 2px;
-      cursor: pointer;
+      display: block;
     }
-    .fullscreenBtn:hover {
-      background: #660000;
+    .dropdown {
+      display: none;
+      position: absolute;
+      background: rgba(139, 0, 0, 0.9);
+      top: 100%;
+      left: 0;
+      min-width: 200px;
+      border-radius: 5px;
+      padding: 0.5rem 0;
+      z-index: 200;
     }
-    #mapCanvas {
-      width: 1000px;
-      height: 1000px;
-      image-rendering: pixelated;
-      touch-action: none;
-    }
-    .mapButton {
-      display: inline-block;
-      margin: 0.5rem;
-      padding: 0.6rem 1rem;
-      font-family: 'Cinzel', serif;
-      background: #8B0000;
+    .dropdown li a {
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
+      display: block;
+      font-family: 'Almendra', serif;
       color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
     }
-    .mapButton:hover {
-      background: #660000;
+    .nav-item:hover > .dropdown {
+      display: block;
     }
-    .controls label {
-      font-family: 'Cinzel', serif;
-      font-size: 1rem;
-      user-select: none;
+    
+    /* CONTAINER & LAYOUT */
+    .container {
+      max-width: 1400px;
+      margin: 1rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 10px;
+      padding: 1rem;
     }
-    .sliderContainer label {
-      margin: 3px 0;
+    main.content {
+      padding: 1rem;
     }
-    .sliderContainer input[type='range'] {
-      width: 140px;
-    }
-    /* Tile menu styling */
-    .tileMenuGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-      gap: 0.5rem;
-      max-width: 600px;
-      margin: 0 auto;
-      justify-items: center;
-    }
-    .tileItem {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #333;
-      border: 1px solid #660000;
-      padding: 0.5rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .tileItem:hover {
-      background: #555;
-    }
-    .tileItem img {
-      image-rendering: pixelated;
-      width: 32px;
-      height: 32px;
-      margin-bottom: 4px;
-    }
-    .tileItem span {
-      font-size: 0.8rem;
-      text-transform: lowercase;
+    footer {
       text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+    
+    /* RESPONSIVENESS */
+    @media screen and (max-width: 900px) {
+      .nav-menu {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    }
+    
+    /* WIKIDOT SEARCH */
+    .search-bar {
+      margin: 1rem 0;
+      text-align: center;
+    }
+    .search-bar input[type="text"] {
+      width: 70%;
+      max-width: 300px;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: none;
+      font-family: 'Almendra', serif;
+    }
+    .search-bar input[type="submit"] {
+      padding: 0.5rem 1rem;
+      margin-left: 0.5rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #8B0000;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .search-bar input[type="submit"]:hover {
+      background-color: #A52A2A;
+    }
+    
+    /* DM CHEAT SHEET ACCORDION */
+    .dm-accordion-section {
+      margin-bottom: 1rem;
+      border: 1px solid #8B0000;
+      border-radius: 5px;
+    }
+    .dm-accordion-header {
+      cursor: pointer;
+      background-color: rgba(139, 0, 0, 0.8);
+      padding: 0.5rem;
+      border-radius: 5px 5px 0 0;
+    }
+    .dm-accordion-content {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.4s ease-out;
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem;
+      border-radius: 0 0 5px 5px;
+    }
+    .dm-accordion-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    .dm-accordion-content table, 
+    .dm-accordion-content th, 
+    .dm-accordion-content td {
+      border: 1px solid #8B0000;
+    }
+    .dm-accordion-content th, 
+    .dm-accordion-content td {
+      padding: 0.5rem;
+      text-align: left;
+    }
+    
+    /* SHOP DISTRICT SECTION */
+    .store-container {
+      background: transparent;
+      padding: 2rem;
+      border-radius: 10px;
+      margin-top: 2rem;
+      text-align: center;
+      font-family: 'Almendra', serif;
+      color: #333;
+    }
+    .store-list {
+      list-style: none;
+      padding: 0;
+      margin: 2rem 0 1rem;
+    }
+    .store-item {
+      margin: 1rem 0;
+    }
+    .store-link {
+      display: inline-block;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      font-family: 'Cinzel', serif;
+      color: #8B0000;
+      background: none;
+      border: none;
+      letter-spacing: 0.1rem;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    .store-link:hover {
+      text-decoration: underline;
+      color: #660000;
+    }
+    
+    /* DIVIDER */
+    .divider {
+      margin: 2rem 0;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
     }
   </style>
 </head>
 <body>
+  <!-- TOP NAVIGATION BAR -->
+  <nav class="top-nav">
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="#">Caldwell Chronicles</a>
+        <ul class="dropdown">
+          <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank">Common &amp; Uncommon Lore, 3rd Ed.</a></li>
+          <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank">Caldwell Commentary, 4th Ed.</a></li>
+          <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank">Treatise on Shaniquáan Chronology</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Evershroud Gazette</a>
+        <ul class="dropdown">
+          <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank">8th Fellwind, 725 Y.S.</a></li>
+          <li><a href="resources/EvershroudGazette1verdant784.pdf" target="_blank">1st Verdant, 784 Y.S.</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Maps</a>
+        <ul class="dropdown">
+          <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank">Map of the Evershroud Isles</a></li>
+          <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank">Map of Silt</a></li>
+          <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank">Map of the Avernum</a></li>
+          <li><a href="resources/Azure.jpg" target="_blank">Merchant's Map of Azure</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Adventurer's Guild</a>
+        <ul class="dropdown">
+          <li><a href="resources/Recruitment%20poster.pdf" target="_blank">Recruitment Poster</a></li>
+          <li><a href="resources/Contract.pdf" target="_blank">Guild Contract</a></li>
+          <li><a href="noticeboard.html" target="_blank">Notice Board</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Upper City</a>
+        <ul class="dropdown">
+          <li><a href="brinealcazar.html" target="_blank">Brine Alcazar</a></li>
+          <li><a href="resources/Writ%20of%20Freeholding%20blank.pdf" target="_blank">Writ of Freeholding</a></li>
+          <li><a href="councilhall.html" target="_blank">Council Hall</a></li>
+          <li><a href="embassy.html" target="_blank">Continental Embassy</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Merchant's Quarter</a>
+        <ul class="dropdown">
+          <li><a href="exchange.html" target="_blank">The Evershroud Exchange</a></li>
+          <li><a href="shopdistrict.html" target="_blank">Shop District</a></li>
+          <li><a href="guildhall.html" target="_blank">Guildhall</a></li>
+          <li><a href="tavern.html" target="_blank">The Pickled Piglet</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Temple District</a>
+        <ul class="dropdown">
+          <li><a href="temple.html" target="_blank">Pentarchon</a></li>
+          <li><a href="tower.html" target="_blank">Spire of Kar'El</a></li>
+          <li><a href="catacombs.html" target="_blank">Catacombs</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Utilities</a>
+        <ul class="dropdown">
+          <li><a href="commgen.html" target="_blank">Commoner Generator</a></li>
+          <li><a href="encgen.html" target="_blank">Encounter Generator (beta)</a></li>
+          <li><a href="ingen.html" target="_blank">Instance Generator (beta)</a></li>
+          <li><a href="mapgen.html" target="_blank">Battle Map Generator (legacy)</a></li>
+          <li><a href="mapgen2.html" target="_blank">Battle Map Generator (flagship)</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Travel</a>
+        <ul class="dropdown">
+          <li><a href="harbour.html" target="_blank">Coastal Travel System (beta)</a></li>
+          <li><a href="travel.html" target="_blank">Road Travel System (beta)</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Observatory</a>
+        <ul class="dropdown">
+          <li><a href="calendar.html" target="_blank">Berynian Calendar and Weather</a></li>
+          <li><a href="astrology.html" target="_blank">Shaniquáan Astrology</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#">Other</a>
+        <ul class="dropdown">
+          <li><a href="fortune.html" target="_blank">Fortune Teller</a></li>
+          <li><a href="harmony.html" target="_blank">Crystal Harmony By Brigitte</a></li>
+          <li><a href="forge.html" target="_blank">Origen's Forge</a></li>
+          <li><a href="madlab.html" target="_blank">Mad Lab</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+  
+  <!-- MAIN CONTAINER -->
   <div class="container">
-    <h1>Procedural Battle Map Generator</h1>
-    <p class="description">
-      "Generate maps, place sprites, roll dice... then export or import to continue later!"
-    </p>
-
-    <!-- Biome selection -->
-    <div class="controls">
-      <div class="mapBiomeContainer">
-        <label>
-          Map Biome:
-          <select id="mapType" onchange="setupSliders()">
-            <option value="desert">Desert</option>
-            <option value="city">City</option>
-            <option value="grassland" selected>Grassland</option>
-            <option value="mountain">Mountain</option>
-            <option value="forest">Forest</option>
-            <option value="cavern">Cavern</option>
-            <option value="sakura">Sakura</option>
-            <option value="volcanic">Volcanic</option>
-            <option value="coastal">Coastal</option>
-            <option value="riverlands">Riverlands</option>
-            <option value="swamp">Swamp</option>
-            <option value="jungle">Jungle</option>
-            <option value="snow">Snow</option>
-            <!-- NEW DUNGEON BIOME -->
-            <option value="dungeon">Dungeon</option>
-          </select>
-        </label>
-      </div>
-    </div>
-  
-    <!-- Generation checkboxes -->
-    <div class="controls">
-      <div class="checkboxContainer">
-        <label>
-          <input type="checkbox" id="buildingsCheck" />
-          Buildings
-        </label>
-        <label>
-          <input type="checkbox" id="generateFields" />
-          Fields
-        </label>
-        <label>
-          <input type="checkbox" id="cityWalls" />
-          City Walls
-        </label>
-        <label>
-          <input type="checkbox" id="cliffsCheck" />
-          Cliffs
-        </label>
-        <label>
-          <input type="checkbox" id="waterCheck" />
-          Water
-        </label>
-        <label>
-          <input type="checkbox" id="roadCheck" />
-          Roads
-        </label>
-        <label>
-          <input type="checkbox" id="scatterCratesCheck" />
-          Crates
-        </label>
-        <label>
-          <input type="checkbox" id="campsCheck" />
-          Camps
-        </label>
-      </div>
-    </div>
-
-    <!-- Map generation button -->
-    <div class="controls">
-      <button class="mapButton" onclick="generateMap()">Generate Map</button>
-    </div>
-
-    <!-- Collapsible sliders -->
-    <div class="collapsibleContainer">
-      <button onclick="toggleSliders()">Map Settings</button>
-      <div id="sliderControls" class="sliderGrid hidden">
-        <!-- Sliders appear here via setupSliders() -->
-      </div>
-    </div>
-
-    <!-- Collapsible tile menu -->
-    <div class="collapsibleContainer">
-      <button onclick="toggleTileMenu()">Tile Menu</button>
-      <div id="tileMenu" class="tileMenuGrid hidden">
-        <!-- Filled in setupTileMenu() -->
-      </div>
-    </div>
-
-  <!-- Occupant type + sprite controls -->
-<div class="controls">
-  <label>
-    Occupant Type:
-    <select id="occupantType">
-      <option value="none" selected>None</option>
-      <option value="player">Player</option>
-      <option value="enemy">Enemy</option>
-      <option value="npc">NPC</option>
-    </select>
-  </label>
-  
-  <label>
-    Sprite:
-    <select id="occupantSprite">
-      <option value="none" selected>None</option>
-      
-      <!-- Base Sprites -->
-      <optgroup label="Base Sprites: Human/Generic">
-        <option value="paladin">paladin</option>
-        <option value="fighter">fighter</option>
-        <option value="guardian">guardian</option>
-        <option value="halfblood">halfblood</option>
-        <option value="berserker">berserker</option>
-        <option value="assassin">assassin</option>
-        <option value="warlock">warlock</option>
-        <option value="sorcerer">sorcerer</option>
-        <option value="priestess">priestess</option>
-        <option value="cleric">cleric</option>
-        <option value="druid">druid</option>
-        <option value="mage">mage</option>
-      </optgroup>
-      <optgroup label="Base Sprites: Orcs">
-        <option value="orc">orc</option>
-        <option value="orcbandit">orcbandit</option>
-        <option value="orcchief">orcchief</option>
-        <option value="orcshaman">orcshaman</option>
-        <option value="orcfighter">orcfighter</option>
-      </optgroup>
-      <optgroup label="Base Sprites: Monsters">
-        <option value="demon">demon</option>
-        <option value="serpent">serpent</option>
-        <option value="chimera">chimera</option>
-        <option value="ogre">ogre</option>
-        <option value="goblin">goblin</option>
-        <option value="spider">spider</option>
-        <option value="bat">bat</option>
-        <option value="zombie">zombie</option>
-      </optgroup>
-      <optgroup label="Base Sprites: Other">
-        <option value="edgelord">edgelord</option>
-        <option value="fallenangel">fallenangel</option>
-        <option value="darkpriestess">darkpriestess</option>
-        <option value="darkguard">darkguard</option>
-        <option value="cultist">cultist</option>
-      </optgroup>
-      
-      <!-- Extended Sprites -->
-      <optgroup label="Extended Sprites: Human">
-        <option value="guard_human">guard_human</option>
-        <option value="fighter_human_f">fighter_human_f</option>
-        <option value="druid_human_f">druid_human_f</option>
-        <option value="cleric_human_f">cleric_human_f</option>
-        <option value="battlemage_human_f">battlemage_human_f</option>
-        <option value="bard_human_f">bard_human_f</option>
-        <option value="barbarian_human_f">barbarian_human_f</option>
-        <option value="archmage_human_f">archmage_human_f</option>
-        <option value="archer_human_f">archer_human_f</option>
-        <option value="archdruid_human_f">archdruid_human_f</option>
-        <option value="wizard_human_f">wizard_human_f</option>
-        <option value="warlock_human_f">warlock_human_f</option>
-        <option value="sorcerer_human_f">sorcerer_human_f</option>
-        <option value="rogue_human_f">rogue_human_f</option>
-        <option value="ranger_human_f">ranger_human_f</option>
-        <option value="priestess_human_f">priestess_human_f</option>
-        <option value="paladin_human_f">paladin_human_f</option>
-        <option value="monk_human_f">monk_human_f</option>
-        <option value="knight_human_f">knight_human_f</option>
-      </optgroup>
-      <optgroup label="Extended Sprites: Elf">
-        <option value="guard_elf">guard_elf</option>
-        <option value="fighter_elf_dark_m">fighter_elf_dark_m</option>
-        <option value="druid_elf">druid_elf</option>
-        <option value="cleric_elf_f">cleric_elf_f</option>
-        <option value="cleric_elf_dark">cleric_elf_dark</option>
-        <option value="battlemage_elf_dark_f">battlemage_elf_dark_f</option>
-        <option value="battlemage_elf">battlemage_elf</option>
-        <option value="wizard_elf_dark_m">wizard_elf_dark_m</option>
-        <option value="wizard_elf">wizard_elf</option>
-        <option value="sorcerer_elf_f">sorcerer_elf_f</option>
-        <option value="rogue_elf">rogue_elf</option>
-        <option value="ranger_elf_dark">ranger_elf_dark</option>
-        <option value="ranger_elf">ranger_elf</option>
-        <option value="mage_elf">mage_elf</option>
-        <option value="witch_hunter_elf">witch_hunter_elf</option>
-      </optgroup>
-      <optgroup label="Extended Sprites: Dwarf">
-        <option value="guard_dwarf">guard_dwarf</option>
-      </optgroup>
-      <optgroup label="Extended Sprites: Other/Monster">
-        <option value="wizard_beard_green">wizard_beard_green</option>
-        <option value="mage_dark">mage_dark</option>
-        <option value="ranger_dark">ranger_dark</option>
-      </optgroup>
-    </select>
-  </label>
-  
-  <label>
-    Name:
-    <input type="text" id="occupantName" placeholder="e.g. Sir Reginald" style="font-family: 'Cinzel', serif;">
-  </label>
-  
-  <label>
-    <input type="checkbox" id="showNameCheck" checked>
-    Show Names
-  </label>
-</div>
-
-<!-- Sprite preview -->
-<div id="spritePreviewContainer" style="background: rgba(0, 0, 0, 0.5); padding: 5px; border-radius: 5px; display: inline-block; vertical-align: middle; margin-left: 10px;">
-  <img id="spritePreview" src="" alt="Sprite Preview" style="width: 50px; height: 50px; object-fit: contain; display: none;">
-</div>
-
-
-    <!-- Occupant mode buttons -->
-    <div class="controls">
-      <button class="mapButton" onclick="clearOccupantSelection()">Clear</button>
-      <button class="mapButton" onclick="setMode('place')">Place</button>
-      <button class="mapButton" onclick="setMode('delete')">Delete</button>
-      <button class="mapButton" onclick="setMode('move')">Move</button>
-    </div>
+    <header>
+      <h1>Virtual DM Screen</h1>
+      <p>Caldwell's Repository for the Evershroud Isles</p>
+    </header>
     
-    <!-- The map / canvas wrapper -->
-    <div class="mapWrapper">
-      <button id="fullscreenBtn" class="fullscreenBtn">Fullscreen</button>
-      <canvas id="mapCanvas" width="1000" height="1000"></canvas>
-      <div id="nameOverlay" style="pointer-events:none; width:1000px; height:1000px;"></div>
-    </div>
-
-    <!-- Navigation and new Import/Export features -->
-    <div style="margin-top: 1rem;">
-      <a href="index.html" class="mapButton">Home</a>
-      <button id="printBtn" class="mapButton">Print</button>
-      <!-- Export/Import: .vtt -->
-      <button id="exportBtn" class="mapButton">Save</button>
-      <input type="file" id="importFile" accept=".vtt" style="display:none"/>
-      <button id="importBtn" class="mapButton">Load</button>
-    </div>
+    <main class="content">
+      <!-- Wikidot Search Section -->
+      <section class="search-section">
+        <h2>Wikidot Search</h2>
+        <div class="search-bar">
+          <form action="https://dnd5e.wikidot.com/search:" method="get" target="_blank">
+            <input type="text" name="q" placeholder="Search dnd5e.wikidot.com..." />
+            <input type="submit" value="Search" />
+          </form>
+        </div>
+      </section>
+      
+      <hr />
+      
+      <!-- DM Cheat Sheet Section -->
+      <section class="dm-cheat-sheet">
+        <h2>DM Cheat Sheet - Official 5e Content</h2>
+        
+        <!-- Conditions & Status Effects -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Conditions &amp; Status Effects
+          </div>
+          <div class="dm-accordion-content">
+            <p>These conditions modify a creature’s capabilities in various ways (spells, monster abilities, etc.).</p>
+            <ul>
+              <li><strong>Blinded</strong>: Cannot see, automatically fails sight-based checks, attackers have advantage.</li>
+              <li><strong>Charmed</strong>: Cannot attack the charmer; the charmer gains advantage on related social checks.</li>
+              <li><strong>Deafened</strong>: Cannot hear, automatically fails hearing-based checks.</li>
+              <li><strong>Frightened</strong>: Disadvantage on ability checks/attack rolls while the source of fear is in sight.</li>
+              <li><strong>Grappled</strong>: Speed becomes 0; ends if the grappler is incapacitated or moved.</li>
+              <li><strong>Incapacitated</strong>: Cannot take actions or reactions.</li>
+              <li><strong>Invisible</strong>: Cannot be seen without special senses; attackers have disadvantage.</li>
+              <li><strong>Paralyzed</strong>: Incapacitated, cannot move or speak, automatic failure on Str/Dex saves; hits within 5 ft. are critical.</li>
+              <li><strong>Petrified</strong>: Transformed into a solid substance; incapacitated.</li>
+              <li><strong>Poisoned</strong>: Disadvantage on attack rolls and ability checks.</li>
+              <li><strong>Prone</strong>: Movement cost doubles, disadvantage on attack rolls unless attacker is within 5 ft.</li>
+              <li><strong>Restrained</strong>: Speed becomes 0; disadvantage on attacks and Dex saves.</li>
+              <li><strong>Stunned</strong>: Incapacitated, can only speak falteringly, fails Str/Dex saves.</li>
+              <li><strong>Unconscious</strong>: Incapacitated, drops held items, prone, automatic failures on Str/Dex saves.</li>
+              <li><strong>Exhaustion</strong>: Levels 1–6, with increasingly severe effects culminating in death at level 6.</li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Ability Checks & DCs -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Ability Checks &amp; Difficulty Classes
+          </div>
+          <div class="dm-accordion-content">
+            <p>When a character attempts a task, roll a d20 plus modifiers. The DC reflects task difficulty.</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Difficulty</th>
+                  <th>Suggested DC</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Very Easy</td><td>5</td></tr>
+                <tr><td>Easy</td><td>10</td></tr>
+                <tr><td>Medium</td><td>15</td></tr>
+                <tr><td>Hard</td><td>20</td></tr>
+                <tr><td>Very Hard</td><td>25</td></tr>
+                <tr><td>Nearly Impossible</td><td>30</td></tr>
+              </tbody>
+            </table>
+            <p><em>Skills by Ability:</em> Strength (Athletics), Dexterity (Acrobatics, Sleight of Hand, Stealth), Constitution (—), Intelligence (Arcana, History, Investigation, Nature, Religion), Wisdom (Animal Handling, Insight, Medicine, Perception, Survival), Charisma (Deception, Intimidation, Performance, Persuasion).</p>
+          </div>
+        </div>
+        
+        <!-- Travel & Movement -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Travel &amp; Movement
+          </div>
+          <div class="dm-accordion-content">
+            <ul>
+              <li><strong>Overland Pace:</strong>
+                <ul>
+                  <li>Fast: 4 miles/hour (–5 Passive Perception)</li>
+                  <li>Normal: 3 miles/hour (no penalty)</li>
+                  <li>Slow: 2 miles/hour (allows Stealth)</li>
+                </ul>
+              </li>
+              <li><strong>Forced March:</strong> Beyond 8 hours, a CON save is required (DC 10 + 1 per extra hour) or suffer exhaustion.</li>
+              <li><strong>Visibility &amp; Encounter Distance:</strong> Adjust based on weather, terrain, and time.</li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Combat Mechanics & Actions -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Combat Mechanics &amp; Actions
+          </div>
+          <div class="dm-accordion-content">
+            <p>Common actions include:</p>
+            <ul>
+              <li>Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Ready, Search, Shove, Use an Object</li>
+            </ul>
+            <p><strong>Cover Rules:</strong>
+              <ul>
+                <li>Half Cover: +2 bonus to AC and Dex saves</li>
+                <li>Three-Quarters Cover: +5 bonus to AC and Dex saves</li>
+                <li>Total Cover: Cannot be targeted</li>
+              </ul>
+            </p>
+          </div>
+        </div>
+        
+        <!-- Encounter Building & XP -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Encounter Building &amp; XP Thresholds
+          </div>
+          <div class="dm-accordion-content">
+            <p>Use XP thresholds (Easy, Medium, Hard, Deadly) based on party level and size. Consult the DMG for full tables and adjust for multiple foes using multipliers.</p>
+          </div>
+        </div>
+        
+        <!-- Damage & Healing -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Damage &amp; Healing
+          </div>
+          <div class="dm-accordion-content">
+            <ul>
+              <li><strong>Falling Damage:</strong> 1d6 per 10 ft. (max 20d6)</li>
+              <li><strong>Suffocating:</strong> Can hold breath for CON mod (minimum 30 seconds), then risk dropping to 0 hp</li>
+              <li><strong>Resistances/Immunities/Vulnerabilities:</strong> Adjust damage accordingly</li>
+              <li><strong>Massive Damage:</strong> Can cause instant death if severe enough</li>
+              <li><strong>Death Saving Throws:</strong> 3 successes stabilize; 3 failures result in death (a 1 counts as two failures; a 20 restores 1 hp immediately)</li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Objects & Environment -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Objects &amp; Environment
+          </div>
+          <div class="dm-accordion-content">
+            <p><strong>Common Object Stats:</strong></p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Object</th>
+                  <th>AC</th>
+                  <th>HP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Glass Bottle</td><td>13</td><td>2</td>
+                </tr>
+                <tr>
+                  <td>Wooden Door</td><td>15</td><td>15</td>
+                </tr>
+                <tr>
+                  <td>Stone Wall</td><td>17</td><td>30</td>
+                </tr>
+                <tr>
+                  <td>Iron Lock</td><td>19</td><td>10</td>
+                </tr>
+              </tbody>
+            </table>
+            <p><strong>Lighting Conditions:</strong>
+              <ul>
+                <li>Bright Light: Normal vision</li>
+                <li>Dim Light: Disadvantage on sight-based Perception checks</li>
+                <li>Darkness: Creatures without darkvision are effectively blinded</li>
+              </ul>
+              <strong>Environmental Hazards:</strong> Improvise DCs (e.g. icy wall: DC 15; sandstorm: CON save DC 10/hour)
+            </p>
+          </div>
+        </div>
+        
+        <!-- Social Interactions -->
+        <div class="dm-accordion-section">
+          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
+            Social Interactions
+          </div>
+          <div class="dm-accordion-content">
+            <p>NPC attitudes can be categorized as:</p>
+            <ul>
+              <li><strong>Friendly:</strong> Willing to help</li>
+              <li><strong>Indifferent:</strong> Neutral unless persuaded</li>
+              <li><strong>Hostile:</strong> Likely to oppose the party</li>
+            </ul>
+            <p>Use Persuasion, Deception, Intimidation, or Insight checks to influence NPCs. Adjust DCs based on context and roleplay.</p>
+          </div>
+        </div>
+      </section>
+      
+      <div class="divider"></div>
+      
+      <!-- SHOP DISTRICT SECTION -->
+      <section class="store-container">
+        <h1>Shop District</h1>
+        <p>Welcome to the Shop District! Explore the finest establishments and stock up on everything an adventurer needs.</p>
+        <ul class="store-list">
+          <li class="store-item">
+            <a href="general-store.html" class="store-link">General Store</a>
+          </li>
+          <li class="store-item">
+            <a href="smithy.html" class="store-link">Smithy</a>
+          </li>
+          <li class="store-item">
+            <a href="alchemist.html" class="store-link">Alchemist</a>
+          </li>
+          <li class="store-item">
+            <a href="artificer.html" class="store-link">Artificer</a>
+          </li>
+          <li class="store-item">
+            <a href="clothier.html" class="store-link">Clothier</a>
+          </li>
+          <li class="store-item">
+            <a href="jeweller.html" class="store-link">Jeweller</a>
+          </li>
+          <li class="store-item">
+            <a href="fletcher.html" class="store-link">Fletcher</a>
+          </li>
+          <li class="store-item">
+            <a href="black-market.html" class="store-link">Blackleaf (Black Market)</a>
+          </li>
+        </ul>
+      </section>
+    </main>
   </div>
-
+  
+  <!-- FOOTER -->
+  <footer>
+    &copy; 2025 Caldwell. Virtual DM Screen for the Evershroud Isles.
+  </footer>
+  
   <script>
-    /*
-      Building Shapes Asset Legend:
-
-      Numerical Codes:
-      
-      1: Outer Wall
-         - Rendered as cobblestone, snowWall, or limestone depending on the current theme.
-      
-      0: Floor
-         - Represents the interior floor using a chosen asset (e.g. "floor1" or "interiorfloors").
-      
-      2: Door
-         - Indicates door placements. Processed into door tiles (either "door" or "doorWood2" after door grouping).
-      
-      3: Courtyard Flag
-         - Marks interior courtyard areas; may trigger special decorations.
-      
-      4: Road Tile
-         - Denotes a road segment within the building’s footprint, determined by getRoadTile() logic.
-      
-      5: Marble Floor
-         - Renders a marble floor variant for a more opulent interior.
-      
-      6: Dark Tile
-         - Represents a dark stone or dark tile texture, often used for contrast or decorative flair.
-      
-      7: Lava Feature
-         - Indicates a lava element integrated into the building.
-      
-      8: Water Feature
-         - A water element incorporated within the building.
-      
-      9: Chests
-         - Furnishings such as chests, adding functional decor.
-      
-      Alphabetical Codes:
-      
-      A: Fireplace
-      B: Anvil
-      C: Beds
-      D: Bookcases
-      E: Rugs
-      F: Forge
-      G: Weapon Rack
-      H: Apothecary
-      I: Counter
-      J: Toilet
-      K: Cabinet
-      L: Kitchen Block
-      M: Barrelshelf
-      N: Bottleshelf
-    */
-
-    /*******************************************************
-     * BASIC CONFIG & GLOBALS
-     *******************************************************/
-    const TILE_SIZE = 20;
-    const GRID_WIDTH = 50;
-    const GRID_HEIGHT = 50;
-    let BRIDGE_WIDTH = 1; // global variable controlling bridge width
-    
-    let mapData = [];
-    let occupantInHand = null;
-
-    const occupantColours = {
-      player: "#00FF00",
-      enemy:  "#FF0000",
-      npc:    "#0000FF"
-    };
-
-    let currentMode = 'place';
-
-    // track which tile the user wants to place from the tile menu
-    let currentTileInHand = null;
-
-    // Pan & Zoom
-    let scale = 1.0, offsetX = 0, offsetY = 0;
-    const minScale = 0.3, maxScale = 3.0;
-    let isDragging = false, dragStartX = 0, dragStartY = 0;
-    let activePointers = new Map();
-    let initialPinchDistance = 0, initialPinchScale = 1.0;
-
-    // City walls, building occupancy
-    let cityWallBounds = null;
-
-    /*******************************************************
-     * TILE TEXTURES & OCCUPANT SPRITES
-     *******************************************************/
-    const tileTextures = {};
-    const occupantSpritesMap = {};
-
-    // Dictionary of tile assets
-    const tileAssetMapping = {
-      "grass": {
-        folder: "grass",
-        files: ["grasstile1.png","grasstile2.png","grasstile3.png","grasstile4.png","grasstile5.png"]
-      },
-      "tree": {
-        folder: "grass",
-        files: ["grasstree1.png","grasstree2.png"]
-      },
-      "crate": {
-        folder: "scatter",
-        files: ["crate1.png", "crate2.png", "crate3.png", "crate4.png"]
-      },
-      "cliffs": {
-        folder: "mountains",
-        files: ["cliff1.png", "cliff2.png", "cliff3.png", "cliff4.png"]
-      },
-      "sakura": {
-        folder: "forest",
-        files: ["Sakura1.png", "Sakura2.png", "Sakura3.png", "Sakura4.png"]
-      },
-      "sakuraFlower": {
-        folder: "forest",
-        files: ["SakuraFlower.png"]
-      },
-      "nicebush": {
-        folder: "forest",
-        files: ["nicebush.png"]
-      },
-      "denseforest": {
-        folder: "forest",
-        files: ["trees1.png","trees2.png","trees3.png","trees4.png","trees5.png"]
-      },
-      "junglegrass": {
-        folder: "jungle",
-        files: ["jungleGrass.png"]
-      },
-      "junglemud": {
-        folder: "jungle",
-        files: ["junglemud1.png","junglemud2.png","junglemud3.png"]
-      },
-      "mossystone": {
-        folder: "jungle",
-        files: ["mossystone.png"]
-      },
-      "jungletree": {
-        folder: "jungle",
-        files: ["jungletree1.png","jungletree2.png","jungletree3.png","jungletree4.png"]
-      },
-      "junglescatter": {
-        folder: "jungle",
-        files: ["jungleRoots.png","junglebush.png","junglebush2.png","junglefern.png","junglelog.png","junglelog2.png","junglevines.png"]
-      },
-      "TileSnow": {
-        folder: "snow",
-        files: ["tileSnow1.png","tileSnow2.png"]
-      },
-      "snow": {
-        folder: "snow",
-        files: ["snow.png","powdersnow1.png","powdersnow2.png"]
-      }, 
-      "mushrooms": {
-        folder: "forest",
-        files: ["mushroom1.png","mushroom2.png","mushroom3.png"]
-      },
-      "caveshrooms": {
-        folder: "cavern",
-        files: ["caveshroom.png","caveshroom2.png","caveshroom3.png"]
-      },
-      "ice": {
-        folder: "snow",
-        files: ["ice1.png","ice2.png","blueice1.png","blueice2.png"]
-      },
-      "snowWall": {
-        folder: "snow",
-        files: ["snowwall1.png","snowwall2.png","snowwall3.png"]
-      },
-      "snowtree": {
-        folder: "snow",
-        files: ["snowTree.png"]
-      },
-      "dirt": {
-        folder: "dirt",
-        files: ["dirt1.png","dirt2.png","dirt3.png"] 
-      },
-      "shrub": {
-        folder: "dirt",
-        files: ["shrub1.png","shrub2.png","shrub3.png"] 
-      },
-      "dirtCracked": {
-        folder: "dirt",
-        files: ["dirtCracked.png", "drymud.png", "drymud2.png"]
-      },
-      "mud": {
-        folder: "dirt",
-        files: ["mud1.png","mud2.png","mud3.png", "mud4.png"]
-      },
-      "floor1": {
-        folder: "buildings/floors",
-        files: ["floor1a.png", "floor1b.png", "floor1c.png"]
-      },
-      "crystal": {
-        folder: "cavern",
-        files: ["crystal.png","crystal2.png","crystal3.png"]
-      },
-      "sand": {
-        folder: "desert",
-        files: ["sand1.png","sand2.png","sand3.png"]
-      },
-      "cactus": {
-        folder: "desert",
-        files: ["cactus1.png","cactus2.png","cactus3.png","cactus4.png","cactus5.png","cactus6.png"]
-      },
-      "desertPalm": {
-        folder: "desert",
-        files: ["desertpalmtree1.png","desertpalmtree2.png","desertpalmtree3.png","desertpalmtree4.png","desertpalmtree5.png"]
-      },
-      "dune": {
-        folder: "desert",
-        files: ["dune1.png","duneRocks1.png","duneRocks2.png","duneRocks3.png"]
-      },
-      "desertBoulder": {
-        folder: "desert",
-        files: ["desertBoulder.png"]
-      },
-      "water": {
-        folder: "water",
-        files: ["water.png","waterrocks.png","waterrocks2.png","swamp.png","swamp2.png","whitesand.png"]
-      },
-      "doorWood2": {
-        folder: "buildings/doors",
-        files: ["doorWood2.png"]
-      },
-      "whitesand": {
-        folder: "water",
-        files: ["whitesand.png"]
-      },
-      "roadstone": {
-        folder: "buildings/floors",
-        files: ["sandstonetile.png"]
-      },
-      "roaddirt": {
-        folder: "dirt",
-        files: ["roadDirt.png"]
-      },
-      "barrens": {
-        folder: "vulcanic",
-        files: ["barrens1.png","barrens2.png"]
-      },
-      "Yurt": {
-        folder: "misc",
-        files: ["Yurt1.png","Yurt3.png","Yurt2.png"]
-      },	
-      "campsite": {
-        folder: "misc",
-        files: ["steppecampsite.png"]
-      },
-      "lavastone": {
-        folder: "vulcanic",
-        files: ["lavastone1.png","lavastone2.png","lavastone3.png","lavastone4.png","lavastone5.png"]
-      },
-      "lava": {
-        folder: "vulcanic",
-        files: ["lava1.png","lava2.png","lava3.png"]
-      },
-      "magma": {
-        folder: "vulcanic",
-        files: ["magma.png"]
-      },
-      "brimstone": {
-        folder: "vulcanic",
-        files: ["brimstone.png", "brimstone2.png"]
-      },
-      "stone": {
-        folder: "buildings/walls",
-        files: ["stoneBlock.png", "stoneBlock2.png"]
-      },
-      "wall": {
-        folder: "buildings/walls",
-        files: [
-          "brick1.png","brick2.png","brick3.png","brick4.png","brick5.png",
-          "cobble1.png","cobble2.png","cobble3.png","cobble4.png",
-          "darkStoneBlock.png","darktile1.png","darktile2.png","darktile3.png","darktile4.png","caveWall.png","pallisade.png"]
-      },
-      "floor": {
-        folder: "buildings/floors",
-        files: [
-          "PlainTileRubble1.png","PlainTileRubble2.png","PlainTileRubble3.png","floorCastle.png",
-          "marble1.png","marble2.png","marble3.png","marble4.png","marbleCracked.png",
-          "tilerubble4.png","tilerubble5.png","woodfloor.png"]
-      },
-      "door": {
-        folder: "buildings/doors",
-        files: ["doorVault.png","doorWood1.png","doorWood2.png","gateStone.png","gateStone2.png","prisonBars.png","prisonGate.png"]
-      },
-      "solidstone": {
-        folder: "cavern",
-        files: ["caveRock.png","caveRockLarge.png"]
-      },
-      "cobblestone": {
-        folder: "buildings/walls",
-        files: ["cobble1.png","cobble2.png","cobble3.png","cobble4.png"]
-      },
-      "ancienttile": {
-        folder: "buildings/walls",
-        files: ["ancientTile.png"]
-      },
-      "sandstonetile": {
-        folder: "buildings/floors",
-        files: ["sandstonetile.png"]
-      },
-      "marble": {
-        folder: "buildings/floors",
-        files: ["marble1.png", "marble2.png", "marble3.png", "marble4.png", "marbleCracked.png"]
-      },
-      "darktile": {
-        folder: "buildings/walls",
-        files: ["darktile1.png","darktile2.png","darktile3.png","darktile4.png"]
-      },
-      "farmland": {
-        folder: "farmland",
-        files: ["corn.png","pumpkins.png","rye.png","sunflowers.png","vinyard.png","wheat.png"]
-      },
-      "cave_floor": {
-        folder: "cavern",
-        files: [
-          "cave1.png","cave2.png","caveBog.png","caveBones.png","caveCliff1.png","caveCliff2.png",
-          "caveMoss1.png","caveMoss2.png","cavePool.png","cavePoolsmall.png","cavePuddle.png"]
-      },
-      "negative": {
-        folder: "",
-        files: []
-      },
-      "scatterStoneGrass": {
-        folder: "jungle",
-        files: ["junglerock1.png"]
-      },
-      "limestone": {
-        folder: "buildings/walls",
-        files: ["limestone1.png", "limestone2.png", "limestone3.png"]
-      },
-      "woodfloor": {
-        folder: "buildings/floors",
-        files: ["woodfloor.png"]
-      },
-      "marketscatter": {
-        folder: "scatter",
-        files: ["marketwares1.png","marketwares2.png","marketwares3.png","smalltent.png","marketstallx.png"]
-      },
-      "well": {
-        folder: "misc",
-        files: ["well.png"]
-      },
-      "towersmall": {
-        folder: "misc",
-        files: ["towersmall.png"]
-      },
-      "toweraveragesized": {
-        folder: "misc",
-        files: ["towermedium1.png", "towermedium2.png", "towermedium3.png", "towermedium4.png"]
-      },
-      "pallisade": {
-        folder: "buildings/walls",
-        files: ["pallisade.png"]
-      },
-      "interiorfloors": {
-        folder: "buildings/floors",
-        files: ["woodintfloor1.png", "woodintfloor2.png", "woodintfloor3.png"]
-      },
-      "hardwoodfloor": {
-        folder: "buildings/floors",
-        files: ["hardwoodfloor.png"]
-      },
-      "brickfloor": {
-        folder: "buildings/floors",
-        files: ["floorbricks1.png", "floorbricks2.png"]
-      },
-      "fireplace": {
-        folder: "misc",
-        files: ["sandstonefireplace.png", "simplefireplace.png","elaboratefireplace.png"]
-      },
-      "anvil": {
-        folder: "misc",
-        files: ["anvil.png","anvil2.png","anvil3.png"]
-      },
-      "forge": {
-        folder: "misc",
-        files: ["forge.png"]
-      },
-      "weaponrack": {
-        folder: "misc",
-        files: ["weaponrack.png","weaponrack2.png","weaponrack3.png"]
-      },
-      "counter": {
-        folder: "misc",
-        files: ["counter.png"]
-      },
-      "apothecary": {
-        folder: "misc",
-        files: ["apothecary.png"]
-      },
-      "toilet": {
-        folder: "misc",
-        files: ["toilet.png"]
-      },
-      "TileRubble": {
-        folder: "buildings/floors",
-        files: ["PlainTileRubble1.png", "PlainTileRubble2.png", "PlainTileRubble3.png"]
-      },
-      "rugs": {
-        folder: "misc",
-        files: ["carpet1.png","carpet2.png"]
-      },
-      "books": {
-        folder: "misc",
-        files: ["bookcase.png","bookcase2.png","bookcase3.png"]
-      },
-      "chests": {
-        folder: "scatter",
-        files: ["chest1.png", "chest2.png", "chest3.png", "chest4.png"]
-      },
-      "beds": {
-        folder: "misc",
-        files: ["bed1.png","bed2.png","bed3.png","bed4.png"]
-      },
-      "bottleshelf": {
-        folder: "misc",
-        files: ["bottleshelf.png","bottleshelf2.png","bottleshelf3.png"]
-      },
-      "barrelshelf": {
-        folder: "misc",
-        files: ["barrelshelf.png","barrelshelf2.png"]
-      },
-      "cabinet": {
-        folder: "misc",
-        files: ["kitchencabinet.png","cluttercabinet.png"]
-      },	
-      "kitchenblock": {
-        folder: "misc",
-        files: ["kitchenblock.png"]
-      }
-    };
-
-    const fallbackColors = {
-      grass:"#9AE582",
-      tree: "#2f6a16",
-      denseforest:"#1c3e0a",
-      junglegrass:"#4a9142",
-      junglemud:"#5a4d38",
-      jungletree:"#335019",
-      junglescatter:"#466028",
-      snow:"#dee0f7",
-      ice:"#88c2f0",
-      snowtree:"#b1bacf",
-      dirt: "#C2A15F",
-      dirtCracked:"#b28a66",
-      mud:"#6f4f3c",
-      sand:"#DDD593",
-      cactus: "#228b22",
-      desertPalm: "#507f30",
-      dune: "#d2c58c",
-      desertBoulder:"#7f7b6c",
-      water:"#2B64CF",
-      whitesand:"#eeeecc",
-      roadstone:"#777777",
-      roaddirt:"#A37E4C",
-      barrens:"#5f5347",
-      lavastone:"#723d33",
-      lava:"#cf3416",
-      magma:"#aa2200",
-      brimstone:"#ff5500",
-      stone:"#AAAAAA",
-      wall:"#8B4513",
-      floor:"#666666",
-      door:"#552200",
-      solidstone:"#222222",
-      cobblestone:"#999999",
-      ancienttile:"#897B42",
-      sandstonetile:"#d0c5a5",
-      marble1:"#f0f0f0",
-      marble2:"#efefef",
-      marble3:"#dddddd",
-      marble4:"#cccccc",
-      darktile:"#333333",
-      farmland:"#9fc648",
-      cave_floor:"#6e6e6e",
-      negative:"#000000",
-      scatterStoneGrass:"#655c47",
-      limestone1:"#b6b699",
-      limestone2:"#b3b196",
-      limestone3:"#b0ae93",
-      woodfloor:"#775b3e",
-      marbleCracked:"#d6d6d6",
-      marketscatter:"#775b3e"
-    };
-
-    function getColorForTileType(tt){
-      return fallbackColors[tt] || "#FFFFFF";
-    }
-
-    function preloadImages(onComplete) {
-  // Base sprite names already in use.
-  const occupantSpriteNames = [
-    "paladin", "fighter", "guardian", "halfblood", "berserker", "assassin", "warlock", "sorcerer",
-    "priestess", "cleric", "druid", "demon", "mage", "serpent", "chimera", "ogre", "edgelord",
-    "fallenangel", "darkpriestess", "darkguard", "cultist", "goblin", "spider", "bat", "zombie",
-    "orc", "orcbandit", "orcchief", "orcshaman", "orcfighter"
-  ];
-  
-  // Extended sprite names located in the sprites/spritesextended subfolder.
-  const extendedSpriteNames = [
-    "guard_human", "guard_elf", "fighter_human_f", "fighter_elf_dark_m", "druid_human_f",
-    "druid_elf", "cleric_human_f", "cleric_elf_f", "cleric_elf_dark", "battlemage_human_f",
-    "battlemage_elf_dark_f", "battlemage_elf", "bard_human_f", "barbarian_human_f",
-    "archmage_human_f", "archer_human_f", "archdruid_human_f", "guard_dwarf", "wizard_beard_green",
-    "mage_dark", "ranger_dark", "wizard_human_f", "wizard_elf_dark_m", "wizard_elf",
-    "witch_hunter_elf", "warlock_human_f", "sorcerer_human_f", "sorcerer_elf_f", "rogue_human_f",
-    "rogue_elf", "ranger_human_f", "ranger_elf_dark", "ranger_elf", "priestess_human_f",
-    "paladin_human_f", "paladin_angelic_f", "monk_human_f", "mage_elf", "knight_human_f"
-  ];
-
-function setupOccupantSpriteDropdown() {
-  const spriteSelect = document.getElementById("occupantSprite");
-  
-  // Create an optgroup for extended sprites.
-  const extendedOptGroup = document.createElement("optgroup");
-  extendedOptGroup.label = "Extended Sprites";
-  
-  // List of extended sprite names (without the .png extension).
-  const extendedSprites = [
-    "guard_human", "guard_elf", "fighter_human_f", "fighter_elf_dark_m", "druid_human_f",
-    "druid_elf", "cleric_human_f", "cleric_elf_f", "cleric_elf_dark", "battlemage_human_f",
-    "battlemage_elf_dark_f", "battlemage_elf", "bard_human_f", "barbarian_human_f",
-    "archmage_human_f", "archer_human_f", "archdruid_human_f", "guard_dwarf", "wizard_beard_green",
-    "mage_dark", "ranger_dark", "wizard_human_f", "wizard_elf_dark_m", "wizard_elf",
-    "witch_hunter_elf", "warlock_human_f", "sorcerer_human_f", "sorcerer_elf_f", "rogue_human_f",
-    "rogue_elf", "ranger_human_f", "ranger_elf_dark", "ranger_elf", "priestess_human_f",
-    "paladin_human_f", "paladin_angelic_f", "monk_human_f", "mage_elf", "knight_human_f"
-  ];
-  
-  extendedSprites.forEach(sprite => {
-    const option = document.createElement("option");
-    option.value = sprite;
-    option.textContent = sprite;
-    extendedOptGroup.appendChild(option);
-  });
-  
-  spriteSelect.appendChild(extendedOptGroup);
-}
-
-	    
-  // Calculate the total number of images to load.
-  let totalToLoad = occupantSpriteNames.length + extendedSpriteNames.length;
-  for (const k in tileAssetMapping) {
-    totalToLoad += tileAssetMapping[k].files.length;
-  }
-  let loadedCount = 0;
-  const checkDone = () => {
-    loadedCount++;
-    if (loadedCount >= totalToLoad && onComplete) {
-      onComplete();
-    }
-  };
-
-  // Preload tile textures.
-  for (const tkey in tileAssetMapping) {
-    tileTextures[tkey] = [];
-    const { folder, files } = tileAssetMapping[tkey];
-    if (!files.length) continue;
-    for (const fname of files) {
-      const img = new Image();
-      img.src = folder
-        ? `resources/mapgen/mapassets/tiles/${folder}/${fname}`
-        : `resources/mapgen/mapassets/tiles/${fname}`;
-      img.onload = checkDone;
-      img.onerror = checkDone;
-      tileTextures[tkey].push(img);
-    }
-  }
-
-  // Load the base sprites.
-  occupantSpriteNames.forEach(sp => {
-    const img = new Image();
-    img.src = `resources/mapgen/mapassets/sprites/${sp}.png`;
-    img.onload = checkDone;
-    img.onerror = checkDone;
-    occupantSpritesMap[sp] = img;
-  });
-
-  // Load the extended sprites from the "sprites/spritesextended" subfolder.
-  extendedSpriteNames.forEach(sp => {
-    const img = new Image();
-    img.src = `resources/mapgen/mapassets/sprites/spritesextended/${sp}.png`;
-    img.onload = checkDone;
-    img.onerror = checkDone;
-    occupantSpritesMap[sp] = img;
-  });
-}
-
-
-    function weightedRandomIndex(weights) {
-      const total = weights.reduce((sum, weight) => sum + weight, 0);
-      let random = Math.random() * total;
-      for (let i = 0; i < weights.length; i++) {
-        if (random < weights[i]) {
-          return i;
-        }
-        random -= weights[i];
-      }
-      return weights.length - 1; 
-    }
-
-    /*******************************************************
-     * SLIDER HANDLING
-     *******************************************************/
-    let sliderCache = {};
-
-    function setupSliders() {
-      const sliderContainer = document.getElementById("sliderControls");
-      sliderContainer.innerHTML = "";
-
-      const theme = document.getElementById("mapType").value;
-      const settings = getMapSettings(theme);
-
-      // If it's a cavern or dungeon, skip main biome sliders
-      if(settings.isCavern || settings.isDungeon){
-        const msg = document.createElement("div");
-        msg.innerHTML = "<p>No primary sliders for this type.</p>";
-        sliderContainer.appendChild(msg);
-        return;
-      }
-
-      // Create a slider for each baseDist entry
-      const distKeys = Object.keys(settings.baseDist);
-      distKeys.forEach(tileType => {
-        const val = settings.baseDist[tileType];
-        const div = document.createElement("div");
-        div.className = "sliderContainer";
-
-        const label = document.createElement("label");
-        label.textContent = `${tileType} : ${val.toFixed(2)}`;
-
-        const slider = document.createElement("input");
-        slider.type = "range";
-        slider.min = "0";
-        slider.max = "1";
-        slider.step = "0.01";
-        slider.value = val;
-
-        slider.oninput = () => {
-          label.textContent = `${tileType} : ${slider.value}`;
-        };
-
-        sliderCache[tileType] = slider;
-
-        div.appendChild(label);
-        div.appendChild(slider);
-        sliderContainer.appendChild(div);
-      });
-
-      // Additional sliders for numeric parameters
-      const paramSliders = [
-        { key: "waterBodies",    min: 0,  max: 20,  step: 1 },
-        { key: "waterMaxSize",   min: 0,  max: 500, step: 10 },
-        { key: "roads",          min: 0,  max: 20,  step: 1 },
-        { key: "roadMaxLength",  min: 0,  max: 300, step: 5 },
-        { key: "buildings",      min: 0,  max: 50,  step: 1 },
-        { key: "bridgeWidth",    min: 0,  max: 5,   step: 1 },
-        { key: "cliffCount",     min: 0,  max: 15,  step: 1 },
-        { key: "cityWallLength", min: 10, max: GRID_WIDTH, step: 1 },
-        { key: "camps",          min: 0,  max: 20,  step: 1 }
-      ];
-
-      paramSliders.forEach(({key, min, max, step}) => {
-        const val = settings[key] || 0;
-        const div = document.createElement("div");
-        div.className = "sliderContainer";
-
-        const label = document.createElement("label");
-        label.textContent = `${key} : ${val}`;
-
-        const slider = document.createElement("input");
-        slider.type = "range";
-        slider.min = min;
-        slider.max = max;
-        slider.step = step;
-        slider.value = val;
-
-        slider.oninput = () => {
-          label.textContent = `${key} : ${slider.value}`;
-        };
-
-        sliderCache[key] = slider;
-
-        div.appendChild(label);
-        div.appendChild(slider);
-        sliderContainer.appendChild(div);
-      });
-    }
-
-    function applySlidersToSettings(settings) {
-      if(settings.isCavern || settings.isDungeon) return settings;
-      for(const tileType in settings.baseDist) {
-        if(sliderCache[tileType]){
-          settings.baseDist[tileType] = parseFloat(sliderCache[tileType].value);
-        }
-      }
-      const paramKeys = ["waterBodies","waterMaxSize","roads","roadMaxLength","buildings","camps"];
-      paramKeys.forEach(k=>{
-        if(sliderCache[k]){
-          const v = parseFloat(sliderCache[k].value);
-          settings[k] = isNaN(v) ? settings[k] : v;
-        }
-      });
-      if (sliderCache["bridgeWidth"]) {
-        settings.bridgeWidth = parseInt(sliderCache["bridgeWidth"].value);
-        BRIDGE_WIDTH = settings.bridgeWidth;
-      }
-      if (sliderCache["cliffCount"]) {
-        settings.cliffCount = parseInt(sliderCache["cliffCount"].value);
-      }
-      if (sliderCache["cityWallLength"]) {
-        settings.cityWallLength = parseInt(sliderCache["cityWallLength"].value);
-      }
-      return settings;
-    }
-
-    function toggleSliders(){
-      const panel = document.getElementById("sliderControls");
-      panel.classList.toggle("hidden");
-    }
-
-    // tile menu setup + toggle
-    function setupTileMenu() {
-      const tileMenu = document.getElementById("tileMenu");
-      tileMenu.innerHTML = "";
-
-      for (const tileName in tileAssetMapping) {
-        if (tileName === "negative" || tileName === "none") continue;
-        const files = tileAssetMapping[tileName].files;
-        if (!files || files.length === 0) continue;
-
-        const tileDiv = document.createElement("div");
-        tileDiv.className = "tileItem";
-
-        const previewImg = document.createElement("img");
-        if (tileTextures[tileName] && tileTextures[tileName].length > 0) {
-          previewImg.src = tileTextures[tileName][0].src;
-        } else {
-          previewImg.style.backgroundColor = getColorForTileType(tileName);
-        }
-        tileDiv.appendChild(previewImg);
-
-        const label = document.createElement("span");
-        label.textContent = tileName;
-        tileDiv.appendChild(label);
-
-        tileDiv.addEventListener("click", () => {
-          currentTileInHand = tileName;
-          setMode("placeTile");
-        });
-
-        tileMenu.appendChild(tileDiv);
-      }
-
-      // Dedicated "None" tile
-      const noneTileDiv = document.createElement("div");
-      noneTileDiv.className = "tileItem none"; 
-      const noneLabel = document.createElement("span");
-      noneLabel.textContent = "None";
-      noneTileDiv.appendChild(noneLabel);
-
-      noneTileDiv.addEventListener("click", () => {
-        currentTileInHand = null;
-        setMode("placeTile");
-      });
-
-      tileMenu.appendChild(noneTileDiv);
-    }
-
-    function toggleTileMenu(){
-      const menu = document.getElementById("tileMenu");
-      menu.classList.toggle("hidden");
-    }
-
-    // Returns occupant name and check for occupant name display
-    function getOccupantName() {
-      return document.getElementById("occupantName").value.trim();
-    }
-    function showOccupantNames() {
-      return document.getElementById("showNameCheck").checked;
-    }
-
-    /*******************************************************
-     * MAP SETTINGS
-     *******************************************************/
-    function getMapSettings(theme) {
-      switch(theme) {
-        case "desert":
-          return {
-            baseDist: { "sand": 0.7, "dirtCracked": 0.1, "dirt": 0.2 },
-            waterBodies: 2,
-            waterMaxSize: 50,
-            roads: 1,
-            roadMaxLength: 40,
-            buildings: 5,
-            bridgeWidth: 0,
-            cliffCount: 0,
-            cityWallLength: 37,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "city":
-          return {
-            baseDist: { "dirt": 0.05, "stone": 0.05, "grass": 0.15, "tree": 0.25 },
-            waterBodies: 2,
-            waterMaxSize: 50,
-            roads: 3,
-            roadMaxLength: 80,
-            buildings: 15,
-            bridgeWidth: 0,
-            cliffCount: 0,
-            cityWallLength: 46,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "grassland":
-          return {
-            baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.1, "stone": 0.05 },
-            waterBodies: 3,
-            waterMaxSize: 60,
-            roads: 2,
-            roadMaxLength: 60,
-            buildings: 6,
-            bridgeWidth: 0,
-            cliffCount: 3,
-            cityWallLength: 40,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "mountain":
-          return {
-            baseDist: { "stone": 0.1, "dirt": 0.5, "grass": 0.1, "tree": 0.15 },
-            waterBodies: 1,
-            waterMaxSize: 40,
-            roads: 1,
-            roadMaxLength: 50,
-            buildings: 4,
-            bridgeWidth: 0,
-            cliffCount: 8,
-            cityWallLength: 22,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "forest":
-          return {
-            baseDist: { "denseforest": 0.27, "tree": 0.35, "mushrooms": 0.03, "grass": 0.25, "dirt": 0.05, "stone": 0.05 },
-            waterBodies: 2,
-            waterMaxSize: 60,
-            roads: 2,
-            roadMaxLength: 50,
-            buildings: 2,
-            bridgeWidth: 0,
-            cliffCount: 2,
-            cityWallLength: 29,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "cavern":
-          return {
-            baseDist: {},
-            waterBodies: 0,
-            waterMaxSize: 0,
-            roads: 0,
-            roadMaxLength: 0,
-            buildings: 0,
-            bridgeWidth: 0,
-            cliffCount: 0,
-            isCavern: true,
-            isDungeon: false
-          };
-        case "volcanic":
-          return {
-            baseDist: { "barrens": 0.5, "lavastone": 0.35, "brimstone": 0.1, "dirtCracked": 0.05 },
-            waterBodies: 1,
-            waterMaxSize: 50,
-            roads: 1,
-            roadMaxLength: 20,
-            buildings: 1,
-            bridgeWidth: 0,
-            cliffCount: 0,
-            cityWallLength: 21,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "coastal":
-          return {
-            baseDist: { "grass": 0.4, "stone":0.1, "tree": 0.3, "dirt": 0.2 },
-            waterBodies: 0,
-            waterMaxSize: 0,
-            roads: 2,
-            roadMaxLength: 50,
-            buildings: 4,
-            bridgeWidth: 0,
-            cliffCount: 4,
-            cityWallLength: 34,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "riverlands":
-          return {
-            baseDist: { "grass": 0.5, "stone": 0.1, "dirt": 0.2, "nicebush": 0.1, "tree": 0.2 },
-            waterBodies: 1,
-            waterMaxSize: 200,
-            roads: 1,
-            roadMaxLength: 80,
-            buildings: 7,
-            bridgeWidth: 0,
-            cliffCount: 3,
-            cityWallLength: 36,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "swamp":
-          return {
-            baseDist: { "dirt": 0.1, "water": 0.2, "grass": 0.17, "mushrooms": 0.03, "tree": 0.2, "mud": 0.3 },
-            waterBodies: 2,
-            waterMaxSize: 80,
-            roads: 2,
-            roadMaxLength: 40,
-            buildings: 3,
-            bridgeWidth: 0,
-            cliffCount: 0,
-            cityWallLength: 27,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "sakura":
-          return {
-            baseDist: { "sakura": 0.2, "jungletree": 0.1, "nicebush": 0.2, "grass": 0.3, "sakuraFlower": 0.1, "stone": 0.1 },
-            waterBodies: 2,
-            waterMaxSize: 60,
-            roads: 1,
-            roadMaxLength: 50,
-            buildings: 2,
-            bridgeWidth: 1,
-            cityWallLength: 32,
-            cliffCount: 2,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "jungle":
-          return {
-            baseDist: { "junglegrass": 0.2, "junglemud": 0.3, "jungletree": 0.35, "junglescatter": 0.15 },
-            waterBodies: 3,
-            waterMaxSize: 60,
-            roads: 2,
-            roadMaxLength: 40,
-            buildings: 3,
-            bridgeWidth: 0,
-            cliffCount: 1,
-            cityWallLength: 32,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "snow":
-          return {
-            baseDist: { "snow": 0.6, "ice": 0.3, "snowtree": 0.1 },
-            waterBodies: 2,
-            waterMaxSize: 40,
-            roads: 2,
-            roadMaxLength: 40,
-            buildings: 2,
-            bridgeWidth: 0,
-            cliffCount: 3,
-            cityWallLength: 32,
-            isCavern: false,
-            isDungeon: false
-          };
-        case "dungeon":
-          // NEW BIOME: Mixture of cave + building logic
-          return {
-            // We’ll simply note that we have no baseDist for overworld tiles
-            baseDist: {},
-            isCavern: false,
-            isDungeon: true
-          };
-        default:
-          return {
-            baseDist: { "grass": 0.6, "tree": 0.2, "dirt": 0.1, "stone": 0.05 },
-            waterBodies: 2,
-            waterMaxSize: 60,
-            roads: 1,
-            roadMaxLength: 60,
-            buildings: 6,
-            bridgeWidth: 0,
-            cityWallLength: 27,
-            cliffCount: 3,
-            isCavern: false,
-            isDungeon: false
-          };
-      }
-    }
-
-    /*******************************************************
-     * MAP GENERATION
-     *******************************************************/
-    function generateMap(){
-      occupantInHand = null;
-      currentTileInHand = null;
-      offsetX=0; offsetY=0; scale=1.0;
-      updateCanvasTransform();
-
-      const theme = document.getElementById("mapType").value;
-      let settings = getMapSettings(theme);
-      settings = applySlidersToSettings(settings);
-
-      const doBuildings = document.getElementById("buildingsCheck").checked;
-      const doFields = document.getElementById("generateFields").checked;
-      const doCityWalls = document.getElementById("cityWalls").checked;
-      const doWater = document.getElementById("waterCheck").checked;
-      const doRoads = document.getElementById("roadCheck").checked;
-      const doCamps = document.getElementById("campsCheck").checked;
-
-      // Special generation paths
-      if(settings.isCavern){
-        generateCavern();
-      }
-      else if(settings.isDungeon){
-        generateDungeon();
-      }
-      else {
-        // Standard biome approach
-        initMap(settings.baseDist);
-
-        if(document.getElementById("cliffsCheck").checked && settings.cliffCount && settings.cliffCount > 0) {
-          generateCliffs(settings.cliffCount);
-        }
-
-        // Thematically shape water if any
-        if(theme==="coastal"){
-          createIrregularCoastLine();
-        }
-        else if(theme==="riverlands" && doWater){
-          createMeanderingRiver(settings.roadMaxLength, "water", 2);
-        }
-        else {
-          if(doWater){
-            for(let i=0; i<settings.waterBodies; i++){
-              if(theme==="volcanic"){
-                createLavaBody(settings.waterMaxSize);
-              } else {
-                createWaterBody(settings.waterMaxSize);
-              }
-            }
-            // Possibly create a river
-            if(theme==="riverlands" || (Math.random()<0.2 && settings.waterBodies>0)){
-              if(theme==="volcanic"){
-                createMeanderingRiver(settings.roadMaxLength, "lava");
-              } else {
-                createMeanderingRiver(settings.roadMaxLength, "water");
-              }
-            }
-          }
-        }
-
-        // City walls
-        if(doCityWalls){
-          createIrregularCityWalls(); 
-        }
-
-        // Roads
-        if(doRoads){
-          for(let i=0; i<settings.roads; i++){
-            createRoadFromEdgeToEdge(theme, settings.roadMaxLength);
-          }
-        }
-
-        // Buildings
-        if (doBuildings && settings.buildings > 0) {
-          createBuildings(settings.buildings);
-          if (document.getElementById("scatterCratesCheck").checked) {
-            scatterCrates(0.1);
-          }
-        }
-
-        // Attempt to connect building doors to roads
-        if (doBuildings && doRoads) {
-          connectBuildingDoorsToRoads();
-        }
-
-        // Biome decoration
-        decorateBiome(theme);
-
-        // Farms
-        if(doFields){
-          createFields(3);
-        }
-
-        // city extras
-        if (theme === "city") {
-          createCitySquares();
-          scatterWells();
-        }
-
-        // Coastal extras
-        if(theme==="coastal"){
-          scatterCoastalTrees(50);
-          createCoastalDocks(2);
-        }
-
-        // Camps
-        if(doCamps && settings.camps > 0){
-          createCamps(settings.camps);
-        }
-      }
-
-      drawMap();
-    }
-
-    function initMap(dist){
-      mapData = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        const row = [];
-        for(let x=0; x<GRID_WIDTH; x++){
-          const rand = Math.random();
-          let chosen = "grass";
-          let cumul = 0;
-          for(const t in dist){
-            cumul += dist[t];
-            if(rand < cumul){
-              chosen = t; 
-              break;
-            }
-          }
-          row.push({ 
-            type: chosen, 
-            occupant: null,
-            _chosenTileIndex: null,
-            hasBuilding: false
-          });
-        }
-        mapData.push(row);
-      }
-    }
-
-    /*******************************************************
-     * CAVERN
-     *******************************************************/
-    function generateCavern(){
-      const fillChance = 0.52;
-      let boolMap = randomBoolMap(fillChance);
-      const steps = 3;
-      for(let i=0; i<steps; i++){
-        boolMap = doCAStep(boolMap);
-      }
-      const { largestMap } = keepLargestRegion(boolMap);
-      carveWideExits(largestMap,3);
-      convertBoolMapToCavern(largestMap);
-      scatterCrystalPatches();
-      scatterCaveshrooms();
-    }
-
-    function randomBoolMap(chance){
-      const out = [];
-      for(let y=0; y<GRID_HEIGHT; y++){
-        const row=[];
-        for(let x=0; x<GRID_WIDTH; x++){
-          row.push(Math.random()<chance);
-        }
-        out.push(row);
-      }
-      return out;
-    }
-    function doCAStep(bm){
-      const newM=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        const row=[];
-        for(let x=0;x<GRID_WIDTH;x++){
-          const n = countFloorNeighbours(bm,x,y);
-          const curr = bm[y][x];
-          row.push(curr ? (n>=4) : (n>=5));
-        }
-        newM.push(row);
-      }
-      return newM;
-    }
-    function countFloorNeighbours(bm,x,y){
-      let c=0;
-      for(let dy=-1; dy<=1; dy++){
-        for(let dx=-1; dx<=1; dx++){
-          if(dx===0 && dy===0) continue;
-          const nx=x+dx, ny=y+dy;
-          if(nx>=0 && ny>=0 && nx<GRID_WIDTH && ny<GRID_HEIGHT){
-            if(bm[ny][nx]) c++;
-          }
-        }
-      }
-      return c;
-    }
-    function keepLargestRegion(bm){
-      const visited=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        visited[y]=new Array(GRID_WIDTH).fill(false);
-      }
-      let bestSize=0, bestRegion=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        for(let x=0;x<GRID_WIDTH;x++){
-          if(bm[y][x] && !visited[y][x]){
-            const queue=[[x,y]];
-            visited[y][x]=true;
-            const regionCells=[[x,y]];
-            let size=1;
-            while(queue.length){
-              const [cx,cy] = queue.pop();
-              for(const [nx,ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]){
-                if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
-                  if(bm[ny][nx] && !visited[ny][nx]){
-                    visited[ny][nx]=true;
-                    queue.push([nx,ny]);
-                    regionCells.push([nx,ny]);
-                    size++;
-                  }
-                }
-              }
-            }
-            if(size>bestSize){
-              bestSize=size;
-              bestRegion=regionCells;
-            }
-          }
-        }
-      }
-      const largestMap = bm.map(row=>row.slice());
-      const regSet = new Set(bestRegion.map(([xx,yy])=>`${xx},${yy}`));
-      for(let y=0;y<GRID_HEIGHT;y++){
-        for(let x=0;x<GRID_WIDTH;x++){
-          if(largestMap[y][x] && !regSet.has(`${x},${y}`)){
-            largestMap[y][x]=false;
-          }
-        }
-      }
-      return { largestMap, largestRegion: bestRegion };
-    }
-    function carveWideExits(boolMap,width){
-      let needed=2;
-      while(needed>0){
-        carveRandomWideTunnel(boolMap,width);
-        needed--;
-      }
-    }
-    function carveRandomWideTunnel(boolMap,w){
-      let tries=0, cx,cy;
-      while(tries<300){
-        cx=Math.floor(Math.random()*GRID_WIDTH);
-        cy=Math.floor(Math.random()*GRID_HEIGHT);
-        if(boolMap[cy][cx]) break;
-        tries++;
-      }
-      const ex = (Math.random()<0.5)? 0 : (GRID_WIDTH-1);
-      const ey = Math.floor(Math.random()*GRID_HEIGHT);
-      carveCorridor(boolMap,cx,cy,ex,ey,w);
-    }
-    function carveCorridor(boolMap,x1,y1,x2,y2,w){
-      let steps=0;
-      while((x1!==x2||y1!==y2) && steps<9999){
-        carveCircle(boolMap,x1,y1,w);
-        if(x1<x2)x1++; else if(x1>x2)x1--;
-        if(y1<y2)y1++; else if(y1>y2)y1--;
-        steps++;
-      }
-      carveCircle(boolMap,x1,y1,w);
-    }
-    function carveCircle(boolMap,cx,cy,r){
-      for(let dy=-r;dy<=r;dy++){
-        for(let dx=-r;dx<=r;dx++){
-          if(dx*dx+dy*dy<=r*r){
-            const nx=cx+dx, ny=cy+dy;
-            if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
-              boolMap[ny][nx]=true;
-            }
-          }
-        }
-      }
-    }
-    function convertBoolMapToCavern(bm){
-      mapData=[];
-      for(let y=0;y<GRID_HEIGHT;y++){
-        const row=[];
-        for(let x=0;x<GRID_WIDTH;x++){
-          if(bm[y][x]){
-            row.push({ type:"cave_floor", occupant:null, _chosenTileIndex:null, hasBuilding:false });
-          } else {
-            row.push({ type:"negative", occupant:null, _chosenTileIndex:null, hasBuilding:false });
-          }
-        }
-        mapData.push(row);
-      }
-    }
-
-    //CRYSTAL GENERATION
-    function createCrystalPatch(seedX, seedY, patchSize) {
-      if (mapData[seedY][seedX].type !== "cave_floor") return;
-      let count = 1;
-      mapData[seedY][seedX].type = "crystal";
-      let patchCells = [{x: seedX, y: seedY}];
-
-      while (count < patchSize && patchCells.length > 0) {
-        const index = Math.floor(Math.random() * patchCells.length);
-        const { x, y } = patchCells[index];
-        const neighbours = [
-          { x: x + 1, y: y },
-          { x: x - 1, y: y },
-          { x: x, y: y + 1 },
-          { x: x, y: y - 1 }
-        ];
-        neighbours.sort(() => Math.random() - 0.5);
-
-        let expanded = false;
-        for (const n of neighbours) {
-          if (n.x < 0 || n.y < 0 || n.x >= GRID_WIDTH || n.y >= GRID_HEIGHT) continue;
-          if (mapData[n.y][n.x].type === "cave_floor") {
-            mapData[n.y][n.x].type = "crystal";
-            patchCells.push({ x: n.x, y: n.y });
-            count++;
-            expanded = true;
-            break;
-          }
-        }
-        if (!expanded) {
-          patchCells.splice(index, 1);
-        }
-      }
-    }
-    function scatterCrystalPatches() {
-      const patchCount = 3 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < patchCount; i++) {
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        if (mapData[y][x].type !== "cave_floor") continue;
-        const patchSize = 3 + Math.floor(Math.random() * 19);
-        createCrystalPatch(x, y, patchSize);
-      }
-    }
-
-    // MUSHROOMS
-    function createCaveshroomCluster(seedX, seedY, clusterSize) {
-      if (mapData[seedY][seedX].type !== "cave_floor") return;
-      let count = 1;
-      mapData[seedY][seedX].type = "caveshrooms";
-      let clusterCells = [{ x: seedX, y: seedY }];
-
-      while (count < clusterSize && clusterCells.length > 0) {
-        const index = Math.floor(Math.random() * clusterCells.length);
-        const { x, y } = clusterCells[index];
-        const neighbours = [
-          { x: x + 1, y: y },
-          { x: x - 1, y: y },
-          { x: x, y: y + 1 },
-          { x: x, y: y - 1 }
-        ];
-        neighbours.sort(() => Math.random() - 0.5);
-
-        let expanded = false;
-        for (const n of neighbours) {
-          if (n.x < 0 || n.y < 0 || n.x >= GRID_WIDTH || n.y >= GRID_HEIGHT) continue;
-          if (mapData[n.y][n.x].type === "cave_floor") {
-            mapData[n.y][n.x].type = "caveshrooms";
-            clusterCells.push({ x: n.x, y: n.y });
-            count++;
-            expanded = true;
-            break;
-          }
-        }
-        if (!expanded) {
-          clusterCells.splice(index, 1);
-        }
-      }
-    }
-    function scatterCaveshrooms() {
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (mapData[y][x].type === "cave_floor" && Math.random() < 0.01) {
-            mapData[y][x].type = "caveshrooms";
-          }
-        }
-      }
-      const clusterCount = 3 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < clusterCount; i++) {
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        if (mapData[y][x].type !== "cave_floor") continue;
-        const clusterSize = 3 + Math.floor(Math.random() * 8);
-        createCaveshroomCluster(x, y, clusterSize);
-      }
-    }
-
-    /*******************************************************
-     * DUNGEON
-     *******************************************************/
-    function generateDungeon(){
-      // 1) Generate random "cave" layout for negative space
-      const fillChance = 0.55;
-      let boolMap = randomBoolMap(fillChance);
-      const steps = 3;
-      for(let i=0; i<steps; i++){
-        boolMap = doCAStep(boolMap);
-      }
-      const { largestMap } = keepLargestRegion(boolMap);
-      carveWideExits(largestMap, 2);
-      convertBoolMapToCavern(largestMap);
-
-      // 2) Place a few small "dungeon rooms" (square buildings) in the open cave_floor areas
-      placeDungeonRooms(8); // number of rooms
-
-      // 3) Scatter some dungeon decorations: rubble floors, random stones, vines
-      scatterDungeonDecor();
-    }
-
-    // Minimal furniture: mostly walls/floor/door and the occasional chest
-    const dungeonRoomShapes = [
-      {
-        width: 4,
-        height: 4,
-        layout: [
-          [1,1,1,1],
-          [1,0,0,2],
-          [1,0,0,0],
-          [1,1,1,1]
-        ]
-      },
-      {
-        width: 5,
-        height: 5,
-        layout: [
-          [1,1,1,1,1],
-          [1,0,0,2,1],
-          [1,0,0,0,1],
-          [1,0,0,0,1],
-          [1,1,1,1,1]
-        ]
-      },
-      {
-        width: 6,
-        height: 4,
-        layout: [
-          [1,1,1,1,1,1],
-          [1,0,0,0,0,2],
-          [1,0,0,9,0,1],
-          [1,1,1,1,1,1]
-        ]
-      }
-    ];
-
-    function placeDungeonRooms(count){
-      let placed = 0, attempts=0;
-      while(placed < count && attempts<5000){
-        attempts++;
-        const shape = dungeonRoomShapes[Math.floor(Math.random() * dungeonRoomShapes.length)];
-        const sx = Math.floor(Math.random()*(GRID_WIDTH - shape.width));
-        const sy = Math.floor(Math.random()*(GRID_HEIGHT - shape.height));
-        if(canPlaceDungeonRoom(sx, sy, shape)){
-          placeBuildingShape(sx, sy, shape, "dungeon"); 
-          placed++;
-        }
-      }
-    }
-
-    // Reuse some building logic but require the underlying tiles to be "cave_floor".
-    function canPlaceDungeonRoom(sx, sy, shape){
-      const buildingWidth  = shape.width;
-      const buildingHeight = shape.height;
-      if(sx+buildingWidth>GRID_WIDTH || sy+buildingHeight>GRID_HEIGHT) return false;
-      for(let y=0; y<buildingHeight; y++){
-        for(let x=0; x<buildingWidth; x++){
-          const val = shape.layout[y][x];
-          if(val===1 || val===0 || val===2 || val===9){
-            if(mapData[sy+y][sx+x].type !== "cave_floor"){
-              return false;
-            }
-            if(mapData[sy+y][sx+x].hasBuilding) return false;
-          }
-        }
-      }
-      return true;
-    }
-
-    // Simplified version of placeBuilding() that uses dungeon-specific logic
-    function placeBuildingShape(sx, sy, shape, context="normal"){
-      const buildingId = nextBuildingId++;
-      const doorGroups = [];
-      const doorVisited = Array.from({ length: shape.height }, () => Array(shape.width).fill(false));
-
-      function groupDoors(relX, relY, group) {
-        if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
-        if (doorVisited[relY][relX]) return;
-        if (shape.layout[relY][relX] !== 2) return;
-        doorVisited[relY][relX] = true;
-        group.push({ x: relX, y: relY });
-        groupDoors(relX + 1, relY, group);
-        groupDoors(relX - 1, relY, group);
-        groupDoors(relX, relY + 1, group);
-        groupDoors(relX, relY - 1, group);
-      }
-      for (let y = 0; y < shape.height; y++){
-        for (let x = 0; x < shape.width; x++){
-          if (shape.layout[y][x] === 2 && !doorVisited[y][x]) {
-            const group = [];
-            groupDoors(x, y, group);
-            doorGroups.push(group);
-          }
-        }
-      }
-      const availableDoorTypes = ["door","doorWood2"];
-      const groupDoorTypes = doorGroups.map(group =>
-        group.length > 1 ? "doorWood2" : availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)]
-      );
-
-      for (let yy = 0; yy < shape.height; yy++){
-        for (let xx = 0; xx < shape.width; xx++){
-          const val = shape.layout[yy][xx];
-          const cell = mapData[sy + yy][sx + xx];
-
-          if (val === 1) {
-            cell.type = (context === "dungeon") ? "wall" : "cobblestone";
-          } 
-          else if (val === 0) {
-            // Use rubble floors for dungeon rooms
-            cell.type = (context === "dungeon") ? "TileRubble" : "floor1";
-          }
-          else if (val === 2) {
-            let assignedType = null;
-            for (let i = 0; i < doorGroups.length; i++) {
-              if (doorGroups[i].some(pos => pos.x === xx && pos.y === yy)) {
-                assignedType = groupDoorTypes[i];
-                break;
-              }
-            }
-            cell.type = assignedType || "door";
-          }
-          else if (val === 9) {
-            cell.type = "chests";
-          }
-          cell.hasBuilding = true;
-          cell.buildingId = buildingId;
-        }
-      }
-    }
-
-    // Scatter extra dungeon decorations: replace random cave_floor with rubble, vines, stone
-    function scatterDungeonDecor(){
-      for(let y=0; y<GRID_HEIGHT; y++){
-        for(let x=0; x<GRID_WIDTH; x++){
-          const cell = mapData[y][x];
-          if(cell.type==="cave_floor"){
-            const r = Math.random();
-            // Some chance to become rubble
-            if(r<0.05){
-              cell.type = "TileRubble";
-            }
-            // Or maybe a chunk of mossy stone
-            else if(r<0.07){
-              cell.type = "mossystone";
-            }
-            // Or vines from the jungle scatter
-            else if(r<0.08){
-              cell.type = "junglescatter";
-              cell._chosenTileIndex = tileTextures["junglescatter"].findIndex(img => img.src.includes("vines"));
-              if(cell._chosenTileIndex < 0) {
-                // fallback pick
-                cell._chosenTileIndex = Math.floor(Math.random() * tileTextures["junglescatter"].length);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    /*******************************************************
-     * WATER / LAVA
-     *******************************************************/
-    function createWaterBody(maxSize){
-      if(Math.random() < 0.3){
-        createPond("water");
+    // DM Cheat Sheet Accordion with smooth transition and ARIA attribute update
+    function toggleDmAccordion(header) {
+      var content = header.nextElementSibling;
+      var expanded = header.getAttribute("aria-expanded") === "true";
+      header.setAttribute("aria-expanded", !expanded);
+      if (!expanded) {
+        content.style.maxHeight = content.scrollHeight + "px";
       } else {
-        createFluidBody(maxSize,"water");
+        content.style.maxHeight = 0;
       }
-      if(Math.random()<0.35){
-        createLinearSandyBeach("water");
-      }
-    }
-    function createLavaBody(maxSize){
-      createFluidBody(maxSize,"lava");
-    }
-    function createFluidBody(maxSize,tileType){
-      const sx=Math.floor(Math.random()*GRID_WIDTH);
-      const sy=Math.floor(Math.random()*GRID_HEIGHT);
-      floodFillFluid(sx, sy, maxSize, tileType);
-    }
-    function floodFillFluid(sx,sy,maxSize,tileType){
-      const stack=[[sx,sy]];
-      let size=0;
-      while(stack.length && size<maxSize){
-        const [cx,cy] = stack.pop();
-        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) continue;
-        if(mapData[cy][cx].type===tileType) continue;
-        if(Math.random()<0.1) continue;
-        mapData[cy][cx].type=tileType;
-        size++;
-        stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
-      }
-    }
-    function createPond(tileType){
-      const cx = Math.floor(Math.random() * GRID_WIDTH);
-      const cy = Math.floor(Math.random() * GRID_HEIGHT);
-      const r = 2 + Math.floor(Math.random()*2); 
-      for(let y = cy-r; y <= cy+r; y++){
-        for(let x = cx-r; x <= cx+r; x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx=x-cx, dy=y-cy;
-          if(dx*dx + dy*dy <= r*r){
-            mapData[y][x].type = tileType;
-          }
-        }
-      }
-      for(let y = cy-(r+1); y <= cy+(r+1); y++){
-        for(let x = cx-(r+1); x <= cx+(r+1); x++){
-          if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) continue;
-          const dx=x-cx, dy=y-cy;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if(dist > (r-0.5) && dist < (r+1) && Math.random()<0.2){
-            if(mapData[y][x].type===tileType){
-              mapData[y][x].type = "water";
-            }
-          }
-        }
-      }
-    }
-    function createLinearSandyBeach(fluidType) {
-      const edgeCells = [];
-      for (let y = 0; y < GRID_HEIGHT; y++){
-        for (let x = 0; x < GRID_WIDTH; x++){
-          if (mapData[y][x].type === fluidType) {
-            const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
-            let isEdge = false;
-            for (let [dx, dy] of neighbors) {
-              const nx = x + dx, ny = y + dy;
-              if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-              if (mapData[ny][nx].type !== fluidType) {
-                isEdge = true;
-                break;
-              }
-            }
-            if (isEdge) {
-              edgeCells.push({ x, y });
-            }
-          }
-        }
-      }
-      if (edgeCells.length === 0) return;
-      let current = edgeCells[Math.floor(Math.random() * edgeCells.length)];
-      const steps = 5 + Math.floor(Math.random() * 6);
-      for (let i = 0; i < steps; i++){
-        const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
-        for (let [dx, dy] of neighbors) {
-          const nx = current.x + dx, ny = current.y + dy;
-          if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-          if (mapData[ny][nx].type !== fluidType) {
-            mapData[ny][nx].type = "whitesand";
-          }
-        }
-        const candidates = edgeCells.filter(cell => Math.abs(cell.x - current.x) <= 1 && Math.abs(cell.y - current.y) <= 1);
-        if (candidates.length > 0) {
-          current = candidates[Math.floor(Math.random() * candidates.length)];
-        } else {
-          break;
-        }
-      }
-    }
-
-    function generateCliffs(cliffCount) {
-      for (let i = 0; i < cliffCount; i++) {
-        let startX = Math.floor(Math.random() * (GRID_WIDTH - 9));
-        let startY = 1 + Math.floor(Math.random() * (GRID_HEIGHT - 2));
-        let currentY = startY;
-        let chainCoordinates = [{ x: startX, y: currentY }];
-        let nonZeroFound = false;
-        
-        for (let j = 1; j < 9; j++) {
-          let x = startX + j;
-          let offset = (Math.random() < 0.8) ? (Math.random() < 0.5 ? -1 : 1) : 0;
-          if (currentY + offset < 1) {
-            offset = 1;
-          } else if (currentY + offset > GRID_HEIGHT - 1) {
-            offset = -1;
-          }
-          currentY += offset;
-          if (offset !== 0) nonZeroFound = true;
-          chainCoordinates.push({ x: x, y: currentY });
-        }
-        
-        if (!nonZeroFound) {
-          const randomIndex = 1 + Math.floor(Math.random() * (chainCoordinates.length - 1));
-          if (chainCoordinates[randomIndex].y < GRID_HEIGHT - 1) {
-            chainCoordinates[randomIndex].y++;
-          } else {
-            chainCoordinates[randomIndex].y--;
-          }
-        }
-        
-        let valid = true;
-        for (const coord of chainCoordinates) {
-          if (coord.y - 1 < 0 ||
-              mapData[coord.y][coord.x].type === "cliffs" ||
-              mapData[coord.y - 1][coord.x].type === "cliffs") {
-            valid = false;
-            break;
-          }
-        }
-        if (!valid) continue;
-        
-        for (const coord of chainCoordinates) {
-          mapData[coord.y][coord.x].type = "cliffs";
-          mapData[coord.y - 1][coord.x].type = "cliffs";
-        }
-      }
-    }
-
-    /*******************************************************
-     * RIVERS
-     *******************************************************/
-    function createMeanderingRiver(maxLength, fluid="water", r=1){
-      const edges=["top","bottom","left","right"];
-      const chosen=edges[Math.floor(Math.random()*edges.length)];
-      let x=0, y=0;
-      if(chosen==="top"){
-        x=Math.floor(Math.random()*GRID_WIDTH); y=0;
-      } else if(chosen==="bottom"){
-        x=Math.floor(Math.random()*GRID_WIDTH); y=GRID_HEIGHT-1;
-      } else if(chosen==="left"){
-        x=0; y=Math.floor(Math.random()*GRID_HEIGHT);
-      } else {
-        x=GRID_WIDTH-1; y=Math.floor(Math.random()*GRID_HEIGHT);
-      }
-      let dir=pickRiverDir(chosen);
-      const steps=Math.floor(Math.random()*(maxLength/2)+maxLength/2);
-      for(let i=0; i<steps; i++){
-        if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) break;
-        carveRiverCircle(x,y,r,fluid);
-        if(Math.random()<0.2) dir=turnSlightly(dir);
-        x+=dir.dx; y+=dir.dy;
-      }
-    }
-    function carveRiverCircle(cx, cy, radius, fluid){
-      for(let dy=-radius; dy<=radius; dy++){
-        for(let dx=-radius; dx<=radius; dx++){
-          if(dx*dx+dy*dy <= radius*radius){
-            const nx=cx+dx, ny=cy+dy;
-            if(nx>=0&&ny>=0&&nx<GRID_WIDTH&&ny<GRID_HEIGHT){
-              mapData[ny][nx].type = fluid;
-            }
-          }
-        }
-      }
-    }
-    function pickRiverDir(edge){
-      switch(edge){
-        case "top":    return {dx: (Math.random()<0.5?1:-1), dy:1};
-        case "bottom": return {dx: (Math.random()<0.5?1:-1), dy:-1};
-        case "left":   return {dx:1, dy: (Math.random()<0.5?1:-1)};
-        case "right":  return {dx:-1,dy: (Math.random()<0.5?1:-1)};
-        default:       return {dx:0,dy:1};
-      }
-    }
-    function turnSlightly(dir){
-      const leftTurn = {
-        "1,0":  {dx:0,dy:-1},
-        "-1,0": {dx:0,dy:1},
-        "0,1":  {dx:-1,dy:0},
-        "0,-1": {dx:1,dy:0}
-      };
-      const rightTurn = {
-        "1,0":  {dx:0,dy:1},
-        "-1,0": {dx:0,dy:-1},
-        "0,1":  {dx:1,dy:0},
-        "0,-1": {dx:-1,dy:0}
-      };
-      const key = `${dir.dx},${dir.dy}`;
-      if(Math.random()<0.5 && leftTurn[key]) return leftTurn[key];
-      if(rightTurn[key]) return rightTurn[key];
-      return dir;
-    }
-
-    /*******************************************************
-     * IRREGULAR COAST
-     *******************************************************/
-    function createIrregularCoastLine(){
-      const topCoast = Math.random()<0.5;
-      let coastY = topCoast
-        ? 2 + Math.floor(Math.random()*5)
-        : GRID_HEIGHT - 2 - Math.floor(Math.random()*5);
-
-      for(let x=0; x<GRID_WIDTH; x++){
-        if(topCoast){
-          for(let y=0; y<coastY; y++){
-            mapData[y][x].type="water";
-          }
-          for(let y=coastY; y<coastY+2; y++){
-            if(y>=0 && y<GRID_HEIGHT){
-              mapData[y][x].type="whitesand";
-            }
-          }
-        } else {
-          for(let y=GRID_HEIGHT-1; y>coastY; y--){
-            mapData[y][x].type="water";
-          }
-          for(let y=coastY; y>coastY-2; y--){
-            if(y>=0 && y<GRID_HEIGHT){
-              mapData[y][x].type="whitesand";
-            }
-          }
-        }
-        const direction = (Math.random()<0.5? -1: 1);
-        coastY += direction;
-        if(topCoast){
-          if(coastY<2) coastY=2;
-          if(coastY>GRID_HEIGHT-3) coastY=GRID_HEIGHT-3;
-        } else {
-          if(coastY>GRID_HEIGHT-2) coastY=GRID_HEIGHT-2;
-          if(coastY<2) coastY=2;
-        }
-      }
-    }
-
-    /*******************************************************
-     * ROADS
-     *******************************************************/
-    function createRoadFromEdgeToEdge(theme, maxLength){
-      const edgeList = ["top","bottom","left","right"];
-      let startEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
-      let endEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
-      let tries=0;
-      while(endEdge===startEdge && tries<10){
-        endEdge = edgeList[Math.floor(Math.random()*edgeList.length)];
-        tries++;
-      }
-      let sx, sy, ex, ey;
-      switch(startEdge){
-        case "top":    sx=Math.floor(Math.random()*GRID_WIDTH); sy=0; break;
-        case "bottom": sx=Math.floor(Math.random()*GRID_WIDTH); sy=GRID_HEIGHT-1; break;
-        case "left":   sx=0; sy=Math.floor(Math.random()*GRID_HEIGHT); break;
-        case "right":  sx=GRID_WIDTH-1; sy=Math.floor(Math.random()*GRID_HEIGHT); break;
-      }
-      switch(endEdge){
-        case "top":    ex=Math.floor(Math.random()*GRID_WIDTH); ey=0; break;
-        case "bottom": ex=Math.floor(Math.random()*GRID_WIDTH); ey=GRID_HEIGHT-1; break;
-        case "left":   ex=0; ey=Math.floor(Math.random()*GRID_HEIGHT); break;
-        case "right":  ex=GRID_WIDTH-1; ey=Math.floor(Math.random()*GRID_HEIGHT); break;
-      }
-      const pathCells = carveStraightRoad(theme, sx, sy, ex, ey);
-
-      if(pathCells.length > 5 && Math.random() < 0.3){
-        const pivot = pathCells[Math.floor(Math.random()*pathCells.length)];
-        carveMeanderingOffshoot(theme, pivot.x, pivot.y, Math.floor(Math.random()*(maxLength/4))+5);
-      }
-    }
-
-    function carveStraightRoad(theme, sx, sy, ex, ey){
-      let dx=Math.abs(ex-sx), sxSign=sx<ex?1:-1;
-      let dy=-Math.abs(ey-sy), sySign=sy<ey?1:-1;
-      let err=dx+dy;
-      let x=sx, y=sy;
-      const cells = [];
-      while(true){
-        carveRoadTile(theme, x, y);
-        cells.push({x,y});
-        if(x===ex && y===ey) break;
-        const e2=2*err;
-        if(e2>=dy){err+=dy; x+=sxSign;}
-        if(e2<=dx){err+=dx; y+=sySign;}
-      }
-      return cells;
-    }
-
-    function carveRoadTile(theme, rx, ry) {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (Math.abs(dx) + Math.abs(dy) <= 1) {
-            const nx = rx + dx, ny = ry + dy;
-            if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-            const cell = mapData[ny][nx];
-            if (cell.type === "towersmall") continue;
-            if (cell.type === "water" || cell.type === "lava") {
-              if (theme !== "coastal") {
-                cell.type = "woodfloor";
-              }
-            } else {
-              const r = Math.random();
-              if (r < 0.05) {
-                cell.type = "roadstone";
-              } else if (r < 0.07) {
-                cell.type = theme === "snow" ? "TileSnow" : "TileRubble";
-              } else {
-                cell.type = "roaddirt";
-              }
-            }
-          }
-        }
-      }
-      if (BRIDGE_WIDTH > 0 && hasWaterWithinRadius(rx, ry, 3)) {
-        convertBridgeTile(rx, ry, new Set());
-      }
-    }
-
-    function hasWaterWithinRadius(x, y, radius) {
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const nx = x + dx, ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-          const t = mapData[ny][nx].type;
-          if (t === "water" || t === "lava") {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-    function convertBridgeTile(x, y, visited) {
-      const key = x + "," + y;
-      if (visited.has(key)) return;
-      visited.add(key);
-      const cell = mapData[y][x];
-      if (cell.type === "roaddirt" || cell.type === "roadstone") {
-        if (hasWaterWithinRadius(x, y, 2)) {
-          cell.type = "woodfloor";
-          const neighbors = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-          for (const [dx, dy] of neighbors) {
-            const nx = x + dx, ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-            convertBridgeTile(nx, ny, visited);
-          }
-        }
-      }
-    }
-
-    function carveMeanderingOffshoot(theme, startX, startY, length){
-      const dirs = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}];
-      let d = dirs[Math.floor(Math.random()*dirs.length)];
-      let x = startX, y = startY;
-      for(let i=0; i<length; i++){
-        carveRoadTile(theme,x,y);
-        if(Math.random()<0.3){
-          d = turnSlightly(d);
-        }
-        let nx = x + d.dx;
-        let ny = y + d.dy;
-        if(!canCarveRoadAt(nx,ny)){
-          let tries=4;
-          while(tries>0){
-            let alt = dirs[Math.floor(Math.random()*dirs.length)];
-            let ax = x+alt.dx, ay=y+alt.dy;
-            if(canCarveRoadAt(ax,ay)){
-              d = alt;
-              nx=ax; ny=ay;
-              break;
-            }
-            tries--;
-          }
-          if(tries===0){
-            break;
-          }
-        }
-        x=nx; y=ny;
-        if(x<0||y<0||x>=GRID_WIDTH||y>=GRID_HEIGHT) break;
-      }
-    }
-
-    function canCarveRoadAt(x, y) {
-      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) return false;
-      const blockedTypes = [
-        "negative", "wall", "water", "lava", "door",
-        "floor1", "cobblestone","marble","marble1","marble2","marble3","marble4",
-        "woodfloor", "darktile", "ancienttile", "limestone1", "limestone2", "limestone3",
-        "towersmall"
-      ];
-      const cellType = mapData[y][x].type;
-      if (blockedTypes.includes(cellType)) return false;
-      return true;
-    }
-
-    function isRoadLike(t){
-      return (t==="roaddirt" || t==="roadstone" || t==="woodfloor");
-    }
-
-    function carveSingleRoadTile(x, y) {
-      if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
-        return;
-      }
-      if (isRoadBlocked(mapData[y][x].type)) return;
-      if (Math.random() < 0.2) {
-        mapData[y][x].type = "roadstone";
-      } else {
-        mapData[y][x].type = "roaddirt";
-      }
-    }
-
-    function isRoadBlocked(cellType){
-      const blocked = [
-        "negative","wall","water","lava","door",
-        "floor1","cobblestone","marble","marble1","marble2","marble3","marble4",
-        "darktile","ancienttile","limestone","limestone1","limestone2","limestone3","snowWall","fireplace"
-      ];
-      return blocked.includes(cellType);
-    }
-
-    /*******************************************************
-     * BUILDINGS
-     *******************************************************/
-    // Omitted building shape commentary for brevity.
-
-    let chosenFloorTile=null;
-    const uniqueBuildingAssets = {
-      toilet: 0
-    };
-
-    function createBuildings(numBuildings) {
-      const possibleFloors = ["floor1", "interiorfloors"];
-      chosenFloorTile = possibleFloors[Math.floor(Math.random() * possibleFloors.length)];
-
-      let attempts = 0, placed = 0;
-      const maxAttempts = 10000;
-      while (placed < numBuildings && attempts < maxAttempts) {
-        attempts++;
-        const shape = buildingShapes[Math.floor(Math.random() * buildingShapes.length)];
-        if (shapeContainsUniqueAsset(shape, "J") && uniqueBuildingAssets.toilet >= 1) {
-          continue;
-        }
-        const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
-        const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
-        if (!canPlaceBuilding(sx, sy, shape)) continue;
-        placeBuilding(sx, sy, shape);
-        placed++;
-        if (shapeContainsUniqueAsset(shape, "J")) {
-          uniqueBuildingAssets.toilet++;
-        }
-      }
-    }
-
-/* 
-  Building Shapes Asset Legend:
-  
-  Numerical Codes:
-  ----------------
-  1 : Outer Wall 
-      // Rendered as cobblestone, snowWall, or limestone depending on the current theme.
-  0 : Floor 
-      // Rendered using a chosen floor asset (e.g. "floor1" or "interiorfloors").
-  2 : Door 
-      // Processed into a door tile (either "door" or "doorWood2" after door grouping).
-  3 : Courtyard Flag 
-      // Used to mark interior courtyard areas; may trigger special decorations.
-  4 : Road Tile 
-      // A road segment; determined via getRoadTile() logic.
-  5 : Marble Floor 
-      // Renders a marble floor variant.
-  6 : Dark Tile 
-      // Renders a dark stone or dark tile texture.
-  7 : Lava Feature 
-      // Indicates a lava element integrated into the building.
-  8 : Water Feature 
-      // Indicates a water element integrated into the building.
-  9 : Chests 
-      // Used for furnishings such as chests.
-  
-  New Alphabetical Codes:
-  -----------------------
-  A : Fireplace 
-      // Renders a fireplace using the corresponding "fireplace" asset.
-  B : Anvil 
-      // Renders an anvil.
-  C : Beds 
-      // Renders bed assets for sleeping quarters.
-  D : Bookcases 
-      // Renders bookcases (or similar furniture) using the "books" asset.
-  E : Rugs 
-      // Renders rugs using the "rugs" asset.
-  F : Forge 
-      // Renders the "forge" asset.
-  G : Weapon rack 
-      // Renders rugs using the "weaponrack" asset.
-  H : apothecary 
-      // A cabinet full of potions.
-  I : Counter 
-      // For all your financial transactions.
-*/
-
-	  
-   const buildingShapes = [
-      {
-        width: 5,
-        height: 6,
-        layout: [
-          [1,1,"A",1,1],
-          [1,"L",0,0,1],
-          [1,0,0,0,1],
-          [1,0,"E",0,1],
-          [1,0,0,"C",1], 
-          [1,1,2,1,1]
-        ]
-      },
-          {
-        width: 7,
-        height: 7,
-        layout: [
-          [1,1,1,1,"A",1,1],
-          [1,"K",2,0,0,"C",1],
-          [1,1,1,0,0,0,1],
-          [1,"L","N",0,0,0,1],
-          [1,0,0,"E",0,0,1], 
-          [1,0,0,0,0,0,1],
-          [1,1,1,2,1,1,1]
-        ]
-      },
-      {
-        width: 9,
-        height: 7,
-        layout: [
-          [1,1,1,1,1,1,1,1,1],
-          [1,"D","D","D","D","D","D","D",1],
-          [1,0,0,0,0,0,0,0,1],
-          [1,9,0,0,1,"A",1,0,2],
-          [1,0,"E",0,0,0,"E",0,1], 
-          [1,0,0,0,0,0,0,0,1],
-          [1,1,1,1,2,1,1,1,1]
-        ]
-      },
-      {
-        width: 7,
-        height: 9,
-        layout: [
-          [1,1,1,2,1,1],
-          [1,"N",4,4,4,1],
-          [1,4,4,4,4,2],
-          [1,3,3,4,3,1], 
-          [1,1,1,2,1,1],
-          [1,"M","L",5,"K",1],
-          [1,6,5,6,5,1],
-          [1,5,6,5,6,1],
-          [1,1,2,2,1,1]
-        ]
-      },
-      {
-        width: 7,
-        height: 9,
-        layout: [
-          [1,1,2,1,1,1,1],
-          [1,"D",0,"D",1,4,3],
-          [1,0,0,0,1,4,1],
-          [1,"C",0,0,1,4,3], 
-          [1,0,0,0,2,4,1],
-          [1,0,0,0,1,4,3],
-          [1,0,0,"C",1,4,1],
-          [1,0,0,0,1,4,3],
-          [1,1,1,2,1,1,1]
-        ]
-      },
-      {
-        width: 8,
-        height: 9,
-        layout: [
-          [1,1,"A",1,1,1,1,1],
-          [1,"C",0,"C",1,0,0,1],
-          [1,0,"E",0,2,0,0,2],
-          [1,0,0,0,1,0,0,1], 
-          [1,1,2,1,1,1,1,1],
-          [1,1,5,6,5,6,1,1],
-          [1,5,6,5,6,5,6,1],
-          [1,6,5,6,5,6,5,1],
-          [1,1,1,2,2,1,1,1]
-        ]
-      },
-      {
-        width: 8,
-        height: 9,
-        layout: [
-          [1,1,1,1,1,1,1,1],
-          [1,6,6,0,0,"F",0,1],
-          [1,7,6,0,"B",0,0,2],
-          [1,6,6,0,0,0,0,1], 
-          [1,1,1,1,2,1,1,1],
-          [1,6,"G",6,5,"G",6,1],
-          [1,5,6,5,6,5,6,1],
-          [1,6,5,6,5,6,5,1],
-          [1,1,1,2,2,1,1,1]
-        ]
-      },
-      {
-        width: 5,
-        height:5,
-        layout: [
-          [3,3,3,3,3],
-          [3,3,3,3,3],	 	
-          [1,1,1,1,1],
-          [1,"J",1,"J",1],
-          [1,2,1,2,1]
-        ]
-              },
-        {
-        width: 5,
-        height:5,
-        layout: [
-          [1,1,"A",1,1],
-          [1,9,0,0,1],	 	
-          [1,"C","E",0,1],
-          [1,0,0,"C",1],
-          [1,1,2,1,1]
-        ]
-      },
-      {
-        width: 5,
-        height:5,
-        layout: [
-          [1,1,1,1,1],
-          [1,"M","M","M",1],	 	
-          [1,0,"E",0,1],
-          [1,"N",0,"N",1],
-          [1,1,2,1,1]
-        ]
-      },
-      {
-        width: 5,
-        height:5,
-        layout: [
-          [1,1,1,1,1],
-          [1,"C","E",0,1],	 	
-          [1,1,1,0,1],
-          [1,0,0,0,1],
-          [1,2,1,1,1]
-        ]
-      },
-      {
-        width: 5,
-        height:5,
-        layout: [
-          [1,1,"A",1,1],
-          [1,0,0,0,1],	 	
-          [1,"C","E",0,1],
-          [1,0,0,0,1],
-          [1,1,2,1,1]
-        ]
-      },
-      {
-        width: 7,
-        height: 9,
-        layout: [
-          [1,1,1,2,1,1,1],
-          [1,3,4,"F",4,3,1],
-          [1,3,4,4,4,3,2],
-          [1,1,1,2,1,1,1], 
-          [1,"G","G",0,"G",0,1],
-          [1,9,0,0,0,0,1],
-          [1,"I","I","I",0,0,1],
-          [1,0,0,0,0,0,1],
-          [1,1,1,2,1,1,1]
-        ]
-      },
-      {
-        width: 9,
-        height: 9,
-        layout: [
-          [1,1,1,1,1,1,1,1,1],
-          [1,"H",0,"H",0,"H",0,"H",1],
-          [1,0,"E",0,"E",0,"E",0,2],
-          [1,0,0,0,0,0,0,0,1], 
-          [1,1,1,1,2,1,1,1,1],
-          [1,"M","M","M",5,5,9,1,3],
-          [1,5,5,5,5,5,5,1,3],
-          [1,5,5,5,5,5,5,1,3],
-          [1,1,1,2,2,1,1,1,3]
-        ]
-      }
-    ];
-
-
-    function shapeContainsUniqueAsset(shape, assetCode) {
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
-          if (shape.layout[y][x] === assetCode) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function canPlaceBuilding(sx, sy, shape){
-      const margin = Math.random() < 0.5 ? 1 : 2;
-      const buildingWidth  = shape.width;
-      const buildingHeight = shape.height;
-      const x1 = sx - margin;
-      const y1 = sy - margin;
-      const x2 = sx + buildingWidth  - 1 + margin;
-      const y2 = sy + buildingHeight - 1 + margin;
-
-      if (x1 < 0 || y1 < 0 || x2 >= GRID_WIDTH || y2 >= GRID_HEIGHT) {
-        return false;
-      }
-      if(cityWallBounds) {
-        const cwX2 = cityWallBounds.x + cityWallBounds.w - 1;
-        const cwY2 = cityWallBounds.y + cityWallBounds.h - 1;
-        if (
-          x1 < cityWallBounds.x || y1 < cityWallBounds.y ||
-          x2 > cwX2            || y2 > cwY2
-        ) {
-          return false;
-        }
-      }
-      for (let y = y1; y <= y2; y++){
-        for (let x = x1; x <= x2; x++){
-          const cell = mapData[y][x];
-          if (cell.hasBuilding) {
-            return false;
-          }
-          if (["water","lava","negative","wall","door","roadstone","roaddirt",
-               "solidstone","magma","woodfloor"].includes(cell.type)) {
-            return false;
-          }
-        }
-      }
-      for(let yy = 0; yy < shape.height; yy++){
-        for(let xx = 0; xx < shape.width; xx++){
-          const val = shape.layout[yy][xx];
-          if(val === 1 || val === 0 || val === 3){
-            const cell = mapData[sy + yy][sx + xx];
-            if (["water","lava","negative","wall","door","roadstone","roaddirt",
-                 "solidstone","magma","woodfloor"].includes(cell.type)) {
-              return false;
-            }
-          }
-        }
-      }
-      return true;
-    }
-
-    function placeBuilding(sx, sy, shape) {
-      const buildingId = nextBuildingId++;
-      const doorGroups = [];
-      const doorVisited = Array.from({ length: shape.height }, () => Array(shape.width).fill(false));
-
-      function groupDoors(relX, relY, group) {
-        if (relX < 0 || relY < 0 || relX >= shape.width || relY >= shape.height) return;
-        if (doorVisited[relY][relX]) return;
-        if (shape.layout[relY][relX] !== 2) return;
-        doorVisited[relY][relX] = true;
-        group.push({ x: relX, y: relY });
-        groupDoors(relX + 1, relY, group);
-        groupDoors(relX - 1, relY, group);
-        groupDoors(relX, relY + 1, group);
-        groupDoors(relX, relY - 1, group);
-      }
-
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
-          if (shape.layout[y][x] === 2 && !doorVisited[y][x]) {
-            const group = [];
-            groupDoors(x, y, group);
-            doorGroups.push(group);
-          }
-        }
-      }
-      const availableDoorTypes = ["door"];
-      const groupDoorTypes = doorGroups.map(group =>
-        group.length > 1 ? "doorWood2" : availableDoorTypes[Math.floor(Math.random() * availableDoorTypes.length)]
-      );
-
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
-          const val = shape.layout[y][x];
-          const cell = mapData[sy + y][sx + x];
-
-          if (val === 1) {
-            const theme = document.getElementById('mapType').value;
-            if (theme === 'snow') {
-              cell.type = 'snowWall';
-            } else if (theme === 'desert') {
-              cell.type = 'limestone';
-            } else {
-              cell.type = 'cobblestone';
-            }
-          } else if (val === 0) {
-            cell.type = chosenFloorTile;
-          } else if (val === 2) {
-            let assignedType = null;
-            for (let i = 0; i < doorGroups.length; i++) {
-              if (doorGroups[i].some(pos => pos.x === x && pos.y === y)) {
-                assignedType = groupDoorTypes[i];
-                break;
-              }
-            }
-            cell.type = assignedType || "door";
-          } else if (val === 3) {
-            cell.courtyard = true;
-          } else if (val === 4) {
-            cell.type = getRoadTile();
-          } else if (val === 5) {
-            cell.type = "marble";
-          } else if (val === 6) {
-            cell.type = "darktile";
-          } else if (val === 7) {
-            cell.type = "lava";
-          } else if (val === 8) {
-            cell.type = "water";
-          } else if (val === 9) {
-            cell.type = "chests";
-          } else if (val === "A") {
-            cell.type = "fireplace";
-          } else if (val === "B") {
-            cell.type = "anvil";
-          } else if (val === "F") {
-            cell.type = "forge";
-          } else if (val === "C") {
-            cell.type = "beds";
-          } else if (val === "D") {
-            cell.type = "books";
-          } else if (val === "E") {
-            cell.type = "rugs";
-          } else if (val === "G") {
-            cell.type = "weaponrack";
-          } else if (val === "H") {
-            cell.type = "apothecary";
-          } else if (val === "I") {
-            cell.type = "counter";
-          } else if (val === "J") {
-            cell.type = "toilet";
-          } else if (val === "K") {
-            cell.type = "cabinet";
-          } else if (val === "L") {
-            cell.type = "kitchenblock";
-          } else if (val === "M") {
-            cell.type = "barrelshelf";
-          } else if (val === "N") {
-            cell.type = "bottleshelf";
-          } else {
-            console.warn(`Unrecognized building shape value: ${val}`);
-          }
-          
-          cell.hasBuilding = true;
-          cell.buildingId = buildingId;
-        }
-      }
-    }
-
-    function getRoadTile() {
-      return Math.random() < 0.2 ? "roadstone" : "roaddirt";
-    }
-
-    let nextBuildingId = 1;
-
-    function createCitySquares() {
-      const squareCount = 2 + Math.floor(Math.random() * 3);
-      let attempts = 0, placed = 0;
-      while (placed < squareCount && attempts < squareCount * 20) {
-        attempts++;
-        const w = 4 + Math.floor(Math.random() * 3);
-        const h = 4 + Math.floor(Math.random() * 3);
-        const sx = Math.floor(Math.random() * (GRID_WIDTH - w));
-        const sy = Math.floor(Math.random() * (GRID_HEIGHT - h));
-        if (!canPlacePlaza(sx, sy, w, h)) continue;
-        stampPlaza(sx, sy, w, h);
-        connectPlazaToRoad(sx, sy, w, h);
-        placed++;
-      }
-    }
-
-    function canPlacePlaza(sx,sy,w,h){
-      for(let y=sy; y<sy+h; y++){
-        for(let x=sx; x<sx+w; x++){
-          const t=mapData[y][x];
-          if(t.hasBuilding || t.type==="wall" || t.type==="door" || t.type==="negative"){
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    function stampPlaza(sx,sy,w,h){
-      for(let yy=sy; yy<sy+h; yy++){
-        for(let xx=sx; xx<sx+w; xx++){
-          const cell=mapData[yy][xx];
-          if(cell.hasBuilding || cell.type==="wall" || cell.type==="door" || cell.type==="negative") continue;
-          if(Math.random()<0.2){
-            cell.type = "roadstone";
-          } else {
-            cell.type="roaddirt";
-          }
-          if(Math.random()<0.15){
-            cell.type="marketscatter";
-          }
-        }
-      }
-    }
-
-    function connectPlazaToRoad(sx, sy, w, h) {
-      let borderCells = [];
-      for (let x = sx; x < sx + w; x++) {
-        borderCells.push({ x: x, y: sy });
-        borderCells.push({ x: x, y: sy + h - 1 });
-      }
-      for (let y = sy + 1; y < sy + h - 1; y++) {
-        borderCells.push({ x: sx, y: y });
-        borderCells.push({ x: sx + w - 1, y: y });
-      }
-      borderCells.sort(() => Math.random() - 0.5);
-
-      for (const cell of borderCells) {
-        let path = findPathToRoad(cell.x, cell.y);
-        if (path) {
-          for (const p of path) {
-            carveSingleRoadTile(p.x, p.y);
-          }
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function findPathToRoad(sx, sy){
-      const visited = new Set();
-      const queue = [{x:sx,y:sy,path:[]}];
-      const maxDist = 50;
-      while(queue.length){
-        const {x,y,path} = queue.shift();
-        if(isRoadLike(mapData[y][x].type) && !(x===sx && y===sy)){
-          return path;
-        }
-        for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-          const nx=x+dx, ny=y+dy;
-          if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) continue;
-          if(path.length>maxDist) continue;
-          const cellType = mapData[ny][nx].type;
-          if(isRoadBlocked(cellType)) continue;
-          const key=`${nx},${ny}`;
-          if(!visited.has(key)){
-            visited.add(key);
-            queue.push({x:nx,y:ny,path:[...path,{x:nx,y:ny}]});
-          }
-        }
-      }
-      return null;
-    }
-
-    function scatterWells(probability = 0.001) {
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          const cell = mapData[y][x];
-          const forbiddenTypes = ["wall", "water", "lava", "cliffs", "door", "woodfloor", "roaddirt", "roadstone"];
-          if (cell.hasBuilding || forbiddenTypes.includes(cell.type)) continue;
-          if (Math.random() < probability) {
-            cell.type = "well";
-            cell._chosenTileIndex = null;
-          }
-        }
-      }
-    }
-
-    function connectBuildingDoorsToRoads() {
-      const doorCells = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (mapData[y][x].type === "door" || mapData[y][x].type === "doorWood2") {
-            doorCells.push({ x, y });
-          }
-        }
-      }
-      if (!doorCells.length) return;
-      doorCells.forEach(dc => {
-        const path = findPathToRoad(dc.x, dc.y);
-        if (path) {
-          for (let i = 0; i < path.length; i++) {
-            const p = path[i];
-            if (mapData[p.y][p.x].type === "door" || mapData[p.y][p.x].type === "doorWood2") continue;
-            carveSingleRoadTile(p.x, p.y);
-          }
-        }
-      });
     }
-
-
-    function scatterCrates(chance = 0.1) {
-      const deltas = [
-        [1, 0], [-1, 0], [0, 1], [0, -1],
-        [1, 1], [-1, -1], [1, -1], [-1, 1]
-      ];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          const cell = mapData[y][x];
-          if (cell.hasBuilding) continue;
-          let doorNeighbor = false;
-          for (const [dx, dy] of deltas) {
-            const nx = x + dx, ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-            if (mapData[ny][nx].type === "door") {
-              doorNeighbor = true;
-              break;
-            }
-          }
-          if (doorNeighbor) continue;
-          let adjacentBuilding = false;
-          for (const [dx, dy] of deltas) {
-            const nx = x + dx, ny = y + dy;
-            if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) continue;
-            if (mapData[ny][nx].hasBuilding) {
-              adjacentBuilding = true;
-              break;
-            }
-          }
-          if (adjacentBuilding && Math.random() < chance) {
-            cell.type = "crate";
-          }
-        }
-      }
-    }
-
-    function createFields(numFields){
-      for(let i=0; i<numFields; i++){
-        const fw=3+Math.floor(Math.random()*5);
-        const fh=3+Math.floor(Math.random()*5);
-        const sx=Math.floor(Math.random()*(GRID_WIDTH-fw));
-        const sy=Math.floor(Math.random()*(GRID_HEIGHT-fh));
-        if(canPlaceFarm(sx,sy,fw,fh)){
-          const farmlandCount=tileAssetMapping["farmland"].files.length;
-          const cropIndex=Math.floor(Math.random()*farmlandCount);
-          for(let yy=sy; yy<sy+fh; yy++){
-            for(let xx=sx; xx<sx+fw; xx++){
-              const c=mapData[yy][xx];
-              c.type="farmland";
-              c.crop=cropIndex;
-            }
-          }
-        }
-      }
-    }
-    function canPlaceFarm(sx, sy, w, h) {
-      for (let y = sy; y < sy + h; y++) {
-        for (let x = sx; x < sx + w; x++) {
-          if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) return false;
-          const cell = mapData[y][x];
-          if (cityWallBounds) {
-            const withinWalls = insideRect(x, y, cityWallBounds);
-
-          }
-          if (
-            ["water", "lava", "negative", "wall", "door", "woodfloor", "floor1", "cobblestone",
-             "marble1", "marble2", "marble3", "marble4", "darktile", "ancienttile", "limestone1",
-             "limestone2", "limestone3", "roaddirt", "roadstone"].includes(cell.type)
-             || cell.hasBuilding
-          ) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    function insideRect(px,py,rect){
-      return (px>=rect.x && py>=rect.y && px<(rect.x+rect.w) && py<(rect.y+rect.h));
-    }
-
-    function createIrregularCityWalls() {
-      const darkStoneWallFiles = [
-        "darkStoneBlock.png",
-        "darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"
-      ];
-      const chosenWallFile = darkStoneWallFiles[Math.floor(Math.random() * darkStoneWallFiles.length)];
-      
-      const theme = document.getElementById('mapType').value;
-      const usePallisade = (theme === "jungle" || theme === "forest" || theme === "snow");
-      
-      let rectW = sliderCache["cityWallLength"] 
-        ? parseInt(sliderCache["cityWallLength"].value)
-        : Math.floor(GRID_WIDTH / 2);
-      let rectH = rectW;
-      let startX = 2 + Math.floor(Math.random() * (GRID_WIDTH - rectW - 4));
-      let startY = 2 + Math.floor(Math.random() * (GRID_HEIGHT - rectH - 4));
-      const thickness = 1 + Math.floor(Math.random() * 1);
-      startX = adjustWallPosition(startX, rectW, GRID_WIDTH);
-      startY = adjustWallPosition(startY, rectH, GRID_HEIGHT);
-      
-      cityWallBounds = {
-        x: startX + thickness,
-        y: startY + thickness,
-        w: rectW - thickness * 2,
-        h: rectH - thickness * 2
-      };
-      
-      placeTower(startX, startY);
-      placeTower(startX + rectW - 1, startY);
-      placeTower(startX + rectW - 1, startY + rectH - 1);
-      placeTower(startX, startY + rectH - 1);
-      
-      carveWallEdge(chosenWallFile, startX, startY, startX + rectW - 1, startY, thickness, true, usePallisade);
-      carveWallEdge(chosenWallFile, startX + rectW - 1, startY, startX + rectW - 1, startY + rectH - 1, thickness, false, usePallisade);
-      carveWallEdge(chosenWallFile, startX + rectW - 1, startY + rectH - 1, startX, startY + rectH - 1, thickness, true, usePallisade);
-      carveWallEdge(chosenWallFile, startX, startY + rectH - 1, startX, startY, thickness, false, usePallisade);
-    }
-
-    function adjustWallPosition(start, length, gridSize) {
-      return (start + length > gridSize) ? gridSize - length : start;
-    }
-    function carveWallBand(baseX, baseY, thickness, horizontal, offset, chosenWallFile, usePallisade) {
-      for (let i = 0; i < thickness; i++) {
-        const xx = baseX + (horizontal ? 0 : i + offset);
-        const yy = baseY + (horizontal ? i + offset : 0);
-        if (xx < 0 || yy < 0 || xx >= GRID_WIDTH || yy >= GRID_HEIGHT) continue;
-        const cell = mapData[yy][xx];
-        if (cell.type === "towersmall") continue;
-        if (cell.type === "roadstone" || cell.type === "roaddirt" || cell.type === "woodfloor") continue;
-        if ((xx + yy) % 3 === 0) {
-          cell.type = "wall";
-          cell.chosenWallFile = "darkStoneBlock.png";
-        } else {
-          if (usePallisade) {
-            cell.type = "pallisade";
-            cell.chosenWallFile = "pallisade.png";
-          } else {
-            cell.type = "wall";
-            const alternatives = ["darktile1.png", "darktile2.png", "darktile3.png", "darktile4.png"];
-            cell.chosenWallFile = alternatives[Math.floor(Math.random() * alternatives.length)];
-          }
-        }
-      }
-    }
-    function carveWallEdge(chosenWallFile, x1, y1, x2, y2, thickness, horizontal, usePallisade) {
-      const dx = (x2 === x1) ? 0 : (x2 > x1 ? 1 : -1);
-      const dy = (y2 === y1) ? 0 : (y2 > y1 ? 1 : -1);
-      let cx = x1, cy = y1;
-      
-      while (cx !== x2 || cy !== y2) {
-        if (hasAdjacentRoad(cx, cy)) {
-          placeTower(cx, cy);
-          return;
-        }
-        const nextX = cx + dx, nextY = cy + dy;
-        if (nextX >= 0 && nextY >= 0 && nextX < GRID_WIDTH && nextY < GRID_HEIGHT) {
-          if (isRoadLike(mapData[nextY][nextX].type)) {
-            placeTower(cx, cy);
-            return;
-          }
-        }
-        carveWallBand(cx, cy, thickness, horizontal, 0, chosenWallFile, usePallisade);
-        cx += dx;
-        cy += dy;
-      }
-      placeTower(cx, cy);
-    }
-    function hasAdjacentRoad(x, y) {
-      const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
-      for (const [dx, dy] of neighbors) {
-        const nx = x + dx, ny = y + dy;
-        if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
-          if (isRoadLike(mapData[ny][nx].type)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-    function placeTower(x, y) {
-      if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) return;
-      mapData[y][x].type = "towersmall";
-      mapData[y][x]._chosenTileIndex = null;
-    }
-
-    function decorateBiome(theme){
-      if(theme==="desert"){
-        decorateDesert();
-      } 
-      else if(theme==="grassland" || theme==="forest" || theme==="mountain"){
-        scatterGrassRocks(80);
-      }
-    }
-
-    function decorateDesert(){
-      for (let i = 0; i < 250; i++){
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        const cell = mapData[y][x];
-        if (["sand", "dirtCracked", "dirt"].includes(cell.type)){
-          const r = Math.random();
-          if (r < 0.08){
-            cell.type = "cactus";
-          } else if (r < 0.12){
-            cell.type = "desertPalm";
-          } else if (r < 0.16){
-            cell.type = "dune";
-          } else if (r < 0.2){
-            cell.type = "desertBoulder";
-          }
-        }
-      }
-      if (Math.random() < 0.3) {
-        createPalmOasis();
-      }
-      scatterPalmsNearWater();
-    }
-    function createPalmOasis(){
-      const cx = Math.floor(Math.random() * GRID_WIDTH);
-      const cy = Math.floor(Math.random() * GRID_HEIGHT);
-      const waterRadius = 2 + Math.floor(Math.random() * 3);
-      
-      for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
-        for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
-          if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
-          if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
-          const dx = x - cx, dy = y - cy;
-          if (dx*dx + dy*dy <= waterRadius * waterRadius){
-            mapData[y][x].type = "water";
-          }
-        }
-      }
-      
-      const beachRadius = waterRadius + 1;
-      for (let y = cy - beachRadius; y <= cy + beachRadius; y++){
-        for (let x = cx - beachRadius; x <= cx + beachRadius; x++){
-          if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
-          if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
-          const dx = x - cx, dy = y - cy;
-          const distSq = dx * dx + dy * dy;
-          if (distSq > waterRadius * waterRadius && distSq <= beachRadius * beachRadius){
-            mapData[y][x].type = "whitesand";
-          }
-        }
-      }
-      
-      for (let y = cy - waterRadius; y <= cy + waterRadius; y++){
-        for (let x = cx - waterRadius; x <= cx + waterRadius; x++){
-          if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
-          if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
-          const dx = x - cx, dy = y - cy;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist > (waterRadius - 1) && dist <= waterRadius && Math.random() < 0.3){
-            mapData[y][x].type = "water";
-          }
-        }
-      }
-      
-      const palmStart = beachRadius + 1;
-      const palmEnd = beachRadius + 3;
-      for (let y = cy - palmEnd; y <= cy + palmEnd; y++){
-        for (let x = cx - palmEnd; x <= cx + palmEnd; x++){
-          if (x < 0 || y < 0 || x >= GRID_WIDTH || y >= GRID_HEIGHT) continue;
-          if (mapData[y][x].hasBuilding || isRoadLike(mapData[y][x].type)) continue;
-          const dx = x - cx, dy = y - cy;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist >= palmStart && dist <= palmEnd){
-            if (["sand", "dune"].includes(mapData[y][x].type)){
-              if (Math.random() < 0.4){
-                mapData[y][x].type = "desertPalm";
-              }
-            }
-          }
-        }
-      }
-    }
-    function scatterPalmsNearWater() {
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (["sand", "dune"].includes(mapData[y][x].type)) {
-            const neighbors = [[x+1,y], [x-1,y], [x,y+1], [x,y-1]];
-            for (let [nx, ny] of neighbors) {
-              if (nx >= 0 && ny >= 0 && nx < GRID_WIDTH && ny < GRID_HEIGHT) {
-                if (mapData[ny][nx].type === "water") {
-                  if (Math.random() < 0.2) {
-                    mapData[y][x].type = "desertPalm";
-                  }
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    function scatterGrassRocks(num){
-      for(let i=0; i<num; i++){
-        const gx=Math.floor(Math.random()*GRID_WIDTH);
-        const gy=Math.floor(Math.random()*GRID_HEIGHT);
-        const c=mapData[gy][gx];
-        if(["grass","dirt","stone"].includes(c.type) && Math.random()<0.2){
-          c.type="scatterStoneGrass";
-        }
-      }
-    }
-
-    function scatterCoastalTrees(count){
-      let placed=0, attempts=0;
-      while(placed<count && attempts<1000){
-        attempts++;
-        const x=Math.floor(Math.random()*GRID_WIDTH);
-        const y=Math.floor(Math.random()*GRID_HEIGHT);
-        const cell=mapData[y][x];
-        if(cell.type==="grass" && !cell.hasBuilding){
-          if(Math.random()<0.25){
-            cell.type="tree";
-            placed++;
-          }
-        }
-      }
-    }
-    function createCoastalDocks(numDocks){
-      let attempts=0, built=0;
-      while(built<numDocks && attempts<1000){
-        attempts++;
-        const x=Math.floor(Math.random()*GRID_WIDTH);
-        const y=Math.floor(Math.random()*GRID_HEIGHT);
-        if(!isLandEdge(x,y)) continue;
-        const dir = canFindConsecutiveWaterLine(x,y,10);
-        if(!dir) continue;
-        if(buildDock(x,y,dir,10)){
-          built++;
-        }
-      }
-    }
-    function isLandEdge(x,y){
-      const c=mapData[y][x];
-      if(["water","lava","negative"].includes(c.type)) return false;
-      if(c.hasBuilding) return false;
-      const nbrs=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]];
-      return nbrs.some(([nx,ny])=>{
-        if(nx<0||ny<0||nx>=GRID_WIDTH||ny>=GRID_HEIGHT) return false;
-        return (mapData[ny][nx].type==="water");
-      });
-    }
-    function canFindConsecutiveWaterLine(x, y, length) {
-      const possibleDirs = [];
-      if (y > 0 && mapData[y-1][x].type === "water") possibleDirs.push({ dx: 0, dy: -1 });
-      if (y < GRID_HEIGHT-1 && mapData[y+1][x].type === "water") possibleDirs.push({ dx: 0, dy: 1 });
-      if (x > 0 && mapData[y][x-1].type === "water") possibleDirs.push({ dx: -1, dy: 0 });
-      if (x < GRID_WIDTH-1 && mapData[y][x+1].type === "water") possibleDirs.push({ dx: 1, dy: 0 });
-
-      for (const dir of possibleDirs) {
-        let ccount = 0, cx = x + dir.dx, cy = y + dir.dy;
-        while (ccount < length) {
-          if (cx < 0 || cy < 0 || cx >= GRID_WIDTH || cy>=GRID_HEIGHT) break;
-          if (mapData[cy][cx].type !== "water") break;
-          cx += dir.dx;
-          cy += dir.dy;
-          ccount++;
-        }
-        if (ccount >= length) {
-          return (dir.dx !== 0) ? "horizontal" : "vertical";
-        }
-      }
-      return null;
-    }
-    function buildDock(x,y,orientation,len){
-      let dx=0, dy=0, foundLine=false;
-      if(orientation==="horizontal"){
-        if(x>0 && mapData[y][x-1].type==="water"){dx=-1; dy=0; foundLine=true;}
-        else if(x<GRID_WIDTH-1 && mapData[y][x+1].type==="water"){dx=1; dy=0; foundLine=true;}
-      } else {
-        if(y>0 && mapData[y-1][x].type==="water"){dx=0; dy=-1; foundLine=true;}
-        else if(y<GRID_HEIGHT-1 && mapData[y+1][x].type==="water"){dx=0; dy=1; foundLine=true;}
-      }
-      if(!foundLine) return false;
-      let sideX=0, sideY=0;
-      if(orientation==="horizontal"){
-        sideX=0; sideY=1;
-      } else {
-        sideX=1; sideY=0;
-      }
-      let cx=x, cy=y;
-      for(let i=0; i<len; i++){
-        cx+=dx; cy+=dy;
-        if(cx<0||cy<0||cx>=GRID_WIDTH||cy>=GRID_HEIGHT) return false;
-        if(mapData[cy][cx].type!=="water") return false;
-      }
-      cx=x; cy=y;
-      for(let i=0; i<len; i++){
-        cx+=dx; cy+=dy;
-        mapData[cy][cx].type="woodfloor";
-        const sx=cx+sideX, sy=cy+sideY;
-        if(sx>=0&&sy>=0&&sx<GRID_WIDTH&&sy<GRID_HEIGHT){
-          if(mapData[sy][sx].type==="water"){
-            mapData[sy][sx].type="woodfloor";
-          }
-        }
-      }
-      return true;
-    }
-
-    const campShapes = [
-      {
-        width: 3,
-        height: 3,
-        layout: [
-          [0, "K", 0],
-          [0, 0, 0],
-          [0, "L", 0]
-        ]
-      },
-      {
-        width: 4,
-        height: 4,
-        layout: [
-          [0, "K", 0, 0],
-          [0, 0, 0, 0],
-          ["L", 0, 0, 0],
-          [0, 0, "K", 0]
-        ]
-      }
-    ];
-
-    function createCamps(numCamps) {
-      let attempts = 0, placed = 0;
-      const maxAttempts = 5000;
-      while (placed < numCamps && attempts < maxAttempts) {
-        attempts++;
-        const shape = campShapes[Math.floor(Math.random() * campShapes.length)];
-        const sx = Math.floor(Math.random() * (GRID_WIDTH - shape.width));
-        const sy = Math.floor(Math.random() * (GRID_HEIGHT - shape.height));
-        if (!canPlaceCamp(sx, sy, shape)) continue;
-        
-        placeCamp(sx, sy, shape);
-        scatterCratesAroundCamp(sx, sy, shape);
-
-        placed++;
-      }
-    }
-
-    function scatterCratesAroundCamp(sx, sy, shape) {
-      const margin = 1; 
-      const x1 = Math.max(0, sx - margin);
-      const y1 = Math.max(0, sy - margin);
-      const x2 = Math.min(GRID_WIDTH - 1, sx + shape.width  + margin - 1);
-      const y2 = Math.min(GRID_HEIGHT - 1, sy + shape.height + margin - 1);
-
-      for (let y = y1; y <= y2; y++) {
-        for (let x = x1; x <= x2; x++) {
-          if (Math.random() < 0.1) {
-            const cell = mapData[y][x];
-            if (
-              !cell.hasBuilding &&
-              cell.type !== "water" &&
-              cell.type !== "lava" &&
-              !isRoadLike(cell.type) &&
-              cell.type !== "door"
-            ) {
-              cell.type = "crate";
-            }
-          }
-        }
-      }
-    }
-
-    function canPlaceCamp(sx, sy, shape) {
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
-          const cell = mapData[sy + y][sx + x];
-          if (
-            cell.type === "negative" ||
-            cell.type === "wall"     ||
-            cell.type === "water"    ||
-            cell.type === "lava"     ||
-            cell.type === "door"     ||
-            cell.hasBuilding         ||
-            isRoadLike(cell.type)
-          ) {
-            return false;
-          }
-          if (cityWallBounds) {
-            const withinWalls = insideRect(sx + x, sy + y, cityWallBounds);
-
-          }
-        }
-      }
-      return true;
-    }
-
-    function placeCamp(sx, sy, shape) {
-      for (let y = 0; y < shape.height; y++) {
-        for (let x = 0; x < shape.width; x++) {
-          const val = shape.layout[y][x];
-          const cell = mapData[sy + y][sx + x];
-          if (val === 0) {
-            cell.type = "dirt";
-          } else if (val === "K") {
-            cell.type = "Yurt";
-          } else if (val === "L") {
-            cell.type = "campsite";
-          }
-          cell.hasBuilding = true;
-        }
-      }
-    }
-
-    function drawMap(){
-      const canvas = document.getElementById("mapCanvas");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      for(let y = 0; y < GRID_HEIGHT; y++){
-        for(let x = 0; x < GRID_WIDTH; x++){
-          drawCell(ctx, x, y);
-        }
-      }
-      updateNameOverlay(); 
-    }
-
-    function drawCell(ctx, gx, gy) {
-      const cell = mapData[gy][gx];
-      const px = gx * TILE_SIZE, py = gy * TILE_SIZE;
-
-      // Draw tile
-      if (cell.type === "pallisade") {
-        const arr = tileTextures["pallisade"] || [];
-        if (arr.length > 0) {
-          const chosen = arr[0];
-          if (chosen && chosen.complete) {
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType("pallisade");
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType("pallisade");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else if (cell.type === "water") {
-        const arr = tileTextures["water"] || [];
-        if (arr.length > 0) {
-          if (cell._chosenTileIndex == null) {
-            const weights = [60, 10, 10, 5, 5, 10];
-            cell._chosenTileIndex = weightedRandomIndex(weights);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if (chosen && chosen.complete) {
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else if (cell.type === "wall" && cell.chosenWallFile) {
-        const arr = tileTextures["wall"] || [];
-        const forcedImg = arr.find(img => img.src.includes(cell.chosenWallFile));
-        if (forcedImg && forcedImg.complete) {
-          ctx.drawImage(forcedImg, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = getColorForTileType("wall");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else if (cell.type === "farmland" && cell.crop !== undefined) {
-        const farmlandImgs = tileTextures["farmland"] || [];
-        const chosen = farmlandImgs[cell.crop];
-        if (chosen && chosen.complete) {
-          ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = getColorForTileType("farmland");
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-      else {
-        const arr = tileTextures[cell.type] || [];
-        if (arr.length > 0) {
-          if (cell._chosenTileIndex == null) {
-            cell._chosenTileIndex = Math.floor(Math.random() * arr.length);
-          }
-          const chosen = arr[cell._chosenTileIndex];
-          if (chosen && chosen.complete) {
-            ctx.drawImage(chosen, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = getColorForTileType(cell.type);
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          ctx.fillStyle = getColorForTileType(cell.type);
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      }
-
-       if (cell.occupant) {
-        drawOccupantSprite(ctx, cell.occupant, px, py);
-      }
-
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
-    }
-
-    function drawOccupantSprite(ctx, occupant, px, py) {
-      if (occupant.sprite && occupant.sprite !== "none") {
-        const spr = occupantSpritesMap[occupant.sprite];
-        if (spr && spr.complete) {
-          ctx.drawImage(spr, px, py, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = "#999";
-          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        }
-      } else {
-        ctx.fillStyle = "#999";
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-      }
-      const borderColor = occupantColours[occupant.type] || "#FF00FF";
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
-    }
-
-    function updateNameOverlay(){
-      const overlay = document.getElementById("nameOverlay");
-      if(!overlay) return;
-      overlay.innerHTML = "";
-      
-      for(let y = 0; y < GRID_HEIGHT; y++){
-        for(let x = 0; x < GRID_WIDTH; x++){
-          const cell = mapData[y][x];
-          if(cell.occupant && cell.occupant.name && showOccupantNames()){
-            const nameDiv = document.createElement("div");
-            nameDiv.textContent = cell.occupant.name;
-            nameDiv.style.position = "absolute";
-            nameDiv.style.whiteSpace = "nowrap";
-            nameDiv.style.font = "10px sans-serif";
-            nameDiv.style.color = occupantColours[cell.occupant.type] || "#FF00FF";
-            nameDiv.style.left = (x * TILE_SIZE + TILE_SIZE/2) + "px";
-            nameDiv.style.top = (y * TILE_SIZE + TILE_SIZE) + "px";
-            nameDiv.style.transform = "translate(-50%, 0)";
-            nameDiv.style.textShadow = "1px 1px 2px black";
-            overlay.appendChild(nameDiv);
-          }
-        }
-      }
-    }
-
-
-    function setMode(mode){
-      currentMode = mode;
-      if(mode!=="move"){
-        occupantInHand = null;
-      }
-    }
-
-
-    const canvas=document.getElementById("mapCanvas");
-    const mapWrapper=document.querySelector(".mapWrapper");
-
-    function updateCanvasTransform(){
-      canvas.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
-      const overlay = document.getElementById("nameOverlay");
-      if(overlay) {
-        overlay.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
-      }
-    }
-
-    canvas.addEventListener("click", (e) => {
-      if(isDragging || activePointers.size>1) return;
-      const rect=mapWrapper.getBoundingClientRect();
-      const mx=e.clientX - rect.left, my=e.clientY - rect.top;
-      const wx=(mx-offsetX)/scale, wy=(my-offsetY)/scale;
-      const tx=Math.floor(wx/TILE_SIZE), ty=Math.floor(wy/TILE_SIZE);
-      if(tx<0||ty<0||tx>=GRID_WIDTH||ty>=GRID_HEIGHT) return;
-
-      const occupantType=document.getElementById("occupantType").value;
-      const occupantSprite=document.getElementById("occupantSprite").value;
-      const tile=mapData[ty][tx];
-
-      switch(currentMode){
-        case "delete":
-          if(tile.occupant){
-            tile.occupant=null;
-            occupantInHand=null;
-            drawCell(canvas.getContext("2d"), tx, ty);
-            updateNameOverlay();
-          }
-          break;
-        case "move":
-          if (!occupantInHand) {
-
-            if (tile.occupant) {
-              occupantInHand = tile.occupant;
-              tile.occupant = null;
-              drawCell(canvas.getContext("2d"), tx, ty);
-              updateNameOverlay();
-            }
-          } else {
-
-            tile.occupant = occupantInHand;
-            occupantInHand = null;
-            drawCell(canvas.getContext("2d"), tx, ty);
-            updateNameOverlay();
-          }
-          break;
-        case "placeTile":
-          if(currentTileInHand){
-            tile.type = currentTileInHand;
-            tile._chosenTileIndex = null;
-            tile.occupant = null;
-            drawCell(canvas.getContext("2d"), tx, ty);
-          }
-          break;
-        case "place":
-        default:
-          occupantInHand = null;
-          if (occupantType === "none") return;
-          tile.occupant = {
-            type: occupantType,
-            sprite: occupantSprite,
-            name: getOccupantName()
-          };
-          drawCell(canvas.getContext("2d"), tx, ty);
-          updateNameOverlay();
-          break;
-      }
-    });
-
-    canvas.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const zoomSpeed=0.1;
-      let newScale=scale + (e.deltaY<0?zoomSpeed:-zoomSpeed);
-      newScale=Math.min(Math.max(newScale,minScale),maxScale);
-
-      const midX = mapWrapper.clientWidth / 2;
-      const midY = mapWrapper.clientHeight / 2;
-      const wx = (midX - offsetX) / scale;
-      const wy = (midY - offsetY) / scale;
-
-      offsetX = midX - wx*newScale;
-      offsetY = midY - wy*newScale;
-      scale=newScale;
-
-      updateCanvasTransform();
-    }, { passive:false });
-
-    canvas.addEventListener("pointerdown", (e) => {
-      activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-      if(activePointers.size===1){
-        isDragging=true;
-        dragStartX=e.clientX;
-        dragStartY=e.clientY;
-      } else if(activePointers.size===2){
-        isDragging=false;
-        initialPinchDistance=getPinchDistance();
-        initialPinchScale=scale;
-      }
-    });
-
-    window.addEventListener("pointermove", (e) => {
-      if(!activePointers.has(e.pointerId)) return;
-      activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-      if(activePointers.size===1 && isDragging){
-        const dx=e.clientX - dragStartX;
-        const dy=e.clientY - dragStartY;
-        dragStartX=e.clientX; 
-        dragStartY=e.clientY;
-        offsetX+=dx; 
-        offsetY+=dy;
-        updateCanvasTransform();
-      } else if(activePointers.size===2){
-        const newDist=getPinchDistance();
-        const scaleRatio=newDist/initialPinchDistance;
-        let newScale=initialPinchScale * scaleRatio;
-        newScale=Math.min(Math.max(newScale,minScale),maxScale);
-
-        const rect=mapWrapper.getBoundingClientRect();
-        const ps=[...activePointers.values()];
-        const midX=(ps[0].x+ps[1].x)/2 - rect.left;
-        const midY=(ps[0].y+ps[1].y)/2 - rect.top;
-        const wx=(midX-offsetX)/scale, wy=(midY-offsetY)/scale;
-        scale=newScale;
-        offsetX=midX - wx*newScale;
-        offsetY=midY - wy*newScale;
-        updateCanvasTransform();
-        e.preventDefault();
-      }
-    });
-    ["pointerup","pointercancel"].forEach(evtName => {
-      window.addEventListener(evtName, (e) => {
-        activePointers.delete(e.pointerId);
-        if(activePointers.size<2) initialPinchDistance=0;
-        if(activePointers.size===0) isDragging=false;
-      });
-    });
-
-    function getPinchDistance(){
-      if(activePointers.size!==2) return 0;
-      const arr=[...activePointers.values()];
-      const dx=arr[0].x - arr[1].x;
-      const dy=arr[0].y - arr[1].y;
-      return Math.sqrt(dx*dx + dy*dy);
-    }
-
-    function clearOccupantSelection(){
-      document.getElementById("occupantType").value="none";
-      document.getElementById("occupantSprite").value="none";
-    }
-
-    function exportMap() {
-      const dataStr = JSON.stringify(mapData);
-      const blob = new Blob([dataStr], { type: "text/plain" });
-      
-      const anchor = document.createElement("a");
-      anchor.href = URL.createObjectURL(blob);
-      anchor.download = "map.vtt"; 
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-    }
-
-    function handleFileImport(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const loadedData = JSON.parse(e.target.result);
-          mapData = loadedData;
-          drawMap();
-        } catch (err) {
-          alert("Failed to parse the .vtt map file! " + err);
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    window.onload = () => {
-  // Set up sliders
-  setupSliders();
-  // Preload images
-  preloadImages(() => {
-    setupTileMenu();
-    generateMap();
-
-
-    // Sprite preview change handler
-    document.getElementById("occupantSprite").addEventListener("change", function() {
-      const sprite = this.value;
-      const previewImg = document.getElementById("spritePreview");
-      if (sprite === "none") {
-        previewImg.style.display = "none";
-        previewImg.src = "";
-      } else {
-        previewImg.style.display = "block";
-        if (occupantSpritesMap[sprite] && occupantSpritesMap[sprite].complete) {
-          previewImg.src = occupantSpritesMap[sprite].src;
-        } else {
-          previewImg.src = "";
-        }
-      }
-    });
-
-
-        document.getElementById('fullscreenBtn').addEventListener('click', function() {
-          const mapWrapper = document.querySelector('.mapWrapper');
-          if (!document.fullscreenElement) {
-            mapWrapper.requestFullscreen().catch(err => {
-              alert(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
-            });
-          } else {
-            document.exitFullscreen();
-          }
-        });
-
-        document.getElementById('printBtn').addEventListener('click', function() {
-          const canvas = document.getElementById('mapCanvas');
-          const dataUrl = canvas.toDataURL('image/png');
-          const printWindow = window.open('', '_blank');
-          printWindow.document.write(
-            `<html>
-              <head>
-                <title>Print Map</title>
-                <style>
-                  body { margin: 0; padding: 0; }
-                  img { width: 100%; display: block; }
-                </style>
-              </head>
-              <body onload="window.print(); window.close();">
-                <img src="${dataUrl}" alt="Map Image" />
-              </body>
-            </html>`
-          );
-          printWindow.document.close();
-        });
-
-        document.getElementById("exportBtn").addEventListener("click", exportMap);
-        const fileInput = document.getElementById("importFile");
-        fileInput.addEventListener("change", handleFileImport);
-        document.getElementById("importBtn").addEventListener("click", () => {
-          fileInput.value = null; 
-          fileInput.click();
-        });
-      });
-    };
   </script>
 </body>
 </html>
