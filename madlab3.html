@@ -3,544 +3,623 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Caldwell's Repository - Comprehensive DM Screen</title>
-  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png" />
+  <title>Caldwell's Repository - Practical DM Screen</title>
   <link 
     href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
   />
   <style>
-    /* GLOBAL STYLES */
+    /* GLOBAL RESETS & FONTS */
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
     body {
-      margin: 0;
+      font-family: 'Almendra', serif;
+      color: #FAF4E0;
       background: url('resources/index.png') no-repeat center center fixed;
       background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', serif;
     }
     a {
       text-decoration: none;
       color: #FAF4E0;
-      transition: background 0.3s ease, color 0.3s ease;
+      transition: color 0.3s ease, background-color 0.3s ease;
     }
     a:hover {
-      background: #660000;
-      border-radius: 5px;
+      background-color: rgba(139, 0, 0, 0.7);
+      border-radius: 4px;
     }
-    h1, h2, h3, h4 {
+    h1, h2, h3 {
       font-family: 'Cinzel', serif;
-      margin: 0.5rem 0;
+      margin-bottom: 0.5rem;
     }
     p {
-      margin: 0.5rem 0 1rem;
-      line-height: 1.5;
+      margin-bottom: 1rem;
+      line-height: 1.4;
     }
     ul {
-      margin: 0;
-      padding: 0;
       list-style: none;
+      margin-bottom: 1rem;
     }
     li {
       margin: 0.3rem 0;
     }
-    
-    /* TOP NAVIGATION BAR */
-    .top-nav {
-      background: rgba(139, 0, 0, 0.85);
-      padding: 0.5rem;
+
+    /* LAYOUT WRAPPER */
+    .layout {
       display: flex;
-      justify-content: center;
+      flex-wrap: nowrap;
+      min-height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    /* HEADER (TOP BAR) */
+    header {
+      width: 100%;
+      background: rgba(139, 0, 0, 0.85);
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 1000;
     }
-    .nav-menu {
+    .header-left {
       display: flex;
-      gap: 1rem;
       align-items: center;
-      margin: 0;
-      padding: 0;
+      gap: 1rem;
     }
-    .nav-item {
-      position: relative;
+    .header-left h1 {
+      margin: 0.5rem 0;
     }
-    .nav-item > a {
-      padding: 0.5rem 1rem;
-      font-family: 'Cinzel', serif;
-      color: #FAF4E0;
-      display: block;
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
-    .dropdown {
-      display: none;
-      position: absolute;
-      background: rgba(139, 0, 0, 0.9);
-      top: 100%;
-      left: 0;
-      min-width: 200px;
-      border-radius: 5px;
-      padding: 0.5rem 0;
-      z-index: 200;
-    }
-    .dropdown li a {
-      padding: 0.5rem 1rem;
-      white-space: nowrap;
-      display: block;
-      font-family: 'Almendra', serif;
-      color: #FAF4E0;
-    }
-    .nav-item:hover > .dropdown {
-      display: block;
-    }
-    
-    /* CONTAINER & LAYOUT */
-    .container {
-      max-width: 1400px;
-      margin: 1rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 10px;
-      padding: 1rem;
-    }
-    main.content {
-      padding: 1rem;
-    }
-    footer {
-      text-align: center;
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #666;
-      font-family: 'Almendra', serif;
-    }
-    
-    /* RESPONSIVENESS */
-    @media screen and (max-width: 900px) {
-      .nav-menu {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-    }
-    
-    /* WIKIDOT SEARCH */
+    /* SEARCH BAR */
     .search-bar {
-      margin: 1rem 0;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .search-bar input[type="text"] {
-      width: 70%;
-      max-width: 300px;
-      padding: 0.5rem;
-      border-radius: 5px;
+      padding: 0.4rem;
       border: none;
+      border-radius: 4px;
+      width: 220px;
+      max-width: 60vw;
       font-family: 'Almendra', serif;
     }
     .search-bar input[type="submit"] {
-      padding: 0.5rem 1rem;
-      margin-left: 0.5rem;
+      padding: 0.4rem 0.8rem;
       border: none;
-      border-radius: 5px;
-      background-color: #8B0000;
+      border-radius: 4px;
+      background: #8B0000;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
     .search-bar input[type="submit"]:hover {
-      background-color: #A52A2A;
+      background: #A52A2A;
     }
-    
-    /* DM CHEAT SHEET ACCORDION */
-    .dm-accordion-section {
-      margin-bottom: 1rem;
-      border: 1px solid #8B0000;
-      border-radius: 5px;
-    }
-    .dm-accordion-header {
+
+    /* HAMBURGER MENU FOR SIDEBAR TOGGLE */
+    .hamburger {
+      display: none;
       cursor: pointer;
-      background-color: rgba(139, 0, 0, 0.8);
-      padding: 0.5rem;
-      border-radius: 5px 5px 0 0;
-    }
-    .dm-accordion-content {
-      overflow: hidden;
-      max-height: 0;
-      transition: max-height 0.4s ease-out;
-      background-color: rgba(0, 0, 0, 0.3);
-      padding: 0.5rem;
-      border-radius: 0 0 5px 5px;
-    }
-    .dm-accordion-content table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    .dm-accordion-content table, 
-    .dm-accordion-content th, 
-    .dm-accordion-content td {
-      border: 1px solid #8B0000;
-    }
-    .dm-accordion-content th, 
-    .dm-accordion-content td {
-      padding: 0.5rem;
-      text-align: left;
-    }
-    
-    /* SHOP DISTRICT SECTION */
-    .store-container {
-      background: transparent;
-      padding: 2rem;
-      border-radius: 10px;
-      margin-top: 2rem;
-      text-align: center;
-      font-family: 'Almendra', serif;
-      color: #333;
-    }
-    .store-list {
-      list-style: none;
-      padding: 0;
-      margin: 2rem 0 1rem;
-    }
-    .store-item {
-      margin: 1rem 0;
-    }
-    .store-link {
-      display: inline-block;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      font-family: 'Cinzel', serif;
-      color: #8B0000;
+      font-size: 1.4rem;
       background: none;
       border: none;
-      letter-spacing: 0.1rem;
+      color: #FAF4E0;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 300px;
+      min-width: 220px;
+      background: rgba(0, 0, 0, 0.9);
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+    }
+    .sidebar.hidden {
+      transform: translateX(-100%);
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      z-index: 999;
+    }
+    .sidebar-content {
+      padding: 1rem;
+    }
+    .sidebar h2 {
+      margin-top: 0;
+    }
+    .accordion-section {
+      margin-bottom: 1rem;
+    }
+    .accordion-header {
+      background: rgba(139, 0, 0, 0.8);
+      padding: 0.5rem;
+      border-radius: 4px;
       cursor: pointer;
-      transition: color 0.3s ease;
+      margin-bottom: 0.3rem;
     }
-    .store-link:hover {
-      text-decoration: underline;
-      color: #660000;
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      transition: max-height 0.4s ease-out;
+      margin-bottom: 0.5rem;
     }
-    
-    /* DIVIDER */
+    .accordion-content ul {
+      padding: 0.5rem 1rem;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      padding: 1rem;
+    }
+    .section-title {
+      margin: 1.5rem 0 1rem 0;
+      font-size: 1.4rem;
+    }
+    hr {
+      margin: 1rem 0;
+      border: 1px solid #8B0000;
+    }
     .divider {
       margin: 2rem 0;
-      font-size: 1.5rem;
       text-align: center;
+      font-size: 1.4rem;
     }
     .divider::after {
       content: "✦ ✧ ✦";
       color: #8B0000;
-      letter-spacing: 0.5rem;
+      letter-spacing: 0.4rem;
+    }
+
+    /* DM ACCORDIONS */
+    .dm-accordion-section {
+      margin-bottom: 1rem;
+      border: 1px solid #8B0000;
+      border-radius: 4px;
+    }
+    .dm-accordion-header {
+      background: rgba(139, 0, 0, 0.8);
+      padding: 0.5rem;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+    }
+    .dm-accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 0 0.5rem;
+      border-radius: 0 0 4px 4px;
+      transition: max-height 0.4s ease-out;
+    }
+    .dm-accordion-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    .dm-accordion-content table,
+    .dm-accordion-content th,
+    .dm-accordion-content td {
+      border: 1px solid #8B0000;
+    }
+    .dm-accordion-content th,
+    .dm-accordion-content td {
+      padding: 0.4rem;
+    }
+
+    /* SHOP DISTRICT */
+    .store-container {
+      background: transparent;
+      margin-top: 1rem;
+      padding: 1rem 0;
+      color: #333;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .store-container h1 {
+      color: #FAF4E0;
+    }
+    .store-list {
+      list-style: none;
+      margin: 2rem 0 1rem;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .store-item {
+      margin: 0;
+    }
+    .store-link {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
+      font-family: 'Cinzel', serif;
+      color: #8B0000;
+      border: 2px solid #8B0000;
+      border-radius: 4px;
+      background: #FAF4E0;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .store-link:hover {
+      background: #8B0000;
+      color: #FAF4E0;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+
+    /* MEDIA QUERIES */
+    @media (max-width: 768px) {
+      .hamburger {
+        display: block;
+      }
+      .sidebar {
+        position: fixed;
+        top: 4rem; /* So it appears just below the header */
+        bottom: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- TOP NAVIGATION BAR -->
-  <nav class="top-nav">
-    <ul class="nav-menu">
-      <li class="nav-item">
-        <a href="#">Caldwell Chronicles</a>
-        <ul class="dropdown">
-          <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank">Common &amp; Uncommon Lore, 3rd Ed.</a></li>
-          <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank">Caldwell Commentary, 4th Ed.</a></li>
-          <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank">Treatise on Shaniquáan Chronology</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Evershroud Gazette</a>
-        <ul class="dropdown">
-          <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank">8th Fellwind, 725 Y.S.</a></li>
-          <li><a href="resources/EvershroudGazette1verdant784.pdf" target="_blank">1st Verdant, 784 Y.S.</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Maps</a>
-        <ul class="dropdown">
-          <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank">Map of the Evershroud Isles</a></li>
-          <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank">Map of Silt</a></li>
-          <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank">Map of the Avernum</a></li>
-          <li><a href="resources/Azure.jpg" target="_blank">Merchant's Map of Azure</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Adventurer's Guild</a>
-        <ul class="dropdown">
-          <li><a href="resources/Recruitment%20poster.pdf" target="_blank">Recruitment Poster</a></li>
-          <li><a href="resources/Contract.pdf" target="_blank">Guild Contract</a></li>
-          <li><a href="noticeboard.html" target="_blank">Notice Board</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Upper City</a>
-        <ul class="dropdown">
-          <li><a href="brinealcazar.html" target="_blank">Brine Alcazar</a></li>
-          <li><a href="resources/Writ%20of%20Freeholding%20blank.pdf" target="_blank">Writ of Freeholding</a></li>
-          <li><a href="councilhall.html" target="_blank">Council Hall</a></li>
-          <li><a href="embassy.html" target="_blank">Continental Embassy</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Merchant's Quarter</a>
-        <ul class="dropdown">
-          <li><a href="exchange.html" target="_blank">The Evershroud Exchange</a></li>
-          <li><a href="shopdistrict.html" target="_blank">Shop District</a></li>
-          <li><a href="guildhall.html" target="_blank">Guildhall</a></li>
-          <li><a href="tavern.html" target="_blank">The Pickled Piglet</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Temple District</a>
-        <ul class="dropdown">
-          <li><a href="temple.html" target="_blank">Pentarchon</a></li>
-          <li><a href="tower.html" target="_blank">Spire of Kar'El</a></li>
-          <li><a href="catacombs.html" target="_blank">Catacombs</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Utilities</a>
-        <ul class="dropdown">
-          <li><a href="commgen.html" target="_blank">Commoner Generator</a></li>
-          <li><a href="encgen.html" target="_blank">Encounter Generator (beta)</a></li>
-          <li><a href="ingen.html" target="_blank">Instance Generator (beta)</a></li>
-          <li><a href="mapgen.html" target="_blank">Battle Map Generator (legacy)</a></li>
-          <li><a href="mapgen2.html" target="_blank">Battle Map Generator (flagship)</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Travel</a>
-        <ul class="dropdown">
-          <li><a href="harbour.html" target="_blank">Coastal Travel System (beta)</a></li>
-          <li><a href="travel.html" target="_blank">Road Travel System (beta)</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Observatory</a>
-        <ul class="dropdown">
-          <li><a href="calendar.html" target="_blank">Berynian Calendar and Weather</a></li>
-          <li><a href="astrology.html" target="_blank">Shaniquáan Astrology</a></li>
-        </ul>
-      </li>
-      <li class="nav-item">
-        <a href="#">Other</a>
-        <ul class="dropdown">
-          <li><a href="fortune.html" target="_blank">Fortune Teller</a></li>
-          <li><a href="harmony.html" target="_blank">Crystal Harmony By Brigitte</a></li>
-          <li><a href="forge.html" target="_blank">Origen's Forge</a></li>
-          <li><a href="madlab.html" target="_blank">Mad Lab</a></li>
-        </ul>
-      </li>
-    </ul>
-  </nav>
-  
-  <!-- MAIN CONTAINER -->
-  <div class="container">
-    <header>
+
+  <!-- TOP BAR -->
+  <header>
+    <div class="header-left">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <h1>Virtual DM Screen</h1>
-      <p>Caldwell's Repository for the Evershroud Isles</p>
-    </header>
+    </div>
+    <div class="header-right">
+      <!-- Wikidot Search -->
+      <form action="https://dnd5e.wikidot.com/search:" method="get" target="_blank" class="search-bar">
+        <input type="text" name="q" placeholder="Search dnd5e.wikidot.com..." />
+        <input type="submit" value="Search" />
+      </form>
+    </div>
+  </header>
+
+  <!-- LAYOUT WRAPPER -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-content">
+        <h2>Caldwell's Repository</h2>
+
+        <!-- Caldwell Chronicles -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">The Caldwell Chronicles</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank">Common &amp; Uncommon Lore, 3rd Ed.</a></li>
+              <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank">Caldwell Commentary, 4th Ed.</a></li>
+              <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank">Treatise on Shaniquáan Chronology</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Evershroud Gazette -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">The Evershroud Gazette</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank">8th Fellwind, 725 Y.S.</a></li>
+              <li><a href="resources/EvershroudGazette1verdant784.pdf" target="_blank">1st Verdant, 784 Y.S.</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Maps -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Maps</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank">Map of the Evershroud Isles</a></li>
+              <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank">Map of Silt</a></li>
+              <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank">Map of the Avernum</a></li>
+              <li><a href="resources/Azure.jpg" target="_blank">Merchant's Map of Azure</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Adventurer's Guild -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Adventurer's Guild</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="resources/Recruitment%20poster.pdf" target="_blank">Recruitment Poster</a></li>
+              <li><a href="resources/Contract.pdf" target="_blank">Guild Contract</a></li>
+              <li><a href="noticeboard.html" target="_blank">Notice Board</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Upper City -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Upper City</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="brinealcazar.html" target="_blank">Brine Alcazar</a></li>
+              <li><a href="resources/Writ%20of%20Freeholding%20blank.pdf" target="_blank">Writ of Freeholding</a></li>
+              <li><a href="councilhall.html" target="_blank">Council Hall</a></li>
+              <li><a href="embassy.html" target="_blank">Continental Embassy</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Merchant's Quarter -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Merchant's Quarter</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="exchange.html" target="_blank">The Evershroud Exchange</a></li>
+              <li><a href="shopdistrict.html" target="_blank">Shop District</a></li>
+              <li><a href="guildhall.html" target="_blank">Guildhall</a></li>
+              <li><a href="tavern.html" target="_blank">The Pickled Piglet</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Temple District -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Temple District</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="temple.html" target="_blank">Pentarchon</a></li>
+              <li><a href="tower.html" target="_blank">Spire of Kar'El</a></li>
+              <li><a href="catacombs.html" target="_blank">Catacombs</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Utilities -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Utilities</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="commgen.html" target="_blank">Commoner Generator</a></li>
+              <li><a href="encgen.html" target="_blank">Encounter Generator (beta)</a></li>
+              <li><a href="ingen.html" target="_blank">Instance Generator (beta)</a></li>
+              <li><a href="mapgen.html" target="_blank">Battle Map Generator (legacy)</a></li>
+              <li><a href="mapgen2.html" target="_blank">Battle Map Generator (flagship)</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Travel -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Travel</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="harbour.html" target="_blank">Coastal Travel System (beta)</a></li>
+              <li><a href="travel.html" target="_blank">Road Travel System (beta)</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Observatory -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Observatory</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="calendar.html" target="_blank">Berynian Calendar and Weather</a></li>
+              <li><a href="astrology.html" target="_blank">Shaniquáan Astrology</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Other -->
+        <div class="accordion-section">
+          <div class="accordion-header" onclick="toggleAccordion(this)">Other</div>
+          <div class="accordion-content">
+            <ul>
+              <li><a href="fortune.html" target="_blank">Fortune Teller</a></li>
+              <li><a href="harmony.html" target="_blank">Crystal Harmony By Brigitte</a></li>
+              <li><a href="forge.html" target="_blank">Origen's Forge</a></li>
+              <li><a href="madlab.html" target="_blank">Mad Lab</a></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </nav>
     
-    <main class="content">
-      <!-- Wikidot Search Section -->
-      <section class="search-section">
-        <h2>Wikidot Search</h2>
-        <div class="search-bar">
-          <form action="https://dnd5e.wikidot.com/search:" method="get" target="_blank">
-            <input type="text" name="q" placeholder="Search dnd5e.wikidot.com..." />
-            <input type="submit" value="Search" />
-          </form>
-        </div>
-      </section>
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
       
-      <hr />
+      <!-- DM CHEAT SHEET -->
+      <h2 class="section-title">DM Cheat Sheet - Official 5e Content</h2>
       
-      <!-- DM Cheat Sheet Section -->
-      <section class="dm-cheat-sheet">
-        <h2>DM Cheat Sheet - Official 5e Content</h2>
-        
-        <!-- Conditions & Status Effects -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Conditions &amp; Status Effects
-          </div>
-          <div class="dm-accordion-content">
-            <p>These conditions modify a creature’s capabilities in various ways (spells, monster abilities, etc.).</p>
-            <ul>
-              <li><strong>Blinded</strong>: Cannot see, automatically fails sight-based checks, attackers have advantage.</li>
-              <li><strong>Charmed</strong>: Cannot attack the charmer; the charmer gains advantage on related social checks.</li>
-              <li><strong>Deafened</strong>: Cannot hear, automatically fails hearing-based checks.</li>
-              <li><strong>Frightened</strong>: Disadvantage on ability checks/attack rolls while the source of fear is in sight.</li>
-              <li><strong>Grappled</strong>: Speed becomes 0; ends if the grappler is incapacitated or moved.</li>
-              <li><strong>Incapacitated</strong>: Cannot take actions or reactions.</li>
-              <li><strong>Invisible</strong>: Cannot be seen without special senses; attackers have disadvantage.</li>
-              <li><strong>Paralyzed</strong>: Incapacitated, cannot move or speak, automatic failure on Str/Dex saves; hits within 5 ft. are critical.</li>
-              <li><strong>Petrified</strong>: Transformed into a solid substance; incapacitated.</li>
-              <li><strong>Poisoned</strong>: Disadvantage on attack rolls and ability checks.</li>
-              <li><strong>Prone</strong>: Movement cost doubles, disadvantage on attack rolls unless attacker is within 5 ft.</li>
-              <li><strong>Restrained</strong>: Speed becomes 0; disadvantage on attacks and Dex saves.</li>
-              <li><strong>Stunned</strong>: Incapacitated, can only speak falteringly, fails Str/Dex saves.</li>
-              <li><strong>Unconscious</strong>: Incapacitated, drops held items, prone, automatic failures on Str/Dex saves.</li>
-              <li><strong>Exhaustion</strong>: Levels 1–6, with increasingly severe effects culminating in death at level 6.</li>
-            </ul>
-          </div>
+      <!-- 1. Conditions & Status Effects -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Conditions &amp; Status Effects
         </div>
-        
-        <!-- Ability Checks & DCs -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Ability Checks &amp; Difficulty Classes
-          </div>
-          <div class="dm-accordion-content">
-            <p>When a character attempts a task, roll a d20 plus modifiers. The DC reflects task difficulty.</p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Difficulty</th>
-                  <th>Suggested DC</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Very Easy</td><td>5</td></tr>
-                <tr><td>Easy</td><td>10</td></tr>
-                <tr><td>Medium</td><td>15</td></tr>
-                <tr><td>Hard</td><td>20</td></tr>
-                <tr><td>Very Hard</td><td>25</td></tr>
-                <tr><td>Nearly Impossible</td><td>30</td></tr>
-              </tbody>
-            </table>
-            <p><em>Skills by Ability:</em> Strength (Athletics), Dexterity (Acrobatics, Sleight of Hand, Stealth), Constitution (—), Intelligence (Arcana, History, Investigation, Nature, Religion), Wisdom (Animal Handling, Insight, Medicine, Perception, Survival), Charisma (Deception, Intimidation, Performance, Persuasion).</p>
-          </div>
+        <div class="dm-accordion-content">
+          <p>These conditions modify a creature’s capabilities in various ways (spells, monster abilities, etc.).</p>
+          <ul>
+            <li><strong>Blinded</strong>: Cannot see, automatically fails sight-based checks, attackers have advantage.</li>
+            <li><strong>Charmed</strong>: Cannot attack the charmer; the charmer has advantage on social checks vs. target.</li>
+            <li><strong>Deafened</strong>: Cannot hear, automatically fails hearing-based checks.</li>
+            <li><strong>Frightened</strong>: Disadvantage on ability checks &amp; attacks while source of fear is in sight.</li>
+            <li><strong>Grappled</strong>: Speed 0; ends if grappler is incapacitated or forced away.</li>
+            <li><strong>Incapacitated</strong>: Cannot take actions or reactions.</li>
+            <li><strong>Invisible</strong>: Cannot be seen without special senses; attacks against have disadvantage.</li>
+            <li><strong>Paralyzed</strong>: Incapacitated, cannot move or speak, fails Str/Dex saves; hits within 5 ft. are critical.</li>
+            <li><strong>Petrified</strong>: Transformed into a solid substance; incapacitated.</li>
+            <li><strong>Poisoned</strong>: Disadvantage on attack rolls &amp; ability checks.</li>
+            <li><strong>Prone</strong>: Movement cost doubles to stand, disadvantage on attacks unless within 5 ft. range.</li>
+            <li><strong>Restrained</strong>: Speed 0, disadvantage on attack rolls &amp; Dex saves.</li>
+            <li><strong>Stunned</strong>: Incapacitated, can’t move, fails Str/Dex saves.</li>
+            <li><strong>Unconscious</strong>: Incapacitated, drops items, prone, fails Str/Dex saves, hits from 5 ft. are crits.</li>
+            <li><strong>Exhaustion</strong>: 6 levels, from disadvantage on checks up to death at level 6.</li>
+          </ul>
         </div>
-        
-        <!-- Travel & Movement -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Travel &amp; Movement
-          </div>
-          <div class="dm-accordion-content">
-            <ul>
-              <li><strong>Overland Pace:</strong>
-                <ul>
-                  <li>Fast: 4 miles/hour (–5 Passive Perception)</li>
-                  <li>Normal: 3 miles/hour (no penalty)</li>
-                  <li>Slow: 2 miles/hour (allows Stealth)</li>
-                </ul>
-              </li>
-              <li><strong>Forced March:</strong> Beyond 8 hours, a CON save is required (DC 10 + 1 per extra hour) or suffer exhaustion.</li>
-              <li><strong>Visibility &amp; Encounter Distance:</strong> Adjust based on weather, terrain, and time.</li>
-            </ul>
-          </div>
+      </div>
+      
+      <!-- 2. Ability Checks & DCs -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Ability Checks &amp; Difficulty Classes
         </div>
-        
-        <!-- Combat Mechanics & Actions -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Combat Mechanics &amp; Actions
-          </div>
-          <div class="dm-accordion-content">
-            <p>Common actions include:</p>
-            <ul>
-              <li>Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Ready, Search, Shove, Use an Object</li>
-            </ul>
-            <p><strong>Cover Rules:</strong>
+        <div class="dm-accordion-content">
+          <p>When a character attempts a task, roll a d20 plus modifiers. Compare the total to a DC reflecting difficulty.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Difficulty</th>
+                <th>Suggested DC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Very Easy</td><td>5</td></tr>
+              <tr><td>Easy</td><td>10</td></tr>
+              <tr><td>Medium</td><td>15</td></tr>
+              <tr><td>Hard</td><td>20</td></tr>
+              <tr><td>Very Hard</td><td>25</td></tr>
+              <tr><td>Nearly Impossible</td><td>30</td></tr>
+            </tbody>
+          </table>
+          <p><em>Skills by Ability:</em> Strength (Athletics), Dexterity (Acrobatics, Sleight of Hand, Stealth), Constitution (—), Intelligence (Arcana, History, Investigation, Nature, Religion), Wisdom (Animal Handling, Insight, Medicine, Perception, Survival), Charisma (Deception, Intimidation, Performance, Persuasion).</p>
+        </div>
+      </div>
+      
+      <!-- 3. Travel & Movement -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Travel &amp; Movement
+        </div>
+        <div class="dm-accordion-content">
+          <ul>
+            <li><strong>Overland Pace</strong>:
               <ul>
-                <li>Half Cover: +2 bonus to AC and Dex saves</li>
-                <li>Three-Quarters Cover: +5 bonus to AC and Dex saves</li>
-                <li>Total Cover: Cannot be targeted</li>
+                <li>Fast: 4 mph (–5 Passive Perception)</li>
+                <li>Normal: 3 mph (no penalty)</li>
+                <li>Slow: 2 mph (can use Stealth)</li>
               </ul>
-            </p>
-          </div>
+            </li>
+            <li><strong>Forced March</strong>: After 8 hours, a CON save (DC 10 + 1 per extra hr) or gain exhaustion.</li>
+            <li><strong>Visibility &amp; Encounter Distance</strong>: Adjust for weather, terrain, &amp; time of day.</li>
+          </ul>
         </div>
-        
-        <!-- Encounter Building & XP -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Encounter Building &amp; XP Thresholds
-          </div>
-          <div class="dm-accordion-content">
-            <p>Use XP thresholds (Easy, Medium, Hard, Deadly) based on party level and size. Consult the DMG for full tables and adjust for multiple foes using multipliers.</p>
-          </div>
-        </div>
-        
-        <!-- Damage & Healing -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Damage &amp; Healing
-          </div>
-          <div class="dm-accordion-content">
-            <ul>
-              <li><strong>Falling Damage:</strong> 1d6 per 10 ft. (max 20d6)</li>
-              <li><strong>Suffocating:</strong> Can hold breath for CON mod (minimum 30 seconds), then risk dropping to 0 hp</li>
-              <li><strong>Resistances/Immunities/Vulnerabilities:</strong> Adjust damage accordingly</li>
-              <li><strong>Massive Damage:</strong> Can cause instant death if severe enough</li>
-              <li><strong>Death Saving Throws:</strong> 3 successes stabilize; 3 failures result in death (a 1 counts as two failures; a 20 restores 1 hp immediately)</li>
-            </ul>
-          </div>
-        </div>
-        
-        <!-- Objects & Environment -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Objects &amp; Environment
-          </div>
-          <div class="dm-accordion-content">
-            <p><strong>Common Object Stats:</strong></p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Object</th>
-                  <th>AC</th>
-                  <th>HP</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Glass Bottle</td><td>13</td><td>2</td>
-                </tr>
-                <tr>
-                  <td>Wooden Door</td><td>15</td><td>15</td>
-                </tr>
-                <tr>
-                  <td>Stone Wall</td><td>17</td><td>30</td>
-                </tr>
-                <tr>
-                  <td>Iron Lock</td><td>19</td><td>10</td>
-                </tr>
-              </tbody>
-            </table>
-            <p><strong>Lighting Conditions:</strong>
-              <ul>
-                <li>Bright Light: Normal vision</li>
-                <li>Dim Light: Disadvantage on sight-based Perception checks</li>
-                <li>Darkness: Creatures without darkvision are effectively blinded</li>
-              </ul>
-              <strong>Environmental Hazards:</strong> Improvise DCs (e.g. icy wall: DC 15; sandstorm: CON save DC 10/hour)
-            </p>
-          </div>
-        </div>
-        
-        <!-- Social Interactions -->
-        <div class="dm-accordion-section">
-          <div class="dm-accordion-header" tabindex="0" role="button" aria-expanded="false" onclick="toggleDmAccordion(this)">
-            Social Interactions
-          </div>
-          <div class="dm-accordion-content">
-            <p>NPC attitudes can be categorized as:</p>
-            <ul>
-              <li><strong>Friendly:</strong> Willing to help</li>
-              <li><strong>Indifferent:</strong> Neutral unless persuaded</li>
-              <li><strong>Hostile:</strong> Likely to oppose the party</li>
-            </ul>
-            <p>Use Persuasion, Deception, Intimidation, or Insight checks to influence NPCs. Adjust DCs based on context and roleplay.</p>
-          </div>
-        </div>
-      </section>
+      </div>
       
+      <!-- 4. Combat Mechanics & Actions -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Combat Mechanics &amp; Actions
+        </div>
+        <div class="dm-accordion-content">
+          <p>Common actions: Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Ready, Search, Shove, Use Object.</p>
+          <p><strong>Cover</strong>:
+            <ul>
+              <li>Half Cover: +2 AC / Dex saves</li>
+              <li>Three-Quarters Cover: +5 AC / Dex saves</li>
+              <li>Total Cover: Cannot be targeted directly</li>
+            </ul>
+          </p>
+        </div>
+      </div>
+      
+      <!-- 5. Encounter Building & XP -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Encounter Building &amp; XP Thresholds
+        </div>
+        <div class="dm-accordion-content">
+          <p>Use XP thresholds for Easy/Medium/Hard/Deadly based on party level. Adjust for multiple enemies. Refer to DMG for full tables.</p>
+        </div>
+      </div>
+      
+      <!-- 6. Damage & Healing -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Damage &amp; Healing
+        </div>
+        <div class="dm-accordion-content">
+          <ul>
+            <li><strong>Falling</strong>: 1d6 per 10 ft (max 20d6).</li>
+            <li><strong>Suffocating</strong>: CON mod in minutes, then risk dropping to 0 hp.</li>
+            <li><strong>Resistance/Immunity/Vulnerability</strong>: Halve/Negate/Double specific damage types.</li>
+            <li><strong>Massive Damage</strong>: Can kill outright if damage is severe enough.</li>
+            <li><strong>Death Saves</strong>: 3 successes = stable, 3 fails = death. (1 = 2 fails, 20 = 1 hp immediately)</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- 7. Objects & Environment -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Objects &amp; Environment
+        </div>
+        <div class="dm-accordion-content">
+          <p><strong>Common Object Stats:</strong></p>
+          <table>
+            <thead>
+              <tr>
+                <th>Object</th>
+                <th>AC</th>
+                <th>HP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Glass Bottle</td><td>13</td><td>2</td></tr>
+              <tr><td>Wooden Door</td><td>15</td><td>15</td></tr>
+              <tr><td>Stone Wall</td><td>17</td><td>30</td></tr>
+              <tr><td>Iron Lock</td><td>19</td><td>10</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Lighting</strong>:
+            <ul>
+              <li>Bright Light: Normal vision</li>
+              <li>Dim Light: Disadvantage on sight-based Perception</li>
+              <li>Darkness: Creatures without darkvision are effectively blinded</li>
+            </ul>
+            <strong>Environmental Hazards</strong>: Improvise DCs for hazards (icy wall DC 15 climb, sandstorm DC 10 CON/hour), etc.
+          </p>
+        </div>
+      </div>
+      
+      <!-- 8. Social Interactions -->
+      <div class="dm-accordion-section">
+        <div class="dm-accordion-header" onclick="toggleDmAccordion(this)">
+          Social Interactions
+        </div>
+        <div class="dm-accordion-content">
+          <p><strong>NPC Attitudes:</strong></p>
+          <ul>
+            <li><strong>Friendly</strong>: Ready to help.</li>
+            <li><strong>Indifferent</strong>: Can be persuaded with roleplay/checks.</li>
+            <li><strong>Hostile</strong>: Opposes or undermines the party.</li>
+          </ul>
+          <p>Use Persuasion/Deception/Intimidation/Insight checks to influence or gauge NPCs. Adjust DCs contextually.</p>
+        </div>
+      </div>
+
       <div class="divider"></div>
-      
-      <!-- SHOP DISTRICT SECTION -->
+
+      <!-- SHOP DISTRICT -->
       <section class="store-container">
         <h1>Shop District</h1>
-        <p>Welcome to the Shop District! Explore the finest establishments and stock up on everything an adventurer needs.</p>
+        <p>Explore the finest establishments for all your adventuring needs.</p>
         <ul class="store-list">
           <li class="store-item">
             <a href="general-store.html" class="store-link">General Store</a>
@@ -568,24 +647,40 @@
           </li>
         </ul>
       </section>
-    </main>
-  </div>
-  
+
+    </div> <!-- main-content end -->
+  </div> <!-- layout end -->
+
   <!-- FOOTER -->
   <footer>
-    &copy; 2025 Caldwell. Virtual DM Screen for the Evershroud Isles.
+    &copy; 2025 Caldwell. The Evershroud Isles Virtual DM Screen.
   </footer>
-  
+
   <script>
-    // DM Cheat Sheet Accordion with smooth transition and ARIA attribute update
-    function toggleDmAccordion(header) {
-      var content = header.nextElementSibling;
-      var expanded = header.getAttribute("aria-expanded") === "true";
-      header.setAttribute("aria-expanded", !expanded);
-      if (!expanded) {
-        content.style.maxHeight = content.scrollHeight + "px";
+    // Toggle entire sidebar on small screens
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('hidden');
+    }
+
+    // Sidebar accordions
+    function toggleAccordion(header) {
+      const content = header.nextElementSibling;
+      // If content is closed, open it
+      if (content.style.maxHeight) {
+        content.style.maxHeight = null;
       } else {
-        content.style.maxHeight = 0;
+        content.style.maxHeight = content.scrollHeight + "px";
+      }
+    }
+
+    // DM Cheat Sheet accordions
+    function toggleDmAccordion(header) {
+      const content = header.nextElementSibling;
+      if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+      } else {
+        content.style.maxHeight = content.scrollHeight + "px";
       }
     }
   </script>
