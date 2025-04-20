@@ -5,68 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bestiary & Initiative Tracker</title>
 
-  <!--  fonts / icon  -->
+  <!-- fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/png;base64,iVBORw0KGgo="> <!-- tiny blank 1 px png -->
 
-  <!--  yaml parser  -->
+  <!-- yaml parser -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
   <style>
-    body{
-      margin:0;
-      background:#1c1c1c url('resources/bestiary.png') center/cover fixed no-repeat;
-      color:#faf4e0;
-      font-family:'Almendra',serif;
-      text-align:center
-    }
-    h1{font-family:'Cinzel',serif;margin:.5rem 0 1rem}
-    .container{
-      max-width:840px;margin:2rem auto;background:rgba(0,0,0,.78);
-      padding:2rem;border-radius:10px
-    }
-    label{font-weight:bold;margin-right:8px}
-    select,.button{
-      font-family:'Cinzel',serif;
-      border:none;border-radius:4px;cursor:pointer
-    }
-    select{
-      padding:.3rem .5rem;background:#fff9ed;color:#333;border:1px solid #999
-    }
-    .button{
-      background:#8b0000;color:#fff;padding:.5rem 1rem;margin:.3rem
-    }
-    .button:hover{background:#6b0000}
-    .pinned-entry{
-      background:rgba(0,0,0,.85);
-      border-radius:6px;
-      padding:1rem;
-      margin:.7rem 0;
-      text-align:left;
-      position:relative
-    }
-    .pinned-entry .remove-btn{
-      position:absolute;top:.25rem;right:.4rem;
-      background:none;border:none;color:#faf4e0;font-size:1.4rem;cursor:pointer
-    }
+    /* —–– simplified styling (same look as before) —–– */
+    body{margin:0;background:#1c1c1c url('resources/bestiary.png') center/cover fixed no-repeat;color:#faf4e0;font-family:Almendra,serif;text-align:center}
+    h1{font-family:Cinzel,serif;margin:.5rem 0 1rem}
+    .container{max-width:840px;margin:2rem auto;background:rgba(0,0,0,.78);padding:2rem;border-radius:10px}
+    select,.button{font-family:Cinzel,serif;border:none;border-radius:4px;cursor:pointer}
+    select{padding:.3rem .5rem;background:#fff9ed;color:#333;border:1px solid #999;margin-right:.4rem}
+    .button{background:#8b0000;color:#fff;padding:.5rem 1rem;margin:.3rem}.button:hover{background:#6b0000}
+    .pinned-entry{background:rgba(0,0,0,.85);border-radius:6px;padding:1rem;margin:.7rem 0;text-align:left;position:relative}
+    .remove-btn{position:absolute;top:.25rem;right:.4rem;background:none;border:none;color:#faf4e0;font-size:1.4rem;cursor:pointer}
     .controls{display:flex;gap:1rem;margin-bottom:.6rem;align-items:center}
-    .controls label{font-family:'Cinzel',serif}
-    .controls input{
-      width:4.2rem;padding:.2rem;
-      border:1px solid #999;border-radius:4px;font-family:inherit
-    }
-    .creature-data{white-space:normal}
-    pre{
-      background:#fff9ed;color:#232323;
-      border:1px solid #999;border-radius:6px;
-      padding:1rem;margin:0;white-space:pre-wrap
-    }
+    .controls input{width:4rem;padding:.2rem;border:1px solid #999;border-radius:4px;font-family:inherit}
+    pre{background:#fff9ed;color:#232323;border:1px solid #999;border-radius:6px;padding:1rem;margin:0;white-space:pre-wrap}
     #definitions{display:none}
-    @media print{
-      body *{visibility:hidden!important}
-      #pinned-container,#pinned-container *{visibility:visible!important}
-      #pinned-container{position:absolute;top:0;left:0;width:100%}
-    }
+    @media print{body *{visibility:hidden!important}#pinned-container,#pinned-container *{visibility:visible!important}#pinned-container{position:absolute;top:0;left:0;width:100%}}
   </style>
 </head>
 <body>
@@ -74,7 +33,7 @@
 <div class="container">
   <h1>Bestiary & Initiative Tracker</h1>
 
-  <label for="creature-select">Select Creature:</label>
+  <label for="creature-select">Creature:</label>
   <select id="creature-select"><option value="">-- choose --</option></select>
 
   <button class="button" id="pin-button">Pin</button>
@@ -85,54 +44,8 @@
   <div id="definitions"></div>
 </div>
 
-<!-- ███████████████████  YAML BESTIARY  ███████████████████ -->
+<!-- █████████████████  YAML BESTIARY  █████████████████ -->
 <script type="text/yaml" id="bestiary-data">
-#  (abbreviated here for brevity — paste the full YAML you generated)
-Silt:
-  - name: "Raellan Inquisitor"
-    cr: 5
-    size: Medium
-    type: humanoid
-    alignment: lawful evil
-    ac: 18
-    hp: "80 (9d8+36)"
-    speed: "30 ft."
-    str: 16
-    dex: 12
-    con: 18
-    int: 11
-    wis: 14
-    cha: 15
-    saves: "Wis +5, Cha +5"
-    skills: "Intimidation +5"
-    resist: "radiant"
-    languages: "Common, Celestial"
-    traits:
-      - {name: "Hold Person (3/day)", desc: "DC 15 Wis save or paralysed 1 min"}
-    actions:
-      - {name: "Multiattack", desc: "Two smite‑blade attacks"}
-      - {name: "Smite‑Blade", desc: "Melee +7; 11 (1d8+7) radiant + 5 (1d8) fire"}
-  - name: "Sister Militant"
-    cr: 4
-    size: Medium
-    type: humanoid
-    alignment: lawful evil
-    ac: 17
-    hp: "75 (10d8+30)"
-    speed: "30 ft."
-    str: 18
-    dex: 14
-    con: 16
-    int: 9
-    wis: 11
-    cha: 10
-    skills: "Athletics +7"
-    languages: "Common"
-    traits:
-      - {name: "Zeal", desc: "Adv. vs frightened; fights 1 rd on 0 HP"}
-    actions:
-      - {name: "Longsword", desc: "Melee +7; 13 (2d8+4) slashing"}
-
 # ───────────────────────────────── S I L T ─────────────────────────────────
 Silt:
   - name: "Raellan Inquisitor"
@@ -1723,185 +1636,77 @@ Unaligned:
         desc: "+7; 2d10+6 bludgeoning."
       - name: "Whirlwind (Recharge 5‑6)"
         desc: "DC 15 Str save; 3d8 bludgeoning + prone."
-<script>
-/* ——— helpers stay the same: slugify, rollDice, rollHpLine ——— */
-
-/* ••• MAIN ••• */
-window.addEventListener('DOMContentLoaded', () => {
-
-  const defs = document.getElementById('definitions');
-  const sel  = document.getElementById('creature-select');
-  const pinZone = document.getElementById('pinned-container');
-
-  /* Build hidden definitions & dropdown ---------------------------------- */
-  Object.entries(CREATURES).forEach(([faction, list])=>{
-    list.forEach((block,i)=>{
-      const title = (block.match(/<strong>(.*?)\s*\(CR/i)||[])[1] || `Creature ${i+1}`;
-      const id    = slugify(`${faction}-${title}`);
-
-      const opt   = document.createElement('option');
-      opt.value   = id;
-      opt.textContent = `${faction} — ${title}`;
-      sel.appendChild(opt);
-
-      const div   = document.createElement('div');
-      div.id      = id;
-      div.className = 'creature';
-      div.innerHTML = block;
-      defs.appendChild(div);
-    });
-  });
-  defs.style.display = 'none';
-
-  /* ---------------------------------------------------------------------- */
-  function makePinnedCard(html, rolled = true){
-    /* outer wrapper */
-    const card = document.createElement('div');
-    card.className = 'pinned-entry';
-
-    /* remove button */
-    const x = document.createElement('button');
-    x.className = 'remove-btn';
-    x.innerHTML = '×';
-    x.onclick = () => card.remove();
-    card.appendChild(x);
-
-    /* initiative / hp controls */
-    const ctl = document.createElement('div');
-    ctl.className = 'controls';
-    ctl.innerHTML = `
-      <label>Init <input type="number" value=""></label>
-      <label>HP&nbsp;<input type="number" value=""></label>`;
-    card.appendChild(ctl);
-
-    /* creature block */
-    const div = document.createElement('div');
-    div.className = 'creature-data';
-    div.innerHTML = rolled ? rollHpLine(html) : html
-                            .replace(/HP/i,'Max&nbsp;HP:&nbsp;_____');
-    card.appendChild(div);
-
-    return card;
-  }
-
-  /* Pin existing creature ------------------------------------------------- */
-  document.getElementById('pin-button').onclick = () => {
-    const id = sel.value;
-    if(!id) return;
-    const src = document.getElementById(id);
-    if(!src) return;
-    const card = makePinnedCard(src.querySelector('pre').outerHTML);
-    pinZone.appendChild(card);
-  };
-
-  /* Add completely blank entry ------------------------------------------- */
-  document.getElementById('add-button').onclick = () =>{
-    const blank = `<pre><strong>Name: ______</strong><br>Type & CR: ______<br>Max&nbsp;HP:&nbsp;_____</pre>`;
-    pinZone.appendChild( makePinnedCard(blank,false) );
-  };
-
-  /* Clear all ------------------------------------------------------------ */
-  document.getElementById('clear-button').onclick = () => { pinZone.innerHTML=''; };
-});
 </script>
+<!-- ███████████████████████████████████████████████████ -->
 
-/* ── helpers ───────────────────────────────────────────── */
-const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-const rollDice = (n,d) => Array.from({length:n},()=>1+Math.floor(Math.random()*d)).reduce((a,b)=>a+b,0);
+<script>
+/* ---------- helpers ---------- */
+const slug = s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const roll = (n,d)=>Array.from({length:n},()=>1+Math.random()*d|0).reduce((a,b)=>a+b,0);
+const rollHP = hp=>{
+  const m = hp.toString().match(/(\d+)\s*\(\s*(\d+)d(\d+)([+-]\d+)?\s*\)/i);
+  return m ? roll(+m[2],+m[3])+(+m[4]||0) : parseInt(hp,10);
+};
+const statPre = o=>{
+  const L = [];
+  L.push(`<strong>${o.name} (CR ${o.cr})</strong>`);
+  L.push(`${o.size} ${o.type}, ${o.alignment}`);
+  L.push(`AC ${o.ac}   Max HP: ${rollHP(o.hp)}`);
+  if(o.speed) L.push(`Speed ${o.speed}`);
+  L.push(`STR ${o.str}  DEX ${o.dex}  CON ${o.con}  INT ${o.int}  WIS ${o.wis}  CHA ${o.cha}`);
+  if(o.saves) L.push(`Saves ${o.saves}`);
+  if(o.skills) L.push(`Skills ${o.skills}`);
+  if(o.resist) L.push(`Resist ${o.resist}`);
+  if(o.immune) L.push(`Immune ${o.immune}`);
+  if(o.languages) L.push(`Languages ${o.languages}`);
+  (o.traits||[]).forEach(t=>L.push(`<strong>${t.name}.</strong> ${t.desc}`));
+  (o.actions||[]).forEach(a=>L.push(`<b>${a.name}.</b> ${a.desc}`));
+  return `<pre>${L.join('\n')}</pre>`;
+};
 
-/* take an HP string like "85 (10d8+40)" OR just "85" */
-function rollHP(str){
-  const m = str.match(/(\d+)\s*\(\s*(\d+)d(\d+)\s*([+-]\s*\d+)?\s*\)/i);
-  if(!m) return parseInt(str,10);                         // flat value
-  const dice = +m[2], sides = +m[3], mod = m[4] ? +m[4].replace(/\s+/g,'') : 0;
-  return rollDice(dice,sides)+mod;
-}
+/* ---------- main ---------- */
+window.addEventListener('DOMContentLoaded',()=>{
+  const data   = jsyaml.load(document.getElementById('bestiary-data').textContent);
+  const defs   = document.getElementById('definitions');
+  const select = document.getElementById('creature-select');
+  const board  = document.getElementById('pinned-container');
 
-/* build <pre> block from YAML record ------------------- */
-function recordToHTML(obj){
-  const lines = [];
-  lines.push(`<strong>${obj.name} (CR ${obj.cr})</strong>`);
-  lines.push(`${obj.size} ${obj.type}, ${obj.alignment}`);
-  lines.push(`AC ${obj.ac}   Max HP: ${rollHP(obj.hp)}`);
-  if(obj.speed) lines.push(`Speed ${obj.speed}`);
-  lines.push(`STR ${obj.str}  DEX ${obj.dex}  CON ${obj.con}  INT ${obj.int}  WIS ${obj.wis}  CHA ${obj.cha}`);
-  if(obj.saves)    lines.push(`Saves ${obj.saves}`);
-  if(obj.skills)   lines.push(`Skills ${obj.skills}`);
-  if(obj.resist)   lines.push(`Resist ${obj.resist}`);
-  if(obj.immune)   lines.push(`Immune ${obj.immune}`);
-  if(obj.languages)lines.push(`Languages ${obj.languages}`);
-
-  if(obj.traits){
-    obj.traits.forEach(t=>lines.push(`<strong>${t.name}.</strong> ${t.desc}`));
-  }
-  if(obj.actions){
-    obj.actions.forEach(a=>lines.push(`<b>${a.name}.</b> ${a.desc}`));
-  }
-  return `<pre>${lines.join('\n')}</pre>`;
-}
-
-/* ── main ─────────────────────────────────────────────── */
-window.addEventListener('DOMContentLoaded',() => {
-
-  const yamlText   = document.getElementById('bestiary-data').textContent;
-  const CREATURES  = jsyaml.load(yamlText);          // object of factions
-
-  const defs       = document.getElementById('definitions');
-  const sel        = document.getElementById('creature-select');
-  const pinZone    = document.getElementById('pinned-container');
-
-  /* populate hidden templates + dropdown */
-  Object.entries(CREATURES).forEach(([faction,list])=>{
-    list.forEach((rec,i)=>{
-      const id   = slugify(`${faction}-${rec.name}`);
-      const div  = document.createElement('div');
-      div.id     = id;
-      div.className = 'creature';
-      div.innerHTML = recordToHTML(rec);
+  /* build hidden templates + dropdown */
+  Object.entries(data).forEach(([faction,list])=>{
+    list.forEach(mon=>{
+      const id = slug(`${faction}-${mon.name}`);
+      const div = document.createElement('div');
+      div.id = id; div.className='creature'; div.innerHTML = statPre(mon);
       defs.appendChild(div);
 
-      const opt  = document.createElement('option');
-      opt.value  = id;
-      opt.textContent = `${faction} — ${rec.name}`;
-      sel.appendChild(opt);
+      const opt = new Option(`${faction} — ${mon.name}`, id);
+      select.add(opt);
     });
   });
 
-  /* card‑builder */
-  function makeCard(innerHTML){
+  /* card factory */
+  const makeCard = html=>{
     const card = document.createElement('div'); card.className='pinned-entry';
-    const rm   = document.createElement('button'); rm.className='remove-btn'; rm.textContent='×';
-    rm.onclick = () => card.remove();
-    card.appendChild(rm);
-
-    const ctl  = document.createElement('div'); ctl.className='controls';
-    ctl.innerHTML =
-      `<label>Init <input type="number"></label>
-       <label>HP <input type="number"></label>`;
-    card.appendChild(ctl);
-
-    const data = document.createElement('div'); data.className='creature-data';
-    data.innerHTML = innerHTML;
-    card.appendChild(data);
-
-    return card;
-  }
+    const close = document.createElement('button'); close.className='remove-btn'; close.textContent='×'; close.onclick=()=>card.remove();
+    const ctl = document.createElement('div'); ctl.className='controls';
+    ctl.innerHTML=`<label>Init <input type="number"></label><label>HP <input type="number"></label>`;
+    const body = document.createElement('div'); body.className='creature-data'; body.innerHTML=html;
+    card.append(close,ctl,body); return card;
+  };
 
   /* pin button */
-  document.getElementById('pin-button').onclick = () => {
-    const id = sel.value; if(!id) return;
-    const src = document.getElementById(id);
-    if(src) pinZone.appendChild( makeCard(src.innerHTML) );
+  document.getElementById('pin-button').onclick = ()=>{
+    const id=select.value, src=id&&document.getElementById(id);
+    if(src) board.appendChild(makeCard(src.innerHTML));
   };
 
-  /* add‑blank button */
-  document.getElementById('add-blank').onclick = () =>{
-    const blank = `<pre><strong>Name: ______</strong>\nType & CR: ______\nMax HP: _____</pre>`;
-    pinZone.appendChild( makeCard(blank) );
+  /* blank entry */
+  document.getElementById('add-blank').onclick = ()=>{
+    board.appendChild(makeCard('<pre><strong>Name: ______</strong>\nType & CR: ______\nMax HP: _____</pre>'));
   };
 
-  /* clear‑all */
-  document.getElementById('clear-all').onclick = ()=> pinZone.innerHTML='';
+  /* clear all */
+  document.getElementById('clear-all').onclick = ()=> board.innerHTML='';
 });
 </script>
 </body>
