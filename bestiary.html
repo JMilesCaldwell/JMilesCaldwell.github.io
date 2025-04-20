@@ -4,241 +4,1730 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bestiary & Initiative Tracker</title>
-  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
+
+  <!-- fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- yaml parser -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
   <style>
-    body {
-      margin: 0;
-      background: url('resources/bestiary.png') center/cover fixed no-repeat;
-      color: #FAF4E0;
-      font-family: 'Almendra', serif;
-      text-align: center;
-    }
-    h1,h2 { font-family: 'Cinzel', serif; margin:0 0 .5rem }
-    .container {
-      max-width: 840px;
-      margin: 2rem auto;
-      background: rgba(0,0,0,.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-    label { display:inline-block;width:150px;margin-right:8px;font-weight:bold }
-    select, .button {
-      font-family: 'Cinzel', serif;
-      background: #8B0000;
-      color: #fff;
-      border: none;
-      padding: .5rem 1rem;
-      margin: .3rem;
-      cursor: pointer;
-      border-radius:4px;
-    }
-    select {
-      background: #fff9ed;
-      color: #333;
-      border:1px solid #999;
-    }
-    select:focus, .button:focus { outline: none; }
-    #definitions { display:none; }
-    #pinned-container { margin-top:1rem; }
-    .pinned-entry {
-      position: relative;
-      background: rgba(0,0,0,0.8);
-      border-radius: 6px;
-      padding: 1rem;
-      margin: .5rem 0;
-      color: #FAF4E0;
-      text-align: left;
-    }
-    .pinned-entry .remove-btn {
-      position: absolute;
-      top: .3rem;
-      right: .3rem;
-      background: transparent;
-      border: none;
-      color: #FAF4E0;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .pinned-entry .controls {
-      margin-bottom: .5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .pinned-entry .controls label {
-      color:#FAF4E0;
-      font-family:'Cinzel',serif;
-    }
-    .pinned-entry .controls input {
-      width:4rem;
-      padding:.2rem;
-      border:1px solid #999;
-      border-radius:4px;
-      font-family:inherit;
-    }
-    .creature-data {
-      white-space: normal;
-      margin-top: .5rem;
-    }
-    @media print {
-      body * { visibility:hidden!important }
-      #pinned-container,#pinned-container * { visibility:visible!important }
-      #pinned-container { position:absolute;top:0;left:0;width:100% }
-    }
+    /* —–– simplified styling (same look as before) —–– */
+    body{margin:0;background:#1c1c1c url('resources/bestiary.png') center/cover fixed no-repeat;color:#faf4e0;font-family:Almendra,serif;text-align:center}
+    h1{font-family:Cinzel,serif;margin:.5rem 0 1rem}
+    .container{max-width:840px;margin:2rem auto;background:rgba(0,0,0,.78);padding:2rem;border-radius:10px}
+    select,.button{font-family:Cinzel,serif;border:none;border-radius:4px;cursor:pointer}
+    select{padding:.3rem .5rem;background:#fff9ed;color:#333;border:1px solid #999;margin-right:.4rem}
+    .button{background:#8b0000;color:#fff;padding:.5rem 1rem;margin:.3rem}.button:hover{background:#6b0000}
+    .pinned-entry{background:rgba(0,0,0,.85);border-radius:6px;padding:1rem;margin:.7rem 0;text-align:left;position:relative}
+    .remove-btn{position:absolute;top:.25rem;right:.4rem;background:none;border:none;color:#faf4e0;font-size:1.4rem;cursor:pointer}
+    .controls{display:flex;gap:1rem;margin-bottom:.6rem;align-items:center}
+    .controls input{width:4rem;padding:.2rem;border:1px solid #999;border-radius:4px;font-family:inherit}
+    pre{background:#fff9ed;color:#232323;border:1px solid #999;border-radius:6px;padding:1rem;margin:0;white-space:pre-wrap}
+    #definitions{display:none}
+    @media print{body *{visibility:hidden!important}#pinned-container,#pinned-container *{visibility:visible!important}#pinned-container{position:absolute;top:0;left:0;width:100%}}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Bestiary & Initiative Tracker</h1>
-    <div>
-      <label for="creature-select">Select Creature:</label>
-      <select id="creature-select"><option value="">-- choose --</option></select>
-      <button class="button" id="pin-button">Pin</button>
-      <button class="button" id="add-button">Add Blank Entry</button>
-      <button class="button" id="clear-button">Clear All</button>
-    </div>
-    <div id="pinned-container"></div>
-    <div id="definitions"></div>
-  </div>
 
-  <script>
-    // slugify helper
-    function slugify(str) {
-      return str.toLowerCase()
-                .replace(/[^a-z0-9]+/g,'-')
-                .replace(/(^-|-$)/g,'');
-    }
+<div class="container">
+  <h1>Bestiary & Initiative Tracker</h1>
 
-    // render a creature object into HTML
-    function renderCreatureHTML(c) {
-      let html = `<h2>${c.name} (CR ${c.cr})</h2>
-        <p><strong>Type:</strong> ${c.size} ${c.type}, ${c.alignment}</p>
-        <p><strong>AC:</strong> ${c.ac}    <strong>HP:</strong> ${c.hp}    <strong>Speed:</strong> ${c.speed}</p>
-        <p><strong>STR</strong> ${c.str} | <strong>DEX</strong> ${c.dex} | <strong>CON</strong> ${c.con}
-           | <strong>INT</strong> ${c.int} | <strong>WIS</strong> ${c.wis} | <strong>CHA</strong> ${c.cha}</p>`;
-      ['saves','skills','immune','languages','senses'].forEach(f => {
-        if (c[f]) html += `<p><strong>${f.charAt(0).toUpperCase()+f.slice(1)}:</strong> ${c[f]}</p>`;
-      });
-      if (c.traits?.length) {
-        html += '<h3>Traits</h3><ul>';
-        c.traits.forEach(t => html += `<li><strong>${t.name}:</strong> ${t.desc}</li>`);
-        html += '</ul>';
-      }
-      if (c.actions?.length) {
-        html += '<h3>Actions</h3><ul>';
-        c.actions.forEach(a => html += `<li><strong>${a.name}:</strong> ${a.desc}</li>`);
-        html += '</ul>';
-      }
-      return html;
-    }
+  <label for="creature-select">Creature:</label>
+  <select id="creature-select"><option value="">-- choose --</option></select>
 
-    // sort pinned entries by initiative desc
-    function sortPinned() {
-      const container = document.getElementById('pinned-container');
-      Array.from(container.children)
-        .sort((a,b) => {
-          const ai = parseInt(a.querySelector('.init-input').value)||0;
-          const bi = parseInt(b.querySelector('.init-input').value)||0;
-          return bi - ai;
-        })
-        .forEach(n=>container.appendChild(n));
-    }
+  <button class="button" id="pin-button">Pin</button>
+  <button class="button" id="add-blank">Add Blank Entry</button>
+  <button class="button" id="clear-all">Clear All</button>
 
-    // load YAML and populate select + hidden definitions
-    async function loadBestiary() {
-      const res  = await fetch('resources/bestiary.yml');
-      const text = await res.text();
-      const data = jsyaml.load(text);
-      const sel  = document.getElementById('creature-select');
-      const defs = document.getElementById('definitions');
-      Object.entries(data).forEach(([faction,list])=>{
-        if (!Array.isArray(list)) return;
-        list.forEach(c=>{
-          const id = slugify(`${faction}-${c.name}`);
-          // option
-          const opt = document.createElement('option');
-          opt.value = id;
-          opt.text = `${faction} — ${c.name}`;
-          sel.appendChild(opt);
-          // hidden template
-          const tpl = document.createElement('div');
-          tpl.id = id;
-          tpl.dataset.hp = c.hp;
-          const block = document.createElement('div');
-          block.className = 'creature-data';
-          block.innerHTML = renderCreatureHTML(c);
-          tpl.appendChild(block);
-          defs.appendChild(tpl);
-        });
-      });
-    }
+  <div id="pinned-container"></div>
+  <div id="definitions"></div>
+</div>
 
-    document.addEventListener('DOMContentLoaded',()=>{
-      loadBestiary();
+<!-- █████████████████  YAML BESTIARY  █████████████████ -->
+<script type="text/yaml" id="bestiary-data">
+# ───────────────────────────────── S I L T ─────────────────────────────────
+Silt:
+  - name: "Raellan Inquisitor"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 18
+    hp: 80
+    speed: "30 ft."
+    str: 16
+    dex: 12
+    con: 18
+    int: 11
+    wis: 14
+    cha: 15
+    saves: "Wis +5, Cha +5"
+    skills: "Intimidation +5"
+    resist: "radiant"
+    languages: "Common, Celestial"
+    traits:
+      - name: "Hold Person (3/day)"
+        desc: "DC 15 Wis save or paralysed 1 minute."
+    actions:
+      - name: "Multiattack"
+        desc: "Two smite‑blade attacks."
+      - name: "Smite‑Blade"
+        desc: "Melee +7, 5 ft.; 11 (1d8+7) radiant + 5 (1d8) fire."
 
-      const pinBtn   = document.getElementById('pin-button');
-      const addBtn   = document.getElementById('add-button');
-      const clearBtn = document.getElementById('clear-button');
-      const sel      = document.getElementById('creature-select');
-      const defs     = document.getElementById('definitions');
-      const pinCon   = document.getElementById('pinned-container');
+  - name: "Sister Militant"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 17
+    hp: 75
+    speed: "30 ft."
+    str: 18
+    dex: 14
+    con: 16
+    int: 9
+    wis: 11
+    cha: 10
+    skills: "Athletics +7"
+    languages: "Common"
+    traits:
+      - name: "Zeal"
+        desc: "Advantage on saves vs. frightened; continues fighting 1 round on 0 HP."
+    actions:
+      - name: "Longsword"
+        desc: "Melee +7, 5 ft.; 13 (2d8+4) slashing."
 
-      function makeEntry(id, maxHP, contentHTML) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'pinned-entry';
-        wrapper.id = `pinned-${id}`;
-        // remove
-        const rm = document.createElement('button');
-        rm.className = 'remove-btn';
-        rm.textContent = '×';
-        rm.title = 'Remove';
-        rm.onclick = ()=>wrapper.remove();
-        wrapper.appendChild(rm);
-        // controls
-        const ctrl = document.createElement('div');
-        ctrl.className = 'controls';
-        ctrl.innerHTML = `
-          <label>Init: <input type="number" class="init-input" value="0"></label>
-          <label>HP: <span class="max-hp">${maxHP}</span> Curr <input type="number" class="cur-hp" value="${maxHP}"></label>
-        `;
-        ctrl.querySelector('.init-input').addEventListener('input', sortPinned);
-        wrapper.appendChild(ctrl);
-        // content
-        const content = document.createElement('div');
-        content.className = 'creature-data';
-        content.innerHTML = contentHTML;
-        wrapper.appendChild(content);
-        return wrapper;
-      }
+  - name: "Cult Zealot"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: chaotic evil
+    ac: 14
+    hp: 60
+    speed: "30 ft."
+    str: 15
+    dex: 12
+    con: 16
+    int: 9
+    wis: 12
+    cha: 13
+    actions:
+      - name: "Mace"
+        desc: "Melee +6, 5 ft.; 9 (1d8+5) bludgeoning."
+      - name: "Frenzied Chant (Recharge 5‑6)"
+        desc: "All allies in 20 ft. gain +2 attack until the zealot’s next turn."
 
-      // pin existing
-      pinBtn.onclick = ()=>{
-        const id = sel.value;
-        if (!id || document.getElementById(`pinned-${id}`)) return;
-        const tpl = document.getElementById(id);
-        const maxHP = tpl.dataset.hp;
-        const html  = tpl.querySelector('.creature-data').innerHTML;
-        pinCon.appendChild(makeEntry(id,maxHP,html));
-      };
+  - name: "Silt Elite Gunner"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 17
+    hp: 85
+    speed: "30 ft."
+    str: 13
+    dex: 16
+    con: 18
+    int: 10
+    wis: 12
+    cha: 10
+    saves: "Con +7, Dex +6"
+    skills: "Perception +3"
+    immune: "poison"
+    languages: "Common"
+    traits:
+      - name: "Stand Your Ground"
+        desc: "Reaction—adjacent ally gains half‑cover versus one attack."
+    actions:
+      - name: "Multiattack"
+        desc: "Two attacks (musket or bayonet)."
+      - name: "Bayonet Musket"
+        desc: "Ranged +7, 120/240 ft.; 13 (2d10+2) piercing; reload 1 turn."
+      - name: "Bayonet"
+        desc: "Melee +5, 5 ft.; 7 (1d8+3) slashing."
+      - name: "Volley Fire (Recharge 5‑6)"
+        desc: "If another gunner is within 10 ft., both attacks deal maximum damage this turn."
 
-      // add blank
-      addBtn.onclick = ()=>{
-        const uid = `custom-${Date.now()}`;
-        const blankHTML = `<h2 contenteditable="true">Creature Name</h2>
-          <p contenteditable="true"><strong>Type:</strong> …</p>
-          <p contenteditable="true"><strong>AC:</strong> …  <strong>HP:</strong> 0  <strong>Speed:</strong> …</p>`;
-        pinCon.appendChild(makeEntry(uid,0,blankHTML));
-      };
+  - name: "Silt Lignite Hound Mk II"
+    cr: 7
+    size: Large
+    type: construct
+    alignment: unaligned
+    ac: 20
+    hp: 170
+    speed: "30 ft."
+    str: 22
+    dex: 9
+    con: 17
+    int: 3
+    wis: 10
+    cha: 5
+    immune: "poison, psychic"
+    cond_immune: "charmed, frightened, paralysed"
+    senses: "darkvision 60 ft."
+    traits:
+      - name: "Subsystems"
+        desc: "Cockpit 35 HP; Saw 50; Cannon 45; Core 40; Legs 30 HP each."
+    actions:
+      - name: "Multiattack"
+        desc: "Saw‑blade and steam‑cannon."
+      - name: "Saw‑Blade"
+        desc: "Melee +9, 10 ft.; 22 (4d8+6) slashing. Crit → DC 15 Con or bleed 2d6."
+      - name: "Steam Cannon (Recharge 5‑6)"
+        desc: "Ranged +7, 90/180 ft.; 27 (6d8) bludgeoning and push 10 ft."
+      - name: "Overrun (Recharge 6)"
+        desc: "DC 16 Dex save or 27 (5d10) bludgeoning and prone."
+      - name: "Overdrive (1/day)"
+        desc: "For 3 rounds: advantage on attacks, +10 ft. speed; suffers 10 force damage each turn‑end."
+      - name: "Engine Explosion"
+        desc: "When the Core reaches 0 HP, creatures in 30 ft. DC 16 Dex save or 28 (8d6) fire + 14 (4d6) force; half on save."
 
-      // clear all
-      clearBtn.onclick = ()=>pinCon.innerHTML = '';
+  - name: "Silt‑class Steambulldozer"
+    cr: 5
+    size: Huge
+    type: construct
+    alignment: unaligned
+    ac: 17
+    hp: 80
+    speed: "20 ft."
+    traits:
+      - name: "Subsystems"
+        desc: "Tracks 30 HP each; Blade 50; Cabin 40; Engine 40."
+    actions:
+      - name: "Ramming Charge (Recharge 5‑6)"
+        desc: "Moves 20 ft. straight; creatures in path DC 14 Dex save or 22 (4d10) bludgeoning and prone."
+      - name: "Smoke Stack (1/day)"
+        desc: "30‑ft. cloud; creatures DC 13 Con save or poisoned 1 minute."
+      - name: "Engine Explosion"
+        desc: "DC 15 Dex save, 20 ft.; 24 (6d6) fire + 14 (4d6) force."
+
+  - name: "Silt Lumberjack"
+    cr: 0.5
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 12
+    hp: 18
+    speed: "25 ft."
+    str: 14
+    dex: 10
+    con: 13
+    int: 8
+    wis: 9
+    cha: 8
+    traits:
+      - name: "Volatile Fuel"
+        desc: "On death roll d6; on a 6 it explodes for 7 (2d6) fire to 5 ft."
+    actions:
+      - name: "Buzz Axe"
+        desc: "Melee +4, 5 ft.; 5 (1d6+2) slashing."
+      - name: "Tree‑Feller’s Frenzy (1/day)"
+        desc: "Two axe attacks with advantage; each hit +1d6 damage; target DC 12 Str save or prone."
+
+  - name: "Silt Tracker"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 15
+    hp: 40
+    speed: "35 ft."
+    str: 11
+    dex: 16
+    con: 14
+    int: 11
+    wis: 14
+    cha: 9
+    skills: "Survival +4, Stealth +6"
+    traits:
+      - name: "Feral Retreat (Reaction)"
+        desc: "When a foe ends within 5 ft., tracker moves 10 ft. without provoking OAs."
+    actions:
+      - name: "Hand Crossbow"
+        desc: "Ranged +6, 30/120 ft.; 9 (2d6+2) piercing; bonus action reload."
+      - name: "Poison Bolt (1/day)"
+        desc: "Next hit deals +7 (2d6) poison; target DC 13 Con save or poisoned 1 minute."
+      - name: "Hunter’s Mark"
+        desc: "Bonus action; +1d6 weapon damage vs. marked target for 1 hour."
+
+  - name: "Silt Arbalestier"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 16
+    hp: 52
+    speed: "30 ft."
+    str: 12
+    dex: 16
+    con: 14
+    int: 10
+    wis: 11
+    cha: 9
+    actions:
+      - name: "Heavy Crossbow"
+        desc: "Ranged +7, 100/400 ft.; 13 (2d10+2) piercing; reload 1 action."
+      - name: "Suppressing Line (Recharge 5‑6)"
+        desc: "10‑ft. line; creatures DC 13 Dex save or 11 (2d10) piercing and lose reactions till next turn."
+      - name: "Quick Load (1/short rest)"
+        desc: "Ignores reload property on next shot."
+
+  - name: "Silt Enforcer"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 17
+    hp: 60
+    speed: "30 ft."
+    str: 16
+    dex: 14
+    con: 16
+    int: 10
+    wis: 10
+    cha: 11
+    traits:
+      - name: "Brace (Reaction)"
+        desc: "Makes an OA against a creature that enters its reach."
+      - name: "Riposte (Reaction, 1/turn)"
+        desc: "If a creature misses it with a melee attack, may make a longsword attack."
+      - name: "Leadership (1/short rest)"
+        desc: "Allies within 10 ft. gain +1 attack & saving throws for 1 minute."
+    actions:
+      - name: "Longsword"
+        desc: "Melee +6, 5 ft.; 9 (1d10+4) slashing (concentration checks at disadvantage)."
+
+  - name: "Silt Field Engineer"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 14
+    hp: 45
+    speed: "25 ft."
+    str: 10
+    dex: 12
+    con: 16
+    int: 14
+    wis: 11
+    cha: 9
+    traits:
+      - name: "Deploy Turret (1/day)"
+        desc: "Tiny force‑turret (AC 14 HP 20) appears; for 3 rounds autoblaster +5 to hit, 1d8 force, 60 ft."
+    actions:
+      - name: "Wrench"
+        desc: "Melee +4, 5 ft.; 6 (1d8+2) bludgeoning (advantage vs. constructs)."
+      - name: "Rewire (Bonus Action)"
+        desc: "Repairs a construct for 10 HP or removes one condition."
+      - name: "Sabotage (Recharge 6)"
+        desc: "Melee +5; on hit a construct is stunned (DC 13 Int or Dex negates)."
+
+# ────────────── M A R G R A E V E – D U S K H A V E N ──────────────
+Margraeve-Duskhaven:
+  - name: "Undead Guard"
+    cr: 1
+    size: Medium
+    type: undead
+    alignment: neutral evil
+    ac: 15
+    hp: 22
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 0         # Undead; no Constitution score
+    int: 6
+    wis: 8
+    cha: 5
+    resist: "necrotic"
+    cond_immune: "poisoned"
+    actions:
+      - name: "Longsword"
+        desc: "Melee +4, 5 ft.; 8 (1d8+2) slashing."
+
+  - name: "Necromancer"
+    cr: 6
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 12
+    hp: 66
+    speed: "30 ft."
+    str: 8
+    dex: 14
+    con: 12
+    int: 16
+    wis: 12
+    cha: 11
+    spells: |
+      DC 14, spell attack +6  
+      **Cantrips** (∞): *chill touch*, *mage hand*  
+      **1st** (4): *ray of sickness*  
+      **3rd** (3): *fireball*  
+      **4th** (2): *blight*
+    traits:
+      - name: "Dread Word (Recharge 5‑6)"
+        desc: "Creatures within 30 ft. DC 14 Wis save or frightened 1 minute."
+
+  - name: "Haunting Spirit"
+    cr: 4
+    size: Medium
+    type: undead
+    alignment: chaotic evil
+    ac: 14
+    hp: 50
+    speed: "fly 50 ft. (hover)"
+    str: 6
+    dex: 16
+    con: 0
+    int: 10
+    wis: 12
+    cha: 14
+    resist: "acid, fire"
+    immune: "necrotic, poison"
+    cond_immune: "charmed, grappled"
+    traits:
+      - name: "Fear Aura"
+        desc: "20 ft.; DC 15 Wis save or frightened 1 minute."
+    actions:
+      - name: "Terror Touch"
+        desc: "Melee +6, 5 ft.; 17 (4d6+3) necrotic."
+
+# ──────────── C A L D W E L L P E O P L E ' S R E P U B L I C ────────────
+Caldwell People's Republic:
+  - name: "Brigand"
+    cr: 0.5
+    size: Medium
+    type: humanoid
+    alignment: chaotic neutral
+    ac: 12
+    hp: 16
+    speed: "30 ft."
+    str: 11
+    dex: 12
+    con: 12
+    int: 9
+    wis: 11
+    cha: 9
+    actions:
+      - name: "Crossbow"
+        desc: "Ranged +3, 40/160 ft.; 6 (1d8+1) piercing."
+
+  - name: "Caldwell Overseer"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 16
+    hp: 88
+    speed: "30 ft."
+    str: 16
+    dex: 12
+    con: 14
+    int: 10
+    wis: 11
+    cha: 13
+    actions:
+      - name: "Greataxe"
+        desc: "Melee +6; 15 (2d10+4) slashing."
+      - name: "Crack the Whip"
+        desc: "All allies within 30 ft. gain +1d4 damage on their next hit."
+
+  - name: "Slave Rebellion Leader"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: chaotic good
+    ac: 14
+    hp: 55
+    speed: "30 ft."
+    str: 14
+    dex: 14
+    con: 12
+    int: 12
+    wis: 13
+    cha: 14
+    actions:
+      - name: "Whip"
+        desc: "Melee +5, reach 10 ft.; 8 (1d6+5) slashing; DC 13 Dex save or disarm target."
+
+# ─────────────────────────── A Z U R E A N L E A G U E ───────────────────────────
+Azurean League:
+  - name: "Halfling Scout"
+    cr: 0.5
+    size: Small
+    type: humanoid
+    alignment: neutral good
+    ac: 14
+    hp: 14
+    speed: "25 ft."
+    str: 10
+    dex: 16
+    con: 12
+    int: 10
+    wis: 10
+    cha: 8
+    actions:
+      - name: "Bow"
+        desc: "Ranged +5, 80/320 ft.; 6 (1d6+3) piercing."
+
+  - name: "Elven Duelist"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: chaotic good
+    ac: 15
+    hp: 52
+    speed: "30 ft."
+    str: 12
+    dex: 18
+    con: 12
+    int: 13
+    wis: 11
+    cha: 14
+    traits:
+      - name: "Riposte (Reaction)"
+        desc: "If a creature misses with a melee attack, makes a rapier attack."
+    actions:
+      - name: "Rapier"
+        desc: "Melee +6; 10 (1d8+6) piercing."
+
+  - name: "Azurean Mage"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 60
+    speed: "30 ft."
+    str: 9
+    dex: 14
+    con: 12
+    int: 17
+    wis: 12
+    cha: 14
+    spells: |
+      DC 15, spell attack +7  
+      bolt of lightning 8d6, *misty step*, *shield*
+
+# ────────────────────────── D W A R V E N U N I O N ──────────────────────────
+Dwarven Union:
+  - name: "Duergar Warrior"
+    cr: 2
+    size: Medium
+    type: dwarf
+    alignment: lawful neutral
+    ac: 16
+    hp: 39
+    speed: "25 ft."
+    str: 16
+    dex: 11
+    con: 14
+    int: 11
+    wis: 10
+    cha: 9
+    traits:
+      - name: "Enlarge (1/short rest)"
+        desc: "As duergar racial ability."
+    actions:
+      - name: "War Pick"
+        desc: "Melee +5; 2d8+2 piercing."
+
+  - name: "Stone Guardian"
+    cr: 4
+    size: Large
+    type: construct
+    alignment: unaligned
+    ac: 17
+    hp: 85
+    speed: "30 ft."
+    str: 18
+    dex: 9
+    con: 16
+    int: 3
+    wis: 10
+    cha: 1
+    actions:
+      - name: "Slam"
+        desc: "Melee +7; 3d10+5 bludgeoning."
+
+  - name: "Cave Hydra"
+    cr: 6
+    size: Huge
+    type: monstrosity
+    alignment: unaligned
+    ac: 16
+    hp: 120
+    speed: "30 ft."
+    str: 20
+    dex: 12
+    con: 20
+    int: 2
+    wis: 10
+    cha: 7
+    actions:
+      - name: "Multiattack — 3 Heads"
+        desc: "Each head bites: +8; 2d10+4 piercing."
+
+# ───────────── O R D E R O F T H E D R A G O N ’ S P H A L L U S ─────────────
+Order of the Dragon’s Phallus:
+  - name: "Acolyte of the Flame"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 38
+    speed: "30 ft."
+    str: 12
+    dex: 11
+    con: 12
+    int: 10
+    wis: 12
+    cha: 14
+    spells: "firebolt 2d10; flame blade 3d6"
+
+  - name: "Archivist of Kar’el"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 12
+    hp: 60
+    speed: "30 ft."
+    str: 10
+    dex: 12
+    con: 12
+    int: 16
+    wis: 12
+    cha: 13
+    spells: "magic missile; fireball"
+
+  - name: "Dragonkin Avatar"
+    cr: 7
+    size: Large
+    type: dragonborn
+    alignment: any
+    ac: 17
+    hp: 110
+    speed: "40 ft."
+    str: 21
+    dex: 12
+    con: 18
+    int: 12
+    wis: 11
+    cha: 17
+    actions:
+      - name: "Bite"
+        desc: "+8; 2d10+5 piercing."
+      - name: "Tail"
+        desc: "Melee +8; 2d8+4 bludgeoning."
+
+# ────────────────────── B E R Y N I A N S C Y T H E S ──────────────────────
+Berynian Scythes:
+  - name: "Druidic Protector"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: neutral
+    ac: 14
+    hp: 58
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 14
+    int: 11
+    wis: 14
+    cha: 13
+    spells: "entangle; thunderwave 3d8"
+
+  - name: "Forest Guardian"
+    cr: 5
+    size: Large
+    type: plant
+    alignment: unaligned
+    ac: 16
+    hp: 85
+    speed: "30 ft."
+    str: 18
+    dex: 10
+    con: 16
+    int: 5
+    wis: 12
+    cha: 9
+    actions:
+      - name: "Claw"
+        desc: "Melee +7; 2d8+4 slashing."
+      - name: "Root Snare"
+        desc: "DC 14 Str save or restrained."
+
+  - name: "Wild Elemental"
+    cr: 6
+    size: Large
+    type: elemental
+    alignment: unaligned
+    ac: 15
+    hp: 110
+    speed: "40 ft., fly 40 ft."
+    str: 18
+    dex: 14
+    con: 16
+    int: 6
+    wis: 11
+    cha: 8
+    actions:
+      - name: "Slam"
+        desc: "Melee +6; 2d10+5 bludgeoning."
+      - name: "Tempest Strike"
+        desc: "Ranged 60 ft., +6; 3d8 damage (type varies by element)."
+
+  - name: "Blackleaf Tribesman"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: neutral
+    ac: 13
+    hp: 45
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 14
+    int: 8
+    wis: 12
+    cha: 10
+    traits:
+      - name: "Forest Camouflage"
+        desc: "Advantage on Stealth checks in forests."
+      - name: "Tribal Tactics"
+        desc: "Advantage on melee attacks when an ally is adjacent to target."
+    actions:
+      - name: "Spear"
+        desc: "Melee +4; 1d8+2 piercing."
+      - name: "Shortbow"
+        desc: "Ranged +4, 80/320 ft.; 1d6+2 piercing."
+
+  - name: "Blackleaf Shaman"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: neutral
+    ac: 14
+    hp: 60
+    speed: "30 ft."
+    str: 8
+    dex: 12
+    con: 14
+    int: 12
+    wis: 18
+    cha: 14
+    traits:
+      - name: "Healing Herbs (2/day)"
+        desc: "Touch heals 2d8+3 HP."
+      - name: "Commune with Nature (1/day)"
+        desc: "Ask three yes/no questions; answers via visions/smoke/whispers."
+    actions:
+      - name: "Quarterstaff"
+        desc: "Melee +1; 1d6 bludgeoning."
+      - name: "Spellcasting"
+        desc: |
+          5th‑level (Wis +4, DC 14)  
+          • Cantrips: *druidcraft*, *guidance*, *produce flame*  
+          • 1st (4): *entangle*, *cure wounds*  
+          • 2nd (3): *barkskin*, *lesser restoration*  
+          • 3rd (2): *call lightning*, *plant growth*
+
+  - name: "Grey‑Ear (Forest Guardian Beast)"
+    cr: 8
+    size: Huge
+    type: beast
+    alignment: unaligned
+    ac: 17
+    hp: 210
+    speed: "40 ft."
+    str: 22
+    dex: 9
+    con: 21
+    int: 6
+    wis: 18
+    cha: 10
+    senses: "passive Perception 14"
+    traits:
+      - name: "Nature’s Bond"
+        desc: "Resistant to fire and poison; ignores natural difficult terrain."
+    actions:
+      - name: "Stomp"
+        desc: "Melee +9; 2d12+6 bludgeoning."
+      - name: "Gore"
+        desc: "Melee +9, reach 10 ft.; 3d8+6 piercing."
+      - name: "Trunk Slam"
+        desc: "Melee +9, reach 10 ft.; 2d10+6 bludgeoning; DC 16 Str save or grappled."
+      - name: "Trample"
+        desc: "When dashing may move through foes; each takes 3d6 bludgeoning (DC 16 Str save or prone)."
+      - name: "Trumpet of the Forest (1/day)"
+        desc: "60‑ft. psychic roar; hostiles DC 15 Wis save or frightened 1 minute."
+
+# ────────────────────────── C H I L D R E N O F N E R G Á L ──────────────────────────
+Children of Nergál:
+  - name: "Bone Servant"
+    cr: 1
+    size: Medium
+    type: undead
+    alignment: neutral evil
+    ac: 13
+    hp: 22
+    speed: "30 ft."
+    str: 14
+    dex: 10
+    con: 0
+    int: 6
+    wis: 8
+    cha: 5
+    resist: "necrotic"
+    cond_immune: "poisoned"
+    traits:
+      - name: "Deathly Grasp"
+        desc: "On hit target grappled (escape DC 12); servant can’t claw another."
+    actions:
+      - name: "Claw"
+        desc: "Melee +3; 1d6+3 slashing."
+
+  - name: "Plague Bearer"
+    cr: 4
+    size: Medium
+    type: undead
+    alignment: chaotic evil
+    ac: 15
+    hp: 78
+    speed: "30 ft."
+    str: 16
+    dex: 12
+    con: 14
+    int: 8
+    wis: 12
+    cha: 6
+    traits:
+      - name: "Diseased Strike"
+        desc: "Melee +6; 1d10+7 necrotic. DC 14 Con save → creeping rot (1d6 necrotic each dawn)."
+      - name: "Rotting Aura"
+        desc: "Creatures start turn within 10 ft.: 3 necrotic (DC 13 Con half)."
+
+  - name: "Death Warden"
+    cr: 7
+    size: Large
+    type: undead
+    alignment: lawful evil
+    ac: 16
+    hp: 120
+    speed: "35 ft."
+    str: 20
+    dex: 14
+    con: 14
+    int: 11
+    wis: 14
+    cha: 15
+    saves: "Wis +6, Cha +6"
+    resist: "necrotic"
+    immune: "poison"
+    actions:
+      - name: "Soul‑Reaping Glaive"
+        desc: "Melee +9, reach 10 ft.; 2d10+8 slashing + 2d6 necrotic."
+      - name: "Spellcasting"
+        desc: "5/day each: *inflict wounds* (4d10), *animate dead*."
+    traits:
+      - name: "Grave Command (Recharge 5‑6)"
+        desc: "Undead allies in 60 ft. use reaction to move & attack."
+
+# ─────────────────────────── O R I G E N B R O T H E R H O O D ───────────────────────────
+Origen Brotherhood:
+  - name: "Forge Sentinel"
+    cr: 2
+    size: Medium
+    type: construct
+    alignment: unaligned
+    ac: 18
+    hp: 44
+    speed: "30 ft."
+    str: 18
+    dex: 12
+    con: 15
+    int: 6
+    wis: 10
+    cha: 1
+    immune: "poison, psychic"
+    cond_immune: "charmed, frightened"
+    actions:
+      - name: "Hammer Strike"
+        desc: "Melee +5; 1d10+4 bludgeoning."
+      - name: "Melted Brand (Recharge 6)"
+        desc: "15‑ft. cone; DC 13 Dex save or 4d6 fire."
+
+  - name: "Arcane Engineer"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: lawful neutral
+    ac: 14
+    hp: 75
+    speed: "30 ft."
+    str: 10
+    dex: 12
+    con: 14
+    int: 18
+    wis: 12
+    cha: 11
+    spells: "scorching ray, arcane lock, mending"
+    actions:
+      - name: "Wrench"
+        desc: "+5; 1d8+4 bludgeoning (heals 5 HP to constructs instead of damage)."
+
+  - name: "Steel Construct"
+    cr: 6
+    size: Large
+    type: construct
+    alignment: unaligned
+    ac: 19
+    hp: 120
+    speed: "30 ft."
+    str: 20
+    dex: 8
+    con: 18
+    int: 3
+    wis: 10
+    cha: 3
+    actions:
+      - name: "Multiattack"
+        desc: "Two slams."
+      - name: "Slam"
+        desc: "+8; 2d10+4 bludgeoning."
+
+# ─────────────────────────── T H E C U L T O F R A E L ───────────────────────────
+The Cult of Rael:
+  - name: "Zealous Knight"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 17
+    hp: 50
+    speed: "30 ft."
+    str: 18
+    dex: 11
+    con: 16
+    int: 10
+    wis: 12
+    cha: 14
+    traits:
+      - name: "Radiant Smite"
+        desc: "Once per turn deals +2d6 radiant on a hit."
+    actions:
+      - name: "Longsword"
+        desc: "+5; 1d10+4 slashing."
+
+  - name: "Raellan Acolyte"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 13
+    hp: 35
+    speed: "30 ft."
+    str: 12
+    dex: 10
+    con: 13
+    int: 11
+    wis: 14
+    cha: 12
+    spells: "bless; smite"
+
+  - name: "High Arbiter"
+    cr: 6
+    size: Medium
+    type: humanoid
+    alignment: lawful evil
+    ac: 18
+    hp: 85
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 16
+    int: 13
+    wis: 16
+    cha: 18
+    spells: "flame strike; silence; banishment"
+
+# ──────────────────────── I N D E P E N D E N T F R E E H O L D S ────────────────────────
+Independent Freeholds:
+  - name: "Wildling Ranger"
+    cr: 1
+    size: Medium
+    type: humanoid
+    alignment: chaotic neutral
+    ac: 14
+    hp: 20
+    speed: "30 ft."
+    str: 12
+    dex: 15
+    con: 12
+    int: 11
+    wis: 13
+    cha: 10
+    actions:
+      - name: "Longbow"
+        desc: "+4; 1d8+3 piercing."
+
+  - name: "Forest Bandit"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 32
+    speed: "30 ft."
+    str: 14
+    dex: 13
+    con: 12
+    int: 10
+    wis: 11
+    cha: 11
+    actions:
+      - name: "Scimitar"
+        desc: "+5; 1d6+4 slashing."
+
+  - name: "Poacher"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 14
+    hp: 45
+    speed: "30 ft."
+    str: 13
+    dex: 14
+    con: 12
+    int: 10
+    wis: 12
+    cha: 9
+    actions:
+      - name: "Heavy Crossbow"
+        desc: "+6; 1d10+6 piercing."
+
+# ────────────────────────── T H E A D V E N T U R E R S G U I L D ──────────────────────────
+The Adventurers Guild:
+  - name: "Novice Adventurer"
+    cr: 1
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 22
+    speed: "30 ft."
+    str: 12
+    dex: 12
+    con: 12
+    int: 10
+    wis: 10
+    cha: 10
+    actions:
+      - name: "Shortsword"
+        desc: "+4; 1d6+3 piercing."
+
+  - name: "Guild Mercenary"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 15
+    hp: 52
+    speed: "30 ft."
+    str: 17
+    dex: 13
+    con: 14
+    int: 11
+    wis: 12
+    cha: 11
+    actions:
+      - name: "Greataxe"
+        desc: "+6; 1d12+6 slashing."
+
+  - name: "Veteran Explorer"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 16
+    hp: 75
+    speed: "30 ft."
+    str: 14
+    dex: 14
+    con: 14
+    int: 12
+    wis: 12
+    cha: 12
+    spells: "misty step; firebolt 2d10"
+
+# ─────────────────────────── Z H I L A N T R I A D S ───────────────────────────
+Zhilan Triads:
+  - name: "Triad Enforcer"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 14
+    hp: 40
+    speed: "30 ft."
+    str: 14
+    dex: 14
+    con: 13
+    int: 10
+    wis: 11
+    cha: 11
+    actions:
+      - name: "Dagger"
+        desc: "+6; 1d8+4 piercing."
+
+  - name: "Silent Blade"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 16
+    hp: 65
+    speed: "30 ft."
+    str: 12
+    dex: 18
+    con: 12
+    int: 13
+    wis: 11
+    cha: 14
+    actions:
+      - name: "Sneak Attack"
+        desc: "+7; 2d6+7 plus 3d6 extra if advantage."
+
+  - name: "Shadow Master"
+    cr: 7
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 17
+    hp: 100
+    speed: "30 ft."
+    str: 12
+    dex: 18
+    con: 14
+    int: 16
+    wis: 12
+    cha: 16
+    spells: "darkness; invisibility; shadow blade"
+
+# ────────────────────────── X O N D A R A N S Y N D I C A T E ──────────────────────────
+Xondaran Syndicate:
+  - name: "Dockside Thug"
+    cr: 1
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 22
+    speed: "30 ft."
+    str: 15
+    dex: 11
+    con: 13
+    int: 9
+    wis: 10
+    cha: 9
+    actions:
+      - name: "Club"
+        desc: "+4; 1d8+3 bludgeoning."
+
+  - name: "Rahib Overseer"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 15
+    hp: 75
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 14
+    int: 12
+    wis: 12
+    cha: 14
+    traits:
+      - name: "Command Lash"
+        desc: "On whip hit may cast *command* (DC 14 Wis)."
+    actions:
+      - name: "Whip"
+        desc: "+5; 1d6+4 slashing."
+
+  - name: "Syndicate Sorcerer"
+    cr: 6
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 14
+    hp: 88
+    speed: "30 ft."
+    str: 10
+    dex: 14
+    con: 14
+    int: 14
+    wis: 12
+    cha: 18
+    spells: "fireball; charm person; mage hand"
+
+# ─────────────────────────── T H E B L A C K J A C K S ───────────────────────────
+The Blackjacks:
+  - name: "Street Tough"
+    cr: 0.5
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 12
+    hp: 18
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 12
+    int: 10
+    wis: 10
+    cha: 10
+    actions:
+      - name: "Fist"
+        desc: "+3; 1d6+2 bludgeoning."
+
+  - name: "Blackjack Enforcer"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 14
+    hp: 55
+    speed: "30 ft."
+    str: 18
+    dex: 14
+    con: 16
+    int: 10
+    wis: 12
+    cha: 11
+    actions:
+      - name: "Sap"
+        desc: "+6; 1d8+7 bludgeoning. Target DC 13 Con save or stunned until end of its next turn."
+
+  - name: "The Jack"
+    cr: 6
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 16
+    hp: 90
+    speed: "30 ft."
+    str: 14
+    dex: 18
+    con: 14
+    int: 13
+    wis: 12
+    cha: 15
+    traits:
+      - name: "Evasion"
+        desc: "Takes no damage on successful Dex saves, half on failure."
+      - name: "Uncanny Dodge"
+        desc: "Reaction—halve damage from an attacker it can see."
+    actions:
+      - name: "Short Sword"
+        desc: "+7; 2d6+7 piercing."
+
+# ────────────────────────── T H E S C A R L E T S W A L L O W S ──────────────────────────
+The Scarlet Swallows:
+  - name: "Scarlet Enchantress"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 40
+    speed: "30 ft."
+    str: 8
+    dex: 14
+    con: 12
+    int: 13
+    wis: 12
+    cha: 16
+    spells: "charm person; minor illusion"
+
+  - name: "Swallow Escort"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 15
+    hp: 68
+    speed: "30 ft."
+    str: 14
+    dex: 15
+    con: 14
+    int: 10
+    wis: 11
+    cha: 13
+    actions:
+      - name: "Rapier"
+        desc: "+5; 1d8+6 piercing."
+
+  - name: "The Madame"
+    cr: 7
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 17
+    hp: 100
+    speed: "30 ft."
+    str: 10
+    dex: 16
+    con: 14
+    int: 14
+    wis: 12
+    cha: 18
+    spells: "suggestion; hypnotic pattern; geas"
+
+# ─────────────────────────── H A R B I N G E R S ───────────────────────────
+Harbingers:
+  - name: "Courier Spy"
+    cr: 1
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 12
+    hp: 22
+    speed: "30 ft."
+    str: 10
+    dex: 15
+    con: 12
+    int: 12
+    wis: 11
+    cha: 13
+    actions:
+      - name: "Dagger"
+        desc: "+4; 1d4+3 piercing."
+
+  - name: "Message Thief"
+    cr: 3
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 14
+    hp: 50
+    speed: "30 ft."
+    str: 12
+    dex: 17
+    con: 13
+    int: 12
+    wis: 12
+    cha: 14
+    traits:
+      - name: "Evasion"
+        desc: "No damage on successful Dex saves, half on failure."
+    actions:
+      - name: "Shortsword"
+        desc: "+5; 1d6+4 piercing."
+
+  - name: "Harbinger Coordinator"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 15
+    hp: 70
+    speed: "30 ft."
+    str: 10
+    dex: 14
+    con: 12
+    int: 16
+    wis: 12
+    cha: 14
+    spells: "message; blur; counterspell"
+
+# ──────────── T H E N O B L E G U I L D O F A S S A S S I N S ────────────
+The Noble Guild of Assassins:
+  - name: "Novice Assassin"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 14
+    hp: 34
+    speed: "30 ft."
+    str: 12
+    dex: 16
+    con: 11
+    int: 10
+    wis: 11
+    cha: 12
+    traits:
+      - name: "Assassinate"
+        desc: "Advantage vs. surprised targets; any hit is a critical."
+    actions:
+      - name: "Poisoned Dagger"
+        desc: "+5; 1d8+3 piercing + 2d6 poison (DC 13 Con half)."
+
+  - name: "Skilled Cutthroat"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 16
+    hp: 68
+    speed: "30 ft."
+    str: 12
+    dex: 18
+    con: 12
+    int: 12
+    wis: 11
+    cha: 14
+    traits:
+      - name: "Sneak Attack"
+        desc: "Once per turn deals +3d6 extra damage with advantage."
+    actions:
+      - name: "Shortbow"
+        desc: "+6, 80/320 ft.; 1d8+5 piercing."
+
+  - name: "Guild Master"
+    cr: 8
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 17
+    hp: 120
+    speed: "30 ft."
+    str: 14
+    dex: 18
+    con: 14
+    int: 16
+    wis: 14
+    cha: 18
+    spells: "greater invisibility; dimension door"
+    actions:
+      - name: "Dagger Storm (Recharge 5‑6)"
+        desc: "15‑ft. cone; DC 16 Dex save or 10d6 piercing, half on success."
+
+# ──────────────────────── S I S T E R S B E N E V O L E N T ────────────────────────
+Sisters Benevolent:
+  - name: "Healing Sister"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: lawful good
+    ac: 12
+    hp: 40
+    speed: "30 ft."
+    str: 10
+    dex: 12
+    con: 12
+    int: 12
+    wis: 16
+    cha: 14
+    spells: "cure wounds; sanctuary"
+    actions:
+      - name: "Mace"
+        desc: "+4; 1d6+4 bludgeoning."
+
+  - name: "Shield Bearer"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: lawful good
+    ac: 16
+    hp: 65
+    speed: "30 ft."
+    str: 16
+    dex: 11
+    con: 14
+    int: 10
+    wis: 12
+    cha: 12
+    actions:
+      - name: "Shield Bash"
+        desc: "+5; 1d8+6 bludgeoning; DC 14 Str save or prone."
+
+  - name: "Benevolent Martyr"
+    cr: 6
+    size: Medium
+    type: humanoid
+    alignment: lawful good
+    ac: 14
+    hp: 85
+    speed: "30 ft."
+    str: 14
+    dex: 12
+    con: 14
+    int: 12
+    wis: 16
+    cha: 14
+    spells: "mass healing word; spirit guardians"
+    traits:
+      - name: "Self‑Sacrifice"
+        desc: "Reaction—take damage meant for an adjacent ally."
+
+# ──────────── D U S K H A V E N B L A C K A R T S E D U C A T I O N C E N T R E ────────────
+Duskhaven Black Arts Education Centre:
+  - name: "Necrotic Apprentice"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 13
+    hp: 38
+    speed: "30 ft."
+    str: 8
+    dex: 12
+    con: 12
+    int: 14
+    wis: 10
+    cha: 12
+    spells: "chill touch 2d8; mage armor"
+
+  - name: "Dark Scholar"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 14
+    hp: 70
+    speed: "30 ft."
+    str: 9
+    dex: 12
+    con: 12
+    int: 16
+    wis: 12
+    cha: 13
+    spells: "animate dead; vampiric touch"
+
+  - name: "Master Necromancer"
+    cr: 8
+    size: Medium
+    type: humanoid
+    alignment: neutral evil
+    ac: 15
+    hp: 100
+    speed: "30 ft."
+    str: 10
+    dex: 14
+    con: 14
+    int: 18
+    wis: 14
+    cha: 16
+    spells: "finger of death; circle of death; create undead"
+
+# ──────── M A D A M E S E R Y E L L ’ S S C H O O L O F S O N G & S P E L L ────────
+Madame Seryell’s School of Song and Spell:
+  - name: "Illusionist Performer"
+    cr: 2
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 12
+    hp: 36
+    speed: "30 ft."
+    str: 8
+    dex: 14
+    con: 12
+    int: 14
+    wis: 12
+    cha: 16
+    spells: "minor illusion; silent image"
+
+  - name: "Arcane Dancer"
+    cr: 4
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 13
+    hp: 60
+    speed: "30 ft."
+    str: 12
+    dex: 18
+    con: 12
+    int: 13
+    wis: 12
+    cha: 16
+    traits:
+      - name: "Graceful Disengage"
+        desc: "May disengage as a bonus action."
+    spells: "mirror image; hypnotic pattern"
+    actions:
+      - name: "Rapier"
+        desc: "+6; 1d8+5 piercing."
+
+  - name: "Songweaver Master"
+    cr: 7
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 15
+    hp: 95
+    speed: "30 ft."
+    str: 12
+    dex: 16
+    con: 14
+    int: 16
+    wis: 14
+    cha: 18
+    spells: "greater invisibility; confusion; mass suggestion"
+
+# ────────────────────────────── U N A L I G N E D ──────────────────────────────
+Unaligned:
+  - name: "Highwayman"
+    cr: 1
+    size: Medium
+    type: humanoid
+    alignment: chaotic neutral
+    ac: 12
+    hp: 20
+    speed: "30 ft."
+    str: 12
+    dex: 14
+    con: 12
+    int: 10
+    wis: 10
+    cha: 12
+    traits:
+      - name: "Hold Up!"
+        desc: "Bonus action—DC 12 Cha check; target drops a coin pouch."
+    actions:
+      - name: "Shortsword"
+        desc: "+4; 1d6+4 piercing."
+
+  - name: "Mist Stalker"
+    cr: 5
+    size: Medium
+    type: humanoid
+    alignment: any
+    ac: 14
+    hp: 70
+    speed: "30 ft."
+    str: 12
+    dex: 18
+    con: 14
+    int: 12
+    wis: 12
+    cha: 14
+    traits:
+      - name: "Mist Step (Recharge 5‑6)"
+        desc: "Teleports 30 ft. as a bonus action."
+    actions:
+      - name: "Dagger"
+        desc: "+6; 2d6+5 piercing."
+
+  - name: "Rogue Elemental"
+    cr: 6
+    size: Large
+    type: elemental
+    alignment: unaligned
+    ac: 15
+    hp: 110
+    speed: "40 ft., fly 40 ft."
+    str: 18
+    dex: 16
+    con: 16
+    int: 6
+    wis: 10
+    cha: 8
+    actions:
+      - name: "Slam"
+        desc: "+7; 2d10+6 bludgeoning."
+      - name: "Whirlwind (Recharge 5‑6)"
+        desc: "DC 15 Str save; 3d8 bludgeoning + prone."
+</script>
+<!-- ███████████████████████████████████████████████████ -->
+
+<script>
+/* ---------- helpers ---------- */
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const roll = (n,d)=>Array.from({length:n},()=>1+Math.random()*d|0).reduce((a,b)=>a+b,0);
+const rollHP = hp=>{
+  const m = hp.toString().match(/(\d+)\s*\(\s*(\d+)d(\d+)([+-]\d+)?\s*\)/i);
+  return m ? roll(+m[2],+m[3])+(+m[4]||0) : parseInt(hp,10);
+};
+const toPre = o=>{
+  const L=[];
+  L.push(`<strong>${o.name} (CR ${o.cr})</strong>`);
+  L.push(`${o.size} ${o.type}, ${o.alignment}`);
+  L.push(`AC ${o.ac}   Max HP: ${rollHP(o.hp)}`);
+  if(o.speed) L.push(`Speed ${o.speed}`);
+  L.push(`STR ${o.str}  DEX ${o.dex}  CON ${o.con}  INT ${o.int}  WIS ${o.wis}  CHA ${o.cha}`);
+  if(o.saves)  L.push(`Saves ${o.saves}`);
+  if(o.skills) L.push(`Skills ${o.skills}`);
+  if(o.resist) L.push(`Resist ${o.resist}`);
+  if(o.immune) L.push(`Immune ${o.immune}`);
+  if(o.languages) L.push(`Languages ${o.languages}`);
+  (o.traits  ||[]).forEach(t=>L.push(`<strong>${t.name}.</strong> ${t.desc}`));
+  (o.actions ||[]).forEach(a=>L.push(`<b>${a.name}.</b> ${a.desc}`));
+  return `<pre>${L.join('\n')}</pre>`;
+};
+
+window.addEventListener('DOMContentLoaded',()=>{
+  /* ===== pull YAML & build hidden templates ===== */
+  const data   = jsyaml.load(document.getElementById('bestiary-data').textContent);
+  const defs   = document.getElementById('definitions');
+  const select = document.getElementById('creature-select');
+  const board  = document.getElementById('pinned-container');
+
+  Object.entries(data).forEach(([faction,list])=>{
+    list.forEach(mon=>{
+      const id  = slug(`${faction}-${mon.name}`);
+      /* hidden template */
+      const div = document.createElement('div');
+      div.id = id; div.className='creature'; div.innerHTML = toPre(mon);
+      defs.appendChild(div);
+      /* dropdown option */
+      select.add(new Option(`${faction} — ${mon.name}`, id));
     });
-  </script>
+  });
+
+  /* ===== card factory ===== */
+  const makeCard = html=>{
+    const card = document.createElement('div'); card.className='pinned-entry';
+    card.innerHTML = `
+      <button class="remove-btn">×</button>
+      <div class="controls">
+        <label>Init <input type="number"></label>
+        <label>HP <input type="number"></label>
+      </div>
+      <div class="creature-data">${html}</div>`;
+    card.querySelector('.remove-btn').onclick = ()=>card.remove();
+    return card;
+  };
+
+  /* ===== board sorter ===== */
+  const sortBoard = ()=>{
+    const cards = Array.from(board.querySelectorAll('.pinned-entry'));
+    cards.sort((a,b)=>{
+      const va = +a.querySelector('.controls input').value || -Infinity;
+      const vb = +b.querySelector('.controls input').value || -Infinity;
+      return vb - va;      // highest initiative first
+    });
+    cards.forEach(c=>board.appendChild(c));
+  };
+
+  /* ===== button handlers ===== */
+  document.getElementById('pin-button').onclick = ()=>{
+    const id = select.value, src = id && document.getElementById(id);
+    if(src){ board.appendChild(makeCard(src.innerHTML)); sortBoard(); }
+  };
+
+  document.getElementById('add-blank').onclick = ()=>{
+    board.appendChild(makeCard(
+      `<pre><strong>Name: ______</strong>\nType & CR: ______\nMax HP: _____</pre>`));
+    sortBoard();
+  };
+
+  document.getElementById('clear-all').onclick = ()=> board.innerHTML='';
+
+  /* auto‑sort whenever an Init field changes */
+  board.addEventListener('input', e=>{
+    if(e.target.closest('.controls') && e.target.type==='number') sortBoard();
+  });
+});
+</script>
+
 </body>
 </html>
