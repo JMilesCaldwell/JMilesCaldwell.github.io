@@ -5,305 +5,173 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bestiary</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <!-- GOOGLE FONTS -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
-
   <style>
-    /* BASIC STYLES */
-    body {
-      margin: 0;
-      background: url('resources/bestiary.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', serif;
-      text-align: center;
-    }
-    h1, h2, h3 {
-      font-family: 'Cinzel', serif;
-      margin-bottom: 0.5rem;
-    }
-    .fancy-divider {
-      margin: 0.25rem 0 1rem;
-      font-size: 1.2rem;
-      text-align: center;
-    }
-    .fancy-divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-    label {
-      display: inline-block;
-      width: 150px;
-      margin-right: 8px;
-      font-weight: bold;
-      font-family: 'Almendra', serif;
-    }
-    select, input[type="text"], input[type="number"] {
-      margin-bottom: 1rem;
-      padding: 0.2rem;
-      font-size: 1rem;
-      background-color: #fff9ed;
-      color: #333;
-      border: 1px solid #999;
-      font-family: 'Almendra', serif;
-    }
-    .button {
-      background-color: #8B0000;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-      font-family: 'Cinzel', serif;
-    }
-    .button:hover {
-      background-color: #6B0000;
-    }
-    .creature {
-      text-align: left;
-      margin: 2rem 0;
-      border-top: 1px solid #8B0000;
-      padding-top: 1rem;
-    }
-    pre {
-      background-color: #fff9ed;
-      padding: 1rem;
-      border: 1px solid #999;
-      border-radius: 5px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      color: #333;
-    }
-    .footer {
-      margin-top: 3rem;
-      font-size: 0.9rem;
-      color: #666;
-      font-family: 'Almendra', serif;
-    }
-    /* HIDE definitions */
-    #definitions { display: none; }
-    #pinned-container .creature { display: block; }
-    /* Print styles */
-    @media print {
-      body * { visibility: hidden !important; }
-      #pinned-container, #pinned-container * { visibility: visible !important; }
-      #pinned-container { position: absolute; top: 0; left: 0; width: 100%; }
-    }
+    body{margin:0;background:url('resources/bestiary.png') no-repeat center center fixed;background-size:cover;color:#FAF4E0;font-family:'Almendra',serif;text-align:center}
+    h1,h2,h3{font-family:'Cinzel',serif;margin-bottom:.5rem}
+    .fancy-divider{margin:.25rem 0 1rem;font-size:1.2rem;text-align:center}
+    .fancy-divider::after{content:"✦ ✧ ✦";color:#8B0000;letter-spacing:.5rem}
+    .container{max-width:800px;margin:2rem auto;background:rgba(0,0,0,.7);padding:2rem;border-radius:10px}
+    label{display:inline-block;width:150px;margin-right:8px;font-weight:bold;font-family:'Almendra',serif}
+    select,input{margin-bottom:1rem;padding:.2rem;font-size:1rem;background:#fff9ed;color:#333;border:1px solid #999;font-family:'Almendra',serif}
+    .button{background:#8B0000;color:#fff;border:none;padding:.5rem 1rem;cursor:pointer;font-size:1rem;margin:.5rem 0;font-family:'Cinzel',serif}
+    .button:hover{background:#6B0000}
+    .creature{text-align:left;margin:2rem 0;border-top:1px solid #8B0000;padding-top:1rem}
+    pre{background:#fff9ed;padding:1rem;border:1px solid #999;border-radius:5px;white-space:pre-wrap;font-family:monospace;color:#333}
+    .footer{margin-top:3rem;font-size:.9rem;color:#666;font-family:'Almendra',serif}
+    #definitions{display:none}
+    #pinned-container .creature{display:block}
+    @media print{body *{visibility:hidden !important}#pinned-container,#pinned-container *{visibility:visible !important}#pinned-container{position:absolute;top:0;left:0;width:100%}}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Bestiary</h1>
     <div class="fancy-divider"></div>
-
-    <!-- HOME BUTTON -->
     <button class="button" onclick="window.location.href='index.html'">Home</button>
-
-    <!-- CREATURE SELECTION -->
     <div>
       <label for="creature-select">Select Creature:</label>
-      <select id="creature-select">
-        <option value="">-- Choose --</option>
-      </select>
+      <select id="creature-select"><option value="">-- Choose --</option></select>
       <button id="pin-button" class="button">Pin</button>
       <button id="clear-button" class="button">Clear All</button>
     </div>
-
-    <!-- PINNED CREATURES -->
     <div id="pinned-container"></div>
-
-    <!-- CREATURE DEFINITIONS -->
-    <div id="definitions">
-      <!-- Silt Elite Gunner -->
-      <div id="silt-elite-gunner" class="creature">
-        <h2>Silt Elite Gunner (CR 4)</h2>
-        <pre>
-Medium humanoid (any), lawful evil
-AC 17 (half-plate + reinforced coat)
-HP 85 (10d8 + 40)    Speed 30 ft.
-
-STR 13 (+1)   DEX 16 (+3)   CON 18 (+4)   INT 10 (+0)   WIS 12 (+1)   CHA 10 (+0)
-
-Saving Throws: Con +7, Dex +6
-Skills: Perception +3, Athletics +5
-Damage Resistances: poison
-Languages: Common, Silt Code
-
-Actions:
-  Bayonet Musket (ranged, reload 1 turn): +7 to hit, range 120/240 ft., one target.
-    Hit: 13 (2d10 + 2) piercing. Reload: full action.
-  Bayonet Melee: +5 to hit, reach 5 ft., one target.
-    Hit: 1d8 + 2 slashing.
-  Volley Fire (Recharge 5–6): Two or more gunners coordinate. +2 to hit, max damage on hit.
-  Stand Your Ground (Reaction): Impose disadvantage on attack vs ally within 10 ft.
-        </pre>
-      </div>
-      <!-- Silt Lignite Hound Mk II -->
-      <div id="lignite-hound" class="creature">
-        <h2>Silt Lignite Hound Mk II (CR 6–7)</h2>
-        <pre>
-Large construct, unaligned (piloted)
-AC 20    HP 170 (20d10 + 60)    Speed 30 ft.
-Immunities: poison, charm, fear, psychic
-Vulnerabilities: lightning (DC 15 Con stun)
-Condition Immunities: paralyzed, unconscious, frightened
-
-Body Parts:
-  Head/Cockpit (AC 16, HP 35) — Eject pilot on destruction.
-  Saw Arm (AC 18, HP 50) — Lose saw attack if destroyed.
-  Cannon Arm (AC 16, HP 45) — Lose cannon if destroyed.
-  Engine Core (AC 13, HP 40) — Explodes on 0 HP.
-  Legs x2 (AC 15, HP 30 each) — Half speed if one lost; immobilized if both.
-
-Actions:
-  Multiattack: 2 attacks (saw + cannon).
-  Sawblade Slash: +9 to hit, 4d8+4 slashing; crit: DC15 Con or 2d6 bleed/turn.
-  Steam Cannon (Recharge 5–6): +7 to hit, 6d8 bludgeoning + push 10 ft.
-  Overrun (Recharge 6): 20 ft. line, DC 16 Dex or 5d10 + prone.
-  Engine Explosion (Triggered): DC16 Dex or 6d6 fire +4d6 force in 30 ft.
-
-Features:
-  Overdrive (1/day): 3 rounds, +10 ft & advantage, take 10 force/round.
-  Fuel Vent (Bonus, 1/Combat): 10 ft smoke, DC12 Con or poisoned.
-        </pre>
-      </div>
-      <!-- Silt-class Steambulldozer -->
-      <div id="steambulldozer" class="creature">
-        <h2>Silt-class Steambulldozer (CR 5)</h2>
-        <pre>
-Huge construct, unaligned
-Speed 20 ft.    Crew 1 + 2 gunners
-Immunities: poison, psychic, charm, fear
-Cond.Immune: blinded, deafened, exhaustion, frightened
-Vulnerable: lightning (DC 14 Con stun)
-
-Sections:
-  Tracks x2 (AC13 HP30 each) — disabled if both destroyed.
-  Blade (AC17 HP50) — half cover front.
-  Platform (AC15 HP80) — boardable.
-  Engine Core (AC12 HP40) — explodes on 0.
-  Cabin (AC16 HP40) — disables pilot.
-
-Actions:
-  Ramming (Recharge 5–6): 30 ft. line, DC14 Dex or 4d10 + prone.
-  Smoke Stack (1/day): 30 ft. heavy obscure, DC13 Con or poisoned.
-Engine Explosion: DC15 Dex or 6d6 fire +3d6 force in 20 ft.
-        </pre>
-      </div>
-      <!-- Silt Lumberjack -->
-      <div id="lumberjack" class="creature">
-        <h2>Silt Lumberjack (CR 1/2)</h2>
-        <pre>
-Medium humanoid, neutral evil
-AC12 (jerkin)    HP18 (3d8+5)    Speed25 ft.
-STR14 (+2) DEX10 (+0) CON13 (+1)
-
-Actions:
-  Buzz Axe: +4 to hit, 1d6+2 slashing.
-  Tree Feller’s Frenzy (1/day): advantage +1d6 + prone.
-Death: d6:6 drops tank, ignites: 2d6 fire/5 ft.
-        </pre>
-      </div>
-      <!-- Silt Tracker -->
-      <div id="tracker" class="creature">
-        <h2>Silt Tracker (CR 2)</h2>
-        <pre>
-Medium humanoid, neutral evil
-AC15 (leather+cloak) HP40 (6d8+12) Speed35 ft.
-
-Skills: Survival+4, Stealth+6
-Darkvision60 ft.
-
-Actions:
-  Hand Crossbow: +6 to hit, 2d6+2 piercing; bonus reload.
-  Poison Bolt (1/day): +2d6 poison, DC13 Con or poisoned.
-  Hunter’s Mark: +1d6 damage 1 hr.
-  Feral Retreat: reaction to move 10 ft.
-        </pre>
-      </div>
-      <!-- Silt Arbalestier -->
-      <div id="arbalestier" class="creature">
-        <h2>Silt Arbalestier (CR 3)</h2>
-        <pre>
-Medium humanoid, lawful evil
-AC16 (lamellar) HP52 (8d8+16) Speed30 ft.
-
-Actions:
-  Heavy Crossbow: +7 to hit, 2d10+2 piercing (reload 1 turn). Auto crit vs prone/surprised.
-  Suppressing Fire (Recharge5–6): 10 ft line, DC13 Dex or 2d10 + lose reactions.
-  Quick Load: ignore reload once/short rest.
-        </pre>
-      </div>
-      <!-- Silt Enforcer -->
-      <div id="enforcer" class="creature">
-        <h2>Silt Enforcer (CR 3)</h2>
-        <pre>
-Medium humanoid, lawful evil
-AC17 (chain+plates) HP60 (8d8+24) Speed30 ft.
-
-STR16 (+3) DEX14 (+2)
-
-Actions:
-  Longsword: +6 to hit, 1d10+4 slashing; DC13 Con or concentration lost.
-  Brace: reaction melee attack vs entering foe.
-  Riposte: attack when missed.
-  Leadership: allies +1 to attack/saves 10 ft/1 min.
-        </pre>
-      </div>
-      <!-- Silt Field Engineer -->
-      <div id="engineer" class="creature">
-        <h2>Silt Field Engineer (CR 2)</h2>
-        <pre>
-Medium humanoid, neutral evil
-AC14 (tools) HP45 (6d8+18) Speed25 ft.
-
-Actions:
-  Wrench Strike: +4 to hit, 1d8+2 bludgeoning; adv on constructs.
-  Rewire: restore 10 HP or remove cond on construct.
-  Turret Deploy (1/day): turret AC14 HP20 1d8/rnd 3 rnds.
-  Sabotage (Recharge6): DC13 Int/Dex or disable subsystem.
-        </pre>
-      </div>
-    </div>
-
-    <div class="footer">
-      Add new <code>&lt;div class="creature"&gt;</code> in #definitions and it will appear in the dropdown.
-    </div>
+    <div id="definitions"></div>
+    <div class="footer">Add or edit creatures in the <code>CREATURES</code> object below.</div>
   </div>
+<script>
+// === Custom & Faction Creatures ===
+const CREATURES = {
+  "Silt": [
+    {"name":"Raellan Inquisitor","cr":5,"statBlock":"HP 80, AC 18, Spells: Hold Person, Smite."},
+    {"name":"Sister Militant","cr":4,"statBlock":"HP 75, AC 17, Attack: Longsword +7 (2d8+4)."},
+    {"name":"Cult Zealot","cr":3,"statBlock":"HP 60, AC 14, Attack: Mace +6 (1d8+3)."},
+    {"name":"Silt Elite Gunner","cr":4,"statBlock":"AC 17 (half‑plate), HP 85 (10d8+40), Bayonet Musket +7 (2d10+2 pierce, reload 1 turn); Bayonet +5 (1d8+2 slash); Volley Fire (Recharge 5‑6); Stand Your Ground (reaction)."},
+    {"name":"Silt Lignite Hound Mk II","cr":7,"statBlock":"Large construct, AC 20, HP 170; Multiattack (Sawblade +9 4d8+4 slash & Steam Cannon +7 6d8 bludgeon 90/180 ft); body‑part targeting; Overdrive 1/day."},
+    {"name":"Silt-class Steambulldozer","cr":5,"statBlock":"Huge construct, AC 17 front blade; HP 80 chassis; Ramming (Recharge 5‑6, 4d10 bludgeon & prone); Smoke Stack 1/day; Engine explosion on core 0 HP."},
+    {"name":"Silt Lumberjack","cr":0.5,"statBlock":"AC 12, HP 18; Buzz Axe +4 (1d6+2 slash); Tree Feller’s Frenzy 1/day; Fuel‑tank death blow (2d6 fire, 5 ft)."},
+    {"name":"Silt Tracker","cr":2,"statBlock":"AC 15, HP 40; Hand Crossbow +6 (2d6+2 pierce, bonus reload); Poison Bolt 1/day (+2d6 poison, DC 13 Con); Hunter’s Mark; Feral Retreat reaction."},
+    {"name":"Silt Arbalestier","cr":3,"statBlock":"AC 16, HP 52; Heavy Crossbow +7 (2d10+2 pierce, reload 1 turn, auto‑crit prone); Suppressing Fire (Recharge 5‑6, 10‑ft line 2d10 & no reactions); Quick Load 1/short rest."},
+    {"name":"Silt Enforcer","cr":3,"statBlock":"AC 17, HP 60; Longsword +6 (1d10+4 slash, DC 13 Con vs concentration); Brace & Riposte reactions; Leadership 1/short (+1 attack/saves allies 10 ft, 1 min)."},
+    {"name":"Silt Field Engineer","cr":2,"statBlock":"AC 14, HP 45; Wrench +4 (1d8+2 bludgeon, adv vs constructs); Rewire 10 HP; Deploy Turret 1/day (AC 14 HP 20 1d8/round); Sabotage (Recharge 6, DC 13 Int/Dex disable subsystem)."}
+  ],
+  "Margraeve-Duskhaven": [
+    {"name":"Undead Guard","cr":1,"statBlock":"HP 22, AC 15, Attack: Longsword +4 (1d8+2)."},
+    {"name":"Necromancer","cr":6,"statBlock":"HP 66, AC 12, Spells: Fireball (8d6), Chill Touch (2d8)."},
+    {"name":"Haunting Spirit","cr":4,"statBlock":"HP 50, AC 14, Effect: Fear Aura (DC 15)."}
+  ],
+  "Caldwell People's Republic": [
+    {"name":"Brigand","cr":0.5,"statBlock":"HP 16, AC 12, Attack: Crossbow +3 (1d8+1)."},
+    {"name":"Caldwell Overseer","cr":4,"statBlock":"HP 88, AC 16, Attack: Greataxe +6 (2d10+4)."},
+    {"name":"Slave Rebellion Leader","cr":3,"statBlock":"HP 55, AC 14, Attack: Whip +5 (1d6+3)."}
+  ],
+  "Azurean League": [
+    {"name":"Halfling Scout","cr":0.5,"statBlock":"HP 14, AC 14, Attack: Bow +5 (1d6+3)."},
+    {"name":"Elven Duelist","cr":3,"statBlock":"HP 52, AC 15, Attack: Rapier +6 (1d8+4)."},
+    {"name":"Azurean Mage","cr":5,"statBlock":"HP 60, AC 13, Spells: Lightning Bolt (8d6), Mage Armor."}
+  ],
+  "Dwarven Union": [
+    {"name":"Duergar Warrior","cr":2,"statBlock":"HP 39, AC 16, Attack: War Pick +5 (2d8+2)."},
+    {"name":"Stone Guardian","cr":4,"statBlock":"HP 85, AC 17, Attack: Slam +7 (3d10+5)."},
+    {"name":"Cave Hydra","cr":6,"statBlock":"HP 120, AC 16, Attack: Multiattack (3 heads, 2d10+4)."}
+  ],
+  "Order of the Dragon’s Phallus": [
+    {"name":"Acolyte of the Flame","cr":2,"statBlock":"HP 38, AC 13, Spells: Firebolt (2d10), Flame Blade (3d6)."},
+    {"name":"Archivist of Kar’el","cr":4,"statBlock":"HP 60, AC 12, Spells: Magic Missile (1d4+1), Fireball (8d6)."},
+    {"name":"Dragonkin Avatar","cr":7,"statBlock":"HP 110, AC 17, Attack: Bite +8 (2d10+5), Tail Swipe (2d8+4)."}
+  ],
+  "Berynian Scythes": [
+    {"name":"Druidic Protector","cr":3,"statBlock":"HP 58, AC 14, Spells: Entangle, Thunderwave (3d8)."},
+    {"name":"Forest Guardian","cr":5,"statBlock":"HP 85, AC 16, Attack: Claw +7 (2d8+4), Root Snare (1d6+3)."},
+    {"name":"Wild Elemental","cr":6,"statBlock":"HP 110, AC 15, Attack: Slam +6 (2d10+5), Tempest Strike (3d8)."}
+  ],
+  "Children of Nergál": [
+    {"name":"Bone Servant","cr":1,"statBlock":"HP 22, AC 13, Attack: Claw +3 (1d8+2)."},
+    {"name":"Plague Bearer","cr":4,"statBlock":"HP 78, AC 15, Diseased Strike (1d10+3, DC 14 CON)."},
+    {"name":"Death Warden","cr":7,"statBlock":"HP 120, AC 16, Spells: Inflict Wounds (4d10), Animate Dead."}
+  ],
+  "Origen Brotherhood": [
+    {"name":"Forge Sentinel","cr":2,"statBlock":"HP 44, AC 18, Attack: Hammer Strike +5 (1d10+2)."},
+    {"name":"Arcane Engineer","cr":5,"statBlock":"HP 75, AC 14, Spells: Scorching Ray, Arcane Lock."},
+    {"name":"Steel Construct","cr":6,"statBlock":"HP 120, AC 19, Attack: Multiattack (2d10+5)."}
+  ],
+  "The Cult of Rael": [
+    {"name":"Zealous Knight","cr":3,"statBlock":"HP 50, AC 17, Attack: Longsword +5 (1d10+3)."},
+    {"name":"Raellan Acolyte","cr":2,"statBlock":"HP 35, AC 13, Spells: Bless, Smite."},
+    {"name":"High Arbiter","cr":6,"statBlock":"HP 85, AC 18, Spells: Flame Strike (4d6+4), Silence."}
+  ],
+  "Independent Freeholds": [
+    {"name":"Wildling Ranger","cr":1,"statBlock":"HP 20, AC 14, Attack: Bow +4 (1d8+2)."},
+    {"name":"Forest Bandit","cr":2,"statBlock":"HP 32, AC 13, Attack: Scimitar +5 (1d6+3)."},
+    {"name":"Poacher","cr":3,"statBlock":"HP 45, AC 14, Attack: Crossbow +6 (1d10+3)."}
+  ],
+  "The Adventurers Guild": [
+    {"name":"Novice Adventurer","cr":1,"statBlock":"HP 22, AC 13, Attack: Shortsword +4 (1d6+2)."},
+    {"name":"Guild Mercenary","cr":3,"statBlock":"HP 52, AC 15, Attack: Greataxe +6 (1d12+3)."},
+    {"name":"Veteran Explorer","cr":5,"statBlock":"HP 75, AC 16, Spells: Misty Step, Firebolt (2d10)."}
+  ],
+  "Zhilan Triads": [
+    {"name":"Triad Enforcer","cr":2,"statBlock":"HP 40, AC 14, Attack: Dagger +6 (1d8+3)."},
+    {"name":"Silent Blade","cr":5,"statBlock":"HP 65, AC 16, Attack: Sneak Attack (2d6), Shortbow +6 (1d8+3)."},
+    {"name":"Shadow Master","cr":7,"statBlock":"HP 100, AC 17, Spells: Darkness, Invisibility, Shadow Blade."}
+  ],
+  "Xondaran Syndicate": [
+    {"name":"Dockside Thug","cr":1,"statBlock":"HP 22, AC 13, Attack: Club +4 (1d8+2)."},
+    {"name":"Rahib Overseer","cr":4,"statBlock":"HP 75, AC 15, Attack: Whip +5 (1d6+3), Command."},
+    {"name":"Syndicate Sorcerer","cr":6,"statBlock":"HP 88, AC 14, Spells: Fireball, Mage Hand, Charm Person."}
+  ],
+  "The Blackjacks": [
+    {"name":"Street Tough","cr":0.5,"statBlock":"HP 18, AC 12, Attack: Fist +3 (1d6+1)."},
+    {"name":"Blackjack Enforcer","cr":3,"statBlock":"HP 55, AC 14, Attack: Sap +6 (1d8+3)."},
+    {"name":"The Jack","cr":6,"statBlock":"HP 90, AC 16, Attack: Short Sword +7 (2d6+4), Evasion."}
+  ],
+  "The Scarlet Swallows": [
+    {"name":"Scarlet Enchantress","cr":2,"statBlock":"HP 40, AC 13, Spells: Charm Person, Minor Illusion."},
+    {"name":"Swallow Escort","cr":4,"statBlock":"HP 68, AC 15, Attack: Rapier +5 (1d8+2)."},
+    {"name":"The Madame","cr":7,"statBlock":"HP 100, AC 17, Spells: Suggestion, Hypnotic Pattern."}
+  ],
+  "Harbingers": [
+    {"name":"Courier Spy","cr":1,"statBlock":"HP 22, AC 12, Attack: Dagger +4 (1d4+2)."},
+    {"name":"Message Thief","cr":3,"statBlock":"HP 50, AC 14, Attack: Shortsword +5 (1d6+3), Evasion."},
+    {"name":"Harbinger Coordinator","cr":5,"statBlock":"HP 70, AC 15, Spells: Message, Blur."}
+  ],
+  "The Noble Guild of Assassins": [
+    {"name":"Novice Assassin","cr":2,"statBlock":"HP 34, AC 14, Attack: Dagger +5 (1d8+3), Poisoned Blade."},
+    {"name":"Skilled Cutthroat","cr":5,"statBlock":"HP 68, AC 16, Attack: Sneak Attack (3d6), Shortbow +6 (1d8+3)."},
+    {"name":"Guild Master","cr":8,"statBlock":"HP 120, AC 17, Spells: Greater Invisibility, Assassinate."}
+  ],
+  "Sisters Benevolent": [
+    {"name":"Healing Sister","cr":2,"statBlock":"HP 40, AC 12, Spells: Cure Wounds, Sanctuary."},
+    {"name":"Shield Bearer","cr":4,"statBlock":"HP 65, AC 16, Attack: Shield Bash +5 (1d8+3)."},
+    {"name":"Benevolent Martyr","cr":6,"statBlock":"HP 85, AC 14, Spells: Mass Healing Word, Spirit Guardians."}
+  ],
+  "Duskhaven Black Arts Education Centre": [
+    {"name":"Necrotic Apprentice","cr":2,"statBlock":"HP 38, AC 13, Spells: Chill Touch (2d8), Mage Armor."},
+    {"name":"Dark Scholar","cr":5,"statBlock":"HP 70, AC 14, Spells: Animate Dead, Vampiric Touch."},
+    {"name":"Master Necromancer","cr":8,"statBlock":"HP 100, AC 15, Spells: Circle of Death, Finger of Death."}
+  ],
+  "Madame Seryell’s School of Song and Spell": [
+    {"name":"Illusionist Performer","cr":2,"statBlock":"HP 36, AC 12, Spells: Minor Illusion, Silent Image."},
+    {"name":"Arcane Dancer","cr":4,"statBlock":"HP 60, AC 13, Spells: Hypnotic Pattern, Mirror Image."},
+    {"name":"Songweaver Master","cr":7,"statBlock":"HP 95, AC 15, Spells: Greater Invisibility, Confusion."}
+  ],
+  "Unaligned": [
+    {"name":"Highwayman","cr":1,"statBlock":"HP 20, AC 12, Attack: Shortsword +4 (1d6+2)."},
+    {"name":"Mist Stalker","cr":5,"statBlock":"HP 70, AC 14, Attack: Dagger +6 (2d6+3), Mist Step (Recharge 5‑6)."},
+    {"name":"Rogue Elemental","cr":6,"statBlock":"HP 110, AC 15, Attack: Slam +7 (2d10+4), Whirlwind (3d8)."}
+  ]
+};
+// === End Creature List ===
 
-  <!-- SCRIPTS -->
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const select = document.getElementById('creature-select');
-      const defs = document.querySelectorAll('#definitions .creature');
-      defs.forEach(def => {
-        const opt = document.createElement('option');
-        opt.value = def.id;
-        opt.text = def.querySelector('h2').innerText;
-        select.appendChild(opt);
-      });
-      document.getElementById('pin-button').addEventListener('click', () => {
-        const id = select.value; if (!id) return;
-        const pinnedContainer = document.getElementById('pinned-container');
-        if (document.getElementById('pinned-' + id)) return;
-        const clone = document.getElementById(id).cloneNode(true);
-        clone.id = 'pinned-' + id;
-        pinnedContainer.appendChild(clone);
-      });
-      document.getElementById('clear-button').addEventListener('click', () => {
-        document.getElementById('pinned-container').innerHTML = '';
-      });
-    });
-  </script>
+function slugify(n){return n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');}
+window.addEventListener('DOMContentLoaded',()=>{const defs=document.getElementById('definitions');const sel=document.getElementById('creature-select');
+Object.values(CREATURES).flat().forEach(c=>{const id=slugify(c.name);const o=document.createElement('option');o.value=id;o.text=`${c.name} (CR ${c.cr})`;sel.appendChild(o);
+const d=document.createElement('div');d.id=id;d.className='creature';d.innerHTML=`<h2>${c.name} (CR ${c.cr})</h2><pre>${c.statBlock}</pre>`;defs.appendChild(d);});
+defs.style.display='none';
+document.getElementById('pin-button').onclick=()=>{const id=sel.value;if(!id)return;if(document.getElementById('pinned-'+id))return;
+const clone=document.getElementById(id).cloneNode(true);clone.id='pinned-'+id;document.getElementById('pinned-container').appendChild(clone);};
+document.getElementById('clear-button').onclick=()=>{document.getElementById('pinned-container').innerHTML='';};});
+</script>
 </body>
 </html>
