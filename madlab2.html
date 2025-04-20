@@ -1641,73 +1641,93 @@ Unaligned:
 
 <script>
 /* ---------- helpers ---------- */
-const slug = s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 const roll = (n,d)=>Array.from({length:n},()=>1+Math.random()*d|0).reduce((a,b)=>a+b,0);
 const rollHP = hp=>{
   const m = hp.toString().match(/(\d+)\s*\(\s*(\d+)d(\d+)([+-]\d+)?\s*\)/i);
   return m ? roll(+m[2],+m[3])+(+m[4]||0) : parseInt(hp,10);
 };
-const statPre = o=>{
-  const L = [];
+const toPre = o=>{
+  const L=[];
   L.push(`<strong>${o.name} (CR ${o.cr})</strong>`);
   L.push(`${o.size} ${o.type}, ${o.alignment}`);
   L.push(`AC ${o.ac}   Max HP: ${rollHP(o.hp)}`);
   if(o.speed) L.push(`Speed ${o.speed}`);
   L.push(`STR ${o.str}  DEX ${o.dex}  CON ${o.con}  INT ${o.int}  WIS ${o.wis}  CHA ${o.cha}`);
-  if(o.saves) L.push(`Saves ${o.saves}`);
+  if(o.saves)  L.push(`Saves ${o.saves}`);
   if(o.skills) L.push(`Skills ${o.skills}`);
   if(o.resist) L.push(`Resist ${o.resist}`);
   if(o.immune) L.push(`Immune ${o.immune}`);
   if(o.languages) L.push(`Languages ${o.languages}`);
-  (o.traits||[]).forEach(t=>L.push(`<strong>${t.name}.</strong> ${t.desc}`));
-  (o.actions||[]).forEach(a=>L.push(`<b>${a.name}.</b> ${a.desc}`));
+  (o.traits  ||[]).forEach(t=>L.push(`<strong>${t.name}.</strong> ${t.desc}`));
+  (o.actions ||[]).forEach(a=>L.push(`<b>${a.name}.</b> ${a.desc}`));
   return `<pre>${L.join('\n')}</pre>`;
 };
 
-/* ---------- main ---------- */
 window.addEventListener('DOMContentLoaded',()=>{
+  /* ===== pull YAML & build hidden templates ===== */
   const data   = jsyaml.load(document.getElementById('bestiary-data').textContent);
   const defs   = document.getElementById('definitions');
   const select = document.getElementById('creature-select');
   const board  = document.getElementById('pinned-container');
 
-  /* build hidden templates + dropdown */
   Object.entries(data).forEach(([faction,list])=>{
     list.forEach(mon=>{
-      const id = slug(`${faction}-${mon.name}`);
+      const id  = slug(`${faction}-${mon.name}`);
+      /* hidden template */
       const div = document.createElement('div');
-      div.id = id; div.className='creature'; div.innerHTML = statPre(mon);
+      div.id = id; div.className='creature'; div.innerHTML = toPre(mon);
       defs.appendChild(div);
-
-      const opt = new Option(`${faction} — ${mon.name}`, id);
-      select.add(opt);
+      /* dropdown option */
+      select.add(new Option(`${faction} — ${mon.name}`, id));
     });
   });
 
-  /* card factory */
+  /* ===== card factory ===== */
   const makeCard = html=>{
     const card = document.createElement('div'); card.className='pinned-entry';
-    const close = document.createElement('button'); close.className='remove-btn'; close.textContent='×'; close.onclick=()=>card.remove();
-    const ctl = document.createElement('div'); ctl.className='controls';
-    ctl.innerHTML=`<label>Init <input type="number"></label><label>HP <input type="number"></label>`;
-    const body = document.createElement('div'); body.className='creature-data'; body.innerHTML=html;
-    card.append(close,ctl,body); return card;
+    card.innerHTML = `
+      <button class="remove-btn">×</button>
+      <div class="controls">
+        <label>Init <input type="number"></label>
+        <label>HP <input type="number"></label>
+      </div>
+      <div class="creature-data">${html}</div>`;
+    card.querySelector('.remove-btn').onclick = ()=>card.remove();
+    return card;
   };
 
-  /* pin button */
+  /* ===== board sorter ===== */
+  const sortBoard = ()=>{
+    const cards = Array.from(board.querySelectorAll('.pinned-entry'));
+    cards.sort((a,b)=>{
+      const va = +a.querySelector('.controls input').value || -Infinity;
+      const vb = +b.querySelector('.controls input').value || -Infinity;
+      return vb - va;      // highest initiative first
+    });
+    cards.forEach(c=>board.appendChild(c));
+  };
+
+  /* ===== button handlers ===== */
   document.getElementById('pin-button').onclick = ()=>{
-    const id=select.value, src=id&&document.getElementById(id);
-    if(src) board.appendChild(makeCard(src.innerHTML));
+    const id = select.value, src = id && document.getElementById(id);
+    if(src){ board.appendChild(makeCard(src.innerHTML)); sortBoard(); }
   };
 
-  /* blank entry */
   document.getElementById('add-blank').onclick = ()=>{
-    board.appendChild(makeCard('<pre><strong>Name: ______</strong>\nType & CR: ______\nMax HP: _____</pre>'));
+    board.appendChild(makeCard(
+      `<pre><strong>Name: ______</strong>\nType & CR: ______\nMax HP: _____</pre>`));
+    sortBoard();
   };
 
-  /* clear all */
   document.getElementById('clear-all').onclick = ()=> board.innerHTML='';
+
+  /* auto‑sort whenever an Init field changes */
+  board.addEventListener('input', e=>{
+    if(e.target.closest('.controls') && e.target.type==='number') sortBoard();
+  });
 });
 </script>
+
 </body>
 </html>
