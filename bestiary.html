@@ -252,29 +252,47 @@ AC 15 HP 110
 };
 /* ===== UI code identical for all parts – keep only in part ① ===== */
 function slugify(n){return n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');}
+
 window.addEventListener('DOMContentLoaded',()=>{
-  const defs=document.getElementById('definitions');
-  const sel=document.getElementById('creature-select');
-  Object.entries(CREATURES).forEach(([fac,list])=>{
-    list.forEach((block,i)=>{
-      const id=slugify(fac)+'-'+i;
-      const opt=document.createElement('option');
-      opt.value=id; opt.text=`${fac} – #${i+1}`;
+
+  const defs = document.getElementById('definitions');
+  const sel  = document.getElementById('creature-select');
+
+  Object.entries(CREATURES).forEach(([faction, list])=>{
+    list.forEach((block, i)=>{
+      /* ---------- new code begins ---------- */
+      // Snip the creature’s name from the first <strong> … (CR
+      const nameMatch = block.match(/<strong>(.*?)\s*\(CR/i);
+      const title = nameMatch ? nameMatch[1].trim() : `Creature ${i+1}`;
+      /* ----------  new code ends  ---------- */
+
+      const id  = slugify(`${faction}-${title}`);
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.text  = `${faction} — ${title}`;        // human‑readable menu line
       sel.appendChild(opt);
-      const div=document.createElement('div');
-      div.id=id; div.className='creature'; div.innerHTML=block;
+
+      const div = document.createElement('div');
+      div.id = id;
+      div.className = 'creature';
+      div.innerHTML = block;
       defs.appendChild(div);
     });
   });
-  defs.style.display='none';
-  document.getElementById('pin-button').onclick=()=>{
-    const id=sel.value;if(!id)return;
-    if(document.getElementById('pinned-'+id))return;
-    const clone=document.getElementById(id).cloneNode(true);
-    clone.id='pinned-'+id;
+
+  defs.style.display = 'none';
+
+  document.getElementById('pin-button').onclick = () => {
+    const id = sel.value;
+    if (!id || document.getElementById('pinned-'+id)) return;
+    const clone = document.getElementById(id).cloneNode(true);
+    clone.id = 'pinned-'+id;
     document.getElementById('pinned-container').appendChild(clone);
   };
-  document.getElementById('clear-button').onclick=()=>{document.getElementById('pinned-container').innerHTML='';};
+
+  document.getElementById('clear-button').onclick =
+      () => { document.getElementById('pinned-container').innerHTML = ''; };
+
 });
 </script>
 <!--‑‑‑ end of PART ① – paste parts ② & ③ immediately below this line ‑‑‑--><!--‑‑‑‑‑‑‑‑‑ PART ② – append more factions ‑‑‑‑‑‑‑‑‑‑-->
