@@ -8,170 +8,568 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body{margin:0;background:url('resources/bestiary.png') no-repeat center center fixed;background-size:cover;color:#FAF4E0;font-family:'Almendra',serif;text-align:center}
-    h1,h2,h3{font-family:'Cinzel',serif;margin-bottom:.5rem}
-    .fancy-divider{margin:.25rem 0 1rem;font-size:1.2rem;text-align:center}
-    .fancy-divider::after{content:"✦ ✧ ✦";color:#8B0000;letter-spacing:.5rem}
-    .container{max-width:800px;margin:2rem auto;background:rgba(0,0,0,.7);padding:2rem;border-radius:10px}
-    label{display:inline-block;width:150px;margin-right:8px;font-weight:bold;font-family:'Almendra',serif}
-    select,input{margin-bottom:1rem;padding:.2rem;font-size:1rem;background:#fff9ed;color:#333;border:1px solid #999;font-family:'Almendra',serif}
-    .button{background:#8B0000;color:#fff;border:none;padding:.5rem 1rem;cursor:pointer;font-size:1rem;margin:.5rem 0;font-family:'Cinzel',serif}
+    body{margin:0;background:url('resources/bestiary.png') center/cover fixed no-repeat;color:#FAF4E0;font-family:'Almendra',serif;text-align:center}
+    h1,h2{font-family:'Cinzel',serif;margin:0 0 .5rem}
+    .container{max-width:840px;margin:2rem auto;background:rgba(0,0,0,.7);padding:2rem;border-radius:10px}
+    label{display:inline-block;width:150px;margin-right:8px;font-weight:bold}
+    select,.button{font-family:'Cinzel',serif}
+    select{padding:.3rem;background:#fff9ed;border:1px solid #999;color:#333}
+    .button{background:#8B0000;color:#fff;border:none;padding:.5rem 1rem;margin:.3rem;cursor:pointer}
     .button:hover{background:#6B0000}
-    .creature{text-align:left;margin:2rem 0;border-top:1px solid #8B0000;padding-top:1rem}
-    pre{background:#fff9ed;padding:1rem;border:1px solid #999;border-radius:5px;white-space:pre-wrap;font-family:monospace;color:#333}
-    .footer{margin-top:3rem;font-size:.9rem;color:#666;font-family:'Almendra',serif}
+    .creature{margin:2rem 0;text-align:left;border-top:1px solid #8B0000;padding-top:1rem}
+    pre{background:#fff9ed;border:1px solid #999;border-radius:6px;padding:1rem;white-space:pre-wrap;color:#333}
     #definitions{display:none}
     #pinned-container .creature{display:block}
-    @media print{body *{visibility:hidden !important}#pinned-container,#pinned-container *{visibility:visible !important}#pinned-container{position:absolute;top:0;left:0;width:100%}}
+    @media print{body *{visibility:hidden!important}#pinned-container,#pinned-container *{visibility:visible!important}#pinned-container{position:absolute;top:0;left:0;width:100%}}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Bestiary</h1>
-    <div class="fancy-divider"></div>
-    <button class="button" onclick="window.location.href='index.html'">Home</button>
-    <div>
-      <label for="creature-select">Select Creature:</label>
-      <select id="creature-select"><option value="">-- Choose --</option></select>
-      <button id="pin-button" class="button">Pin</button>
-      <button id="clear-button" class="button">Clear All</button>
-    </div>
-    <div id="pinned-container"></div>
-    <div id="definitions"></div>
-    <div class="footer">Add or edit creatures in the <code>CREATURES</code> object below.</div>
-  </div>
-<script>
-// === Custom & Faction Creatures ===
-const CREATURES = {
-  "Silt": [
-    {"name":"Raellan Inquisitor","cr":5,"statBlock":"HP 80, AC 18, Spells: Hold Person, Smite."},
-    {"name":"Sister Militant","cr":4,"statBlock":"HP 75, AC 17, Attack: Longsword +7 (2d8+4)."},
-    {"name":"Cult Zealot","cr":3,"statBlock":"HP 60, AC 14, Attack: Mace +6 (1d8+3)."},
-    {"name":"Silt Elite Gunner","cr":4,"statBlock":"AC 17 (half‑plate), HP 85 (10d8+40), Bayonet Musket +7 (2d10+2 pierce, reload 1 turn); Bayonet +5 (1d8+2 slash); Volley Fire (Recharge 5‑6); Stand Your Ground (reaction)."},
-    {"name":"Silt Lignite Hound Mk II","cr":7,"statBlock":"Large construct, AC 20, HP 170; Multiattack (Sawblade +9 4d8+4 slash & Steam Cannon +7 6d8 bludgeon 90/180 ft); body‑part targeting; Overdrive 1/day."},
-    {"name":"Silt-class Steambulldozer","cr":5,"statBlock":"Huge construct, AC 17 front blade; HP 80 chassis; Ramming (Recharge 5‑6, 4d10 bludgeon & prone); Smoke Stack 1/day; Engine explosion on core 0 HP."},
-    {"name":"Silt Lumberjack","cr":0.5,"statBlock":"AC 12, HP 18; Buzz Axe +4 (1d6+2 slash); Tree Feller’s Frenzy 1/day; Fuel‑tank death blow (2d6 fire, 5 ft)."},
-    {"name":"Silt Tracker","cr":2,"statBlock":"AC 15, HP 40; Hand Crossbow +6 (2d6+2 pierce, bonus reload); Poison Bolt 1/day (+2d6 poison, DC 13 Con); Hunter’s Mark; Feral Retreat reaction."},
-    {"name":"Silt Arbalestier","cr":3,"statBlock":"AC 16, HP 52; Heavy Crossbow +7 (2d10+2 pierce, reload 1 turn, auto‑crit prone); Suppressing Fire (Recharge 5‑6, 10‑ft line 2d10 & no reactions); Quick Load 1/short rest."},
-    {"name":"Silt Enforcer","cr":3,"statBlock":"AC 17, HP 60; Longsword +6 (1d10+4 slash, DC 13 Con vs concentration); Brace & Riposte reactions; Leadership 1/short (+1 attack/saves allies 10 ft, 1 min)."},
-    {"name":"Silt Field Engineer","cr":2,"statBlock":"AC 14, HP 45; Wrench +4 (1d8+2 bludgeon, adv vs constructs); Rewire 10 HP; Deploy Turret 1/day (AC 14 HP 20 1d8/round); Sabotage (Recharge 6, DC 13 Int/Dex disable subsystem)."}
-  ],
-  "Margraeve-Duskhaven": [
-    {"name":"Undead Guard","cr":1,"statBlock":"HP 22, AC 15, Attack: Longsword +4 (1d8+2)."},
-    {"name":"Necromancer","cr":6,"statBlock":"HP 66, AC 12, Spells: Fireball (8d6), Chill Touch (2d8)."},
-    {"name":"Haunting Spirit","cr":4,"statBlock":"HP 50, AC 14, Effect: Fear Aura (DC 15)."}
-  ],
-  "Caldwell People's Republic": [
-    {"name":"Brigand","cr":0.5,"statBlock":"HP 16, AC 12, Attack: Crossbow +3 (1d8+1)."},
-    {"name":"Caldwell Overseer","cr":4,"statBlock":"HP 88, AC 16, Attack: Greataxe +6 (2d10+4)."},
-    {"name":"Slave Rebellion Leader","cr":3,"statBlock":"HP 55, AC 14, Attack: Whip +5 (1d6+3)."}
-  ],
-  "Azurean League": [
-    {"name":"Halfling Scout","cr":0.5,"statBlock":"HP 14, AC 14, Attack: Bow +5 (1d6+3)."},
-    {"name":"Elven Duelist","cr":3,"statBlock":"HP 52, AC 15, Attack: Rapier +6 (1d8+4)."},
-    {"name":"Azurean Mage","cr":5,"statBlock":"HP 60, AC 13, Spells: Lightning Bolt (8d6), Mage Armor."}
-  ],
-  "Dwarven Union": [
-    {"name":"Duergar Warrior","cr":2,"statBlock":"HP 39, AC 16, Attack: War Pick +5 (2d8+2)."},
-    {"name":"Stone Guardian","cr":4,"statBlock":"HP 85, AC 17, Attack: Slam +7 (3d10+5)."},
-    {"name":"Cave Hydra","cr":6,"statBlock":"HP 120, AC 16, Attack: Multiattack (3 heads, 2d10+4)."}
-  ],
-  "Order of the Dragon’s Phallus": [
-    {"name":"Acolyte of the Flame","cr":2,"statBlock":"HP 38, AC 13, Spells: Firebolt (2d10), Flame Blade (3d6)."},
-    {"name":"Archivist of Kar’el","cr":4,"statBlock":"HP 60, AC 12, Spells: Magic Missile (1d4+1), Fireball (8d6)."},
-    {"name":"Dragonkin Avatar","cr":7,"statBlock":"HP 110, AC 17, Attack: Bite +8 (2d10+5), Tail Swipe (2d8+4)."}
-  ],
-  "Berynian Scythes": [
-    {"name":"Druidic Protector","cr":3,"statBlock":"HP 58, AC 14, Spells: Entangle, Thunderwave (3d8)."},
-    {"name":"Forest Guardian","cr":5,"statBlock":"HP 85, AC 16, Attack: Claw +7 (2d8+4), Root Snare (1d6+3)."},
-    {"name":"Wild Elemental","cr":6,"statBlock":"HP 110, AC 15, Attack: Slam +6 (2d10+5), Tempest Strike (3d8)."}
-  ],
-  "Children of Nergál": [
-    {"name":"Bone Servant","cr":1,"statBlock":"HP 22, AC 13, Attack: Claw +3 (1d8+2)."},
-    {"name":"Plague Bearer","cr":4,"statBlock":"HP 78, AC 15, Diseased Strike (1d10+3, DC 14 CON)."},
-    {"name":"Death Warden","cr":7,"statBlock":"HP 120, AC 16, Spells: Inflict Wounds (4d10), Animate Dead."}
-  ],
-  "Origen Brotherhood": [
-    {"name":"Forge Sentinel","cr":2,"statBlock":"HP 44, AC 18, Attack: Hammer Strike +5 (1d10+2)."},
-    {"name":"Arcane Engineer","cr":5,"statBlock":"HP 75, AC 14, Spells: Scorching Ray, Arcane Lock."},
-    {"name":"Steel Construct","cr":6,"statBlock":"HP 120, AC 19, Attack: Multiattack (2d10+5)."}
-  ],
-  "The Cult of Rael": [
-    {"name":"Zealous Knight","cr":3,"statBlock":"HP 50, AC 17, Attack: Longsword +5 (1d10+3)."},
-    {"name":"Raellan Acolyte","cr":2,"statBlock":"HP 35, AC 13, Spells: Bless, Smite."},
-    {"name":"High Arbiter","cr":6,"statBlock":"HP 85, AC 18, Spells: Flame Strike (4d6+4), Silence."}
-  ],
-  "Independent Freeholds": [
-    {"name":"Wildling Ranger","cr":1,"statBlock":"HP 20, AC 14, Attack: Bow +4 (1d8+2)."},
-    {"name":"Forest Bandit","cr":2,"statBlock":"HP 32, AC 13, Attack: Scimitar +5 (1d6+3)."},
-    {"name":"Poacher","cr":3,"statBlock":"HP 45, AC 14, Attack: Crossbow +6 (1d10+3)."}
-  ],
-  "The Adventurers Guild": [
-    {"name":"Novice Adventurer","cr":1,"statBlock":"HP 22, AC 13, Attack: Shortsword +4 (1d6+2)."},
-    {"name":"Guild Mercenary","cr":3,"statBlock":"HP 52, AC 15, Attack: Greataxe +6 (1d12+3)."},
-    {"name":"Veteran Explorer","cr":5,"statBlock":"HP 75, AC 16, Spells: Misty Step, Firebolt (2d10)."}
-  ],
-  "Zhilan Triads": [
-    {"name":"Triad Enforcer","cr":2,"statBlock":"HP 40, AC 14, Attack: Dagger +6 (1d8+3)."},
-    {"name":"Silent Blade","cr":5,"statBlock":"HP 65, AC 16, Attack: Sneak Attack (2d6), Shortbow +6 (1d8+3)."},
-    {"name":"Shadow Master","cr":7,"statBlock":"HP 100, AC 17, Spells: Darkness, Invisibility, Shadow Blade."}
-  ],
-  "Xondaran Syndicate": [
-    {"name":"Dockside Thug","cr":1,"statBlock":"HP 22, AC 13, Attack: Club +4 (1d8+2)."},
-    {"name":"Rahib Overseer","cr":4,"statBlock":"HP 75, AC 15, Attack: Whip +5 (1d6+3), Command."},
-    {"name":"Syndicate Sorcerer","cr":6,"statBlock":"HP 88, AC 14, Spells: Fireball, Mage Hand, Charm Person."}
-  ],
-  "The Blackjacks": [
-    {"name":"Street Tough","cr":0.5,"statBlock":"HP 18, AC 12, Attack: Fist +3 (1d6+1)."},
-    {"name":"Blackjack Enforcer","cr":3,"statBlock":"HP 55, AC 14, Attack: Sap +6 (1d8+3)."},
-    {"name":"The Jack","cr":6,"statBlock":"HP 90, AC 16, Attack: Short Sword +7 (2d6+4), Evasion."}
-  ],
-  "The Scarlet Swallows": [
-    {"name":"Scarlet Enchantress","cr":2,"statBlock":"HP 40, AC 13, Spells: Charm Person, Minor Illusion."},
-    {"name":"Swallow Escort","cr":4,"statBlock":"HP 68, AC 15, Attack: Rapier +5 (1d8+2)."},
-    {"name":"The Madame","cr":7,"statBlock":"HP 100, AC 17, Spells: Suggestion, Hypnotic Pattern."}
-  ],
-  "Harbingers": [
-    {"name":"Courier Spy","cr":1,"statBlock":"HP 22, AC 12, Attack: Dagger +4 (1d4+2)."},
-    {"name":"Message Thief","cr":3,"statBlock":"HP 50, AC 14, Attack: Shortsword +5 (1d6+3), Evasion."},
-    {"name":"Harbinger Coordinator","cr":5,"statBlock":"HP 70, AC 15, Spells: Message, Blur."}
-  ],
-  "The Noble Guild of Assassins": [
-    {"name":"Novice Assassin","cr":2,"statBlock":"HP 34, AC 14, Attack: Dagger +5 (1d8+3), Poisoned Blade."},
-    {"name":"Skilled Cutthroat","cr":5,"statBlock":"HP 68, AC 16, Attack: Sneak Attack (3d6), Shortbow +6 (1d8+3)."},
-    {"name":"Guild Master","cr":8,"statBlock":"HP 120, AC 17, Spells: Greater Invisibility, Assassinate."}
-  ],
-  "Sisters Benevolent": [
-    {"name":"Healing Sister","cr":2,"statBlock":"HP 40, AC 12, Spells: Cure Wounds, Sanctuary."},
-    {"name":"Shield Bearer","cr":4,"statBlock":"HP 65, AC 16, Attack: Shield Bash +5 (1d8+3)."},
-    {"name":"Benevolent Martyr","cr":6,"statBlock":"HP 85, AC 14, Spells: Mass Healing Word, Spirit Guardians."}
-  ],
-  "Duskhaven Black Arts Education Centre": [
-    {"name":"Necrotic Apprentice","cr":2,"statBlock":"HP 38, AC 13, Spells: Chill Touch (2d8), Mage Armor."},
-    {"name":"Dark Scholar","cr":5,"statBlock":"HP 70, AC 14, Spells: Animate Dead, Vampiric Touch."},
-    {"name":"Master Necromancer","cr":8,"statBlock":"HP 100, AC 15, Spells: Circle of Death, Finger of Death."}
-  ],
-  "Madame Seryell’s School of Song and Spell": [
-    {"name":"Illusionist Performer","cr":2,"statBlock":"HP 36, AC 12, Spells: Minor Illusion, Silent Image."},
-    {"name":"Arcane Dancer","cr":4,"statBlock":"HP 60, AC 13, Spells: Hypnotic Pattern, Mirror Image."},
-    {"name":"Songweaver Master","cr":7,"statBlock":"HP 95, AC 15, Spells: Greater Invisibility, Confusion."}
-  ],
-  "Unaligned": [
-    {"name":"Highwayman","cr":1,"statBlock":"HP 20, AC 12, Attack: Shortsword +4 (1d6+2)."},
-    {"name":"Mist Stalker","cr":5,"statBlock":"HP 70, AC 14, Attack: Dagger +6 (2d6+3), Mist Step (Recharge 5‑6)."},
-    {"name":"Rogue Elemental","cr":6,"statBlock":"HP 110, AC 15, Attack: Slam +7 (2d10+4), Whirlwind (3d8)."}
-  ]
-};
-// === End Creature List ===
+<div class="container">
+  <h1>Bestiary</h1>
+  <label for="creature-select">Select Creature:</label>
+  <select id="creature-select"><option value="">-- choose --</option></select>
+  <button class="button" id="pin-button">Pin</button>
+  <button class="button" id="clear-button">Clear All</button>
+  <div id="pinned-container"></div>
+  <div id="definitions"></div>
+</div>
 
+<script>
+/* ===== COMPLETE CREATURE LIST ===== */
+const CREATURES = {
+"Silt": [
+`<pre><strong>Raellan Inquisitor (CR 5)</strong>
+Medium humanoid, lawful evil
+AC 18 (plate), HP 80 (9d8+36)   Speed 30 ft.
+STR 16 DEX 12 CON 18 INT 11 WIS 14 CHA 15
+Saves Wis +5, Cha +5   Skills Intimidation +5
+Damage Res. radiant   Languages Common, Celestial
+<strong>Hold Person (3/Day).</strong> DC 15 Wis save or paralyzed 1 min.
+<strong>Multiattack.</strong> Inquisitor makes two smite‑blade attacks.
+<b>Smite‑Blade.</b> +7 to hit, 5 ft.; 11 (1d8+7) radiant & 5 (1d8) fire.</pre>`,
+
+`<pre><strong>Sister Militant (CR 4)</strong>
+Medium humanoid, lawful evil
+AC 17 (chain + shield)  HP 75 (10d8+30)  Speed 30 ft.
+STR 18 DEX 14 CON 16 INT 9 WIS 11 CHA 10
+Skills Athletics +7   Languages Common
+<strong>Zeal.</strong> Advantage vs frightened; on 0 HP fight 1 more round.
+<strong>Longsword.</strong> +7 to hit, 5 ft.; 13 (2d8+4) slashing.</pre>`,
+
+`<pre><strong>Cult Zealot (CR 3)</strong>
+Medium humanoid, chaotic evil
+AC 14 (studded)  HP 60 (8d8+24)  Speed 30 ft.
+STR 15 DEX 12 CON 16 INT 9 WIS 12 CHA 13
+<b>Mace.</b> +6 to hit, 5 ft.; 9 (1d8+5) bludgeoning.
+<b>Frenzied Chant (Recharge 5‑6).</b> Allies in 20 ft.+2 atk until next turn.</pre>`,
+
+/* —— Silt custom machines & troops (7 blocks) —— */
+`<pre><strong>Silt Elite Gunner (CR 4)</strong>
+Medium humanoid, lawful evil
+AC 17 (half‑plate)  HP 85 (10d8+40)   Speed 30 ft.
+STR 13 DEX 16 CON 18 INT 10 WIS 12 CHA 10
+Saves Con +7, Dex +6   Skills Perception +3
+Damage Res. poison   Languages Common
+<strong>Multiattack.</strong> Two attacks (musket or bayonet).
+<b>Bayonet Musket.</b> Ranged +7 (120/240 ft.) 13 (2d10+2) piercing; reload 1 turn.
+<b>Bayonet.</b> Melee +5, 7 (1d8+3) slashing.
+<b>Volley Fire (Recharge 5‑6).</b> If another gunner within 10 ft., both attacks auto‑deal max damage this turn.
+<b>Stand Your Ground (Reaction).</b> Give adjacent ally half cover vs one attack.</pre>`,
+
+`<pre><strong>Silt Lignite Hound Mk II (CR 7)</strong>
+Large construct (vehicle), unaligned
+AC 20 (shell)   HP 170 (20d10+60)  Speed 30 ft.
+STR 22 DEX 9 CON 17 INT 3 WIS 10 CHA 5
+Immunities poison, psychic; Cond. Immune charmed, frightened, paralyzed
+Senses darkvision 60 ft.
+<b>Subsystems.</b> Cockpit HP 35; Saw HP 50; Cannon HP 45; Core HP 40; Legs HP 30 ea.
+<strong>Multiattack.</strong> Sawblade and Steam Cannon.
+<b>Sawblade.</b> +9, 10 ft.; 22 (4d8+6) slashing. On crit DC 15 Con or bleed 2d6.
+<b>Steam Cannon (Recharge 5‑6).</b> +7, 90/180 ft.; 27 (6d8) bludgeon & push 10 ft.
+<b>Overrun (Recharge 6).</b> DC 16 Dex or 27 (5d10) bludgeon & prone.
+<b>Overdrive (1/day).</b> Advantage on attacks & +10 ft. speed for 3 rounds; takes 10 force each end‑turn.
+<b>Engine Explosion.</b> Core 0 HP → DC 16 Dex 30 ft., 28 (8d6) fire + 14 (4d6) force; half on save.</pre>`,
+
+`<pre><strong>Silt‑class Steambulldozer (CR 5)</strong>
+Huge construct, unaligned
+AC 17 (blade), 15 (hull)
+HP 80 platform   Speed 20 ft. (wide turns)
+Subsystems: Tracks HP 30 ea; Blade HP 50; Cabin HP 40; Engine HP 40.
+<b>Ramming Charge (Recharge 5‑6).</b> 20 ft. straight; DC 14 Dex 22 (4d10) bludgeon & prone.
+<b>Smoke Stack (1/day).</b> 30‑ft. heavy obscurement; DC 13 Con or poisoned 1 min.
+<b>Engine Explosion.</b> DC 15 Dex 20 ft.; 24 (6d6) fire + 14 (4d6) force.</pre>`,
+
+`<pre><strong>Silt Lumberjack (CR 1/2)</strong>
+Medium humanoid, neutral evil
+AC 12   HP 18 (3d8+5)   Speed 25 ft.
+STR 14 DEX 10 CON 13 INT 8 WIS 9 CHA 8
+<b>Buzz Axe.</b> +4, 5 ft.; 5 (1d6+2) slashing.
+<b>Tree‑Feller’s Frenzy (1/day).</b> Two axe attacks w/ adv; each hit +1d6 & DC 12 Str save prone.
+<b>Volatile Fuel.</b> On death roll d6; 6 → 7 (2d6) fire to 5 ft.</pre>`,
+
+`<pre><strong>Silt Tracker (CR 2)</strong>
+Medium humanoid, neutral evil
+AC 15   HP 40 (6d8+12)   Speed 35 ft.
+STR 11 DEX 16 CON 14 INT 11 WIS 14 CHA 9
+Skills Survival +4, Stealth +6
+<b>Hand Crossbow.</b> +6, 30/120 ft.; 9 (2d6+2) piercing. Bonus‑reload.
+<b>Poison Bolt (1/day).</b> Next hit +7 (2d6) poison & DC 13 Con poison 1 min.
+<b>Hunter’s Mark.</b> Bonus action mark; +1d6 vs target 1 h.
+<b>Feral Retreat (Reaction).</b> When enemy ends within 5 ft., Tracker moves 10 ft. no OA.</pre>`,
+
+`<pre><strong>Silt Arbalestier (CR 3)</strong>
+Medium humanoid, lawful evil
+AC 16   HP 52 (8d8+16)   Speed 30 ft.
+STR 12 DEX 16 CON 14 INT 10 WIS 11 CHA 9
+<b>Heavy Crossbow.</b> +7, 100/400 ft.; 13 (2d10+2) piercing. Reload 1 action.
+<b>Suppressing Line (Recharge 5‑6).</b> 10‑ft. line DC 13 Dex 11 (2d10) & lose reactions.
+<b>Quick Load (1/short).</b> Ignore reload on next shot.</pre>`,
+
+`<pre><strong>Silt Enforcer (CR 3)</strong>
+Medium humanoid, lawful evil
+AC 17   HP 60 (8d8+24)   Speed 30 ft.
+STR 16 DEX 14 CON 16 INT 10 WIS 10 CHA 11
+<b>Longsword.</b> +6, 5 ft.; 9 (1d10+4) slashing. Concentration checks at disadv.
+<b>Brace (Reaction).</b> OA against entering enemy.
+<b>Riposte (Reaction 1/turn).</b> On miss vs Enforcer, make sword attack.
+<b>Leadership (1/short).</b> Allies 10 ft. +1 atk/saves 1 min.</pre>`,
+
+`<pre><strong>Silt Field Engineer (CR 2)</strong>
+Medium humanoid, neutral evil
+AC 14   HP 45 (6d8+18)   Speed 25 ft.
+STR 10 DEX 12 CON 16 INT 14 WIS 11 CHA 9
+<b>Wrench.</b> +4, 5 ft.; 6 (1d8+2) bludgeoning (adv vs constructs).
+<b>Rewire (Bonus).</b> Repair construct 10 HP or remove condition.
+<b>Deploy Turret (1/day).</b> Tiny turret AC 14 HP 20; for 3 rds auto +5 to hit 1d8 force 60 ft.
+<b>Sabotage (Recharge 6).</b> +5 melee; on hit target construct stunned (DC 13 Int/Dex negates).</pre>`
+],
+
+"Margraeve-Duskhaven": [
+`<pre><strong>Undead Guard (CR 1)</strong>
+Medium undead, neutral evil
+AC 15 (chain + shield)  HP 22 (4d8)   Speed 30 ft.
+STR 14 DEX 12 CON — INT 6 WIS 8 CHA 5
+Damage Res. necrotic   Condition Immune poisoned
+<b>Longsword.</b> +4 to hit; 8 (1d8+2) slashing.</pre>`,
+
+`<pre><strong>Necromancer (CR 6)</strong>
+Medium humanoid, neutral evil
+AC 12 (robe)  HP 66 (12d8+12)   Speed 30 ft.
+STR 8 DEX 14 CON 12 INT 16 WIS 12 CHA 11
+Spells (DC 14, +6): Cantrips chill touch, mage hand|1st ray of sickness|3rd fireball|4th blight
+<b>Dread Word (Recharge 5‑6).</b> DC 14 Wis fear 1 min.</pre>`,
+
+`<pre><strong>Haunting Spirit (CR 4)</strong>
+Medium undead, chaotic evil
+AC 14  HP 50 (9d8)   Speed 0 ft., fly 50 ft. (hover)
+STR 6 DEX 16 CON — INT 10 WIS 12 CHA 14
+Damage Res. acid, fire; Immune necrotic, poison; Condition Immune charmed, grappled
+<b>Fear Aura.</b> 20 ft.; DC 15 Wis or frightened 1 min.
+<b>Terror Touch.</b> +6 melee; 17 (4d6+3) necrotic.</pre>`
+],
+
+"Caldwell People's Republic": [
+`<pre><strong>Brigand (CR 1/2)</strong>
+Medium humanoid, chaotic neutral
+AC 12 leather   HP 16 (3d8+3)   Speed 30 ft.
+<b>Crossbow.</b> +3 40/160 ft.; 6 (1d8+1) piercing.</pre>`,
+
+`<pre><strong>Caldwell Overseer (CR 4)</strong>
+Medium humanoid, lawful evil
+AC 16 scale     HP 88 (16d8+16)
+<b>Greataxe.</b> +6 to hit; 15 (2d10+4) slashing.
+<b>Crack the Whip.</b> Allies in 30 ft. gain +1d4 damage next hit.</pre>`,
+
+`<pre><strong>Slave Rebellion Leader (CR 3)</strong>
+Medium humanoid, chaotic good
+AC 14 studded   HP 55 (10d8)   Speed 30 ft.
+<b>Whip.</b> +5 10 ft.; 8 (1d6+5) slashing & DC 13 Dex disarm.</pre>`
+],
+
+"Azurean League": [
+`<pre><strong>Halfling Scout (CR 1/2)</strong>
+Small humanoid, neutral good
+AC 14 (leather)  HP 14   <b>Bow</b> +5 80/320 ft.; 6 (1d6+3)</pre>`,
+
+`<pre><strong>Elven Duelist (CR 3)</strong>
+Medium humanoid, chaotic good
+AC 15 breastplate  HP 52
+<b>Rapier.</b> +6 to hit; 10 (1d8+6) piercing; riposte reaction.</pre>`,
+
+`<pre><strong>Azurean Mage (CR 5)</strong>
+Medium humanoid, any
+AC 13 mage armor  HP 60
+Spells (DC 15, +7): bolt of lightning (8d6), misty step, shield.</pre>`
+],
+
+"Dwarven Union": [
+`<pre><strong>Duergar Warrior (CR 2)</strong>
+Medium dwarf, lawful neutral
+AC 16   HP 39   <b>War Pick</b> +5 (2d8+2) pierce; enlarge 1/short.</pre>`,
+
+`<pre><strong>Stone Guardian (CR 4)</strong>
+Large construct
+AC 17   HP 85   <b>Slam</b> +7 (3d10+5) bludgeon.</pre>`,
+
+`<pre><strong>Cave Hydra (CR 6)</strong>
+Huge monstrosity
+AC 16  HP 120
+<b>Multiattack – 3 Heads.</b> Each +8 2d10+4 piercing.</pre>`
+],
+
+"Order of the Dragon’s Phallus": [
+`<pre><strong>Acolyte of the Flame (CR 2)</strong>
+Medium humanoid
+AC 13  HP 38
+Spells: firebolt 2d10; flame blade 3d6.</pre>`,
+
+`<pre><strong>Archivist of Kar’el (CR 4)</strong>
+Medium humanoid
+AC 12    HP 60
+Spells: magic missile, fireball.</pre>`,
+
+`<pre><strong>Dragonkin Avatar (CR 7)</strong>
+Large dragonborn
+AC 17 HP 110
+<b>Bite</b> +8 (2d10+5); <b>Tail</b> 2d8+4.</pre>`
+],
+
+"Berynian Scythes": [
+`<pre><strong>Druidic Protector (CR 3)</strong>
+Medium humanoid
+AC 14 HP 58   Spells entangle, thunderwave 3d8.</pre>`,
+
+`<pre><strong>Forest Guardian (CR 5)</strong>
+Large plant
+AC 16 HP 85
+<b>Claw</b> +7 (2d8+4); root snare DC 14.</pre>`,
+
+`<pre><strong>Wild Elemental (CR 6)</strong>
+Large elemental
+AC 15 HP 110
+<b>Slam</b> +6 (2d10+5); tempest strike 3d8.</pre>`
+]
+};
+/* ===== UI code identical for all parts – keep only in part ① ===== */
 function slugify(n){return n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');}
-window.addEventListener('DOMContentLoaded',()=>{const defs=document.getElementById('definitions');const sel=document.getElementById('creature-select');
-Object.values(CREATURES).flat().forEach(c=>{const id=slugify(c.name);const o=document.createElement('option');o.value=id;o.text=`${c.name} (CR ${c.cr})`;sel.appendChild(o);
-const d=document.createElement('div');d.id=id;d.className='creature';d.innerHTML=`<h2>${c.name} (CR ${c.cr})</h2><pre>${c.statBlock}</pre>`;defs.appendChild(d);});
-defs.style.display='none';
-document.getElementById('pin-button').onclick=()=>{const id=sel.value;if(!id)return;if(document.getElementById('pinned-'+id))return;
-const clone=document.getElementById(id).cloneNode(true);clone.id='pinned-'+id;document.getElementById('pinned-container').appendChild(clone);};
-document.getElementById('clear-button').onclick=()=>{document.getElementById('pinned-container').innerHTML='';};});
+window.addEventListener('DOMContentLoaded',()=>{
+  const defs=document.getElementById('definitions');
+  const sel=document.getElementById('creature-select');
+  Object.entries(CREATURES).forEach(([fac,list])=>{
+    list.forEach((block,i)=>{
+      const id=slugify(fac)+'-'+i;
+      const opt=document.createElement('option');
+      opt.value=id; opt.text=`${fac} – #${i+1}`;
+      sel.appendChild(opt);
+      const div=document.createElement('div');
+      div.id=id; div.className='creature'; div.innerHTML=block;
+      defs.appendChild(div);
+    });
+  });
+  defs.style.display='none';
+  document.getElementById('pin-button').onclick=()=>{
+    const id=sel.value;if(!id)return;
+    if(document.getElementById('pinned-'+id))return;
+    const clone=document.getElementById(id).cloneNode(true);
+    clone.id='pinned-'+id;
+    document.getElementById('pinned-container').appendChild(clone);
+  };
+  document.getElementById('clear-button').onclick=()=>{document.getElementById('pinned-container').innerHTML='';};
+});
 </script>
+<!--‑‑‑ end of PART ① – paste parts ② & ③ immediately below this line ‑‑‑--><!--‑‑‑‑‑‑‑‑‑ PART ② – append more factions ‑‑‑‑‑‑‑‑‑‑-->
+<script>
+Object.assign(CREATURES, {
+
+"Children of Nergál": [
+`<pre><strong>Bone Servant (CR 1)</strong>
+Medium undead, neutral evil
+AC 13 (rotting mail)  HP 22 (4d8)   Speed 30 ft.
+STR 14 DEX 10 CON — INT 6 WIS 8 CHA 5
+Damage Res. necrotic   Condition Immune poisoned
+<b>Claw.</b> +3 to hit, 5 ft.; 7 (1d6 + 3) slashing.
+<b>Deathly Grasp.</b> Target grappled (escape DC 12); while grappled the servant can’t claw another.</pre>`,
+
+`<pre><strong>Plague Bearer (CR 4)</strong>
+Medium undead, chaotic evil
+AC 15 (pustulent hide)   HP 78 (12d8 + 24)   Speed 30 ft.
+STR 16 DEX 12 CON 14 INT 8 WIS 12 CHA 6
+<b>Diseased Strike.</b> +6 to hit; 12 (1d10 + 7) necrotic. DC 14 Con or contract creeping rot (1d6 necrotic each dawn, cure lesser restoration).
+<b>Rotting Aura.</b> Creatures starting turn within 10 ft. take 3 necrotic (DC 13 Con half).</pre>`,
+
+`<pre><strong>Death Warden (CR 7)</strong>
+Large undead, lawful evil
+AC 16 (bone plate)   HP 120 (16d10 + 32)   Speed 35 ft.
+STR 20 DEX 14 CON 14 INT 11 WIS 14 CHA 15
+Saves Wis +6, Cha +6   Damage Res. necrotic; Immune poison
+<b>Soul‑Reaping Glaive.</b> +9 reach 10 ft.; 19 (2d10 + 8) slashing + 7 (2d6) necrotic.
+<b>Spellcasting.</b> 5/day each: <em>inflict wounds</em> (4d10), <em>animate dead</em>.
+<b>Grave Command (Recharge 5‑6).</b> Undead allies in 60 ft. use reaction to move & attack.</pre>`
+],
+
+"Origen Brotherhood": [
+`<pre><strong>Forge Sentinel (CR 2)</strong>
+Medium construct, unaligned
+AC 18 (forged steel)   HP 44 (8d8)   Speed 30 ft.
+Immunities poison, psychic   Cond. Immune charmed, frightened
+<b>Hammer Strike.</b> +5; 9 (1d10 + 4) bludgeoning.
+<b>Melted Brand (Recharge 6).</b> 15‑ft. cone, DC 13 Dex or 14 (4d6) fire.</pre>`,
+
+`<pre><strong>Arcane Engineer (CR 5)</strong>
+Medium humanoid, lawful neutral
+AC 14   HP 75 (10d8 + 30)
+<b>Spells</b> (DC 15, +7): <em>scorching ray</em>, <em>arcane lock</em>, <em>mending</em>.
+<b>Wrench.</b> +5; 8 (1d8 + 4) bludgeoning. On hit vs construct heals 5 HP instead of damage.</pre>`,
+
+`<pre><strong>Steel Construct (CR 6)</strong>
+Large construct, unaligned
+AC 19   HP 120 (16d10 + 32)
+<b>Multiattack.</b> Two slams.
+<b>Slam.</b> +8; 15 (2d10 + 4) bludgeoning.</pre>`
+],
+
+"The Cult of Rael": [
+`<pre><strong>Zealous Knight (CR 3)</strong>
+Medium humanoid, lawful evil
+AC 17 (plate)   HP 50
+<b>Longsword.</b> +5; 9 (1d10 + 4) slashing.
+<b>Radiant Smite.</b> Once/turn extra 7 (2d6) radiant.</pre>`,
+
+`<pre><strong>Raellan Acolyte (CR 2)</strong>
+Medium humanoid, lawful evil
+AC 13   HP 35
+Spells (dc 13): <em>bless</em>, <em>smite</em>.</pre>`,
+
+`<pre><strong>High Arbiter (CR 6)</strong>
+Medium humanoid, lawful evil
+AC 18   HP 85
+<b>Spellcasting</b> (DC 15, +7): <em>flame strike</em>, <em>silence</em>, <em>banishment</em>.</pre>`
+],
+
+"Independent Freeholds": [
+`<pre><strong>Wildling Ranger (CR 1)</strong>
+Medium humanoid, chaotic neutral
+AC 14   HP 20
+<b>Longbow.</b> +4; 7 (1d8 + 3) piercing.</pre>`,
+
+`<pre><strong>Forest Bandit (CR 2)</strong>
+Medium humanoid
+AC 13   HP 32
+<b>Scimitar.</b> +5; 7 (1d6 + 4) slashing.</pre>`,
+
+`<pre><strong>Poacher (CR 3)</strong>
+Medium humanoid
+AC 14   HP 45
+<b>Heavy Crossbow.</b> +6; 11 (1d10 + 6) piercing.</pre>`
+],
+
+"The Adventurers Guild": [
+`<pre><strong>Novice Adventurer (CR 1)</strong>
+Medium humanoid
+AC 13   HP 22
+<b>Shortsword.</b> +4; 6 (1d6 + 3).</pre>`,
+
+`<pre><strong>Guild Mercenary (CR 3)</strong>
+Medium humanoid
+AC 15 chain   HP 52
+<b>Greataxe.</b> +6; 13 (1d12 + 6).</pre>`,
+
+`<pre><strong>Veteran Explorer (CR 5)</strong>
+Medium humanoid
+AC 16   HP 75
+Spells dc15: <em>misty step</em>, <em>firebolt</em> 2d10.</pre>`
+],
+
+"Zhilan Triads": [
+`<pre><strong>Triad Enforcer (CR 2)</strong>
+Medium humanoid
+AC 14   HP 40
+<b>Dagger.</b> +6; 8 (1d8 + 4) piercing.</pre>`,
+
+`<pre><strong>Silent Blade (CR 5)</strong>
+Medium humanoid
+AC 16   HP 65
+<b>Sneak Attack.</b> +7; 14 (2d6 + 7) plus 10 (3d6) extra if adv.</pre>`,
+
+`<pre><strong>Shadow Master (CR 7)</strong>
+Medium humanoid
+AC 17   HP 100
+Spells: <em>darkness</em>, <em>invisibility</em>, <em>shadow blade</em>.</pre>`
+],
+
+"Xondaran Syndicate": [
+`<pre><strong>Dockside Thug (CR 1)</strong>
+Medium humanoid
+AC 13   HP 22
+<b>Club.</b> +4; 7 (1d8 + 3).</pre>`,
+
+`<pre><strong>Rahib Overseer (CR 4)</strong>
+Medium humanoid
+AC 15   HP 75
+<b>Whip.</b> +5; 7 (1d6 + 4) slashing; on hit can Command (DC 14 Wis).</pre>`,
+
+`<pre><strong>Syndicate Sorcerer (CR 6)</strong>
+Medium humanoid
+AC 14   HP 88
+Spells dc15: <em>fireball</em>, <em>charm person</em>, <em>mage hand</em>.</pre>`
+],
+
+"The Blackjacks": [
+`<pre><strong>Street Tough (CR 1/2)</strong>
+Medium humanoid
+AC 12   HP 18
+<b>Fist.</b> +3; 5 (1d6 + 2) bludgeoning.</pre>`,
+
+`<pre><strong>Blackjack Enforcer (CR 3)</strong>
+Medium humanoid
+AC 14   HP 55
+<b>Sap.</b> +6; 11 (1d8 + 7). Hit: target DC 13 Con or stunned until turn‑end.</pre>`,
+
+`<pre><strong>The Jack (CR 6)</strong>
+Medium humanoid
+AC 16   HP 90
+<b>Short Sword.</b> +7; 14 (2d6 + 7). Evasion, uncanny dodge.</pre>`
+],
+
+"The Scarlet Swallows": [
+`<pre><strong>Scarlet Enchantress (CR 2)</strong>
+Medium humanoid
+AC 13   HP 40
+Spells dc 13: <em>charm person</em>, <em>minor illusion</em>.</pre>`,
+
+`<pre><strong>Swallow Escort (CR 4)</strong>
+Medium humanoid
+AC 15   HP 68
+<b>Rapier.</b> +5; 10 (1d8 + 6) piercing.</pre>`,
+
+`<pre><strong>The Madame (CR 7)</strong>
+Medium humanoid
+AC 17   HP 100
+Spells dc 16: <em>suggestion</em>, <em>hypnotic pattern</em>, <em>geas</em>.</pre>`
+],
+
+"Harbingers": [
+`<pre><strong>Courier Spy (CR 1)</strong>
+Medium humanoid
+AC 12   HP 22
+<b>Dagger.</b> +4; 5 (1d4 + 3).</pre>`,
+
+`<pre><strong>Message Thief (CR 3)</strong>
+Medium humanoid
+AC 14   HP 50
+<b>Shortsword.</b> +5; 7 (1d6 + 4) piercing; Evasion.</pre>`,
+
+`<pre><strong>Harbinger Coordinator (CR 5)</strong>
+Medium humanoid
+AC 15   HP 70
+Spells dc 14: <em>message</em>, <em>blur</em>, <em>counterspell</em>.</pre>`
+]
+
+});  // end Object.assign
+</script>
+<!--‑‑‑‑‑‑‑‑‑ end of PART ② – PART ③ continues below ‑‑‑‑‑‑‑‑‑-->
+<!--‑‑‑‑‑‑‑‑‑ PART ③ – final factions & close document ‑‑‑‑‑‑‑‑‑-->
+<script>
+Object.assign(CREATURES, {
+
+"The Noble Guild of Assassins": [
+`<pre><strong>Novice Assassin (CR 2)</strong>
+Medium humanoid, neutral evil
+AC 14 (leather) HP 34 (8d8)
+STR 12 DEX 16 CON 11 INT 10 WIS 11 CHA 12
+<b>Poisoned Dagger.</b> +5 to hit, 5 ft.; 8 (1d8 + 3) piercing + 7 (2d6) poison (DC 13 Con half).
+<b>Assassinate.</b> Advantage vs surprised creatures; any hit is a critical.</pre>`,
+
+`<pre><strong>Skilled Cutthroat (CR 5)</strong>
+Medium humanoid, neutral evil
+AC 16 (studded) HP 68 (12d8 + 12)
+<b>Sneak Attack.</b> Once per turn an extra 10 (3d6) damage on advantage.
+<b>Shortbow.</b> +6 80/320 ft.; 9 (1d8 + 5) piercing.</pre>`,
+
+`<pre><strong>Guild Master (CR 8)</strong>
+Medium humanoid, neutral evil
+AC 17 (elven chain) HP 120 (16d8 + 48)
+<b>Spellcasting</b> (DC 16, +8): <em>greater invisibility</em>, <em>dimension door</em>.
+<b>Dagger Storm (Recharge 5‑6).</b> 15‑ft. cone, DC 16 Dex for 35 (10d6) piercing, half on save.</pre>`
+],
+
+"Sisters Benevolent": [
+`<pre><strong>Healing Sister (CR 2)</strong>
+Medium humanoid, lawful good
+AC 12 (habit) HP 40 (9d8)
+Spells (DC 13, +5): <em>cure wounds</em>, <em>sanctuary</em>.
+<b>Mace.</b> +4; 7 (1d6 + 4) bludgeoning.</pre>`,
+
+`<pre><strong>Shield Bearer (CR 4)</strong>
+Medium humanoid, lawful good
+AC 16 (shield) HP 65 (10d8 + 20)
+<b>Shield Bash.</b> +5; 10 (1d8 + 6) bludgeon; DC 14 Str save prone.</pre>`,
+
+`<pre><strong>Benevolent Martyr (CR 6)</strong>
+Medium humanoid, lawful good
+AC 14 HP 85 (14d8 + 14)
+Spells (DC 15, +7): <em>mass healing word</em>, <em>spirit guardians</em>.
+<b>Self‑Sacrifice.</b> Reaction—take damage meant for ally within 5 ft.</pre>`
+],
+
+"Duskhaven Black Arts Education Centre": [
+`<pre><strong>Necrotic Apprentice (CR 2)</strong>
+Medium humanoid, neutral evil
+AC 13 HP 38
+Spells: <em>chill touch</em> (2d8 necrotic), <em>mage armor</em>.</pre>`,
+
+`<pre><strong>Dark Scholar (CR 5)</strong>
+Medium humanoid
+AC 14 HP 70
+Spells: <em>animate dead</em>, <em>vampiric touch</em>.</pre>`,
+
+`<pre><strong>Master Necromancer (CR 8)</strong>
+Medium humanoid
+AC 15 HP 100
+Spells: <em>finger of death</em>, <em>circle of death</em>, <em>create undead</em>.</pre>`
+],
+
+"Madame Seryell’s School of Song and Spell": [
+`<pre><strong>Illusionist Performer (CR 2)</strong>
+Medium humanoid
+AC 12 HP 36
+Spells: <em>minor illusion</em>, <em>silent image</em>.</pre>`,
+
+`<pre><strong>Arcane Dancer (CR 4)</strong>
+Medium humanoid
+AC 13 HP 60
+<b>Rapier.</b> +6; 9 (1d8 + 5); disengage as bonus.
+Spells: <em>mirror image</em>, <em>hypnotic pattern</em>.</pre>`,
+
+`<pre><strong>Songweaver Master (CR 7)</strong>
+Medium humanoid
+AC 15 HP 95
+Spells: <em>greater invisibility</em>, <em>confusion</em>, <em>mass suggestion</em>.</pre>`
+],
+
+"Unaligned": [
+`<pre><strong>Highwayman (CR 1)</strong>
+Medium humanoid, chaotic neutral
+AC 12 HP 20
+<b>Shortsword.</b> +4; 7 (1d6 + 4) piercing.
+<b>Hold Up!</b> Bonus: DC 12 Cha—target drops a coin pouch.</pre>`,
+
+`<pre><strong>Mist Stalker (CR 5)</strong>
+Medium humanoid
+AC 14 HP 70
+<b>Dagger.</b> +6; 12 (2d6 + 5) piercing.
+<b>Mist Step (Recharge 5‑6).</b> Teleport 30 ft. as bonus action.</pre>`,
+
+`<pre><strong>Rogue Elemental (CR 6)</strong>
+Large elemental, unaligned
+AC 15 HP 110
+<b>Slam.</b> +7; 17 (2d10 + 6) bludgeon.
+<b>Whirlwind (Recharge 5‑6).</b> DC 15 Str; 13 (3d8) bludgeon & prone.</pre>`
+]
+
+}); /* end Object.assign – all factions loaded */
+</script>
+
 </body>
 </html>
+
