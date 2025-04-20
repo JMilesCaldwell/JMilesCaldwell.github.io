@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +6,8 @@
   <title>Bestiary</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -19,7 +16,7 @@
       font-family: 'Almendra', serif;
       text-align: center;
     }
-    h1,h2 {
+    h1, h2 {
       font-family: 'Cinzel', serif;
       margin: 0 0 .5rem;
     }
@@ -41,7 +38,7 @@
       background: #fff9ed;
       border: 1px solid #999;
       color: #333;
-      font-family: 'Almendra', serif;
+      font-family: 'Cinzel', serif;
     }
     .button {
       font-family: 'Cinzel', serif;
@@ -60,20 +57,18 @@
       text-align: left;
       border-top: 1px solid #8B0000;
       padding-top: 1rem;
+      display: none;
     }
-    pre {
-      background: #fff9ed;
-      border: 1px solid #999;
-      border-radius: 6px;
-      padding: 1rem;
-      white-space: pre-wrap;
-      color: #333;
+    #definitions {
+      display: none;
     }
-    #definitions { display: none; }
+    #pinned-container .creature {
+      display: block;
+    }
     @media print {
-      body * { visibility: hidden !important }
-      #pinned-container, #pinned-container * { visibility: visible !important }
-      #pinned-container { position: absolute; top:0; left:0; width:100%; }
+      body * { visibility: hidden !important; }
+      #pinned-container, #pinned-container * { visibility: visible !important; }
+      #pinned-container { position: absolute; top: 0; left: 0; width: 100%; }
     }
   </style>
 </head>
@@ -81,104 +76,108 @@
   <div class="container">
     <h1>Bestiary</h1>
     <label for="creature-select">Select Creature:</label>
-    <select id="creature-select">
-      <option value="">-- choose --</option>
-    </select>
+    <select id="creature-select"><option value="">-- choose --</option></select>
     <button class="button" id="pin-button">Pin</button>
-    <button class="button" id="clear-button">Clear All</button>
+    <button class="button" id="clear-button">Clear All</button>
     <div id="pinned-container"></div>
     <div id="definitions"></div>
   </div>
 
-  <!-- js‑yaml from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script>
+    // slugify helper
     function slugify(str) {
       return str.toLowerCase()
-                .replace(/[^a-z0-9]+/g,'-')
-                .replace(/(^-|-$)/g,'');
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
     }
 
-    // render one creature obj into a 5e‐style block
-    function formatStatBlock(c) {
-      let s = `**${c.name}**  *(CR ${c.cr})*\n`;
-      s += `${c.size} ${c.type}, ${c.alignment}\n\n`;
-      s += `**AC** ${c.ac}   **HP** ${c.hp}   **Speed** ${c.speed}\n\n`;
-      s += `STR ${c.str} DEX ${c.dex} CON ${c.con} INT ${c.int} WIS ${c.wis} CHA ${c.cha}\n\n`;
-      if (c.saves)      s += `**Saves:** ${c.saves}\n`;
-      if (c.skills)     s += `**Skills:** ${c.skills}\n`;
-      if (c.vulnerable) s += `**Vulnerable:** ${c.vulnerable}\n`;
-      if (c.resist)     s += `**Resist:** ${c.resist}\n`;
-      if (c.immune)     s += `**Immune:** ${c.immune}\n`;
-      if (c.conditions) s += `**Cond. Immune:** ${c.conditions}\n`;
-      if (c.senses)     s += `**Senses:** ${c.senses}\n`;
-      if (c.languages)  s += `**Languages:** ${c.languages}\n`;
-      s += "\n";
-      if (c.traits && c.traits.length) {
-        s += `__**Traits**__\n`;
-        c.traits.forEach(t=>{ s += `• **${t.name}.** ${t.desc}\n`; });
-        s += "\n";
+    // render a single creature object to HTML
+    function renderCreatureHTML(faction, creature) {
+      let html = `<h2>${creature.name} (CR ${creature.cr})</h2>
+        <p><strong>Type:</strong> ${creature.size} ${creature.type}, ${creature.alignment}</p>
+        <p>
+          <strong>AC:</strong> ${creature.ac}  
+          <strong>HP:</strong> ${creature.hp}  
+          <strong>Speed:</strong> ${creature.speed}
+        </p>
+        <p>
+          <strong>STR</strong> ${creature.str} |
+          <strong>DEX</strong> ${creature.dex} |
+          <strong>CON</strong> ${creature.con} |
+          <strong>INT</strong> ${creature.int} |
+          <strong>WIS</strong> ${creature.wis} |
+          <strong>CHA</strong> ${creature.cha}
+        </p>`;
+
+      if (creature.saves)      html += `<p><strong>Saves:</strong> ${creature.saves}</p>`;
+      if (creature.skills)     html += `<p><strong>Skills:</strong> ${creature.skills}</p>`;
+      if (creature.immune)     html += `<p><strong>Immune:</strong> ${creature.immune}</p>`;
+      if (creature.languages)  html += `<p><strong>Languages:</strong> ${creature.languages}</p>`;
+      if (creature.senses)     html += `<p><strong>Senses:</strong> ${creature.senses}</p>`;
+
+      if (creature.traits && creature.traits.length) {
+        html += `<h3>Traits</h3><ul>`;
+        creature.traits.forEach(t => {
+          html += `<li><strong>${t.name}:</strong> ${t.desc}</li>`;
+        });
+        html += `</ul>`;
       }
-      if (c.actions && c.actions.length) {
-        s += `__**Actions**__\n`;
-        c.actions.forEach(a=>{ s += `• **${a.name}.** ${a.desc}\n`; });
-        s += "\n";
+
+      if (creature.actions && creature.actions.length) {
+        html += `<h3>Actions</h3><ul>`;
+        creature.actions.forEach(a => {
+          html += `<li><strong>${a.name}:</strong> ${a.desc}</li>`;
+        });
+        html += `</ul>`;
       }
-      if (c.reactions && c.reactions.length) {
-        s += `__**Reactions**__\n`;
-        c.reactions.forEach(r=>{ s += `• **${r.name}.** ${r.desc}\n`; });
-        s += "\n";
-      }
-      if (c.legendary && c.legendary.length) {
-        s += `__**Legendary**__\n`;
-        c.legendary.forEach(l=>{ s += `• **${l.name}.** ${l.desc}\n`; });
-        s += "\n";
-      }
-      return s.trim();
+
+      return html;
     }
 
     async function loadBestiary() {
       try {
-        const resp = await fetch('resources/bestiary.yml');
-        const txt  = await resp.text();
-        const data = jsyaml.load(txt);
-
-        const sel  = document.getElementById('creature-select');
-        const defs = document.getElementById('definitions');
+        const res    = await fetch('resources/bestiary.yml');
+        const text   = await res.text();
+        const data   = jsyaml.load(text);
+        const sel    = document.getElementById('creature-select');
+        const defs   = document.getElementById('definitions');
 
         Object.entries(data).forEach(([faction, list]) => {
+          if (!Array.isArray(list)) return;
           list.forEach(creature => {
-            const title = `${creature.name} (CR ${creature.cr})`;
-            const id    = slugify(faction + '-' + creature.name);
-            // option
-            const opt = document.createElement('option');
-            opt.value       = id;
-            opt.textContent = `${faction} — ${title}`;
+            const id    = slugify(`${faction}-${creature.name}`);
+            const opt   = document.createElement('option');
+            opt.value   = id;
+            opt.text    = `${faction} — ${creature.name}`;
             sel.appendChild(opt);
-            // hidden block
-            const div = document.createElement('div');
-            div.id        = id;
-            div.className = 'creature';
-            div.innerHTML = `<pre>${formatStatBlock(creature)}</pre>`;
+
+            const div         = document.createElement('div');
+            div.id            = id;
+            div.className     = 'creature';
+            div.innerHTML     = renderCreatureHTML(faction, creature);
             defs.appendChild(div);
           });
         });
-        defs.style.display = 'none';
-      } catch(e) {
-        console.error('Failed to load or parse YAML:', e);
+      } catch (err) {
+        console.error('Failed to load Bestiary YAML:', err);
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       loadBestiary();
 
+      // pin logic
       document.getElementById('pin-button').onclick = () => {
-        const id = document.getElementById('creature-select').value;
-        if (!id || document.getElementById('pinned-'+id)) return;
-        const clone = document.getElementById(id).cloneNode(true);
-        clone.id = 'pinned-'+id;
+        const selVal = document.getElementById('creature-select').value;
+        if (!selVal) return;
+        if (document.getElementById('pinned-' + selVal)) return;
+        const orig = document.getElementById(selVal);
+        const clone = orig.cloneNode(true);
+        clone.id = 'pinned-' + selVal;
         document.getElementById('pinned-container').appendChild(clone);
       };
+
+      // clear all
       document.getElementById('clear-button').onclick = () => {
         document.getElementById('pinned-container').innerHTML = '';
       };
