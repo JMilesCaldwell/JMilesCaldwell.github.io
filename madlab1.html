@@ -52,18 +52,45 @@
     .button:hover {
       background: #6B0000;
     }
-    .creature {
-      margin: 2rem 0;
+    /* definitions hidden */
+    #definitions { display: none; }
+    /* pinned entry styling */
+    .pinned-entry {
+      position: relative;
+      background: rgba(0,0,0,0.8);
+      border-radius: 6px;
+      padding: 1rem;
+      margin: .5rem 0;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
       text-align: left;
-      border-top: 1px solid #8B0000;
-      padding-top: 1rem;
-      display: none;
     }
-    #definitions {
-      display: none;
+    .pinned-entry .remove-btn {
+      position: absolute;
+      top: .3rem;
+      right: .3rem;
+      background: transparent;
+      border: none;
+      color: #FAF4E0;
+      font-size: 1.2rem;
+      cursor: pointer;
     }
-    #pinned-container .creature {
-      display: block;
+    .pinned-entry .controls {
+      margin-bottom: .5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .pinned-entry .controls label {
+      font-family: 'Cinzel', serif;
+      color: #FAF4E0;
+    }
+    .pinned-entry .controls input {
+      width: 4rem;
+      padding: .2rem;
+      border-radius: 4px;
+      border: 1px solid #999;
+      font-family: inherit;
     }
     @media print {
       body * { visibility: hidden !important; }
@@ -78,7 +105,7 @@
     <label for="creature-select">Select Creature:</label>
     <select id="creature-select"><option value="">-- choose --</option></select>
     <button class="button" id="pin-button">Pin</button>
-    <button class="button" id="clear-button">Clear All</button>
+    <button class="button" id="clear-button">Clear All</button>
     <div id="pinned-container"></div>
     <div id="definitions"></div>
   </div>
@@ -92,7 +119,7 @@
     }
 
     // render a single creature object to HTML
-    function renderCreatureHTML(faction, creature) {
+    function renderCreatureHTML(creature) {
       let html = `<h2>${creature.name} (CR ${creature.cr})</h2>
         <p><strong>Type:</strong> ${creature.size} ${creature.type}, ${creature.alignment}</p>
         <p>
@@ -108,53 +135,63 @@
           <strong>WIS</strong> ${creature.wis} |
           <strong>CHA</strong> ${creature.cha}
         </p>`;
-
       if (creature.saves)      html += `<p><strong>Saves:</strong> ${creature.saves}</p>`;
       if (creature.skills)     html += `<p><strong>Skills:</strong> ${creature.skills}</p>`;
       if (creature.immune)     html += `<p><strong>Immune:</strong> ${creature.immune}</p>`;
       if (creature.languages)  html += `<p><strong>Languages:</strong> ${creature.languages}</p>`;
       if (creature.senses)     html += `<p><strong>Senses:</strong> ${creature.senses}</p>`;
-
-      if (creature.traits && creature.traits.length) {
+      if (creature.traits?.length) {
         html += `<h3>Traits</h3><ul>`;
         creature.traits.forEach(t => {
           html += `<li><strong>${t.name}:</strong> ${t.desc}</li>`;
         });
         html += `</ul>`;
       }
-
-      if (creature.actions && creature.actions.length) {
+      if (creature.actions?.length) {
         html += `<h3>Actions</h3><ul>`;
         creature.actions.forEach(a => {
           html += `<li><strong>${a.name}:</strong> ${a.desc}</li>`;
         });
         html += `</ul>`;
       }
-
       return html;
+    }
+
+    // sort pinned entries by initiative descending
+    function sortPinned() {
+      const container = document.getElementById('pinned-container');
+      Array.from(container.children)
+        .sort((a, b) => {
+          const ai = parseInt(a.querySelector('.init-input').value) || 0;
+          const bi = parseInt(b.querySelector('.init-input').value) || 0;
+          return bi - ai;
+        })
+        .forEach(node => container.appendChild(node));
     }
 
     async function loadBestiary() {
       try {
-        const res    = await fetch('resources/bestiary.yml');
-        const text   = await res.text();
-        const data   = jsyaml.load(text);
-        const sel    = document.getElementById('creature-select');
-        const defs   = document.getElementById('definitions');
+        const res  = await fetch('resources/bestiary.yml');
+        const text = await res.text();
+        const data = jsyaml.load(text);
+        const sel  = document.getElementById('creature-select');
+        const defs = document.getElementById('definitions');
 
         Object.entries(data).forEach(([faction, list]) => {
           if (!Array.isArray(list)) return;
           list.forEach(creature => {
-            const id    = slugify(`${faction}-${creature.name}`);
-            const opt   = document.createElement('option');
-            opt.value   = id;
-            opt.text    = `${faction} — ${creature.name}`;
+            const id = slugify(`${faction}-${creature.name}`);
+            // add to dropdown
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.text = `${faction} — ${creature.name}`;
             sel.appendChild(opt);
-
-            const div         = document.createElement('div');
-            div.id            = id;
-            div.className     = 'creature';
-            div.innerHTML     = renderCreatureHTML(faction, creature);
+            // prepare hidden definition
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'creature';
+            div.dataset.hp = creature.hp; // store max HP
+            div.innerHTML = renderCreatureHTML(creature);
             defs.appendChild(div);
           });
         });
@@ -166,18 +203,35 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadBestiary();
 
-      // pin logic
       document.getElementById('pin-button').onclick = () => {
         const selVal = document.getElementById('creature-select').value;
         if (!selVal) return;
-        if (document.getElementById('pinned-' + selVal)) return;
+        if (document.querySelector(`#pinned-${selVal}`)) return;
         const orig = document.getElementById(selVal);
+        const maxHP = orig.dataset.hp;
+        // wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pinned-entry';
+        wrapper.id = `pinned-${selVal}`;
+        // controls bar
+        wrapper.innerHTML = `
+          <div class="controls">
+            <button class="remove-btn" title="Remove">×</button>
+            <label>Init: <input type="number" class="init-input" value="0"></label>
+            <label>HP: <span class="max-hp">${maxHP}</span> Curr <input type="number" class="cur-hp" value="${maxHP}"></label>
+          </div>
+        `;
+        // clone content
         const clone = orig.cloneNode(true);
-        clone.id = 'pinned-' + selVal;
-        document.getElementById('pinned-container').appendChild(clone);
+        clone.style.display = 'block';
+        wrapper.appendChild(clone);
+        document.getElementById('pinned-container').appendChild(wrapper);
+        // remove handler
+        wrapper.querySelector('.remove-btn').onclick = () => wrapper.remove();
+        // initiative change handler
+        wrapper.querySelector('.init-input').addEventListener('input', sortPinned);
       };
 
-      // clear all
       document.getElementById('clear-button').onclick = () => {
         document.getElementById('pinned-container').innerHTML = '';
       };
