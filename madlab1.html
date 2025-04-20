@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bestiary</title>
+  <title>Bestiary & Initiative Tracker</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+    rel="stylesheet"
+  >
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <style>
     body {
@@ -16,10 +19,7 @@
       font-family: 'Almendra', serif;
       text-align: center;
     }
-    h1, h2 {
-      font-family: 'Cinzel', serif;
-      margin: 0 0 .5rem;
-    }
+    h1,h2 { font-family: 'Cinzel', serif; margin:0 0 .5rem }
     .container {
       max-width: 840px;
       margin: 2rem auto;
@@ -27,20 +27,8 @@
       padding: 2rem;
       border-radius: 10px;
     }
-    label {
-      display: inline-block;
-      width: 150px;
-      margin-right: 8px;
-      font-weight: bold;
-    }
-    select {
-      padding: .3rem;
-      background: #fff9ed;
-      border: 1px solid #999;
-      color: #333;
-      font-family: 'Cinzel', serif;
-    }
-    .button {
+    label { display:inline-block;width:150px;margin-right:8px;font-weight:bold }
+    select, .button {
       font-family: 'Cinzel', serif;
       background: #8B0000;
       color: #fff;
@@ -48,13 +36,16 @@
       padding: .5rem 1rem;
       margin: .3rem;
       cursor: pointer;
+      border-radius:4px;
     }
-    .button:hover {
-      background: #6B0000;
+    select {
+      background: #fff9ed;
+      color: #333;
+      border:1px solid #999;
     }
-    /* definitions hidden */
-    #definitions { display: none; }
-    /* pinned entry styling */
+    select:focus, .button:focus { outline: none; }
+    #definitions { display:none; }
+    #pinned-container { margin-top:1rem; }
     .pinned-entry {
       position: relative;
       background: rgba(0,0,0,0.8);
@@ -62,7 +53,6 @@
       padding: 1rem;
       margin: .5rem 0;
       color: #FAF4E0;
-      font-family: 'Almendra', serif;
       text-align: left;
     }
     .pinned-entry .remove-btn {
@@ -72,7 +62,7 @@
       background: transparent;
       border: none;
       color: #FAF4E0;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       cursor: pointer;
     }
     .pinned-entry .controls {
@@ -82,30 +72,37 @@
       gap: 1rem;
     }
     .pinned-entry .controls label {
-      font-family: 'Cinzel', serif;
-      color: #FAF4E0;
+      color:#FAF4E0;
+      font-family:'Cinzel',serif;
     }
     .pinned-entry .controls input {
-      width: 4rem;
-      padding: .2rem;
-      border-radius: 4px;
-      border: 1px solid #999;
-      font-family: inherit;
+      width:4rem;
+      padding:.2rem;
+      border:1px solid #999;
+      border-radius:4px;
+      font-family:inherit;
+    }
+    .creature-data {
+      white-space: normal;
+      margin-top: .5rem;
     }
     @media print {
-      body * { visibility: hidden !important; }
-      #pinned-container, #pinned-container * { visibility: visible !important; }
-      #pinned-container { position: absolute; top: 0; left: 0; width: 100%; }
+      body * { visibility:hidden!important }
+      #pinned-container,#pinned-container * { visibility:visible!important }
+      #pinned-container { position:absolute;top:0;left:0;width:100% }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Bestiary</h1>
-    <label for="creature-select">Select Creature:</label>
-    <select id="creature-select"><option value="">-- choose --</option></select>
-    <button class="button" id="pin-button">Pin</button>
-    <button class="button" id="clear-button">Clear All</button>
+    <h1>Bestiary & Initiative Tracker</h1>
+    <div>
+      <label for="creature-select">Select Creature:</label>
+      <select id="creature-select"><option value="">-- choose --</option></select>
+      <button class="button" id="pin-button">Pin</button>
+      <button class="button" id="add-button">Add Blank Entry</button>
+      <button class="button" id="clear-button">Clear All</button>
+    </div>
     <div id="pinned-container"></div>
     <div id="definitions"></div>
   </div>
@@ -114,127 +111,133 @@
     // slugify helper
     function slugify(str) {
       return str.toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)/g, '');
+                .replace(/[^a-z0-9]+/g,'-')
+                .replace(/(^-|-$)/g,'');
     }
 
-    // render a single creature object to HTML
-    function renderCreatureHTML(creature) {
-      let html = `<h2>${creature.name} (CR ${creature.cr})</h2>
-        <p><strong>Type:</strong> ${creature.size} ${creature.type}, ${creature.alignment}</p>
-        <p>
-          <strong>AC:</strong> ${creature.ac}  
-          <strong>HP:</strong> ${creature.hp}  
-          <strong>Speed:</strong> ${creature.speed}
-        </p>
-        <p>
-          <strong>STR</strong> ${creature.str} |
-          <strong>DEX</strong> ${creature.dex} |
-          <strong>CON</strong> ${creature.con} |
-          <strong>INT</strong> ${creature.int} |
-          <strong>WIS</strong> ${creature.wis} |
-          <strong>CHA</strong> ${creature.cha}
-        </p>`;
-      if (creature.saves)      html += `<p><strong>Saves:</strong> ${creature.saves}</p>`;
-      if (creature.skills)     html += `<p><strong>Skills:</strong> ${creature.skills}</p>`;
-      if (creature.immune)     html += `<p><strong>Immune:</strong> ${creature.immune}</p>`;
-      if (creature.languages)  html += `<p><strong>Languages:</strong> ${creature.languages}</p>`;
-      if (creature.senses)     html += `<p><strong>Senses:</strong> ${creature.senses}</p>`;
-      if (creature.traits?.length) {
-        html += `<h3>Traits</h3><ul>`;
-        creature.traits.forEach(t => {
-          html += `<li><strong>${t.name}:</strong> ${t.desc}</li>`;
-        });
-        html += `</ul>`;
+    // render a creature object into HTML
+    function renderCreatureHTML(c) {
+      let html = `<h2>${c.name} (CR ${c.cr})</h2>
+        <p><strong>Type:</strong> ${c.size} ${c.type}, ${c.alignment}</p>
+        <p><strong>AC:</strong> ${c.ac}    <strong>HP:</strong> ${c.hp}    <strong>Speed:</strong> ${c.speed}</p>
+        <p><strong>STR</strong> ${c.str} | <strong>DEX</strong> ${c.dex} | <strong>CON</strong> ${c.con}
+           | <strong>INT</strong> ${c.int} | <strong>WIS</strong> ${c.wis} | <strong>CHA</strong> ${c.cha}</p>`;
+      ['saves','skills','immune','languages','senses'].forEach(f => {
+        if (c[f]) html += `<p><strong>${f.charAt(0).toUpperCase()+f.slice(1)}:</strong> ${c[f]}</p>`;
+      });
+      if (c.traits?.length) {
+        html += '<h3>Traits</h3><ul>';
+        c.traits.forEach(t => html += `<li><strong>${t.name}:</strong> ${t.desc}</li>`);
+        html += '</ul>';
       }
-      if (creature.actions?.length) {
-        html += `<h3>Actions</h3><ul>`;
-        creature.actions.forEach(a => {
-          html += `<li><strong>${a.name}:</strong> ${a.desc}</li>`;
-        });
-        html += `</ul>`;
+      if (c.actions?.length) {
+        html += '<h3>Actions</h3><ul>';
+        c.actions.forEach(a => html += `<li><strong>${a.name}:</strong> ${a.desc}</li>`);
+        html += '</ul>';
       }
       return html;
     }
 
-    // sort pinned entries by initiative descending
+    // sort pinned entries by initiative desc
     function sortPinned() {
       const container = document.getElementById('pinned-container');
       Array.from(container.children)
-        .sort((a, b) => {
-          const ai = parseInt(a.querySelector('.init-input').value) || 0;
-          const bi = parseInt(b.querySelector('.init-input').value) || 0;
+        .sort((a,b) => {
+          const ai = parseInt(a.querySelector('.init-input').value)||0;
+          const bi = parseInt(b.querySelector('.init-input').value)||0;
           return bi - ai;
         })
-        .forEach(node => container.appendChild(node));
+        .forEach(n=>container.appendChild(n));
     }
 
+    // load YAML and populate select + hidden definitions
     async function loadBestiary() {
-      try {
-        const res  = await fetch('resources/bestiary.yml');
-        const text = await res.text();
-        const data = jsyaml.load(text);
-        const sel  = document.getElementById('creature-select');
-        const defs = document.getElementById('definitions');
-
-        Object.entries(data).forEach(([faction, list]) => {
-          if (!Array.isArray(list)) return;
-          list.forEach(creature => {
-            const id = slugify(`${faction}-${creature.name}`);
-            // add to dropdown
-            const opt = document.createElement('option');
-            opt.value = id;
-            opt.text = `${faction} — ${creature.name}`;
-            sel.appendChild(opt);
-            // prepare hidden definition
-            const div = document.createElement('div');
-            div.id = id;
-            div.className = 'creature';
-            div.dataset.hp = creature.hp; // store max HP
-            div.innerHTML = renderCreatureHTML(creature);
-            defs.appendChild(div);
-          });
+      const res  = await fetch('resources/bestiary.yml');
+      const text = await res.text();
+      const data = jsyaml.load(text);
+      const sel  = document.getElementById('creature-select');
+      const defs = document.getElementById('definitions');
+      Object.entries(data).forEach(([faction,list])=>{
+        if (!Array.isArray(list)) return;
+        list.forEach(c=>{
+          const id = slugify(`${faction}-${c.name}`);
+          // option
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.text = `${faction} — ${c.name}`;
+          sel.appendChild(opt);
+          // hidden template
+          const tpl = document.createElement('div');
+          tpl.id = id;
+          tpl.dataset.hp = c.hp;
+          const block = document.createElement('div');
+          block.className = 'creature-data';
+          block.innerHTML = renderCreatureHTML(c);
+          tpl.appendChild(block);
+          defs.appendChild(tpl);
         });
-      } catch (err) {
-        console.error('Failed to load Bestiary YAML:', err);
-      }
+      });
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded',()=>{
       loadBestiary();
 
-      document.getElementById('pin-button').onclick = () => {
-        const selVal = document.getElementById('creature-select').value;
-        if (!selVal) return;
-        if (document.querySelector(`#pinned-${selVal}`)) return;
-        const orig = document.getElementById(selVal);
-        const maxHP = orig.dataset.hp;
-        // wrapper
+      const pinBtn   = document.getElementById('pin-button');
+      const addBtn   = document.getElementById('add-button');
+      const clearBtn = document.getElementById('clear-button');
+      const sel      = document.getElementById('creature-select');
+      const defs     = document.getElementById('definitions');
+      const pinCon   = document.getElementById('pinned-container');
+
+      function makeEntry(id, maxHP, contentHTML) {
         const wrapper = document.createElement('div');
         wrapper.className = 'pinned-entry';
-        wrapper.id = `pinned-${selVal}`;
-        // controls bar
-        wrapper.innerHTML = `
-          <div class="controls">
-            <button class="remove-btn" title="Remove">×</button>
-            <label>Init: <input type="number" class="init-input" value="0"></label>
-            <label>HP: <span class="max-hp">${maxHP}</span> Curr <input type="number" class="cur-hp" value="${maxHP}"></label>
-          </div>
+        wrapper.id = `pinned-${id}`;
+        // remove
+        const rm = document.createElement('button');
+        rm.className = 'remove-btn';
+        rm.textContent = '×';
+        rm.title = 'Remove';
+        rm.onclick = ()=>wrapper.remove();
+        wrapper.appendChild(rm);
+        // controls
+        const ctrl = document.createElement('div');
+        ctrl.className = 'controls';
+        ctrl.innerHTML = `
+          <label>Init: <input type="number" class="init-input" value="0"></label>
+          <label>HP: <span class="max-hp">${maxHP}</span> Curr <input type="number" class="cur-hp" value="${maxHP}"></label>
         `;
-        // clone content
-        const clone = orig.cloneNode(true);
-        clone.style.display = 'block';
-        wrapper.appendChild(clone);
-        document.getElementById('pinned-container').appendChild(wrapper);
-        // remove handler
-        wrapper.querySelector('.remove-btn').onclick = () => wrapper.remove();
-        // initiative change handler
-        wrapper.querySelector('.init-input').addEventListener('input', sortPinned);
+        ctrl.querySelector('.init-input').addEventListener('input', sortPinned);
+        wrapper.appendChild(ctrl);
+        // content
+        const content = document.createElement('div');
+        content.className = 'creature-data';
+        content.innerHTML = contentHTML;
+        wrapper.appendChild(content);
+        return wrapper;
+      }
+
+      // pin existing
+      pinBtn.onclick = ()=>{
+        const id = sel.value;
+        if (!id || document.getElementById(`pinned-${id}`)) return;
+        const tpl = document.getElementById(id);
+        const maxHP = tpl.dataset.hp;
+        const html  = tpl.querySelector('.creature-data').innerHTML;
+        pinCon.appendChild(makeEntry(id,maxHP,html));
       };
 
-      document.getElementById('clear-button').onclick = () => {
-        document.getElementById('pinned-container').innerHTML = '';
+      // add blank
+      addBtn.onclick = ()=>{
+        const uid = `custom-${Date.now()}`;
+        const blankHTML = `<h2 contenteditable="true">Creature Name</h2>
+          <p contenteditable="true"><strong>Type:</strong> …</p>
+          <p contenteditable="true"><strong>AC:</strong> …  <strong>HP:</strong> 0  <strong>Speed:</strong> …</p>`;
+        pinCon.appendChild(makeEntry(uid,0,blankHTML));
       };
+
+      // clear all
+      clearBtn.onclick = ()=>pinCon.innerHTML = '';
     });
   </script>
 </body>
