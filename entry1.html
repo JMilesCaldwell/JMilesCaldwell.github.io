@@ -54,15 +54,15 @@
       color: #fff;
     }
 
-    .transcript span.word[data-digit]:hover ~ .digit-display::after {
-      content: attr(data-digit);
+    .word[data-digit] {
+      cursor: pointer;
     }
 
     .digit-display {
       position: fixed;
       bottom: 1rem;
       left: 1rem;
-      color: #fff;
+      color: #000;
       font-family: 'Apocryphos', monospace;
       font-size: 1.5rem;
       pointer-events: none;
@@ -148,7 +148,8 @@
   <h1>ТРАНСКРИПТ</h1>
 
   <div class="transcript">
-    <span>[Dial tone]
+    <span>
+[Dial tone]
 
 <span class="word" data-digit="8">Operator:</span> Sheriff’s Department, <span class="word" data-digit="1">Jansen</span> speaking.
 
@@ -188,10 +189,11 @@ Alfie: Will do. Night, Jansen.
 
 Operator: Night.
 
-[Call ends]</span>
+[Call ends]
+    </span>
   </div>
 
-  <div class="digit-display"></div>
+  <div class="digit-display" id="digitDisplay"></div>
 
   <footer>
     &copy; 2025 John Miles Caldwell — This page was found under floorboards.
@@ -208,6 +210,19 @@ Operator: Night.
     const returnBtn  = document.getElementById('return-btn');
     const audio      = document.getElementById('ambience');
     const glitch     = document.getElementById('glitch');
+    const digitDisplay = document.getElementById('digitDisplay');
+
+    let collectedDigits = '';
+
+    document.querySelectorAll('.word[data-digit]').forEach(word => {
+      word.addEventListener('mouseenter', (e) => {
+        const digit = e.target.getAttribute('data-digit');
+        if (!collectedDigits.includes(digit)) {
+          collectedDigits += digit;
+          digitDisplay.textContent = collectedDigits;
+        }
+      });
+    });
 
     enterBtn.addEventListener('click', () => {
       disclaimer.style.display = 'none';
