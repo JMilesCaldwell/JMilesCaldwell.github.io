@@ -54,7 +54,7 @@
       color: #fff;
     }
 
-    .word[data-digit] {
+    .word {
       cursor: pointer;
     }
 
@@ -151,19 +151,19 @@
     <span>
 [Dial tone]
 
-<span class="word" data-digit="8">Operator:</span> Sheriff’s Department, <span class="word" data-digit="1">Jansen</span> speaking.
+<span class="word" data-index="0" data-digit="8">Operator:</span> Sheriff’s Department, <span class="word" data-index="1" data-digit="1">Jansen</span> speaking.
 
-Alfie: Evenin’, <span class="word" data-digit="7">Jansen.</span> Alfie Myers here. I been pickin’ up somethin’ <span class="word" data-digit="2">strange</span> on the shortwave—keeps loopin’. Sounds like “veenahmaneeyeh -povtor… ooblisk...” every thirty seconds or so. Gives me the <span class="word" data-digit="4">creeps.</span> Like one o’ them Cold War spy <span class="word" data-digit="0">flicks.</span>
+Alfie: Evenin’, Jansen. Alfie Myers here. I been pickin’ up somethin’ <span class="word" data-index="2" data-digit="7">strange</span> on the shortwave—keeps loopin’. Sounds like “veenahmaneeyeh – povtor… ooblisk…” every thirty seconds or so. Gives me the <span class="word" data-index="3" data-digit="2">creeps.</span> Like one o’ them Cold War spy <span class="word" data-index="4" data-digit="4">flicks.</span>
 
-Operator: Uh-huh. Russian numbers or some such. That’s just <span class="word" data-digit="2">foreign</span> military or maritime stuff, Alfie. Been around for decades. Weird but harmless.
+Operator: Uh-huh. Russian numbers or some such. That’s just <span class="word" data-index="5" data-digit="0">foreign</span> military or maritime stuff, Alfie. Been around for decades. Weird but harmless.
 
 Alfie: Still, it don’t sit right. Same words, same rhythm. Like a pattern. I figured maybe I oughta call it in, just in case.
 
-Operator: Sure. Appreciate the heads-up. But I wouldn’t lose sleep over it. These things pop up now and then. Nothing ever comes of it.
+Operator: Sure. Appreciate the heads-up. But I wouldn’t lose sleep over it. These things <span class="word" data-index="6" data-digit="2">pop</span> up now and then. Nothing ever comes of it.
 
 Alfie: Yeah. I guess. It just got under my skin a bit.
 
-Operator: Shortwave’ll do that. Picks up all sorts of noise from halfway across the world. Easy to spook yourself if you’re listenin’ too long.
+Operator: Shortwave’ll do that. Picks up all sorts of noise from halfway across the world. Easy to <span class="word" data-index="7" data-digit="1">spook</span> yourself if you’re listenin’ too long.
 
 Alfie: Yeah… yeah, that’s probably it.
 
@@ -177,7 +177,7 @@ Alfie: Nah, he passed in October. Been just me since.
 
 Operator: Sorry to hear that. You ever think about movin’ closer in? You’re only out there ‘cause you’re stubborn.
 
-Alfie: Heh. Ain’t that the truth. I dunno, Jansen. Sometimes I think I hear stuff that ain’t there. Especially in the winter. Wind through the trees, branches knockin’. This signal—maybe it ain’t nothin’, but it felt like somethin’.
+Alfie: Heh. Ain’t that the truth. I dunno, Jansen. Sometimes I think I hear stuff that ain’t there. Especially in the <span class="word" data-index="8" data-digit="3">winter.</span> Wind through the trees, branches knockin’. This signal—maybe it ain’t nothin’, but it felt like somethin’.
 
 Operator: Well, we logged it. If it turns into somethin’, you’ll be the first to say “told you so,” alright?
 
@@ -212,14 +212,16 @@ Operator: Night.
     const glitch     = document.getElementById('glitch');
     const digitDisplay = document.getElementById('digitDisplay');
 
-    let collectedDigits = '';
+    // sequence key: 8172402134
+    const key = '8172402134';
+    let collected = '';
 
-    document.querySelectorAll('.word[data-digit]').forEach(word => {
-      word.addEventListener('mouseenter', (e) => {
-        const digit = e.target.getAttribute('data-digit');
-        if (!collectedDigits.includes(digit)) {
-          collectedDigits += digit;
-          digitDisplay.textContent = collectedDigits;
+    document.querySelectorAll('.word[data-index]').forEach(el => {
+      el.addEventListener('mouseenter', e => {
+        const idx = Number(e.target.dataset.index);
+        if (idx === collected.length) {
+          collected += key[idx];
+          digitDisplay.textContent = collected;
         }
       });
     });
@@ -244,14 +246,7 @@ Operator: Night.
     function doGlitch() {
       glitch.style.opacity = '1';
       setTimeout(() => { glitch.style.opacity = '0'; }, 80);
-
-      if (Math.random() < 0.2) {
-        setTimeout(() => {
-          glitch.style.opacity = '1';
-          setTimeout(() => { glitch.style.opacity = '0'; }, 80);
-        }, 120);
-      }
-
+      if (Math.random() < 0.2) { setTimeout(() => { glitch.style.opacity = '1'; setTimeout(() => { glitch.style.opacity = '0'; }, 80); }, 120); }
       scheduleGlitch();
     }
 
