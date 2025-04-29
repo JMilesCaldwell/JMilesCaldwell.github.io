@@ -4,12 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apocrypha | Caldwell's Repository</title>
-  <!-- Original favicon (overridden by the one below) -->
+  <!-- Original favicon (will be removed immediately) -->
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png" />
-  <!-- Override with a 1×1 transparent image -->
+  <!-- Transparent override (also removed) -->
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" type="image/gif" />
-
-  <style>
+<style>
     @font-face {
       font-family: 'Apocryphos';
       src: local('Courier New'), monospace;
@@ -145,8 +144,11 @@
     }
   </style>
 </head>
-
 <body>
+  <!-- Immediately nuke all favicons -->
+  <script>
+    document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
+  </script>
 
   <!-- Glitch Flash -->
   <div id="glitch" class="glitch-overlay"></div>
@@ -183,59 +185,55 @@
   </audio>
 
   <script>
-  const disclaimer = document.getElementById('disclaimer');
-  const enterBtn   = document.getElementById('enter-btn');
-  const returnBtn  = document.getElementById('return-btn');
-  const audio      = document.getElementById('ambience');
-  const glitch     = document.getElementById('glitch');
+    const disclaimer = document.getElementById('disclaimer');
+    const enterBtn   = document.getElementById('enter-btn');
+    const returnBtn  = document.getElementById('return-btn');
+    const audio      = document.getElementById('ambience');
+    const glitch     = document.getElementById('glitch');
 
-  // Dismiss popup and start audio + glitch loop
-  enterBtn.addEventListener('click', () => {
-    disclaimer.style.display = 'none';
-    audio.muted  = false;
-    audio.volume = 0.2;
-    audio.play().catch(() => {
-      console.warn('Audio play was prevented by browser policy.');
+    // Dismiss popup and start audio + glitch loop
+    enterBtn.addEventListener('click', () => {
+      disclaimer.style.display = 'none';
+      audio.muted  = false;
+      audio.volume = 0.2;
+      audio.play().catch(() => {
+        console.warn('Audio play was prevented by browser policy.');
+      });
+      scheduleGlitch();
     });
-    scheduleGlitch();
-  });
 
-  // Redirect back
-  returnBtn.addEventListener('click', () => {
-    window.location.href = 'https://jmilescaldwell.github.io';
-  });
+    // Redirect back
+    returnBtn.addEventListener('click', () => {
+      window.location.href = 'https://jmilescaldwell.github.io';
+    });
 
-  // Ensure audio unblocked on any click
-  window.addEventListener('click', function enableAudio() {
-    audio.muted = false;
-    window.removeEventListener('click', enableAudio);
-  });
+    // Ensure audio unblocked on any click
+    window.addEventListener('click', function enableAudio() {
+      audio.muted = false;
+      window.removeEventListener('click', enableAudio);
+    });
 
-  // One “glitch” flash, with a 30% chance of a rapid second flash
-  function doGlitch() {
-    // First flash
-    glitch.style.opacity = '1';
-    setTimeout(() => { glitch.style.opacity = '0'; }, 80);
+    // One “glitch” flash, with a 20% chance of a rapid second flash
+    function doGlitch() {
+      // First flash
+      glitch.style.opacity = '1';
+      setTimeout(() => { glitch.style.opacity = '0'; }, 80);
 
-    // 30% chance of double-flash
-    if (Math.random() < 0.2) {
-      setTimeout(() => {
-        glitch.style.opacity = '1';
-        setTimeout(() => { glitch.style.opacity = '0'; }, 80);
-      }, 120);
+      // 20% chance of double-flash
+      if (Math.random() < 0.2) {
+        setTimeout(() => {
+          glitch.style.opacity = '1';
+          setTimeout(() => { glitch.style.opacity = '0'; }, 80);
+        }, 120);
+      }
+
+      scheduleGlitch();
     }
 
-    // Schedule next
-    scheduleGlitch();
-  }
-
-  function scheduleGlitch() {
-    // Next glitch in 2–5 seconds randomly
-    const delay = 2000 + Math.random() * 3000;
-    setTimeout(doGlitch, delay);
-  }
-</script>
-
-
+    function scheduleGlitch() {
+      const delay = 2000 + Math.random() * 3000; // 2–5 seconds
+      setTimeout(doGlitch, delay);
+    }
+  </script>
 </body>
 </html>
