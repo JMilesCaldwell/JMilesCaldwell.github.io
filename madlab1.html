@@ -1,244 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bestiary & Initiative Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caldwell's Repository</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
     rel="stylesheet"
   >
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+
   <style>
+    /* Navigation Bar Styling */
+    .navbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #8B0000;
+      padding: 0.5rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 3px solid #660000;
+      flex-wrap: wrap;
+    }
+
+    .navbar a {
+      color: #FAF4E0;
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+    }
+
+    .navbar a:hover {
+      background: #660000;
+      color: #FAF4E0;
+    }
+
+    /* General Styling */
     body {
       margin: 0;
-      background: url('resources/bestiary.png') center/cover fixed no-repeat;
+      background: url('resources/index.png') no-repeat center center fixed;
+      background-size: cover;
       color: #FAF4E0;
       font-family: 'Almendra', serif;
       text-align: center;
     }
-    h1,h2 { font-family: 'Cinzel', serif; margin:0 0 .5rem }
     .container {
-      max-width: 840px;
+      max-width: 800px;
       margin: 2rem auto;
-      background: rgba(0,0,0,.7);
+      background: rgba(0, 0, 0, 0.7);
       padding: 2rem;
       border-radius: 10px;
     }
-    label { display:inline-block;width:150px;margin-right:8px;font-weight:bold }
-    select, .button {
+    h1, h2 {
       font-family: 'Cinzel', serif;
-      background: #8B0000;
-      color: #fff;
-      border: none;
-      padding: .5rem 1rem;
-      margin: .3rem;
-      cursor: pointer;
-      border-radius:4px;
     }
-    select {
-      background: #fff9ed;
-      color: #333;
-      border:1px solid #999;
+    ul {
+      list-style-type: none;
+      padding: 0;
     }
-    select:focus, .button:focus { outline: none; }
-    #definitions { display:none; }
-    #pinned-container { margin-top:1rem; }
-    .pinned-entry {
-      position: relative;
-      background: rgba(0,0,0,0.8);
-      border-radius: 6px;
-      padding: 1rem;
-      margin: .5rem 0;
+    li {
+      margin: 0.5rem 0;
+    }
+    a {
+      text-decoration: none;
       color: #FAF4E0;
-      text-align: left;
+      transition: color 0.3s ease;
     }
-    .pinned-entry .remove-btn {
-      position: absolute;
-      top: .3rem;
-      right: .3rem;
-      background: transparent;
-      border: none;
-      color: #FAF4E0;
+    a:hover {
+      color: #8B0000;
+    }
+    .divider {
+      margin: 1rem auto;
       font-size: 1.5rem;
-      cursor: pointer;
     }
-    .pinned-entry .controls {
-      margin-bottom: .5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+    .divider::after {
+      content: "✦ ✧ ✦";
+      color: #8B0000;
+      letter-spacing: 0.5rem;
     }
-    .pinned-entry .controls label {
-      color:#FAF4E0;
-      font-family:'Cinzel',serif;
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
     }
-    .pinned-entry .controls input {
-      width:4rem;
-      padding:.2rem;
-      border:1px solid #999;
-      border-radius:4px;
-      font-family:inherit;
-    }
-    .creature-data {
-      white-space: normal;
-      margin-top: .5rem;
-    }
-    @media print {
-      body * { visibility:hidden!important }
-      #pinned-container,#pinned-container * { visibility:visible!important }
-      #pinned-container { position:absolute;top:0;left:0;width:100% }
+
+    @media (max-width: 600px) {
+      li {
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Bestiary & Initiative Tracker</h1>
-    <div>
-      <label for="creature-select">Select Creature:</label>
-      <select id="creature-select"><option value="">-- choose --</option></select>
-      <button class="button" id="pin-button">Pin</button>
-      <button class="button" id="add-button">Add Blank Entry</button>
-      <button class="button" id="clear-button">Clear All</button>
-    </div>
-    <div id="pinned-container"></div>
-    <div id="definitions"></div>
+
+  <!-- Top Navigation Bar -->
+  <div class="navbar">
+    <a href="index.html">Home</a>
+    <a href="madlab1.html">Mad Lab 1</a>
+    <a href="madlab2.html">Mad Lab 2</a>
   </div>
 
-  <script>
-    // slugify helper
-    function slugify(str) {
-      return str.toLowerCase()
-                .replace(/[^a-z0-9]+/g,'-')
-                .replace(/(^-|-$)/g,'');
-    }
+  <div class="container">
+    <h1>Caldwell's Repository</h1>
+    <img src="resources/Caldwell's%20Repository.jpg" alt="Caldwell's Repository Banner" style="max-width: 100%; height: auto;">
 
-    // render a creature object into HTML
-    function renderCreatureHTML(c) {
-      let html = `<h2>${c.name} (CR ${c.cr})</h2>
-        <p><strong>Type:</strong> ${c.size} ${c.type}, ${c.alignment}</p>
-        <p><strong>AC:</strong> ${c.ac}    <strong>HP:</strong> ${c.hp}    <strong>Speed:</strong> ${c.speed}</p>
-        <p><strong>STR</strong> ${c.str} | <strong>DEX</strong> ${c.dex} | <strong>CON</strong> ${c.con}
-           | <strong>INT</strong> ${c.int} | <strong>WIS</strong> ${c.wis} | <strong>CHA</strong> ${c.cha}</p>`;
-      ['saves','skills','immune','languages','senses'].forEach(f => {
-        if (c[f]) html += `<p><strong>${f.charAt(0).toUpperCase()+f.slice(1)}:</strong> ${c[f]}</p>`;
-      });
-      if (c.traits?.length) {
-        html += '<h3>Traits</h3><ul>';
-        c.traits.forEach(t => html += `<li><strong>${t.name}:</strong> ${t.desc}</li>`);
-        html += '</ul>';
-      }
-      if (c.actions?.length) {
-        html += '<h3>Actions</h3><ul>';
-        c.actions.forEach(a => html += `<li><strong>${a.name}:</strong> ${a.desc}</li>`);
-        html += '</ul>';
-      }
-      return html;
-    }
+    <p>
+     Welcome, Traveler, to Caldwell’s Repository.<br>
+      <br>
+  Here lies a compendium of maps, histories, and well-worn truths that are at very the heart of the Evershroud Isles. These pages hold the wisdom of sages, scholars and wanderers, and it is my hope that they may be of service to you in these uncertain times.
 
-    // sort pinned entries by initiative desc
-    function sortPinned() {
-      const container = document.getElementById('pinned-container');
-      Array.from(container.children)
-        .sort((a,b) => {
-          const ai = parseInt(a.querySelector('.init-input').value)||0;
-          const bi = parseInt(b.querySelector('.init-input').value)||0;
-          return bi - ai;
-        })
-        .forEach(n=>container.appendChild(n));
-    }
+  Read voraciously, for knowledge is a powerful companion. But remember, what is clear from the warmth of one's library may remain shrouded to those who walk the mists. Understanding unfolds in its own time, and even the greatest of truths can slip through the grasp of the unprepared.<br>
+      <br>
+      May this repository serve you well on your journey, wherever the mists may take you.<br>
+      <br>
+      -J.M.C.
+    </p>
 
-    // load YAML and populate select + hidden definitions
-    async function loadBestiary() {
-      const res  = await fetch('resources/bestiary.yml');
-      const text = await res.text();
-      const data = jsyaml.load(text);
-      const sel  = document.getElementById('creature-select');
-      const defs = document.getElementById('definitions');
-      Object.entries(data).forEach(([faction,list])=>{
-        if (!Array.isArray(list)) return;
-        list.forEach(c=>{
-          const id = slugify(`${faction}-${c.name}`);
-          // option
-          const opt = document.createElement('option');
-          opt.value = id;
-          opt.text = `${faction} — ${c.name}`;
-          sel.appendChild(opt);
-          // hidden template
-          const tpl = document.createElement('div');
-          tpl.id = id;
-          tpl.dataset.hp = c.hp;
-          const block = document.createElement('div');
-          block.className = 'creature-data';
-          block.innerHTML = renderCreatureHTML(c);
-          tpl.appendChild(block);
-          defs.appendChild(tpl);
-        });
-      });
-    }
+    <div class="divider"></div>
 
-    document.addEventListener('DOMContentLoaded',()=>{
-      loadBestiary();
+    <!-- The Caldwell Chronicles -->
+    <h2>The Caldwell Chronicles</h2>
+    <ul>
+      <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank">Common and Uncommon Lore of the Evershroud Isles, 3rd Edition</a></li>
+      <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank">The Caldwell Commentary, 4th Edition</a></li>
+      <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank">A Treatise on Shaniquáan Chronology and Meteorology, 1st Edition</a></li>
+    </ul>
 
-      const pinBtn   = document.getElementById('pin-button');
-      const addBtn   = document.getElementById('add-button');
-      const clearBtn = document.getElementById('clear-button');
-      const sel      = document.getElementById('creature-select');
-      const defs     = document.getElementById('definitions');
-      const pinCon   = document.getElementById('pinned-container');
+    <div class="divider"></div>
+    
+      <!-- Other books -->
+    <h2>Other Books</h2>
+    <ul>
+      <li><a href="resources/seatofpower.pdf" target="_blank">The True Seat of Power</a></li>
+      <li><a href="resources/houseofdust.pdf" target="_blank">The House of Dust</a></li>
+    </ul>
 
-      function makeEntry(id, maxHP, contentHTML) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'pinned-entry';
-        wrapper.id = `pinned-${id}`;
-        // remove
-        const rm = document.createElement('button');
-        rm.className = 'remove-btn';
-        rm.textContent = '×';
-        rm.title = 'Remove';
-        rm.onclick = ()=>wrapper.remove();
-        wrapper.appendChild(rm);
-        // controls
-        const ctrl = document.createElement('div');
-        ctrl.className = 'controls';
-        ctrl.innerHTML = `
-          <label>Init: <input type="number" class="init-input" value="0"></label>
-          <label>HP: <span class="max-hp">${maxHP}</span> Curr <input type="number" class="cur-hp" value="${maxHP}"></label>
-        `;
-        ctrl.querySelector('.init-input').addEventListener('input', sortPinned);
-        wrapper.appendChild(ctrl);
-        // content
-        const content = document.createElement('div');
-        content.className = 'creature-data';
-        content.innerHTML = contentHTML;
-        wrapper.appendChild(content);
-        return wrapper;
-      }
 
-      // pin existing
-      pinBtn.onclick = ()=>{
-        const id = sel.value;
-        if (!id || document.getElementById(`pinned-${id}`)) return;
-        const tpl = document.getElementById(id);
-        const maxHP = tpl.dataset.hp;
-        const html  = tpl.querySelector('.creature-data').innerHTML;
-        pinCon.appendChild(makeEntry(id,maxHP,html));
-      };
+    <div class="divider"></div>
 
-      // add blank
-      addBtn.onclick = ()=>{
-        const uid = `custom-${Date.now()}`;
-        const blankHTML = `<h2 contenteditable="true">Creature Name</h2>
-          <p contenteditable="true"><strong>Type:</strong> …</p>
-          <p contenteditable="true"><strong>AC:</strong> …  <strong>HP:</strong> 0  <strong>Speed:</strong> …</p>`;
-        pinCon.appendChild(makeEntry(uid,0,blankHTML));
-      };
+    <!-- The Evershroud Gazette -->
+    <h2>The Evershroud Gazette</h2>
+    <ul>
+      <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank">8th Fellwind, 725 Y.S.</a></li>
+      <li><a href="resources/EvershroudGazette1verdant784.pdf" target="_blank">1st Verdant, 784 Y.S.</a></li>
+    </ul>
 
-      // clear all
-      clearBtn.onclick = ()=>pinCon.innerHTML = '';
-    });
-  </script>
+    <div class="divider"></div>
+
+    <!-- Maps -->
+    <h2>Maps</h2>
+    <ul>
+      <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank">A Comprehensive Map of the Evershroud Isles</a></li>
+      <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank">A Comprehensive Map of Silt</a></li>
+      <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank">An Approximate Map of the Evershroud Avernum</a></li>
+      <li><a href="resources/Azure.jpg" target="_blank">A Merchant's Map of Azure Proper</a></li>
+    </ul>
+
+    <div class="divider"></div>
+
+    <!-- Adventurer's Guild -->
+    <h2>Adventurer's Guild</h2>
+    <ul>
+      <li><a href="resources/Recruitment%20poster.pdf" target="_blank">Recruitment Poster</a></li>
+      <li><a href="resources/Contract.pdf" target="_blank">Guild Contract</a></li>
+      <li><a href="noticeboard.html" target="_blank">Notice Board</a></li>
+    </ul>
+
+    <div class="divider"></div>
+
+     <!-- Political Buildings -->
+    <h2>Upper City</h2>
+    <ul>
+      <li><a href="brinealcazar.html">Brine Alcazar</a></li>
+      <li><a href="resources/Writ%20of%20Freeholding%20blank.pdf" target="_blank">Writ of Freeholding</a></li>
+      <li><a href="councilhall.html">Council Hall</a></li>
+      <li><a href="embassy.html">Continental Embassy</a></li>
+    </ul>
+    
+    <div class="divider"></div>
+    <!-- Merchant's Quarter -->
+    <h2>Merchant's Quarter</h2>
+    <ul>
+      <li><a href="exchange.html">The Evershroud Exchange</a></li>
+      <li><a href="shopdistrict.html">Shop District</a></li>
+      <li><a href="guildhall.html">Guildhall</a></li>
+      <li><a href="tavern.html">The Pickled Piglet</a></li>
+    </ul>
+
+    <div class="divider"></div>
+
+  <!-- Temple District -->
+    <h2>Temple District</h2>
+    <ul>
+      <li><a href="temple.html">Pentarchon</a></li>
+      <li><a href="tower.html">Spire of Kar'El</a></li>
+      <li><a href="catacombs.html">Catacombs</a></li>
+    </ul>
+
+    <div class="divider"></div>
+    
+    <!-- Utilities -->
+    <h2>Utilities</h2>
+    <ul>
+      <li><a href="commgen.html">Commoner Generator</a></li>
+      <li><a href="encgen.html">Encounter Generator (beta)</a></li>
+      <li><a href="ingen.html">Instance Generator (beta)</a></li>
+      <li><a href="mapgen.html">Battle Map Generator (legacy)</a></li>
+      <li><a href="mapgen2.html">Battle Map Generator (flagship)</a></li>
+      <li><a href="dmscreen.html">DM Screen</a></li>
+      <li><a href="bestiary.html">Bestiary</a></li>
+    </ul>
+
+    <div class="divider"></div>
+
+      <!-- Travel -->
+    <h2>Travel</h2>
+    <ul>
+      <li><a href="harbour.html">Coastal Travel System (beta)</a></li>
+      <li><a href="travel.html">Road Travel System (beta)</a></li>
+
+    <div class="divider"></div>
+      
+      <!-- Observatory -->
+    <h2>Observatory</h2>
+    <ul>
+      <li><a href="calendar.html">Berynian Calendar and Weather</a></li>
+      <li><a href="astrology.html">Shaniquáan Astrology</a></li>
+    </ul>
+
+    <div class="divider"></div>
+
+    <!-- Other -->
+    <h2>Other</h2>
+    <ul>
+      <li><a href="fortune.html">Fortune Teller</a></li>
+      <li><a href="harmony.html">Crystal Harmony By Brigitte</a></li>
+      <li><a href="forge.html">Origen's Forge</a></li>
+      <li><a href="madlab.html">Mad Lab</a></li>
+    </ul>
+  </div>
+
+  <footer>
+    &copy; 2025 Caldwell. The repository for the Evershroud Isles.
+  </footer>
+
 </body>
 </html>
