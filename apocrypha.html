@@ -4,20 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apocrypha | Caldwell's Repository</title>
+  
   <!-- Original favicon (will be removed immediately) -->
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png" />
   <!-- Transparent override (also removed) -->
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" type="image/gif" />
-<style>
+
+  <style>
     @font-face {
       font-family: 'Apocryphos';
       src: local('Courier New'), monospace;
       font-weight: normal;
     }
 
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
+    }
+
+    body {
       background: url('resources/apocrypha.png') no-repeat center center fixed;
       background-size: cover;
       background-color: #000;
@@ -25,6 +31,16 @@
       font-family: 'Apocryphos', monospace;
       text-align: center;
       overflow-x: hidden;
+    }
+
+    .page-wrapper {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-wrapper > *:not(footer) {
+      flex: 0 0 auto;
     }
 
     h1, h2 {
@@ -92,20 +108,24 @@
       font-size: 0.8rem;
       color: #666;
       font-family: monospace;
-      margin: 4rem 0 2rem;
+      margin-top: auto;
+      padding: 2rem 0;
     }
 
     /* Disclaimer Popup Styles */
     .popup-overlay {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.85);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 9999;
     }
+
     .popup-content {
       background: rgba(0, 0, 0, 0.75);
       padding: 2rem;
@@ -113,10 +133,12 @@
       text-align: center;
       font-family: 'Apocryphos', monospace;
     }
+
     #disclaimer p {
       margin-bottom: 1.5rem;
       font-size: 1.2rem;
     }
+
     #disclaimer button {
       background: #000;
       color: #fff;
@@ -127,31 +149,40 @@
       font-size: 1rem;
       cursor: pointer;
     }
+
     #disclaimer button:hover {
       opacity: 0.8;
     }
 
-    /* Glitch Flash Overlay */
-    .glitch-overlay {
+    /* Ripple Effect */
+    .ripple {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #000;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
       pointer-events: none;
-      opacity: 0;
+      animation: rippleAnim 0.5s ease-out forwards;
       z-index: 10000;
-      transition: opacity 0.1s ease-out;
+    }
+
+    @keyframes rippleAnim {
+      to {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+      }
     }
   </style>
 </head>
+
 <body>
   <!-- Immediately nuke all favicons -->
   <script>
     document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
   </script>
-
-  <!-- Glitch Flash -->
-  <div id="glitch" class="glitch-overlay"></div>
 
   <!-- Disclaimer Popup -->
   <div id="disclaimer" class="popup-overlay">
@@ -162,22 +193,24 @@
     </div>
   </div>
 
-  <h1>The Apocrypha</h1>
-  <p>
-    Entries removed from canon.<br>
-    Corrupted, disputed, or simply forgotten.
-  </p>
+  <div class="page-wrapper">
+    <h1>The Apocrypha</h1>
+    <p>
+      Entries removed from canon.<br>
+      Corrupted, disputed, or simply forgotten.
+    </p>
 
-  <h2>Archive</h2>
-  <ul>
-    <li><a href="#">Entry #1</a></li>
-    <li><a href="#">Entry #2</a></li>
-    <li><a href="#">Entry #3</a></li>
-  </ul>
+    <h2>Archive</h2>
+    <ul>
+      <li><a href="#">Entry #1</a></li>
+      <li><a href="#">Entry #2</a></li>
+      <li><a href="#">Entry #3</a></li>
+    </ul>
 
-  <footer>
-    &copy; 2025 Caldwell’s Repository — This page was found under floorboards.
-  </footer>
+    <footer>
+      &copy; 2025 Caldwell’s Repository — This page was found under floorboards.
+    </footer>
+  </div>
 
   <audio autoplay loop muted id="ambience">
     <source src="resources/apocrypha.mp3" type="audio/mpeg">
@@ -189,17 +222,35 @@
     const enterBtn   = document.getElementById('enter-btn');
     const returnBtn  = document.getElementById('return-btn');
     const audio      = document.getElementById('ambience');
-    const glitch     = document.getElementById('glitch');
 
-    // Dismiss popup and start audio + glitch loop
+    // Starts ripples
+    function doRipple() {
+      const circle = document.createElement('div');
+      circle.className = 'ripple';
+      document.body.appendChild(circle);
+      circle.addEventListener('animationend', () => circle.remove());
+
+      // 30% chance of a second ripple
+      if (Math.random() < 0.3) {
+        setTimeout(doRipple, 200);
+      }
+    }
+
+    function scheduleRipple() {
+      const delay = 2000 + Math.random() * 3000; // 2–5s
+      setTimeout(() => {
+        doRipple();
+        scheduleRipple();
+      }, delay);
+    }
+
+    // Dismiss popup, unmute audio, kick off ripples
     enterBtn.addEventListener('click', () => {
       disclaimer.style.display = 'none';
       audio.muted  = false;
       audio.volume = 0.2;
-      audio.play().catch(() => {
-        console.warn('Audio play was prevented by browser policy.');
-      });
-      scheduleGlitch();
+      audio.play().catch(() => console.warn('Audio play was prevented.'));
+      scheduleRipple();
     });
 
     // Redirect back
@@ -207,33 +258,11 @@
       window.location.href = 'https://jmilescaldwell.github.io';
     });
 
-    // Ensure audio unblocked on any click
+    // Ensure audio is unblocked on any first click
     window.addEventListener('click', function enableAudio() {
       audio.muted = false;
       window.removeEventListener('click', enableAudio);
     });
-
-    // One “glitch” flash, with a 20% chance of a rapid second flash
-    function doGlitch() {
-      // First flash
-      glitch.style.opacity = '1';
-      setTimeout(() => { glitch.style.opacity = '0'; }, 80);
-
-      // 20% chance of double-flash
-      if (Math.random() < 0.2) {
-        setTimeout(() => {
-          glitch.style.opacity = '1';
-          setTimeout(() => { glitch.style.opacity = '0'; }, 80);
-        }, 120);
-      }
-
-      scheduleGlitch();
-    }
-
-    function scheduleGlitch() {
-      const delay = 2000 + Math.random() * 3000; // 2–5 seconds
-      setTimeout(doGlitch, delay);
-    }
   </script>
 </body>
 </html>
