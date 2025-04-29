@@ -91,10 +91,48 @@
       font-family: monospace;
       margin: 4rem 0 2rem;
     }
+
+    /* Disclaimer Popup Styles */
+    .popup-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: centre;    /* Centre the content vertically */
+      justify-content: centre; /* Centre the content horizontally */
+      z-index: 9999;
+    }
+    .popup-content {
+      background: #111;
+      padding: 2rem;
+      border: 2px solid #555;
+      text-align: center;
+      font-family: 'Apocryphos', monospace;
+    }
+    #disclaimer p {
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+    }
+    #disclaimer button {
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- Disclaimer Popup -->
+  <div id="disclaimer" class="popup-overlay">
+    <div class="popup-content">
+      <p>This page contains apocryphal content – viewer discretion is advised.</p>
+      <button id="enter-btn">Enter</button>
+      <button id="return-btn">Return</button>
+    </div>
+  </div>
 
   <h1>The Apocrypha</h1>
   <p>
@@ -113,23 +151,39 @@
     &copy; 2025 Caldwell’s Repository — This page was found under floorboards.
   </footer>
 
-</body>
-
   <audio autoplay loop muted id="ambience">
-  <source src="resources/apocrypha.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
+    <source src="resources/apocrypha.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
 
-<script>
-  // Unmute and play on first interaction (Chrome autoplay policy workaround)
-  window.addEventListener('click', function enableAudio() {
-    const audio = document.getElementById('ambience');
-    audio.muted = false;
-    audio.volume = 0.2;
-    audio.play();
-    window.removeEventListener('click', enableAudio);
-  });
-</script>
+  <script>
+    // Elements
+    const disclaimer = document.getElementById('disclaimer');
+    const enterBtn   = document.getElementById('enter-btn');
+    const returnBtn  = document.getElementById('return-btn');
+    const audio      = document.getElementById('ambience');
 
-  
+    // Enter: dismiss popup and play audio
+    enterBtn.addEventListener('click', () => {
+      disclaimer.style.display = 'none';
+      audio.muted  = false;
+      audio.volume = 0.2;
+      audio.play().catch(() => {
+        console.warn('Audio play was prevented by browser policy.');
+      });
+    });
+
+    // Return: redirect back to main site
+    returnBtn.addEventListener('click', () => {
+      window.location.href = 'https://jmilescaldwell.github.io';
+    });
+
+    // Fallback: on any first click, unblock audio if needed
+    window.addEventListener('click', function enableAudio() {
+      audio.muted = false;
+      window.removeEventListener('click', enableAudio);
+    });
+  </script>
+
+</body>
 </html>
