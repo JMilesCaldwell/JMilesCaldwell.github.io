@@ -154,26 +154,18 @@
       opacity: 0.8;
     }
 
-    /* Ripple Effect */
-    .ripple {
+    /* Glitch Flash Overlay */
+    .glitch-overlay {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
       pointer-events: none;
-      animation: rippleAnim 0.5s ease-out forwards;
+      opacity: 0;
       z-index: 10000;
-    }
-
-    @keyframes rippleAnim {
-      to {
-        transform: translate(-50%, -50%) scale(4);
-        opacity: 0;
-      }
+      transition: opacity 0.1s ease-out;
     }
   </style>
 </head>
@@ -183,6 +175,9 @@
   <script>
     document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
   </script>
+
+  <!-- Glitch Flash -->
+  <div id="glitch" class="glitch-overlay"></div>
 
   <!-- Disclaimer Popup -->
   <div id="disclaimer" class="popup-overlay">
@@ -200,11 +195,16 @@
       For research purposes only
     </p>
 
-    <h2>Archive</h2>
+    <h2>Архив</h2>
     <ul>
-      <li><a href="#">Entry #1</a></li>
-      <li><a href="#">Entry #2</a></li>
-      <li><a href="#">Entry #3</a></li>
+      <li><a href="entry1.html">Entry #1</a></li>
+      <li><a href="entry2.html">Entry #2</a></li>
+      <li><a href="entry3.html">Entry #3</a></li>
+    </ul>
+
+    <h2>Терминал доступа</h2>
+    <ul>
+      <li><a href="terminal.html">Терминал доступа</a></li>
     </ul>
 
     <footer>
@@ -222,35 +222,15 @@
     const enterBtn   = document.getElementById('enter-btn');
     const returnBtn  = document.getElementById('return-btn');
     const audio      = document.getElementById('ambience');
+    const glitch     = document.getElementById('glitch');
 
-    // Starts ripples
-    function doRipple() {
-      const circle = document.createElement('div');
-      circle.className = 'ripple';
-      document.body.appendChild(circle);
-      circle.addEventListener('animationend', () => circle.remove());
-
-      // 30% chance of a second ripple
-      if (Math.random() < 0.3) {
-        setTimeout(doRipple, 200);
-      }
-    }
-
-    function scheduleRipple() {
-      const delay = 2000 + Math.random() * 3000; // 2–5s
-      setTimeout(() => {
-        doRipple();
-        scheduleRipple();
-      }, delay);
-    }
-
-    // Dismiss popup, unmute audio, kick off ripples
+    // Dismiss popup and start audio + glitch loop
     enterBtn.addEventListener('click', () => {
       disclaimer.style.display = 'none';
       audio.muted  = false;
       audio.volume = 0.2;
       audio.play().catch(() => console.warn('Audio play was prevented.'));
-      scheduleRipple();
+      scheduleGlitch();
     });
 
     // Redirect back
@@ -263,6 +243,28 @@
       audio.muted = false;
       window.removeEventListener('click', enableAudio);
     });
+
+    // One “glitch” flash, with a 20% chance of a rapid second flash
+    function doGlitch() {
+      // First flash
+      glitch.style.opacity = '1';
+      setTimeout(() => { glitch.style.opacity = '0'; }, 80);
+
+      // 20% chance of double-flash
+      if (Math.random() < 0.2) {
+        setTimeout(() => {
+          glitch.style.opacity = '1';
+          setTimeout(() => { glitch.style.opacity = '0'; }, 80);
+        }, 120);
+      }
+
+      scheduleGlitch();
+    }
+
+    function scheduleGlitch() {
+      const delay = 2000 + Math.random() * 3000; // 2–5 seconds
+      setTimeout(doGlitch, delay);
+    }
   </script>
 </body>
 </html>
