@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Терминал</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Full‐screen terminal look */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #333; overflow: hidden; }
+    body {
+      color: #ff9900;               /* yellow-orange text */
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      line-height: 1.4;
+      padding: 1rem;
+      white-space: pre-wrap;
+    }
+    /* Prompt/input line */
+    .line {
+      display: flex;
+    }
+    .prompt {
+      flex: none;
+      margin-right: 0.25em;
+    }
+    .line-input {
+      flex: auto;
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-family: inherit;
+      font-size: inherit;
+      outline: none;
+      width: 12ch;
+    }
+    /* Blinking cursor */
+    .cursor {
+      display: inline-block;
+      width: 0.6ch;
+      background: #ff9900;
+      animation: blink 1s steps(2, start) infinite;
+      margin-left: 2px;
+    }
+    @keyframes blink { to { visibility: hidden; } }
+  </style>
+</head>
+<body>
+  <!-- Audio for terminal ambience -->
+  <audio id="terminal-audio" loop>
+    <source src="resources/terminal.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="console">
+&gt; Требуется код доступа — осталось попыток [<span id="attempts">3</span>]
+  </div>
+
+  <script>
+    const consoleDiv  = document.getElementById('console');
+    const audio       = document.getElementById('terminal-audio');
+    let attempts = 3;
+    const validCodes = ['8172402134'];
+    let audioEnabled = false;
+
+    // Fade in audio over 1 second to a target volume
+    function fadeInAudio(targetVolume = 0.2, duration = 1000) {
+      audio.volume = 0;
+      audio.play().catch(() => {});
+      const stepTime = 50;
+      const steps = duration / stepTime;
+      const volumeIncrement = targetVolume / steps;
+      let currentStep = 0;
+      const fadeInterval = setInterval(() => {
+        currentStep++;
+        audio.volume = Math.min(targetVolume, audio.volume + volumeIncrement);
+        if (currentStep >= steps) clearInterval(fadeInterval);
+      }, stepTime);
+    }
+
+    // Enable audio on first user click
+    document.body.addEventListener('click', () => {
+      if (!audioEnabled) {
+        audioEnabled = true;
+        fadeInAudio();
+      }
+    }, { once: true });
+
+    function newPrompt() {
+      if (attempts <= 0) return;
+      const line = document.createElement('div');
+      line.className = 'line';
+      // prompt symbol
+      const prompt = document.createElement('span');
+      prompt.className = 'prompt';
+      prompt.textContent = '> ';
+      line.appendChild(prompt);
+      // input field
+      const input = document.createElement('input');
+      input.className = 'line-input';
+      input.type = 'text';
+      input.maxLength = 10;
+      line.appendChild(input);
+      // blinking cursor
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      line.appendChild(cursor);
+
+      consoleDiv.appendChild(line);
+      input.focus();
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const cmd = input.value.trim();
+          // remove input & cursor, replace with static text
+          line.removeChild(input);
+          line.removeChild(cursor);
+          const text = document.createElement('span');
+          text.textContent = cmd;
+          line.appendChild(text);
+
+          handleCommand(cmd);
+        }
+      });
+    }
+
+    function handleCommand(cmd) {
+      if (/^\d{10}$/.test(cmd) && validCodes.includes(cmd)) {
+        window.open(`${cmd}.html`, '_blank');
+      } else {
+        attempts--;
+        document.getElementById('attempts').textContent = attempts;
+        if (attempts <= 0) {
+          consoleDiv.innerHTML = '';
+          return;
+        }
+      }
+      newPrompt();
+    }
+
+    // Start initial prompt
+    newPrompt();
+  </script>
+</body>
+</html>
