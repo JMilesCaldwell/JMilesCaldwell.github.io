@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buddhist Temple Simulator - Meet the Monks</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+            background: #000;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(139, 69, 19, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+            border: 2px solid #DAA520;
+        }
+        
+        #dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 248, 220, 0.95);
+            color: #8B4513;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border: 3px solid #DAA520;
+        }
+        
+        #dialogue-box h3 {
+            margin: 0 0 10px 0;
+            color: #B8860B;
+        }
+        
+        #dialogue-content {
+            margin: 10px 0;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .dialogue-option {
+            background: #F5DEB3;
+            border: 2px solid #DAA520;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .dialogue-option:hover {
+            background: #DAA520;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        #custom-question-container {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #DAA520;
+        }
+        
+        #custom-question-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #DAA520;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            box-sizing: border-box;
+            background: #FFF8DC;
+        }
+        
+        #custom-question-submit {
+            background: #DAA520;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-top: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        #custom-question-submit:hover {
+            background: #B8860B;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #custom-question-submit:disabled {
+            background: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(218, 165, 32, 0.3);
+            border-radius: 50%;
+            border-top-color: #DAA520;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .instruction {
+            opacity: 0.8;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        #interaction-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(139, 69, 19, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: none;
+            font-size: 14px;
+            border: 2px solid #DAA520;
+        }
+        
+        .floating-text {
+            position: absolute;
+            color: #DAA520;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="ui-overlay">
+        <h2 style="color: #DAA520;">🏯 Sacred Temple</h2>
+        <p style="font-size: 20px; color: #F0E68C;">☸️ Meet the Monks</p>
+        <p style="color: #F0E68C;">Use WASD to move around</p>
+        <p style="color: #F0E68C;">Arrow keys or mouse to look left/right</p>
+        <p style="color: #F0E68C;">Press E to interact</p>
+        <p style="color: #F0E68C;">Press SPACE to meditate</p>
+        <p style="color: #F0E68C;">Press ESC to close dialogs/release mouse</p>
+        <p class="instruction" style="margin-top: 10px; color: #DDD;">🕉️ Ask about dharma, meditation, and wisdom!</p>
+    </div>
+    
+    <div id="dialogue-box">
+        <h3 id="dialogue-name">Name</h3>
+        <div id="dialogue-content">Content</div>
+        <div id="dialogue-options"></div>
+        <div id="custom-question-container">
+            <p style="margin: 5px 0; font-size: 14px; opacity: 0.8; text-align: center;">━━━ Or ask your own question ━━━</p>
+            <input type="text" id="custom-question-input" placeholder="Ask about meditation, dharma, enlightenment..." maxlength="200">
+            <button id="custom-question-submit">Ask Question</button>
+        </div>
+    </div>
+    
+    <div id="interaction-prompt"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x8B4513); // Warm brown sky
+        scene.fog = new THREE.Fog(0x8B4513, 15, 60);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        
+        // Floating text effect
+        function createFloatingText(text, worldPos) {
+            const screenPos = worldPos.clone();
+            screenPos.project(camera);
+            
+            const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+            
+            const div = document.createElement('div');
+            div.className = 'floating-text';
+            div.textContent = text;
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            document.body.appendChild(div);
+            
+            setTimeout(() => div.remove(), 2000);
+        }
+        
+        // Lighting - warm temple atmosphere
+        const ambientLight = new THREE.AmbientLight(0xFFE4B5, 0.4); // Warm ambient
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xFFA500, 0.6); // Golden sunlight
+        directionalLight.position.set(10, 20, 10);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.camera.near = 0.1;
+        directionalLight.shadow.camera.far = 60;
+        directionalLight.shadow.camera.left = -40;
+        directionalLight.shadow.camera.right = 40;
+        directionalLight.shadow.camera.top = 40;
+        directionalLight.shadow.camera.bottom = -40;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        // Temple floor with stone pattern
+        const floorGeometry = new THREE.PlaneGeometry(50, 50);
+        const floorMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x8B7355,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // Add stone tiles pattern
+        const tileGeometry = new THREE.PlaneGeometry(2.5, 2.5);
+        const tileMaterial1 = new THREE.MeshStandardMaterial({ color: 0x8B7355 });
+        const tileMaterial2 = new THREE.MeshStandardMaterial({ color: 0x9B8365 });
+        
+        for (let x = -25; x < 25; x += 2.5) {
+            for (let z = -25; z < 25; z += 2.5) {
+                const tile = new THREE.Mesh(tileGeometry, ((x + z) / 2.5) % 2 === 0 ? tileMaterial1 : tileMaterial2);
+                tile.position.set(x + 1.25, 0.01, z + 1.25);
+                tile.rotation.x = -Math.PI / 2;
+                tile.receiveShadow = true;
+                scene.add(tile);
+            }
+        }
+        
+        // Temple walls with traditional architecture
+        const wallMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xD2691E,
+            roughness: 0.9
+        });
+        
+        const redWoodMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8B0000,
+            roughness: 0.7
+        });
+        
+        // Back wall
+        const backWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 12),
+            wallMaterial
+        );
+        backWall.position.set(0, 6, -25);
+        backWall.receiveShadow = true;
+        scene.add(backWall);
+        
+        // Side walls
+        const leftWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 12),
+            wallMaterial
+        );
+        leftWall.position.set(-25, 6, 0);
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.receiveShadow = true;
+        scene.add(leftWall);
+        
+        const rightWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 12),
+            wallMaterial
+        );
+        rightWall.position.set(25, 6, 0);
+        rightWall.rotation.y = -Math.PI / 2;
+        rightWall.receiveShadow = true;
+        scene.add(rightWall);
+        
+        // Traditional temple roof
+        const roofGeometry = new THREE.ConeGeometry(30, 8, 4);
+        const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
+        const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+        roof.position.y = 16;
+        roof.rotation.y = Math.PI / 4;
+        roof.castShadow = true;
+        scene.add(roof);
+        
+        // Temple pillars
+        const pillarGeometry = new THREE.CylinderGeometry(0.8, 0.8, 12, 8);
+        const pillarMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xDAA520,
+            roughness: 0.6,
+            metalness: 0.2
+        });
+        
+        const pillarPositions = [
+            [-15, 6, -20], [15, 6, -20],
+            [-15, 6, 20], [15, 6, 20],
+            [-20, 6, -15], [-20, 6, 15],
+            [20, 6, -15], [20, 6, 15]
+        ];
+        
+        pillarPositions.forEach(pos => {
+            const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+            pillar.position.set(...pos);
+            pillar.castShadow = true;
+            pillar.receiveShadow = true;
+            scene.add(pillar);
+        });
+        
+        // Buddha statue at the center back
+        const buddhaBaseGeometry = new THREE.CylinderGeometry(3, 3, 1, 8);
+        const buddhaBaseMaterial = new THREE.MeshStandardMaterial({ color: 0xDAA520 });
+        const buddhaBase = new THREE.Mesh(buddhaBaseGeometry, buddhaBaseMaterial);
+        buddhaBase.position.set(0, 0.5, -20);
+        buddhaBase.castShadow = true;
+        scene.add(buddhaBase);
+        
+        // Buddha body
+        const buddhaBodyGeometry = new THREE.BoxGeometry(2, 3, 1.5);
+        const buddhaBodyMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700 });
+        const buddhaBody = new THREE.Mesh(buddhaBodyGeometry, buddhaBodyMaterial);
+        buddhaBody.position.set(0, 2.5, -20);
+        buddhaBody.castShadow = true;
+        scene.add(buddhaBody);
+        
+        // Buddha head
+        const buddhaHeadGeometry = new THREE.SphereGeometry(0.8, 12, 8);
+        const buddhaHead = new THREE.Mesh(buddhaHeadGeometry, buddhaBodyMaterial);
+        buddhaHead.position.set(0, 4.5, -20);
+        buddhaHead.castShadow = true;
+        scene.add(buddhaHead);
+        
+        // Meditation cushions
+        function createCushion(x, z, color) {
+            const cushionGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.3, 16);
+            const cushionMaterial = new THREE.MeshStandardMaterial({ color: color });
+            const cushion = new THREE.Mesh(cushionGeometry, cushionMaterial);
+            cushion.position.set(x, 0.15, z);
+            cushion.castShadow = true;
+            cushion.receiveShadow = true;
+            return cushion;
+        }
+        
+        // Add meditation cushions in a pattern
+        const cushion1 = createCushion(-8, -8, 0x8B008B);
+        const cushion2 = createCushion(0, -8, 0x4B0082);
+        const cushion3 = createCushion(8, -8, 0x800080);
+        const cushion4 = createCushion(-8, 8, 0x9932CC);
+        const cushion5 = createCushion(0, 8, 0x9400D3);
+        const cushion6 = createCushion(8, 8, 0x8A2BE2);
+        scene.add(cushion1, cushion2, cushion3, cushion4, cushion5, cushion6);
+        
+        // Incense burners
+        function createIncenseBurner(x, z) {
+            const group = new THREE.Group();
+            
+            const baseGeometry = new THREE.CylinderGeometry(0.3, 0.4, 0.6, 8);
+            const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.y = 0.3;
+            group.add(base);
+            
+            // Incense smoke (particles)
+            const smokeGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+            const smokeMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xE6E6FA,
+                transparent: true,
+                opacity: 0.3
+            });
+            
+            for (let i = 0; i < 5; i++) {
+                const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);
+                smoke.position.set(
+                    Math.random() * 0.4 - 0.2,
+                    0.8 + i * 0.5,
+                    Math.random() * 0.4 - 0.2
+                );
+                group.add(smoke);
+            }
+            
+            group.position.set(x, 0, z);
+            return group;
+        }
+        
+        const incense1 = createIncenseBurner(-12, -15);
+        const incense2 = createIncenseBurner(12, -15);
+        const incense3 = createIncenseBurner(-12, 15);
+        const incense4 = createIncenseBurner(12, 15);
+        scene.add(incense1, incense2, incense3, incense4);
+        
+        // Prayer wheels
+        function createPrayerWheel(x, z) {
+            const group = new THREE.Group();
+            
+            const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
+            const poleMaterial = new THREE.MeshStandardMaterial({ color: 0xDAA520 });
+            const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+            pole.position.y = 1.5;
+            group.add(pole);
+            
+            const wheelGeometry = new THREE.CylinderGeometry(0.6, 0.6, 1, 16);
+            const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
+            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            wheel.position.y = 2;
+            wheel.userData = { spinning: true };
+            group.add(wheel);
+            
+            group.position.set(x, 0, z);
+            group.userData = { wheel: wheel };
+            return group;
+        }
+        
+        const prayerWheel1 = createPrayerWheel(-18, 0);
+        const prayerWheel2 = createPrayerWheel(18, 0);
+        scene.add(prayerWheel1, prayerWheel2);
+        
+        // Lotus flowers in pond
+        function createLotus(x, z) {
+            const group = new THREE.Group();
+            
+            // Water lily pad
+            const padGeometry = new THREE.CircleGeometry(0.5, 8);
+            const padMaterial = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+            const pad = new THREE.Mesh(padGeometry, padMaterial);
+            pad.rotation.x = -Math.PI / 2;
+            pad.position.y = 0.02;
+            group.add(pad);
+            
+            // Lotus flower
+            const flowerGeometry = new THREE.SphereGeometry(0.3, 8, 6);
+            const flowerMaterial = new THREE.MeshStandardMaterial({ color: 0xFFB6C1 });
+            const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
+            flower.position.y = 0.2;
+            flower.scale.y = 0.6;
+            group.add(flower);
+            
+            group.position.set(x, 0, z);
+            return group;
+        }
+        
+        // Small pond area
+        const pondGeometry = new THREE.CircleGeometry(8, 16);
+        const pondMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x4682B4,
+            transparent: true,
+            opacity: 0.7
+        });
+        const pond = new THREE.Mesh(pondGeometry, pondMaterial);
+        pond.rotation.x = -Math.PI / 2;
+        pond.position.set(-20, 0.01, -20);
+        scene.add(pond);
+        
+        // Add lotus flowers to pond
+        const lotus1 = createLotus(-22, -22);
+        const lotus2 = createLotus(-18, -18);
+        const lotus3 = createLotus(-24, -18);
+        scene.add(lotus1, lotus2, lotus3);
+        
+        // Character creation - Buddhist monks
+        const characters = [];
+        
+        function createMonk(name, title, x, z, robeColor, characterData) {
+            const group = new THREE.Group();
+            
+            // Robe (body)
+            const robeGeometry = new THREE.CylinderGeometry(0.4, 0.6, 1.2, 8);
+            const robeMaterial = new THREE.MeshStandardMaterial({ color: robeColor });
+            const robe = new THREE.Mesh(robeGeometry, robeMaterial);
+            robe.position.y = 0.8;
+            robe.castShadow = true;
+            group.add(robe);
+            
+            // Arms in prayer position
+            const armGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.5, 6);
+            
+            const leftArm = new THREE.Mesh(armGeometry, robeMaterial);
+            leftArm.position.set(-0.2, 1, 0.2);
+            leftArm.rotation.z = Math.PI / 4;
+            leftArm.rotation.x = Math.PI / 6;
+            group.add(leftArm);
+            
+            const rightArm = new THREE.Mesh(armGeometry, robeMaterial);
+            rightArm.position.set(0.2, 1, 0.2);
+            rightArm.rotation.z = -Math.PI / 4;
+            rightArm.rotation.x = Math.PI / 6;
+            group.add(rightArm);
+            
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.25, 12, 8);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 1.65;
+            head.castShadow = true;
+            group.add(head);
+            
+            // Shaved head (very short hair)
+            const hairGeometry = new THREE.SphereGeometry(0.26, 8, 6);
+            const hairMaterial = new THREE.MeshStandardMaterial({ color: 0x2F2F2F });
+            const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+            hair.position.y = 1.7;
+            hair.scale.y = 0.3;
+            group.add(hair);
+            
+            // Eyes (closed in meditation)
+            const eyeGeometry = new THREE.BoxGeometry(0.15, 0.02, 0.02);
+            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.08, 1.65, 0.22);
+            group.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.08, 1.65, 0.22);
+            group.add(rightEye);
+            
+            // Prayer beads
+            const beadGeometry = new THREE.SphereGeometry(0.03, 4, 4);
+            const beadMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+            
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const bead = new THREE.Mesh(beadGeometry, beadMaterial);
+                bead.position.set(
+                    Math.cos(angle) * 0.3,
+                    0.9,
+                    Math.sin(angle) * 0.3 + 0.1
+                );
+                group.add(bead);
+            }
+            
+            // Name label with traditional style
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const context = canvas.getContext('2d');
+            context.fillStyle = 'rgba(255, 248, 220, 0.9)';
+            context.fillRect(0, 0, 256, 64);
+            context.fillStyle = '#8B4513';
+            context.font = 'bold 18px Georgia';
+            context.textAlign = 'center';
+            context.fillText(name, 128, 25);
+            context.font = '14px Georgia';
+            context.fillStyle = '#B8860B';
+            context.fillText(title, 128, 45);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const labelMaterial = new THREE.SpriteMaterial({ map: texture });
+            const label = new THREE.Sprite(labelMaterial);
+            label.position.y = 2.2;
+            label.scale.set(2, 0.5, 1);
+            group.add(label);
+            
+            group.position.set(x, 0, z);
+            group.userData = { 
+                name, 
+                title, 
+                conversations: [],
+                initialPosition: new THREE.Vector3(x, 0, z),
+                targetPosition: new THREE.Vector3(x, 0, z),
+                moveTimer: 0,
+                isMeditating: false,
+                leftArm: leftArm,
+                rightArm: rightArm,
+                ...characterData
+            };
+            
+            characters.push(group);
+            return group;
+        }
+        
+        // Create Buddhist monks with wisdom
+        const thich = createMonk('Thich Minh An', 'Zen Master', -8, -5, 0xFF8C00, {
+            personality: 'peaceful and profound',
+            specialty: 'mindfulness and present moment awareness',
+            quirk: 'speaks only in the present tense'
+        });
+        
+        const lama = createMonk('Lama Tenzin', 'Tibetan Teacher', 8, -5, 0x8B0000, {
+            personality: 'compassionate and wise',
+            specialty: 'Tibetan Buddhism and compassion meditation',
+            quirk: 'always finds the middle way in every answer'
+        });
+        
+        const sensei = createMonk('Roshi Kenji', 'Zen Teacher', -8, 8, 0x4B0082, {
+            personality: 'direct and insightful',
+            specialty: 'Zen koans and sudden enlightenment',
+            quirk: 'answers questions with questions'
+        });
+        
+        const bhante = createMonk('Bhante Ananda', 'Theravada Elder', 8, 8, 0xDAA520, {
+            personality: 'methodical and clear',
+            specialty: 'Vipassana meditation and the Four Noble Truths',
+            quirk: 'explains everything in numbered lists'
+        });
+        
+        const ajahn = createMonk('Ajahn Bodhi', 'Forest Monk', -15, 0, 0x228B22, {
+            personality: 'simple and natural',
+            specialty: 'forest tradition and simplicity',
+            quirk: 'relates everything to nature'
+        });
+        
+        const rinpoche = createMonk('Rinpoche Karma', 'Reincarnate Teacher', 15, 0, 0x800080, {
+            personality: 'mystical and profound',
+            specialty: 'emptiness and interdependence',
+            quirk: 'sees the interconnectedness in everything'
+        });
+        
+        scene.add(thich, lama, sensei, bhante, ajahn, rinpoche);
+        
+        // Player controls
+        const player = {
+            position: new THREE.Vector3(0, 1.6, 8),
+            velocity: new THREE.Vector3(0, 0, 0),
+            speed: 0.08, // Slower, more mindful movement
+            isMeditating: false
+        };
+        
+        const keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            const customQuestionInput = document.getElementById('custom-question-input');
+            
+            // Don't process game controls if typing
+            if (document.activeElement === customQuestionInput) {
+                if (e.key === 'Escape') {
+                    document.getElementById('dialogue-box').style.display = 'none';
+                    currentCharacter = null;
+                    if (document.pointerLockElement === renderer.domElement) {
+                        document.exitPointerLock();
+                    }
+                }
+                return;
+            }
+            
+            keys[e.key.toLowerCase()] = true;
+            keys[e.key] = true;
+            
+            if (e.key.toLowerCase() === 'e' && nearbyCharacter && document.getElementById('dialogue-box').style.display !== 'block') {
+                e.preventDefault();
+                openDialogue(nearbyCharacter);
+            }
+            
+            if (e.key === ' ' && document.getElementById('dialogue-box').style.display !== 'block') {
+                e.preventDefault();
+                player.isMeditating = true;
+                createFloatingText('🧘‍♂️', player.position);
+            }
+            
+            // Prevent arrow keys from scrolling the page
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            const customQuestionInput = document.getElementById('custom-question-input');
+            
+            // Don't process game controls if typing
+            if (document.activeElement === customQuestionInput) {
+                return;
+            }
+            
+            keys[e.key.toLowerCase()] = false;
+            keys[e.key] = false;
+            
+            if (e.key === ' ' && document.getElementById('dialogue-box').style.display !== 'block') {
+                player.isMeditating = false;
+            }
+        });
+        
+        // Character movement AI - more peaceful and meditative
+        function updateCharacterMovement(character, deltaTime) {
+            // Random meditation sessions
+            if (Math.random() < 0.002 && !character.userData.isMeditating) {
+                character.userData.isMeditating = true;
+                createFloatingText('☸️', character.position);
+                setTimeout(() => {
+                    character.userData.isMeditating = false;
+                }, 5000); // Longer meditation
+            }
+            
+            // Don't move if this character is in conversation or meditating
+            if (character === currentCharacter || character.userData.isMeditating) {
+                if (character === currentCharacter) {
+                    // Face the player
+                    const lookTarget = new THREE.Vector3(player.position.x, character.position.y, player.position.z);
+                    character.lookAt(lookTarget);
+                    character.rotation.x = 0;
+                    character.rotation.z = 0;
+                }
+                
+                // Gentle breathing animation during meditation
+                if (character.userData.isMeditating) {
+                    character.position.y = Math.sin(Date.now() * 0.002) * 0.02;
+                }
+                return;
+            }
+            
+            character.userData.moveTimer -= deltaTime;
+            
+            if (character.userData.moveTimer <= 0) {
+                // Set new target near meditation areas
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 2 + Math.random() * 4; // Smaller movement range
+                character.userData.targetPosition = new THREE.Vector3(
+                    character.userData.initialPosition.x + Math.cos(angle) * distance,
+                    0,
+                    character.userData.initialPosition.z + Math.sin(angle) * distance
+                );
+                
+                // Keep within temple bounds
+                character.userData.targetPosition.x = Math.max(-22, Math.min(22, character.userData.targetPosition.x));
+                character.userData.targetPosition.z = Math.max(-22, Math.min(22, character.userData.targetPosition.z));
+                
+                character.userData.moveTimer = 8 + Math.random() * 10; // Longer pauses
+            }
+            
+            // Move towards target slowly and mindfully
+            const direction = new THREE.Vector3().subVectors(character.userData.targetPosition, character.position);
+            direction.y = 0;
+            const distance = direction.length();
+            
+            if (distance > 0.1) {
+                direction.normalize();
+                character.position.add(direction.multiplyScalar(0.015)); // Slower movement
+                
+                // Face movement direction
+                character.lookAt(character.userData.targetPosition);
+                character.rotation.x = 0;
+                character.rotation.z = 0;
+                
+                // Gentle walking animation
+                character.position.y = Math.abs(Math.sin(Date.now() * 0.003)) * 0.03;
+            }
+        }
+        
+        // Dialogue system with Buddhist wisdom
+        const dialogueBox = document.getElementById('dialogue-box');
+        const dialogueName = document.getElementById('dialogue-name');
+        const dialogueContent = document.getElementById('dialogue-content');
+        const dialogueOptions = document.getElementById('dialogue-options');
+        const interactionPrompt = document.getElementById('interaction-prompt');
+        
+        let currentCharacter = null;
+        let nearbyCharacter = null;
+        
+        function generateDialogueOptions(character) {
+            const allQuestions = [
+                // Basic Buddhist concepts
+                "What is the meaning of suffering?",
+                "How do I find inner peace?",
+                "What is enlightenment?",
+                "Tell me about the Four Noble Truths",
+                "What is meditation?",
+                "How do I practice mindfulness?",
+                "What is karma?",
+                "What happens after death?",
+                
+                // Meditation and practice
+                "How do I start meditating?",
+                "What is the best meditation posture?",
+                "How long should I meditate?",
+                "What do I do with racing thoughts?",
+                "How do I develop compassion?",
+                "What is loving-kindness meditation?",
+                "How do I deal with anger?",
+                "What is the middle way?",
+                
+                // Philosophy and wisdom
+                "What is emptiness?",
+                "What does interdependence mean?",
+                "How do I let go of attachments?",
+                "What is the nature of reality?",
+                "What is Buddha nature?",
+                "How do I find my true self?",
+                "What is the purpose of life?",
+                "How do I overcome fear?",
+                
+                // Daily life application
+                "How do I stay calm in difficult situations?",
+                "What is right speech?",
+                "How do I practice patience?",
+                "What is mindful eating?",
+                "How do I deal with loss?",
+                "What is spiritual friendship?",
+                "How do I find balance?",
+                "What is gratitude practice?",
+                
+                // Deeper teachings
+                "What are the three poisons?",
+                "What is the Eightfold Path?",
+                "Tell me about impermanence",
+                "What is non-self?",
+                "What are the five precepts?",
+                "What is right livelihood?",
+                "How do I cultivate wisdom?",
+                "What is the Bodhisattva path?"
+            ];
+            
+            // Select 4 random questions
+            const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, 4);
+        }
+        
+        function openDialogue(character) {
+            currentCharacter = character;
+            dialogueBox.style.display = 'block';
+            dialogueName.textContent = `${character.userData.name} - ${character.userData.title}`;
+            
+            // Exit pointer lock when opening dialogue
+            if (document.pointerLockElement === renderer.domElement) {
+                document.exitPointerLock();
+            }
+            
+            const greetings = [
+                `🙏 Namaste. I am ${character.userData.name}. How may I guide you on the path?`,
+                `☸️ Welcome, friend. I am ${character.userData.name}. What wisdom do you seek?`,
+                `🧘‍♂️ Peace be with you. I am ${character.userData.name}. ${character.userData.quirk}`,
+                `🕉️ Greetings. ${character.userData.name} here. I specialize in ${character.userData.specialty}.`
+            ];
+            
+            if (character.userData.conversations.length === 0) {
+                dialogueContent.innerHTML = `<p><strong>${character.userData.name}:</strong> ${greetings[Math.floor(Math.random() * greetings.length)]}</p>`;
+            } else {
+                // Show last exchange
+                const lastConv = character.userData.conversations[character.userData.conversations.length - 1];
+                dialogueContent.innerHTML = `<p><strong>You:</strong> ${lastConv.user}</p><p><strong>${character.userData.name}:</strong> ${lastConv.response}</p>`;
+            }
+            
+            // Generate dialogue options
+            const options = generateDialogueOptions(character);
+            dialogueOptions.innerHTML = '';
+            
+            options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'dialogue-option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(option);
+                dialogueOptions.appendChild(optionDiv);
+            });
+            
+            // Clear custom question input
+            document.getElementById('custom-question-input').value = '';
+            
+            // Focus the input for easy typing
+            setTimeout(() => {
+                document.getElementById('custom-question-input').focus();
+            }, 100);
+        }
+        
+        async function selectOption(option) {
+            if (!currentCharacter) return;
+            
+            // Show selected option
+            dialogueContent.innerHTML += `<p><strong>You:</strong> ${option}</p>`;
+            dialogueContent.innerHTML += `<p><strong>${currentCharacter.userData.name}:</strong> <span class="loading"></span></p>`;
+            
+            // Scroll to bottom of dialogue
+            dialogueContent.scrollTop = dialogueContent.scrollHeight;
+            
+            // Get references to custom question elements
+            const customQuestionInput = document.getElementById('custom-question-input');
+            const customQuestionSubmit = document.getElementById('custom-question-submit');
+            
+            // Disable options during loading
+            dialogueOptions.style.pointerEvents = 'none';
+            dialogueOptions.style.opacity = '0.5';
+            customQuestionInput.disabled = true;
+            customQuestionSubmit.disabled = true;
+            
+            let responseText = "";
+            
+            // Try to use Claude API, but have fallback responses
+            try {
+                const prompt = `You are roleplaying as ${currentCharacter.userData.name}, ${currentCharacter.userData.title}.
+Character traits: ${currentCharacter.userData.personality}, specializes in ${currentCharacter.userData.specialty}, ${currentCharacter.userData.quirk}
+User question: "${option}"
+
+You are a wise Buddhist monk/teacher in a peaceful temple setting. Draw from Buddhist teachings, meditation practices, and spiritual wisdom. Reference concepts like mindfulness, compassion, the Four Noble Truths, impermanence, interdependence, etc. Keep responses gentle, wise, and practical.
+
+${option.length > 50 ? 'This is a custom question from the user, so be creative and stay in character!' : ''}
+
+Respond as this character with Buddhist wisdom and gentle guidance in 60-100 words. Include relevant Buddhist concepts and practical advice.
+
+IMPORTANT: Output ONLY valid JSON:
+{"response": "your character's wise response here"}`;
+
+                const response = await window.claude.complete(prompt);
+                
+                try {
+                    const data = JSON.parse(response);
+                    responseText = data.response;
+                } catch (parseError) {
+                    console.warn('JSON parsing failed, using fallback responses');
+                    responseText = generateBuddhistResponse(currentCharacter, option);
+                }
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                responseText = generateBuddhistResponse(currentCharacter, option);
+            }
+            
+            // Update conversation
+            currentCharacter.userData.conversations.push({
+                user: option,
+                response: responseText
+            });
+            
+            // Update display
+            dialogueContent.innerHTML = dialogueContent.innerHTML.replace(
+                '<span class="loading"></span>',
+                responseText
+            );
+            
+            // Scroll to bottom
+            dialogueContent.scrollTop = dialogueContent.scrollHeight;
+            
+            // Random wisdom events
+            if (Math.random() < 0.3) {
+                createFloatingText('💫', currentCharacter.position);
+            }
+            
+            // Generate new options
+            const newOptions = generateDialogueOptions(currentCharacter);
+            dialogueOptions.innerHTML = '';
+            
+            newOptions.forEach(opt => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'dialogue-option';
+                optionDiv.textContent = opt;
+                optionDiv.onclick = () => selectOption(opt);
+                dialogueOptions.appendChild(optionDiv);
+            });
+            
+            // Re-enable options
+            dialogueOptions.style.pointerEvents = 'auto';
+            dialogueOptions.style.opacity = '1';
+            customQuestionInput.disabled = false;
+            customQuestionSubmit.disabled = false;
+            customQuestionInput.focus();
+        }
+        
+        // Fallback Buddhist response generator
+        function generateBuddhistResponse(character, question) {
+            const responses = {
+                'Thich Minh An': {
+                    'suffering': [
+                        "Suffering exists in this present moment because we resist what is. When you breathe in, breathe in suffering. When you breathe out, release it with compassion.",
+                        "The flower that blooms today will wither tomorrow. This is not suffering - this is the natural way. Suffering comes when we wish the flower to be eternal."
+                    ],
+                    'meditation': [
+                        "Meditation is not escape from this moment - it is arriving fully in this moment. Sit. Breathe. Be present. This is all.",
+                        "In this breath, there is peace. In this breath, there is wisdom. Each breath brings you home to yourself."
+                    ],
+                    'peace': [
+                        "Peace is not found in tomorrow or yesterday. Peace walks with you right now, in this step, in this breath.",
+                        "The mind seeks peace in the future. The heart finds peace in the present. Listen to your heart in this moment."
+                    ],
+                    'default': [
+                        "This question arises in the present moment. The answer also lives in the present moment. Breathe and listen deeply.",
+                        "Like clouds passing through the sky, thoughts come and go. But the sky of awareness remains unchanged in this moment.",
+                        "The Buddha nature is not hidden somewhere else. It shines through your question right now."
+                    ]
+                },
+                'Lama Tenzin': {
+                    'compassion': [
+                        "Compassion begins with ourselves, extends to loved ones, reaches to strangers, and embraces even our enemies. This is the middle way of the heart.",
+                        "When you hurt, all beings hurt. When you heal, all beings heal. Compassion recognizes this profound interconnection."
+                    ],
+                    'suffering': [
+                        "The First Noble Truth teaches that life contains suffering. The middle way is neither avoiding pain nor seeking it, but accepting it with wisdom.",
+                        "Suffering is the teacher that points us toward liberation. Without understanding pain, how could we appreciate the path to freedom?"
+                    ],
+                    'meditation': [
+                        "In meditation, we find the middle way between effort and relaxation. Neither forcing the mind nor letting it wander freely.",
+                        "Tibetan meditation teaches us to rest in the nature of mind itself - clear, aware, and naturally at peace."
+                    ],
+                    'default': [
+                        "Every question contains its own answer when approached with the middle way - neither grasping nor rejecting, but observing with clear awareness.",
+                        "The middle path teaches that extremes lead to suffering. In balance, we find wisdom and compassion.",
+                        "As we say in Tibet, the mountain teaches patience, the river teaches flow. Find the middle way between these."
+                    ]
+                },
+                'Roshi Kenji': {
+                    'enlightenment': [
+                        "What is enlightenment? Who is asking? When the questioner disappears, what remains?",
+                        "You seek enlightenment. But who is the seeker? What is being sought? Is the seeker separate from the sought?"
+                    ],
+                    'meditation': [
+                        "How do you meditate? What meditates on what? When all concepts drop away, who sits?",
+                        "You ask about meditation. But what is not meditation? Is walking not meditation? Is breathing not meditation?"
+                    ],
+                    'suffering': [
+                        "Why do you suffer? Who suffers? Find the one who suffers and show them to me.",
+                        "Suffering appears. Where does it come from? Where does it go? What is its true nature?"
+                    ],
+                    'default': [
+                        "You have asked a question. But who is the questioner? What is a question? Can you show me your question?",
+                        "Words point to the moon. Don't mistake the finger for the moon. What remains when words fall away?",
+                        "The ancient masters said: 'The pine teaches silence, the rock teaches stillness.' What do you teach?",
+                        "Before your parents were born, what was your original face? That is also the answer to your question."
+                    ]
+                },
+                'Bhante Ananda': {
+                    'truths': [
+                        "The Four Noble Truths: First, life contains suffering. Second, suffering arises from craving. Third, suffering can end. Fourth, the Eightfold Path leads to this end.",
+                        "These truths are not beliefs but direct observations. Practice mindfulness and see these truths for yourself."
+                    ],
+                    'meditation': [
+                        "Vipassana meditation has three foundations: First, mindfulness of body. Second, mindfulness of feelings. Third, mindfulness of mind. Fourth, mindfulness of phenomena.",
+                        "Begin with the breath. Notice inhaling, notice exhaling. When mind wanders, gently return. This is the beginning of wisdom."
+                    ],
+                    'path': [
+                        "The Eightfold Path contains three trainings: First, ethical conduct (right speech, action, livelihood). Second, mental cultivation (right effort, mindfulness, concentration). Third, wisdom (right understanding, intention).",
+                        "Each step supports the others. Ethics purifies action, meditation purifies mind, wisdom purifies understanding."
+                    ],
+                    'default': [
+                        "The Buddha taught systematically. First, understand the problem. Second, find the cause. Third, know the solution exists. Fourth, practice the path.",
+                        "All phenomena have three characteristics: First, impermanence. Second, suffering. Third, non-self. Contemplate these deeply.",
+                        "Practice consists of three parts: First, hearing the teaching. Second, contemplating its meaning. Third, meditating on its truth."
+                    ]
+                },
+                'Ajahn Bodhi': {
+                    'nature': [
+                        "The forest teaches patience - trees grow slowly, dropping leaves in autumn, blooming in spring. Our practice is like this natural rhythm.",
+                        "Watch the birds - they don't worry about tomorrow's food. The river flows without effort. Nature shows us the way of effortless being."
+                    ],
+                    'simplicity': [
+                        "A bowl, a robe, and shelter from rain - what more does one need? Simplicity brings clarity like a clear mountain stream.",
+                        "The more we own, the more we are owned. In the forest, we learn that happiness comes not from having more, but needing less."
+                    ],
+                    'meditation': [
+                        "Sit under a tree and breathe with the forest. Your breath mingles with the wind, your heart beats with the earth's rhythm.",
+                        "In nature, everything meditates - the mountain in stillness, the river in flow, the tree in growth. Join this natural meditation."
+                    ],
+                    'default': [
+                        "The ant teaches diligence, the flower teaches beauty without self-consciousness. What does nature teach you in this moment?",
+                        "Storms come and go, seasons change, but the forest remains at peace. Find this natural peace within yourself.",
+                        "A seed knows when to sprout, a bird knows when to migrate. Trust the natural wisdom within your own heart.",
+                        "In the forest, there is no hurry, no worry, no waste. Everything has its place and purpose in the great web of life."
+                    ]
+                },
+                'Rinpoche Karma': {
+                    'emptiness': [
+                        "Emptiness doesn't mean nothing exists, but that nothing exists independently. You, me, this conversation - all arise through interconnected causes.",
+                        "Like a rainbow appears vivid yet has no solid substance, all phenomena appear clearly while being empty of inherent existence."
+                    ],
+                    'interdependence': [
+                        "This moment exists because of infinite causes - your parents, their parents, the earth, sun, countless beings. Nothing stands alone.",
+                        "When you understand interdependence, compassion arises naturally. Harming others is harming yourself; helping others is helping yourself."
+                    ],
+                    'karma': [
+                        "Karma is not fate but action. Every thought, word, and deed plants seeds. Understanding this, we can choose to plant seeds of wisdom and compassion.",
+                        "Past karma brought you here, present karma shapes your future. But in each moment, you have the freedom to choose your response."
+                    ],
+                    'default': [
+                        "All phenomena arise through the union of emptiness and appearance, like space and rainbow. Neither exists without the other.",
+                        "In the web of interdependence, your question and my answer co-create each other. Subject and object dance together.",
+                        "Samsara and nirvana are not different places but different ways of seeing the same reality. Shift your perspective, change your world.",
+                        "The Buddha nature is like space - unborn, unchanging, pervading all. It is your true nature, closer than your breath."
+                    ]
+                },
+                'default': {
+                    'default': [
+                        "🙏 The path of wisdom begins with questioning. Your question shows the awakening of spiritual curiosity.",
+                        "☸️ Each moment offers an opportunity for mindfulness and compassion. Practice begins now.",
+                        "🧘‍♂️ In stillness, find movement. In silence, find the deepest teachings. Listen with your whole being.",
+                        "🕉️ The Buddha taught that we are what we think. Think with kindness, and kindness manifests."
+                    ]
+                }
+            };
+            
+            // Determine response category based on keywords
+            let responseKey = 'default';
+            const questionLower = question.toLowerCase();
+            
+            if (questionLower.includes('suffering') || questionLower.includes('pain') || questionLower.includes('noble truth')) responseKey = 'suffering';
+            else if (questionLower.includes('meditation') || questionLower.includes('mindfulness') || questionLower.includes('breathe')) responseKey = 'meditation';
+            else if (questionLower.includes('peace') || questionLower.includes('calm') || questionLower.includes('tranquil')) responseKey = 'peace';
+            else if (questionLower.includes('compassion') || questionLower.includes('loving') || questionLower.includes('kindness')) responseKey = 'compassion';
+            else if (questionLower.includes('enlightenment') || questionLower.includes('awakening') || questionLower.includes('liberation')) responseKey = 'enlightenment';
+            else if (questionLower.includes('truth') || questionLower.includes('path') || questionLower.includes('eightfold')) responseKey = 'truths';
+            else if (questionLower.includes('nature') || questionLower.includes('forest') || questionLower.includes('tree')) responseKey = 'nature';
+            else if (questionLower.includes('simple') || questionLower.includes('minimalism') || questionLower.includes('need')) responseKey = 'simplicity';
+            else if (questionLower.includes('empty') || questionLower.includes('void') || questionLower.includes('form')) responseKey = 'emptiness';
+            else if (questionLower.includes('interconnect') || questionLower.includes('dependent') || questionLower.includes('together')) responseKey = 'interdependence';
+            else if (questionLower.includes('karma') || questionLower.includes('action') || questionLower.includes('consequence')) responseKey = 'karma';
+            else if (questionLower.includes('path') || questionLower.includes('practice') || questionLower.includes('training')) responseKey = 'path';
+            
+            const characterResponses = responses[character.userData.name] || responses['default'];
+            const responseArray = characterResponses[responseKey] || characterResponses['default'] || responses['default']['default'];
+            
+            return responseArray[Math.floor(Math.random() * responseArray.length)];
+        }
+        
+        // Close dialogue with Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                dialogueBox.style.display = 'none';
+                currentCharacter = null;
+                if (document.pointerLockElement === renderer.domElement) {
+                    document.exitPointerLock();
+                }
+            }
+        });
+        
+        // Set up custom question handlers
+        const customQuestionInput = document.getElementById('custom-question-input');
+        const customQuestionSubmit = document.getElementById('custom-question-submit');
+        
+        customQuestionSubmit.addEventListener('click', () => {
+            const customQuestion = customQuestionInput.value.trim();
+            if (customQuestion && currentCharacter) {
+                selectOption(customQuestion);
+                customQuestionInput.value = '';
+            }
+        });
+        
+        customQuestionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const customQuestion = customQuestionInput.value.trim();
+                if (customQuestion && currentCharacter) {
+                    selectOption(customQuestion);
+                    customQuestionInput.value = '';
+                }
+            }
+        });
+        
+        // Animation loop
+        let lastTime = 0;
+        
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+            
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            // Update player movement (only if dialogue is not open)
+            player.velocity.set(0, 0, 0);
+            
+            if (!player.isMeditating && dialogueBox.style.display !== 'block') {
+                if (keys['w']) player.velocity.z = player.speed;
+                if (keys['s']) player.velocity.z = -player.speed;
+                if (keys['a']) player.velocity.x = -player.speed;
+                if (keys['d']) player.velocity.x = player.speed;
+            }
+            
+            // Arrow key camera controls (horizontal only)
+            const lookSpeed = 0.03; // Slower, more mindful looking
+            if (dialogueBox.style.display !== 'block') {
+                if (keys['ArrowLeft']) {
+                    mouseX += lookSpeed;
+                }
+                if (keys['ArrowRight']) {
+                    mouseX -= lookSpeed;
+                }
+            }
+            
+            // Update camera rotation (horizontal only)
+            if (!player.isMeditating && dialogueBox.style.display !== 'block') {
+                camera.rotation.y = mouseX;
+                camera.rotation.x = 0;
+            }
+            
+            // Apply movement in camera direction
+            const forward = new THREE.Vector3(0, 0, -1);
+            forward.applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+            
+            const right = new THREE.Vector3(1, 0, 0);
+            right.applyQuaternion(camera.quaternion);
+            right.y = 0;
+            right.normalize();
+            
+            player.position.add(forward.multiplyScalar(player.velocity.z));
+            player.position.add(right.multiplyScalar(player.velocity.x));
+            
+            // Keep player in temple bounds
+            player.position.x = Math.max(-22, Math.min(22, player.position.x));
+            player.position.z = Math.max(-22, Math.min(22, player.position.z));
+            
+            // Meditation animation for player
+            if (player.isMeditating && dialogueBox.style.display !== 'block') {
+                camera.position.y = player.position.y + Math.sin(Date.now() * 0.005) * 0.1; // Gentle breathing
+                camera.rotation.z = Math.sin(Date.now() * 0.005) * 0.02; // Subtle swaying
+                camera.rotation.y = mouseX;
+                camera.rotation.x = 0;
+            } else {
+                camera.position.copy(player.position);
+                camera.rotation.z = 0;
+                if (dialogueBox.style.display !== 'block') {
+                    camera.rotation.y = mouseX;
+                    camera.rotation.x = 0;
+                }
+            }
+            
+            // Update character movement
+            characters.forEach(character => {
+                updateCharacterMovement(character, deltaTime);
+                
+                // Meditation animation for characters
+                if (character.userData.isMeditating) {
+                    // Gentle breathing
+                    character.position.y = Math.sin(Date.now() * 0.003) * 0.02;
+                    
+                    // Prayer hand position
+                    character.userData.leftArm.rotation.z = Math.PI / 4;
+                    character.userData.leftArm.rotation.x = Math.PI / 6;
+                    character.userData.rightArm.rotation.z = -Math.PI / 4;
+                    character.userData.rightArm.rotation.x = Math.PI / 6;
+                } else {
+                    // Normal arm position
+                    character.position.y = 0;
+                }
+            });
+            
+            // Animate prayer wheels spinning
+            prayerWheel1.userData.wheel.rotation.y += 0.02;
+            prayerWheel2.userData.wheel.rotation.y += 0.02;
+            
+            // Animate incense smoke
+            [incense1, incense2, incense3, incense4].forEach(incense => {
+                incense.children.forEach((child, index) => {
+                    if (index > 0) { // Skip the base
+                        child.position.x += (Math.random() - 0.5) * 0.002;
+                        child.position.z += (Math.random() - 0.5) * 0.002;
+                        child.position.y += 0.005;
+                        
+                        if (child.position.y > 4) {
+                            child.position.y = 0.8;
+                        }
+                    }
+                });
+            });
+            
+            // Check for nearby characters
+            nearbyCharacter = null;
+            let minDistance = Infinity;
+            
+            characters.forEach(character => {
+                const distance = player.position.distanceTo(character.position);
+                if (distance < 3 && distance < minDistance) {
+                    minDistance = distance;
+                    nearbyCharacter = character;
+                }
+            });
+            
+            // Show/hide interaction prompt
+            if (nearbyCharacter && !currentCharacter) {
+                interactionPrompt.style.display = 'block';
+                interactionPrompt.textContent = `Press E to seek wisdom from ${nearbyCharacter.userData.name}`;
+            } else {
+                interactionPrompt.style.display = 'none';
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Mouse look (horizontal only)
+        let mouseX = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === renderer.domElement && dialogueBox.style.display !== 'block') {
+                mouseX += e.movementX * 0.001; // Slower mouse sensitivity for peaceful exploration
+            }
+        });
+        
+        renderer.domElement.addEventListener('click', () => {
+            if (!dialogueBox.style.display || dialogueBox.style.display === 'none') {
+                renderer.domElement.requestPointerLock();
+            }
+        });
+        
+        animate(0);
+    </script>
+</body>
+</html>
