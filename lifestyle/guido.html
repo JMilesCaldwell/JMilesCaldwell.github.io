@@ -1,7 +1,8 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="nl">
 <head>
+    <meta charset="UTF-8">
     <title>Consult Sjamaan Guido</title>
     <style>
         body {
@@ -15,9 +16,14 @@
             animation: blinker 1s linear infinite;
         }
         @keyframes blinker { 50% { opacity: 0; } }
+        #guidoImg {
+            width: 220px;
+            height: auto;
+            margin-top: 10px;
+        }
         #answerBox {
             margin-top: 20px;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             min-height: 1.5em;
         }
@@ -34,62 +40,84 @@
     </style>
 </head>
 <body>
-    <img src="https://i.imgur.com/iYxNf8y.gif" alt="Crystal Ball"><br>
+    <img id="guidoImg" src="images/guidodefault.png" alt="Sjamaan Guido"><br>
     <h1><blink>Vraag het aan Sjamaan Guido</blink></h1>
 
     <p>Stel je vraag aan het universum:</p>
     <input type="text" id="question" placeholder="Typ hier je vraag...">
-    <button onclick="consultGuido()">Vraag&nbsp;Guido!</button>
+    <button id="askBtn" onclick="consultGuido()">Vraag&nbsp;Guido!</button>
 
     <div id="answerBox"></div>
 
-    <!-- Ambient panflute MIDI for proper vibes -->
-    <embed src="https://files.freemidi.org/download1839.mid" autostart="true" loop="true" hidden="true">
-
     <script>
+    const thinkingPhrases = [
+        "… raadpleegt de antlantische archieven …",
+        "… voelt de vibraties …",
+        "… stemt kosmische essenties af …"
+    ];
+
     const responses = [
-        // YES (10)
-        "De sterren zeggen ja.",
-        "Kosmisch antwoord: absoluut.",
-        "De wind van verandering fluistert 'ja'.",
-        "Jouw aura straalt groen licht.",
-        "Heilige geitenkaas bevestigt het.",
-        "Het universum knikt instemmend.",
-        "Het vijfde element glimlacht naar je.",
-        "Je spirit animal zegt: definitely.",
-        "Alle chakra's staan op groen.",
-        "Innerlijke stilte spreekt een luid 'JA'.",
-        // NO (10)
-        "De kristallen zijn ongeïnspireerd.",
-        "Mercurius staat retrograde – beter van niet.",
-        "De kosmos fronst zijn wenkbrauwen.",
-        "Het orakel ruikt onraad.",
-        "Je aura schudt haar hoofd.",
-        "Niet vandaag, oude ziel.",
-        "Het wiel van karma zegt nee.",
-        "Zelfs de zenkat miauwt afwijzend.",
-        "De maan draait zich om.",
-        "Het derde oog knippert sceptisch.",
-        // MAYBE (10)
-        "Luister naar je innerlijke natuur.",
-        "Hoe voel je je er zelf bij?",
-        "De mist van onzekerheid blijft hangen.",
-        "Er zijn meer werelden dan deze.",
-        "Alle paden komen samen in stilte.",
-        "Vertrouw op het ritme, niet het antwoord.",
-        "Nog één wierookstokje, dan verder zien.",
-        "Het universum typt… en pauzeert.",
-        "De kaarten schuifelen nog.",
-        "Tijd zal het mysterie ontrafelen."
+        // POSITIEF
+        {text:"De sterren zeggen ja.", type:"positive"},
+        {text:"Kosmisch antwoord: absoluut.", type:"positive"},
+        {text:"De wind van verandering fluistert 'ja'.", type:"positive"},
+        {text:"Jouw aura straalt groen licht.", type:"positive"},
+        {text:"Heilige geitenkaas bevestigt het.", type:"positive"},
+        {text:"Het universum knikt instemmend.", type:"positive"},
+        {text:"Het vijfde element glimlacht naar je.", type:"positive"},
+        {text:"Je spirit animal zegt: definitely.", type:"positive"},
+        {text:"Alle chakra's staan op groen.", type:"positive"},
+        {text:"Innerlijke stilte spreekt een luid 'JA'.", type:"positive"},
+        // NEGATIEF
+        {text:"De kristallen zijn ongeïnspireerd.", type:"negative"},
+        {text:"Mercurius staat retrograde – beter van niet.", type:"negative"},
+        {text:"De kosmos fronst zijn wenkbrauwen.", type:"negative"},
+        {text:"Het orakel ruikt onraad.", type:"negative"},
+        {text:"Je aura schudt haar hoofd.", type:"negative"},
+        {text:"Niet vandaag, oude ziel.", type:"negative"},
+        {text:"Het wiel van karma zegt nee.", type:"negative"},
+        {text:"Zelfs de zenkat miauwt afwijzend.", type:"negative"},
+        {text:"De maan draait zich om.", type:"negative"},
+        {text:"Het derde oog knippert sceptisch.", type:"negative"},
+        // NEUTRAAL
+        {text:"Luister naar je innerlijke natuur.", type:"neutral"},
+        {text:"Hoe voel je je er zelf bij?", type:"neutral"},
+        {text:"De mist van onzekerheid blijft hangen.", type:"neutral"},
+        {text:"Er zijn meer werelden dan deze.", type:"neutral"},
+        {text:"Alle paden komen samen in stilte.", type:"neutral"},
+        {text:"Vertrouw op het ritme, niet het antwoord.", type:"neutral"},
+        {text:"Nog één wierookstokje, dan verder zien.", type:"neutral"},
+        {text:"Het universum typt… en pauzeert.", type:"neutral"},
+        {text:"De kaarten schuifelen nog.", type:"neutral"},
+        {text:"Tijd zal het mysterie ontrafelen.", type:"neutral"}
     ];
 
     function consultGuido() {
-        const answer = responses[Math.floor(Math.random() * responses.length)];
-        document.getElementById("answerBox").innerText = answer;
+        const btn = document.getElementById("askBtn");
+        btn.disabled = true;
+
+        // Toon denkbeeld en placeholder
+        document.getElementById("guidoImg").src = "images/guidothinking.png";
+        const placeholder = thinkingPhrases[Math.floor(Math.random() * thinkingPhrases.length)];
+        document.getElementById("answerBox").innerText = placeholder;
+
+        // Na 8 seconden antwoord
+        setTimeout(() => {
+            const answerObj = responses[Math.floor(Math.random() * responses.length)];
+            document.getElementById("answerBox").innerText = answerObj.text;
+
+            let imgFile = "images/guidodefault.png";
+            if (answerObj.type === "positive") imgFile = "images/guidohappy.png";
+            else if (answerObj.type === "negative") imgFile = "images/guidosad.png";
+            else imgFile = "images/guidoconfused.png";
+
+            document.getElementById("guidoImg").src = imgFile;
+            btn.disabled = false;
+        }, 8000);
     }
     </script>
 
     <br><br>
-    <small><a href="../lentebloesem_1995.html">← Terug naar hoofdpagina</a></small>
+    <small><a href="../lentebloesem_1995_v2.html">← Terug naar hoofdpagina</a></small>
 </body>
 </html>
