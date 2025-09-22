@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Shopify Import Filler (PLGGR, all rows, locale aware)</title>
+  <title>Shopify Import Filler (scan all PLGGR rows)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body { font-family: system-ui, sans-serif; background:#0f1115; color:#e6e6e6; margin:0; padding:20px; }
@@ -13,16 +13,16 @@
     button:disabled { opacity:.6; cursor:not-allowed; }
     pre { background:#171a21; border:1px solid #2a2f3a; border-radius:8px; padding:12px; white-space:pre-wrap; margin-top:14px; color:#cfd2d6; }
   </style>
-  <!-- SheetJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <h1>Shopify Import Filler</h1>
   <p>
+    Inputs:<br>
     A) Shopify skeleton (3-row format)<br>
     B) SKU → Handle map (.xlsx)<br>
-    C) PLGGR export (any language, SKU=A, Title=AE, Description=AG)<br>
-    Output: skeleton filled with translations in column H, Locale set as chosen.
+    C) PLGGR export (SKU=A, Title=AE, Description=AG)<br>
+    Output: skeleton filled in column H, locale set.
   </p>
 
   <label>A) Shopify skeleton (.xlsx)</label>
@@ -53,16 +53,14 @@ let fSkeleton=null, fSkuHandle=null, fPlggr=null;
   });
 });
 
-function sheetToAOA(file){
+function readWorkbook(file){
   return new Promise((resolve,reject)=>{
     const r=new FileReader();
     r.onload=e=>{
       try {
         const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-        const ws=wb.Sheets[wb.SheetNames[0]];
-        const aoa=XLSX.utils.sheet_to_json(ws,{header:1, raw:false, defval:""});
-        resolve(aoa);
-      } catch(err){ reject(err); }
+        resolve(wb);
+      }catch(err){reject(err);}
     };
     r.onerror=reject;
     r.readAsArrayBuffer(file);
@@ -71,88 +69,90 @@ function sheetToAOA(file){
 
 $('process').addEventListener('click', async ()=>{
   const report=[];
-  const [skel, skuMap, plggr] = await Promise.all([
-    sheetToAOA(fSkeleton),
-    sheetToAOA(fSkuHandle),
-    sheetToAOA(fPlggr)
+  // read all three
+  const [wbSkel, wbSku, wbPlg] = await Promise.all([
+    readWorkbook(fSkeleton),
+    readWorkbook(fSkuHandle),
+    readWorkbook(fPlggr)
   ]);
+
+  const wsSkel=wbSkel.Sheets[wbSkel.SheetNames[0]];
+  const wsSku=wbSku.Sheets[wbSku.SheetNames[0]];
+  const wsPlg=wbPlg.Sheets[wbPlg.SheetNames[0]];
   const locale=$('locale').value.trim();
 
+  // Convert skeleton fully
+  const skelAOA=XLSX.utils.sheet_to_json(wsSkel,{header:1,raw:false,defval:""});
   // Column indices
   const TYPE=0, IDENT=1, FIELD=2, LOCALE=3, DEFAULT_C=6, TRANSLATED=7;
-  const COL_SKU=0, COL_TITLE=30, COL_BODY=32;
 
-  // Map Ident -> Handle from skeleton
+  // ident -> handle from skeleton
   const identToHandle=new Map();
-  for (let i=1;i<skel.length;i++){
-    const row=skel[i]; if (!row) continue;
-    if (String(row[TYPE]).toUpperCase()==='PRODUCT' && String(row[FIELD]).toLowerCase()==='handle'){
+  for(let i=1;i<skelAOA.length;i++){
+    const row=skelAOA[i]; if(!row) continue;
+    if(String(row[TYPE]).toUpperCase()==='PRODUCT' && String(row[FIELD]).toLowerCase()==='handle'){
       identToHandle.set(String(row[IDENT]).trim(), String(row[DEFAULT_C]).trim());
     }
   }
 
-  // Map Handle -> SKU from sku_handle_map.xlsx
+  // handle -> sku from skuHandle sheet
+  const skuAOA=XLSX.utils.sheet_to_json(wsSku,{header:1,raw:false,defval:""});
   const handleToSku=new Map();
-  for (let i=1;i<skuMap.length;i++){
-    const r=skuMap[i]; if (!r) continue;
+  for(let i=1;i<skuAOA.length;i++){
+    const r=skuAOA[i]; if(!r) continue;
     const sku=String(r[0]||'').trim(), handle=String(r[1]||'').trim();
-    if (sku && handle) handleToSku.set(handle, sku);
+    if(sku && handle) handleToSku.set(handle, sku);
   }
 
-  // Map SKU -> {title, body} from PLGGR
+  // Now plggr: scan ALL rows by cell address
   const skuToContent=new Map();
-  let plRows=0, lastRow=0;
-  for (let i=1;i<plggr.length;i++){
-    const r=plggr[i]; if (!r) continue;
-    lastRow=i;
-    const sku=String(r[COL_SKU]||'').trim();
-    const title=String(r[COL_TITLE]||'').trim();
-    const body=String(r[COL_BODY]||'').trim();
-    if (!sku) continue;
-    if (!skuToContent.has(sku)) skuToContent.set(sku,{title:'',body:''});
+  const range=XLSX.utils.decode_range(wsPlg["!ref"]);
+  let lastRow=range.e.r+1; // 1-based
+  let rowsWithData=0;
+  for(let R=1;R<=lastRow;R++){ // start at row 2 (index 1)
+    const addrSKU = XLSX.utils.encode_cell({c:0,r:R});
+    const addrTitle = XLSX.utils.encode_cell({c:30,r:R});
+    const addrBody = XLSX.utils.encode_cell({c:32,r:R});
+    const sku=(wsPlg[addrSKU] ? String(wsPlg[addrSKU].v).trim() : "");
+    if(!sku) continue;
+    const title=(wsPlg[addrTitle] ? String(wsPlg[addrTitle].v).trim() : "");
+    const body=(wsPlg[addrBody] ? String(wsPlg[addrBody].v).trim() : "");
+    if(!skuToContent.has(sku)) skuToContent.set(sku,{title:"",body:""});
     const o=skuToContent.get(sku);
-    if (title) o.title=title;
-    if (body)  o.body=body;
-    plRows++;
+    if(title) o.title=title;
+    if(body) o.body=body;
+    rowsWithData++;
   }
 
   // Fill skeleton
-  const out=skel.map(r=>r?r.slice():r);
+  const out=skelAOA.map(r=>r?r.slice():r);
   let filledTitle=0, filledBody=0;
-  for (let i=1;i<out.length;i++){
-    const row=out[i]; if (!row) continue;
-    if (String(row[TYPE]).toUpperCase()!=='PRODUCT') continue;
+  for(let i=1;i<out.length;i++){
+    const row=out[i]; if(!row) continue;
+    if(String(row[TYPE]).toUpperCase()!=='PRODUCT') continue;
     const ident=String(row[IDENT]||'').trim();
     const field=String(row[FIELD]||'').trim().toLowerCase();
-    if (locale) row[LOCALE]=locale;
-    if (field!=='title' && field!=='body_html') continue;
-
+    if(locale) row[LOCALE]=locale;
+    if(field!=='title' && field!=='body_html') continue;
     const handle=identToHandle.get(ident);
-    if (!handle) continue;
+    if(!handle) continue;
     const sku=handleToSku.get(handle);
-    if (!sku) continue;
+    if(!sku) continue;
     const content=skuToContent.get(sku);
-    if (!content) continue;
-
-    if (field==='title' && content.title){
-      row[TRANSLATED]=content.title;
-      filledTitle++;
-    }
-    if (field==='body_html' && content.body){
-      row[TRANSLATED]=content.body;
-      filledBody++;
-    }
+    if(!content) continue;
+    if(field==='title' && content.title){ row[TRANSLATED]=content.title; filledTitle++; }
+    if(field==='body_html' && content.body){ row[TRANSLATED]=content.body; filledBody++; }
   }
 
-  // Output file
-  const ws=XLSX.utils.aoa_to_sheet(out);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Shopify Import");
-  XLSX.writeFile(wb, `shopify_import_filled_${locale||'xx'}.xlsx`);
+  const wsOut=XLSX.utils.aoa_to_sheet(out);
+  const wbOut=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wbOut, wsOut, "Shopify Import");
+  XLSX.writeFile(wbOut, `shopify_import_filled_${locale||'xx'}.xlsx`);
 
   $('report').textContent=
-    `Skeleton rows: ${skel.length}\n`+
-    `PLGGR rows read: ${plRows} (last row index: ${lastRow})\n`+
+    `Skeleton rows: ${skelAOA.length}\n`+
+    `PLGGR last row index: ${lastRow}\n`+
+    `PLGGR rows with SKU data: ${rowsWithData}\n`+
     `Titles filled: ${filledTitle}\n`+
     `Descriptions filled: ${filledBody}`;
 });
