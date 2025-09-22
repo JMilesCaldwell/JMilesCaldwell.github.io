@@ -2,16 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Fill Translations → Shopify Import (XLSX)</title>
+  <title>Shopify Import Filler (fixed PLGGR layout)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body { font-family: system-ui, sans-serif; background:#0f1115; color:#e6e6e6; margin:0; padding:20px; }
     h1 { margin:0 0 8px; }
-    .hint { color:#a9abb0; font-size:.92rem; margin:0 0 16px; }
-    label { display:block; margin:12px 0 4px; }
+    label { display:block; margin-top:12px; }
     input[type="file"], input[type="text"] { width:100%; max-width:560px; }
-    .row { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-top:8px; }
-    .check { display:flex; align-items:center; gap:8px; }
     button { margin-top:16px; padding:10px 14px; border:0; border-radius:8px; background:#2b6cb0; color:#fff; cursor:pointer; }
     button:disabled { opacity:.6; cursor:not-allowed; }
     pre { background:#171a21; border:1px solid #2a2f3a; border-radius:8px; padding:12px; white-space:pre-wrap; margin-top:14px; color:#cfd2d6; }
@@ -20,32 +17,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-  <h1>Fill Translations → Shopify Import (XLSX)</h1>
-  <p class="hint">
+  <h1>Shopify Import Filler</h1>
+  <p>
     Inputs:<br>
-    A) Shopify skeleton (<code>Type, Identification, Field, Locale, Market, Status, Default content, Translated content</code>)<br>
-    B) SKU → Identification map (<code>SKU | Identification</code>)<br>
-    C) PLGGR export: Column A = SKU; headers include <em>Webomschrijving</em> (title) &amp; <em>Uitgebreide omschrijving</em> (description).<br>
-    Output: skeleton filled with title/description in <em>Translated content</em> (col H).
+    A) Shopify skeleton (3-row format)<br>
+    B) SKU → Identification map<br>
+    C) PLGGR export (SKU=A, Title=AE, Description=AG)<br>
+    Output: skeleton filled in column H (Translated content).
   </p>
 
-  <label for="skeleton">A) Shopify skeleton (.xlsx)</label>
+  <label>A) Shopify skeleton (.xlsx)</label>
   <input id="skeleton" type="file" accept=".xlsx">
 
-  <label for="skuIdent">B) SKU → Identification (.xlsx)</label>
+  <label>B) SKU → Identification map (.xlsx)</label>
   <input id="skuIdent" type="file" accept=".xlsx">
 
-  <label for="plggr">C) PLGGR export (.xlsx)</label>
+  <label>C) PLGGR export (.xlsx)</label>
   <input id="plggr" type="file" accept=".xlsx">
 
-  <div class="row">
-    <div>
-      <label for="locale">Locale to set (e.g. <code>de</code>)</label>
-      <input id="locale" type="text" value="de" placeholder="de">
-    </div>
-    <label class="check"><input id="stripZeros" type="checkbox" checked> Strip leading zeroes in SKUs (recommended)</label>
-    <label class="check"><input id="overwrite" type="checkbox" checked> Overwrite existing “Translated content”</label>
-  </div>
+  <label>Locale code</label>
+  <input id="locale" type="text" value="de">
 
   <button id="process" disabled>Generate Filled XLSX</button>
   <pre id="report"></pre>
@@ -53,212 +44,90 @@
 <script>
 const $ = id => document.getElementById(id);
 let fSkeleton=null, fSkuIdent=null, fPlggr=null;
-['skeleton','skuIdent','plggr'].forEach(id => {
-  $(id).addEventListener('change', e => {
-    if (id==='skeleton') fSkeleton = e.target.files[0];
-    if (id==='skuIdent') fSkuIdent = e.target.files[0];
-    if (id==='plggr')   fPlggr   = e.target.files[0];
+
+['skeleton','skuIdent','plggr'].forEach(id=>{
+  $(id).addEventListener('change', e=>{
+    if (id==='skeleton') fSkeleton=e.target.files[0];
+    if (id==='skuIdent') fSkuIdent=e.target.files[0];
+    if (id==='plggr')   fPlggr=e.target.files[0];
     $('process').disabled = !(fSkeleton && fSkuIdent && fPlggr);
   });
 });
 
 function sheetToAOA(file){
   return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onload = e => {
-      try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false});
-        resolve(aoa);
-      } catch (err) { reject(err); }
+    const r=new FileReader();
+    r.onload=e=>{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
+      resolve(aoa);
     };
-    r.onerror = reject;
+    r.onerror=reject;
     r.readAsArrayBuffer(file);
   });
 }
 
-// Normalise header names: lower-case, collapse spaces/underscores
-function normHeader(s){
-  return String(s||'').toLowerCase().replace(/\s+/g,' ').replace(/_/g,' ').trim();
-}
-function findCol(headers, wantedList){
-  // wantedList: array of acceptable names, in priority order
-  const map = headers.map(normHeader);
-  for (const w of wantedList){
-    const target = normHeader(w);
-    for (let i=0;i<map.length;i++){
-      if (map[i] === target) return i;
-    }
-  }
-  return -1;
-}
-function colLetterToIndex(letter){
-  let s = String(letter).toUpperCase().trim(), n=0;
-  for (let i=0;i<s.length;i++) n = n*26 + (s.charCodeAt(i)-64);
-  return n-1;
-}
-function normaliseSKU(s, stripZeros){
-  let t = String(s||'').trim();
-  if (!t) return '';
-  // If asked, drop leading zeroes (but keep alphanumerics intact)
-  if (stripZeros && /^[0-9]+$/.test(t)) t = t.replace(/^0+/, '') || '0';
-  return t;
-}
-function normFieldName(f){
-  return String(f||'').toLowerCase().replace(/[^a-z]+/g,'_').replace(/^_+|_+$/g,'');
+function normaliseSKU(s){
+  return String(s||'').trim().replace(/^0+/, '') || '0';
 }
 
-$('process').addEventListener('click', async () => {
-  const report = [];
-  const locale = $('locale').value.trim();
-  const stripZeros = $('stripZeros').checked;
-  const overwrite = $('overwrite').checked;
-
-  // Load all three
+$('process').addEventListener('click', async ()=>{
   const [skeletonAOA, skuIdentAOA, plggrAOA] = await Promise.all([
     sheetToAOA(fSkeleton), sheetToAOA(fSkuIdent), sheetToAOA(fPlggr)
   ]);
+  const locale = $('locale').value.trim();
 
-  // ---- Build SKU -> Identification map (tolerant to leading-zero differences) ----
-  let skuMapCount = 0;
-  const skuToIdent = new Map();
+  // Build SKU → Identification
+  const skuToIdent=new Map();
   for (let i=1;i<skuIdentAOA.length;i++){
-    const r = skuIdentAOA[i]; if (!r) continue;
-    const rawSKU = (r[0]!==undefined) ? r[0] : '';
-    const ident  = (r[1]!==undefined) ? r[1] : '';
-    const sku = normaliseSKU(rawSKU, stripZeros);
-    const idt = String(ident||'').trim();
-    if (!sku || !idt) continue;
-    if (!skuToIdent.has(sku)) skuMapCount++;
-    skuToIdent.set(sku, idt);
+    const r=skuIdentAOA[i]; if (!r) continue;
+    const sku=normaliseSKU(r[0]); const ident=String(r[1]||'').trim();
+    if (sku && ident) skuToIdent.set(sku, ident);
   }
-  report.push(`SKU→Identification entries read: ${skuMapCount}`);
 
-  // ---- Parse PLGGR: locate SKU, Title, Description columns ----
-  const plHeader = plggrAOA[0] || [];
-  const skuIdx = 0; // Column A by your spec
-  // Try exact names first; tolerate minor variations
-  let titleIdx = findCol(plHeader, ['webomschrijving']);
-  let descIdx  = findCol(plHeader, ['uitgebreide omschrijving']);
-  // Fallback to AE / AG if not found
-  if (titleIdx === -1) { titleIdx = colLetterToIndex('AE'); report.push('Title header not found; using AE fallback'); }
-  if (descIdx  === -1) { descIdx  = colLetterToIndex('AG'); report.push('Description header not found; using AG fallback'); }
-
-  const identToContent = new Map();
-  let plRows=0, matchedSkus=0, withTitle=0, withDesc=0;
-
+  // Build Identification → {title, body}
+  const identToContent=new Map();
   for (let i=1;i<plggrAOA.length;i++){
-    const row = plggrAOA[i]; if (!row) continue;
-    plRows++;
-    const skuRaw = row[skuIdx];
-    const skuKey = normaliseSKU(skuRaw, stripZeros);
-    if (!skuKey) continue;
-    const ident = skuToIdent.get(skuKey);
-    if (!ident) continue;
-    matchedSkus++;
-
-    const title = (row[titleIdx]!==undefined) ? String(row[titleIdx]).trim() : '';
-    const body  = (row[descIdx ]!==undefined) ? String(row[descIdx ]).trim() : '';
-
-    if (!identToContent.has(ident)) identToContent.set(ident, {title:'', body:''});
-    const o = identToContent.get(ident);
-    if (title) { o.title = title; withTitle++; }
-    if (body)  { o.body  = body;  withDesc++; }
-  }
-  report.push(`PLGGR rows read: ${plRows}`);
-  report.push(`Rows with SKU→Identification match: ${matchedSkus}`);
-  report.push(`Identifications with title: ${withTitle}`);
-  report.push(`Identifications with description: ${withDesc}`);
-
-  // ---- Prepare to fill skeleton: detect column indices by header names ----
-  const out = skeletonAOA.map(r => (r ? r.slice() : r));
-  // Ensure header row exists and is normalised
-  const expected = ["Type","Identification","Field","Locale","Market","Status","Default content","Translated content"];
-  let head = out[0] || [];
-  if (!head.length || normHeader(head[0])!=='type') {
-    // inject header if missing
-    out.unshift(expected.slice());
-    head = out[0];
-  } else {
-    // normalise header labels (cosmetic)
-    for (let i=0;i<expected.length;i++) head[i] = expected[i];
-  }
-  const headerMap = head.map(normHeader);
-  function idxOf(name){
-    const want = normHeader(name);
-    const i = headerMap.indexOf(want);
-    return i >= 0 ? i : -1;
-  }
-  const idxType  = idxOf('Type');
-  const idxIdent = idxOf('Identification');
-  const idxField = idxOf('Field');
-  const idxLocale= idxOf('Locale');
-  const idxTrans = idxOf('Translated content');
-
-  if ([idxType,idxIdent,idxField,idxLocale,idxTrans].includes(-1)){
-    alert('Skeleton header is missing one or more required columns.');
-    return;
+    const row=plggrAOA[i]; if (!row) continue;
+    const sku=normaliseSKU(row[0]);
+    const ident=skuToIdent.get(sku); if (!ident) continue;
+    const title=String(row[30]||'').trim(); // AE = col 30 (0-based)
+    const body =String(row[32]||'').trim(); // AG = col 32 (0-based)
+    if (!identToContent.has(ident)) identToContent.set(ident,{title:'',body:''});
+    const o=identToContent.get(ident);
+    if (title) o.title=title;
+    if (body)  o.body =body;
   }
 
-  // ---- Fill rows ----
-  let filledTitle=0, filledBody=0, totalRows=0;
-  const samplesFilled = [], samplesMissed = [];
+  // Fill skeleton
+  const out=skeletonAOA.map(r=>r?r.slice():r);
+  const header=out[0];
+  const idx={Type:0, Identification:1, Field:2, Locale:3, Market:4, Status:5, Default:6, Translated:7};
 
+  let filledTitle=0, filledBody=0;
   for (let i=1;i<out.length;i++){
-    const row = out[i]; if (!row) continue;
-    const type  = String(row[idxType]||'').trim().toUpperCase();
-    const ident = String(row[idxIdent]||'').trim();
-    const fieldRaw = row[idxField];
-    const field = normFieldName(fieldRaw); // e.g. "body html" -> "body_html"
-    if (type!=='PRODUCT' || !ident) continue;
-
-    // Set locale if provided (always, for consistency)
-    if (locale) row[idxLocale] = locale;
-
-    const content = identToContent.get(ident);
-    const current = String(row[idxTrans]||'').trim();
-
-    if (field === 'title') {
-      totalRows++;
-      const val = content?.title || '';
-      if (val && (overwrite || !current)) {
-        row[idxTrans] = val;
-        filledTitle++;
-        if (samplesFilled.length < 3) samplesFilled.push(`${ident} • title`);
-      } else if (!val && samplesMissed.length < 3) {
-        samplesMissed.push(`${ident} • title`);
-      }
-    } else if (field === 'body_html' || field === 'bodyhtml') {
-      totalRows++;
-      const val = content?.body || '';
-      if (val && (overwrite || !current)) {
-        row[idxTrans] = val;
-        filledBody++;
-        if (samplesFilled.length < 3) samplesFilled.push(`${ident} • body_html`);
-      } else if (!val && samplesMissed.length < 3) {
-        samplesMissed.push(`${ident} • body_html`);
-      }
-    } else {
-      // handle row or other fields: leave untouched
-      totalRows++;
+    const row=out[i]; if (!row) continue;
+    if (String(row[idx.Type]).toUpperCase()!=='PRODUCT') continue;
+    const ident=String(row[idx.Identification]||'').trim();
+    const field=String(row[idx.Field]||'').trim().toLowerCase();
+    const content=identToContent.get(ident);
+    if (locale) row[idx.Locale]=locale;
+    if (field==='title' && content?.title){
+      row[idx.Translated]=content.title; filledTitle++;
+    }
+    if (field==='body_html' && content?.body){
+      row[idx.Translated]=content.body; filledBody++;
     }
   }
 
-  report.push(`Title rows filled: ${filledTitle}`);
-  report.push(`Body_html rows filled: ${filledBody}`);
-  report.push(`Total rows examined: ${totalRows}`);
-  if (samplesFilled.length) report.push(`Examples filled: ${samplesFilled.join(' | ')}`);
-  if (samplesMissed.length) report.push(`Examples missing data: ${samplesMissed.join(' | ')}`);
-
-  // ---- Emit workbook ----
-  const ws = XLSX.utils.aoa_to_sheet(out);
-  const wb = XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(out);
+  const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Shopify Import");
-  const fname = `shopify_import_filled_${locale || 'xx'}.xlsx`;
-  XLSX.writeFile(wb, fname);
+  XLSX.writeFile(wb,"shopify_import_filled.xlsx");
 
-  $('report').textContent = report.join('\n');
+  $('report').textContent=
+    `Titles filled: ${filledTitle}\nDescriptions filled: ${filledBody}\nTotal products mapped: ${identToContent.size}`;
 });
 </script>
 </body>
