@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Fill DE Translations → Shopify Import (fixed columns)</title>
+  <title>Shopify Import Filler (PLGGR, all rows, locale aware)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:#0f1115; color:#e6e6e6; margin:0; padding:20px; }
+    body { font-family: system-ui, sans-serif; background:#0f1115; color:#e6e6e6; margin:0; padding:20px; }
     h1 { margin:0 0 8px; }
-    .hint { color:#a9abb0; font-size:.92rem; margin:0 0 16px; }
-    label { display:block; margin:12px 0 6px; }
-    input[type="file"] { width:100%; max-width:640px; }
+    label { display:block; margin-top:12px; }
+    input[type="file"], input[type="text"] { width:100%; max-width:640px; }
     button { margin-top:16px; padding:10px 14px; border:0; border-radius:8px; background:#2b6cb0; color:#fff; cursor:pointer; }
     button:disabled { opacity:.6; cursor:not-allowed; }
     pre { background:#171a21; border:1px solid #2a2f3a; border-radius:8px; padding:12px; white-space:pre-wrap; margin-top:14px; color:#cfd2d6; }
@@ -18,12 +17,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-  <h1>Fill DE Translations → Shopify Import</h1>
-  <p class="hint">
-    Fixed field logic. No header sniffing beyond row 1 in the skeleton.<br>
-    A) <strong>shopify_import_format_handles.xlsx</strong> (Type,B,Field,Locale,Market,Status,Default content,Translated content)<br>
-    B) <strong>sku_handle_map.xlsx</strong> (A: SKU, B: Handle)<br>
-    C) <strong>PLGGR Export (DE)</strong> (A: SKU, AE: title, AG: description)
+  <h1>Shopify Import Filler</h1>
+  <p>
+    A) Shopify skeleton (3-row format)<br>
+    B) SKU → Handle map (.xlsx)<br>
+    C) PLGGR export (any language, SKU=A, Title=AE, Description=AG)<br>
+    Output: skeleton filled with translations in column H, Locale set as chosen.
   </p>
 
   <label>A) Shopify skeleton (.xlsx)</label>
@@ -32,8 +31,11 @@
   <label>B) SKU → Handle map (.xlsx)</label>
   <input id="skuHandle" type="file" accept=".xlsx">
 
-  <label>C) PLGGR export DE (.xlsx)</label>
+  <label>C) PLGGR export (.xlsx)</label>
   <input id="plggr" type="file" accept=".xlsx">
+
+  <label>Locale code</label>
+  <input id="locale" type="text" value="de">
 
   <button id="process" disabled>Generate Filled XLSX</button>
   <pre id="report"></pre>
@@ -53,132 +55,106 @@ let fSkeleton=null, fSkuHandle=null, fPlggr=null;
 
 function sheetToAOA(file){
   return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onload = e => {
+    const r=new FileReader();
+    r.onload=e=>{
       try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const aoa = XLSX.utils.sheet_to_json(ws, { header:1, raw:false });
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const aoa=XLSX.utils.sheet_to_json(ws,{header:1, raw:false, defval:""});
         resolve(aoa);
       } catch(err){ reject(err); }
     };
-    r.onerror = reject;
+    r.onerror=reject;
     r.readAsArrayBuffer(file);
   });
 }
 
-$('process').addEventListener('click', async () => {
-  const report = [];
-  // Load all three files
+$('process').addEventListener('click', async ()=>{
+  const report=[];
   const [skel, skuMap, plggr] = await Promise.all([
     sheetToAOA(fSkeleton),
     sheetToAOA(fSkuHandle),
     sheetToAOA(fPlggr)
   ]);
+  const locale=$('locale').value.trim();
 
-  // --- Build Identification -> Handle (from skeleton handle rows) ---
-  // Fixed columns in skeleton: A=Type, B=Identification, C=Field, G=Default content, H=Translated content
-  const TYPE=0, IDENT=1, FIELD=2, LOCALE=3, MARKET=4, STATUS=5, DEFAULT_C=6, TRANSLATED=7;
+  // Column indices
+  const TYPE=0, IDENT=1, FIELD=2, LOCALE=3, DEFAULT_C=6, TRANSLATED=7;
+  const COL_SKU=0, COL_TITLE=30, COL_BODY=32;
 
-  if (!skel || skel.length < 2) { alert('Skeleton appears empty.'); return; }
-
-  const identToHandle = new Map();
-  let handleRows = 0;
-  for (let i=1; i<skel.length; i++){
-    const row = skel[i];
-    if (!row) continue;
-    const type  = String(row[TYPE]  || '').trim().toUpperCase();
-    const field = String(row[FIELD] || '').trim().toLowerCase();
-    if (type !== 'PRODUCT' || field !== 'handle') continue;
-    const ident  = String(row[IDENT]     || '').trim();
-    const handle = String(row[DEFAULT_C] || '').trim();
-    if (ident && handle) { identToHandle.set(ident, handle); handleRows++; }
-  }
-  report.push(`Handle rows seen in skeleton: ${handleRows}`);
-
-  // --- Build Handle -> SKU map (from sku_handle_map.xlsx) ---
-  // Fixed columns: A=SKU, B=Handle; skip header if literally 'SKU'/'Handle'
-  const handleToSku = new Map();
-  let skuPairs = 0;
-  for (let i=0; i<skuMap.length; i++){
-    const r = skuMap[i]; if (!r) continue;
-    const sku    = String(r[0] || '').trim();
-    const handle = String(r[1] || '').trim();
-    if (!sku || !handle) continue;
-    if (i===0 && sku.toLowerCase()==='sku' && handle.toLowerCase()==='handle') continue; // header
-    if (!handleToSku.has(handle)) skuPairs++;
-    handleToSku.set(handle, sku);
-  }
-  report.push(`SKU↔Handle pairs loaded: ${skuPairs}`);
-
-  // --- Build SKU -> {title, body} from PLGGR ---
-  // Fixed columns: A=SKU (0), AE=30 (title), AG=32 (description)
-  const COL_SKU = 0, COL_TITLE = 30, COL_BODY = 32;
-  const skuToContent = new Map();
-  let plRows=0, plWithData=0;
-
-  for (let i=1; i<plggr.length; i++){
-    const r = plggr[i]; if (!r) continue;
-    plRows++;
-    const sku   = String(r[COL_SKU]   || '').trim();
-    if (!sku) continue;
-    const title = String(r[COL_TITLE] || '').trim();
-    const body  = String(r[COL_BODY]  || '').trim();
-    if (!skuToContent.has(sku)) skuToContent.set(sku, {title:'', body:''});
-    const o = skuToContent.get(sku);
-    if (title) o.title = title;
-    if (body)  o.body  = body;
-    if (title || body) plWithData++;
-  }
-  report.push(`PLGGR rows read: ${plRows} (with any data: ${plWithData})`);
-
-  // --- Fill the skeleton's title/body_html rows with Translated content (H) ---
-  let filledTitle=0, filledBody=0, examined=0, missingHandle=0, missingSku=0, missingContent=0;
-  const out = skel.map(r => r ? r.slice() : r);
-
-  for (let i=1; i<out.length; i++){
-    const row = out[i]; if (!row) continue;
-    const type  = String(row[TYPE]  || '').trim().toUpperCase();
-    if (type !== 'PRODUCT') continue;
-
-    const ident = String(row[IDENT] || '').trim();
-    const field = String(row[FIELD] || '').trim().toLowerCase();
-
-    if (field !== 'title' && field !== 'body_html') continue;
-    examined++;
-
-    const handle = identToHandle.get(ident);
-    if (!handle) { missingHandle++; continue; }
-
-    const sku = handleToSku.get(handle);
-    if (!sku) { missingSku++; continue; }
-
-    const content = skuToContent.get(sku);
-    if (!content) { missingContent++; continue; }
-
-    if (field === 'title' && content.title){
-      row[TRANSLATED] = content.title;
-      filledTitle++;
-    } else if (field === 'body_html' && content.body){
-      row[TRANSLATED] = content.body;
-      filledBody++;
-    } else {
-      missingContent++;
+  // Map Ident -> Handle from skeleton
+  const identToHandle=new Map();
+  for (let i=1;i<skel.length;i++){
+    const row=skel[i]; if (!row) continue;
+    if (String(row[TYPE]).toUpperCase()==='PRODUCT' && String(row[FIELD]).toLowerCase()==='handle'){
+      identToHandle.set(String(row[IDENT]).trim(), String(row[DEFAULT_C]).trim());
     }
   }
 
-  report.push(`Title rows filled: ${filledTitle}`);
-  report.push(`Body_html rows filled: ${filledBody}`);
-  report.push(`Title/body rows examined: ${examined}`);
-  report.push(`Missing handle: ${missingHandle} · Missing SKU: ${missingSku} · Missing content: ${missingContent}`);
+  // Map Handle -> SKU from sku_handle_map.xlsx
+  const handleToSku=new Map();
+  for (let i=1;i<skuMap.length;i++){
+    const r=skuMap[i]; if (!r) continue;
+    const sku=String(r[0]||'').trim(), handle=String(r[1]||'').trim();
+    if (sku && handle) handleToSku.set(handle, sku);
+  }
 
-  // --- Emit workbook ---
-  const ws = XLSX.utils.aoa_to_sheet(out);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Shopify Import (DE)");
-  XLSX.writeFile(wb, "shopify_import_filled_de.xlsx");
+  // Map SKU -> {title, body} from PLGGR
+  const skuToContent=new Map();
+  let plRows=0, lastRow=0;
+  for (let i=1;i<plggr.length;i++){
+    const r=plggr[i]; if (!r) continue;
+    lastRow=i;
+    const sku=String(r[COL_SKU]||'').trim();
+    const title=String(r[COL_TITLE]||'').trim();
+    const body=String(r[COL_BODY]||'').trim();
+    if (!sku) continue;
+    if (!skuToContent.has(sku)) skuToContent.set(sku,{title:'',body:''});
+    const o=skuToContent.get(sku);
+    if (title) o.title=title;
+    if (body)  o.body=body;
+    plRows++;
+  }
 
-  $('report').textContent = report.join('\n');
+  // Fill skeleton
+  const out=skel.map(r=>r?r.slice():r);
+  let filledTitle=0, filledBody=0;
+  for (let i=1;i<out.length;i++){
+    const row=out[i]; if (!row) continue;
+    if (String(row[TYPE]).toUpperCase()!=='PRODUCT') continue;
+    const ident=String(row[IDENT]||'').trim();
+    const field=String(row[FIELD]||'').trim().toLowerCase();
+    if (locale) row[LOCALE]=locale;
+    if (field!=='title' && field!=='body_html') continue;
+
+    const handle=identToHandle.get(ident);
+    if (!handle) continue;
+    const sku=handleToSku.get(handle);
+    if (!sku) continue;
+    const content=skuToContent.get(sku);
+    if (!content) continue;
+
+    if (field==='title' && content.title){
+      row[TRANSLATED]=content.title;
+      filledTitle++;
+    }
+    if (field==='body_html' && content.body){
+      row[TRANSLATED]=content.body;
+      filledBody++;
+    }
+  }
+
+  // Output file
+  const ws=XLSX.utils.aoa_to_sheet(out);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Shopify Import");
+  XLSX.writeFile(wb, `shopify_import_filled_${locale||'xx'}.xlsx`);
+
+  $('report').textContent=
+    `Skeleton rows: ${skel.length}\n`+
+    `PLGGR rows read: ${plRows} (last row index: ${lastRow})\n`+
+    `Titles filled: ${filledTitle}\n`+
+    `Descriptions filled: ${filledBody}`;
 });
 </script>
 </body>
