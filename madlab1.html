@@ -1,1457 +1,188 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  
-  <title>Oldschool Procedural RPG</title>
-
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
-
+  <meta charset="utf-8">
+  <title>EAN Tripler · Phoenix Import</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body {
-      margin: 0;
-      background: #1a1a1a;
-      color: #FAF4E0;
-      font-family: 'Almendra', serif;
-      overscroll-behavior: none;
-    }
-    
-    .game-container {
-      display: flex;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.9);
-    }
-    
-    .map-panel {
-      flex: 2;
-      position: relative;
-      border-right: 2px solid #660000;
-    }
-    
-    .ui-panel {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 1rem;
-      overflow-y: auto;
-      min-width: 300px;
-    }
-    
-    .map-viewport {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      position: relative;
-      background: #202020;
-    }
-    
-    #gameCanvas {
-      width: 1000px;
-      height: 1000px;
-      image-rendering: pixelated;
-      touch-action: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform-origin: top left;
-    }
-    
-    .ui-section {
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      background: rgba(139, 0, 0, 0.2);
-    }
-    
-    .ui-section h3 {
-      margin: 0 0 0.5rem 0;
-      font-family: 'Cinzel', serif;
-      color: #FAF4E0;
-      font-size: 1.1rem;
-    }
-    
-    .stat-bar {
-      background: #333;
-      border: 1px solid #666;
-      height: 20px;
-      margin: 0.25rem 0;
-      position: relative;
-    }
-    
-    .stat-fill {
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-    
-    .hp-fill { background: #ff4444; }
-    .xp-fill { background: #4444ff; }
-    
-    .stat-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 0.8rem;
-      color: white;
-      text-shadow: 1px 1px 2px black;
-    }
-    
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin: 0.5rem 0;
-    }
-    
-    .btn {
-      padding: 0.5rem;
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Cinzel', serif;
-      text-align: center;
-    }
-    
-    .btn:hover {
-      background: #660000;
-    }
-    
-    .btn:disabled {
-      background: #444;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-    
-    .story-text {
-      background: rgba(0, 0, 0, 0.7);
-      padding: 0.75rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      line-height: 1.4;
-      max-height: 200px;
-      overflow-y: auto;
-      margin: 0.5rem 0;
-    }
-    
-    .inventory-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.25rem;
-      margin: 0.5rem 0;
-    }
-    
-    .inventory-slot {
-      aspect-ratio: 1;
-      background: #333;
-      border: 1px solid #666;
-      border-radius: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      cursor: pointer;
-    }
-    
-    .inventory-slot.filled {
-      background: #555;
-      border-color: #888;
-    }
-    
-    .minimap {
-      width: 100%;
-      height: 120px;
-      background: #111;
-      border: 1px solid #666;
-      margin: 0.5rem 0;
-    }
-    
-    .log {
-      background: rgba(0, 0, 0, 0.8);
-      border: 1px solid #666;
-      height: 120px;
-      overflow-y: auto;
-      font-size: 0.8rem;
-      padding: 0.5rem;
-    }
-    
-    .log-entry {
-      margin: 0.25rem 0;
-      padding: 0.25rem;
-      border-left: 2px solid #666;
-      padding-left: 0.5rem;
-    }
-    
-    .log-combat { border-left-color: #ff4444; }
-    .log-story { border-left-color: #44ff44; }
-    .log-loot { border-left-color: #ffff44; }
-    
-    .dialogue-box {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #660000;
-      padding: 1rem;
-      border-radius: 4px;
-      display: none;
-    }
-    
-    .dialogue-speaker {
-      font-family: 'Cinzel', serif;
-      color: #ffdd44;
-      margin-bottom: 0.5rem;
-    }
-    
-    .dialogue-text {
-      margin-bottom: 1rem;
-      line-height: 1.4;
-    }
-    
-    .dialogue-choices {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .choice-btn {
-      padding: 0.5rem;
-      background: #333;
-      border: 1px solid #666;
-      color: #FAF4E0;
-      cursor: pointer;
-      text-align: left;
-    }
-    
-    .choice-btn:hover {
-      background: #555;
-    }
-    
-    .game-title {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    
-    .game-title h1 {
-      font-family: 'Cinzel', serif;
-      margin: 0;
-      font-size: 1.5rem;
-    }
-    
-    .fog-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 1000px;
-      height: 1000px;
-      pointer-events: none;
-      z-index: 10;
-    }
+    :root { --gap: 12px; --pad: 14px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    body { margin: 0; background: #0f1115; color: #e6e6e6; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 28px 18px 40px; }
+    h1 { margin: 0 0 6px; font-size: 1.6rem; }
+    p.sub { margin: 0 0 22px; color: #a9abb0; }
+    .panel { background: #171a21; border: 1px solid #2a2f3a; border-radius: 10px; padding: var(--pad); margin-bottom: 18px; }
+    label { display: block; margin: 0 0 8px; font-weight: 600; }
+    textarea { width: 100%; min-height: 160px; box-sizing: border-box; background: #0f1217; color: #e6e6e6; border: 1px solid #2a2f3a; border-radius: 8px; padding: var(--pad); resize: vertical; }
+    input[type="file"] { width: 100%; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    .controls { display: flex; flex-wrap: wrap; gap: var(--gap); align-items: center; }
+    button { background: #2b6cb0; color: #fff; border: 0; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
+    button.secondary { background: #2a2f3a; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .muted { color: #9aa0a6; font-size: .92rem; }
+    .stats { margin-left: auto; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    a.dl { text-decoration: none; background: #2b6cb0; color: #fff; padding: 10px 14px; border-radius: 8px; display: inline-block; }
+    .hint { font-size: .9rem; color:#a9abb0; }
+    .check { display:flex; align-items:center; gap:8px; margin-top:8px; color:#c6c8cc; }
   </style>
 </head>
-
 <body>
-  <div class="game-container">
-    <!-- Map Panel -->
-    <div class="map-panel">
-      <div class="map-viewport">
-        <canvas id="gameCanvas" width="1000" height="1000"></canvas>
-        <canvas id="fogCanvas" class="fog-overlay" width="1000" height="1000"></canvas>
+  <div class="wrap">
+    <h1>EAN Tripler</h1>
+    <p class="sub">Keeps only lines beginning with <span class="mono">PRODUCT,</span>, strips the prefix, repeats each EAN three times, and exports a one-column CSV.</p>
+
+    <div class="panel">
+      <div class="row">
+        <div>
+          <label for="file">CSV file (comma-separated)</label>
+          <input id="file" type="file" accept=".csv,text/csv">
+          <p class="hint">Expected input per line: <span class="mono">PRODUCT,9828150083927</span></p>
+        </div>
+        <div>
+          <label for="paste">…or paste CSV here</label>
+          <textarea id="paste" placeholder="PRODUCT,9828150083927&#10;PRODUCT,1234567890123"></textarea>
+        </div>
       </div>
-      
-      <!-- Dialogue System -->
-      <div id="dialogueBox" class="dialogue-box">
-        <div id="dialogueSpeaker" class="dialogue-speaker"></div>
-        <div id="dialogueText" class="dialogue-text"></div>
-        <div id="dialogueChoices" class="dialogue-choices"></div>
+
+      <div class="check">
+        <input type="checkbox" id="digitsOnly">
+        <label for="digitsOnly" style="margin:0;">Strip non-digits from EAN (optional)</label>
+      </div>
+
+      <div class="controls" style="margin-top:14px;">
+        <button id="process">Process</button>
+        <button id="copy" class="secondary" disabled>Copy output</button>
+        <a id="download" class="dl" href="#" download="ean_tripled.csv" style="display:none;">Download CSV</a>
+        <span class="stats muted" id="stats">No input yet.</span>
       </div>
     </div>
-    
-    <!-- UI Panel -->
-    <div class="ui-panel">
-      <div class="game-title">
-        <h1>Realm of Mystery</h1>
-        <p>A Procedural Adventure</p>
-      </div>
-      
-      <!-- Player Stats -->
-      <div class="ui-section">
-        <h3>Hero Status</h3>
-        <div>Level <span id="playerLevel">1</span> <span id="playerClass">Adventurer</span></div>
-        
-        <div class="stat-bar">
-          <div id="hpFill" class="stat-fill hp-fill" style="width: 100%"></div>
-          <div class="stat-text"><span id="hpText">20/20</span> HP</div>
-        </div>
-        
-        <div class="stat-bar">
-          <div id="xpFill" class="stat-fill xp-fill" style="width: 0%"></div>
-          <div class="stat-text"><span id="xpText">0/100</span> XP</div>
-        </div>
-        
-        <div style="margin-top: 0.5rem;">
-          <small>ATK: <span id="playerAttack">5</span> | DEF: <span id="playerDefense">2</span></small>
-        </div>
-      </div>
-      
-      <!-- Controls -->
-      <div class="ui-section">
-        <h3>Actions</h3>
-        <div class="controls">
-          <button class="btn" onclick="newWorld()">New World</button>
-          <button class="btn" onclick="toggleAutoExplore()" id="autoBtn">Auto Explore</button>
-          <button class="btn" onclick="rest()">Rest (+5 HP)</button>
-          <button class="btn" onclick="showInventory()">Inventory</button>
-        </div>
-        <div style="margin-top: 0.5rem; font-size: 0.8rem;">
-          Click map to move • WASD keys to move
-        </div>
-      </div>
-      
-      <!-- Current Story -->
-      <div class="ui-section">
-        <h3>Current Quest</h3>
-        <div id="currentStory" class="story-text">
-          Welcome, brave adventurer! A mysterious realm awaits your exploration. Ancient dungeons hold treasures, monsters roam the wilderness, and NPCs have stories to tell. Click "New World" to begin your journey!
-        </div>
-      </div>
-      
-      <!-- Inventory -->
-      <div class="ui-section">
-        <h3>Inventory</h3>
-        <div id="inventoryGrid" class="inventory-grid">
-          <!-- Filled by JS -->
-        </div>
-        <div style="font-size: 0.8rem; margin-top: 0.5rem;">
-          Gold: <span id="goldAmount">0</span>
-        </div>
-      </div>
-      
-      <!-- Minimap -->
-      <div class="ui-section">
-        <h3>World Map</h3>
-        <canvas id="minimap" class="minimap" width="200" height="120"></canvas>
-      </div>
-      
-      <!-- Action Log -->
-      <div class="ui-section">
-        <h3>Adventure Log</h3>
-        <div id="actionLog" class="log">
-          <!-- Filled by JS -->
-        </div>
-      </div>
+
+    <div class="panel">
+      <label for="output">Output (one-column CSV)</label>
+      <textarea id="output" readonly></textarea>
+      <p class="hint">Each input EAN is repeated three times, in order. No header row.</p>
     </div>
   </div>
 
   <script>
-    /*******************************************************
-     * GLOBAL CONSTANTS & GAME STATE
-     *******************************************************/
-    const TILE_SIZE = 20;
-    const GRID_WIDTH = 50;
-    const GRID_HEIGHT = 50;
-    const VISION_RADIUS = 6;
-    
-    // Game State
-    let gameState = {
-      player: {
-        x: 25,
-        y: 25,
-        level: 1,
-        hp: 20,
-        maxHp: 20,
-        xp: 0,
-        xpToNext: 100,
-        attack: 5,
-        defense: 2,
-        gold: 0,
-        inventory: [],
-        class: "Adventurer"
-      },
-      mapData: [],
-      fogOfWar: [],
-      currentBiome: "grassland",
-      worldSeed: 0,
-      autoExplore: false,
-      activeQuest: null,
-      npcs: [],
-      monsters: [],
-      currentDialogue: null
-    };
-    
-    // Pan & Zoom for map
-    let scale = 1.0, offsetX = 0, offsetY = 0;
-    const minScale = 0.5, maxScale = 3.0;
-    let isDragging = false, dragStartX = 0, dragStartY = 0;
-    
-    // Fallback colors for tiles
-    const fallbackColors = {
-      grass:"#9AE582", tree: "#2f6a16", denseforest:"#1c3e0a", snow:"#dee0f7", 
-      dirt: "#C2A15F", sand:"#DDD593", cactus: "#228b22", water:"#2B64CF",
-      stone:"#AAAAAA", wall:"#8B4513", floor:"#666666", door:"#552200",
-      cave_floor:"#6e6e6e", negative:"#000000", crate:"#8B4513", cliffs:"#888888",
-      chests: "#DEB887"
-    };
+    const $ = id => document.getElementById(id);
+    const fileInput = $('file');
+    const pasteArea = $('paste');
+    const outputArea = $('output');
+    const processBtn = $('process');
+    const copyBtn = $('copy');
+    const dlLink = $('download');
+    const stats = $('stats');
+    const digitsOnly = $('digitsOnly');
 
-    /*******************************************************
-     * PROCEDURAL STORY & QUEST GENERATION
-     *******************************************************/
-    const storyTemplates = {
-      explore: [
-        "Ancient ruins have been spotted to the {direction}. Legends speak of treasures within...",
-        "A mysterious tower has appeared in the {biome}. What secrets does it hold?",
-        "Strange lights were seen emanating from the {direction}. Investigate the source!",
-        "An old map fragment points to buried treasure in the {biome} region."
-      ],
-      rescue: [
-        "A merchant has gone missing near the {biome}. Find them and ensure their safety!",
-        "Villagers report hearing cries for help from the direction of {direction}.",
-        "A fellow adventurer hasn't returned from exploring the {biome}. Seek them out!"
-      ],
-      clear: [
-        "Monsters have been terrorizing the {biome}. Clear them out for a reward!",
-        "An ancient evil stirs in the {direction}. Put an end to this menace!",
-        "Bandits have set up camp in the {biome}. Drive them away!"
-      ]
-    };
+    let lastBlobUrl = null;
 
-    const lootTable = {
-      common: ["Rusty Sword", "Leather Boots", "Health Potion", "Bread", "Torch"],
-      uncommon: ["Iron Sword", "Chain Mail", "Magic Ring", "Silver Coin", "Ancient Key"],
-      rare: ["Enchanted Blade", "Plate Armor", "Spell Scroll", "Golden Idol", "Crystal Orb"]
-    };
-
-    /*******************************************************
-     * WORLD GENERATION
-     *******************************************************/
-    function generateInitialWorld() {
-      gameState.worldSeed = Math.floor(Math.random() * 10000);
-      
-      // Choose random biome
-      const biomes = ["grassland", "forest", "desert", "snow", "mountain"];
-      gameState.currentBiome = biomes[Math.floor(Math.random() * biomes.length)];
-      
-      // Generate base terrain
-      generateTerrain(gameState.currentBiome);
-      
-      // Add features
-      addWorldFeatures();
-      
-      // Initialize fog of war
-      initFogOfWar();
-      
-      // Place player in safe starting location
-      placePlayerSafely();
-      
-      // Generate quest
-      generateQuest();
-      
-      updateStoryText(`You awaken in the ${gameState.currentBiome}. ${gameState.activeQuest}`);
+    function normaliseNewlines(text){
+      return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     }
 
-    function generateTerrain(biome) {
-      gameState.mapData = [];
-      
-      // Base terrain distribution
-      const distributions = {
-        grassland: { grass: 0.6, tree: 0.2, dirt: 0.15, stone: 0.05 },
-        forest: { denseforest: 0.4, tree: 0.3, grass: 0.25, dirt: 0.05 },
-        desert: { sand: 0.7, cactus: 0.1, dirt: 0.15, stone: 0.05 },
-        snow: { snow: 0.6, tree: 0.1, dirt: 0.25, stone: 0.05 },
-        mountain: { stone: 0.4, dirt: 0.35, grass: 0.15, tree: 0.1 }
-      };
-      
-      const dist = distributions[biome] || distributions.grassland;
-      
-      // Generate base map
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        const row = [];
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          const rand = Math.random();
-          let chosen = "grass";
-          let cumul = 0;
-          for (const t in dist) {
-            cumul += dist[t];
-            if (rand < cumul) {
-              chosen = t;
-              break;
-            }
-          }
-          row.push({ 
-            type: chosen, 
-            occupant: null,
-            _chosenTileIndex: null,
-            discovered: false,
-            canWalk: isWalkable(chosen)
-          });
+    function parseAndTriplicate(raw){
+      const lines = normaliseNewlines(raw).split('\n');
+      const out = [];
+      let kept = 0, skipped = 0;
+
+      for (let line of lines){
+        if (!line) { continue; }
+        // Remove UTF-8 BOM if present on first line
+        if (kept === 0 && skipped === 0) line = line.replace(/^\uFEFF/, '');
+        // Accept only lines starting with PRODUCT,
+        if (!/^PRODUCT\s*,/i.test(line.trim())) { skipped++; continue; }
+
+        // Split on first comma only
+        const idx = line.indexOf(',');
+        let ean = idx >= 0 ? line.slice(idx + 1) : '';
+
+        ean = ean.trim();
+
+        if (digitsOnly.checked){
+          ean = ean.replace(/\D+/g, '');
         }
-        gameState.mapData.push(row);
-      }
-    }
 
-    function addWorldFeatures() {
-      // Add some water bodies
-      for (let i = 0; i < 2; i++) {
-        createWaterBody();
-      }
-      
-      // Add a dungeon entrance
-      placeDungeonEntrance();
-      
-      // Add some buildings/ruins
-      for (let i = 0; i < 3; i++) {
-        placeBuilding();
-      }
-      
-      // Scatter treasure chests
-      for (let i = 0; i < 5; i++) {
-        placeTreasureChest();
-      }
-      
-      // Place NPCs and monsters
-      placeNPCs();
-      placeMonsters();
-    }
-
-    function createWaterBody() {
-      const centerX = Math.floor(Math.random() * GRID_WIDTH);
-      const centerY = Math.floor(Math.random() * GRID_HEIGHT);
-      const radius = 2 + Math.floor(Math.random() * 3);
-      
-      for (let y = centerY - radius; y <= centerY + radius; y++) {
-        for (let x = centerX - radius; x <= centerX + radius; x++) {
-          if (x >= 0 && y >= 0 && x < GRID_WIDTH && y < GRID_HEIGHT) {
-            const dx = x - centerX;
-            const dy = y - centerY;
-            if (dx * dx + dy * dy <= radius * radius) {
-              gameState.mapData[y][x].type = "water";
-              gameState.mapData[y][x].canWalk = false;
-            }
-          }
+        if (ean.length === 0){
+          skipped++; 
+          continue;
         }
+
+        out.push(ean, ean, ean);
+        kept++;
       }
+
+      return { csv: out.join('\n'), kept, skipped, rows: out.length };
     }
 
-    function placeDungeonEntrance() {
-      let attempts = 0;
-      while (attempts < 100) {
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        const cell = gameState.mapData[y][x];
-        
-        if (cell.canWalk && !cell.occupant) {
-          cell.type = "cave_floor";
-          cell.isDungeonEntrance = true;
-          cell.canWalk = true;
-          break;
-        }
-        attempts++;
-      }
+    function updateDownload(csvText){
+      if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      lastBlobUrl = url;
+      dlLink.href = url;
+      dlLink.style.display = csvText ? 'inline-block' : 'none';
     }
 
-    function placeBuilding() {
-      let attempts = 0;
-      while (attempts < 100) {
-        const x = Math.floor(Math.random() * (GRID_WIDTH - 4));
-        const y = Math.floor(Math.random() * (GRID_HEIGHT - 4));
-        
-        let canPlace = true;
-        for (let dy = 0; dy < 4; dy++) {
-          for (let dx = 0; dx < 4; dx++) {
-            if (!gameState.mapData[y + dy][x + dx].canWalk) {
-              canPlace = false;
-              break;
-            }
-          }
-          if (!canPlace) break;
-        }
-        
-        if (canPlace) {
-          // Place simple building
-          for (let dy = 0; dy < 4; dy++) {
-            for (let dx = 0; dx < 4; dx++) {
-              const cell = gameState.mapData[y + dy][x + dx];
-              if (dx === 0 || dy === 0 || dx === 3 || dy === 3) {
-                cell.type = "wall";
-                cell.canWalk = false;
-              } else {
-                cell.type = "floor";
-                cell.canWalk = true;
-              }
-            }
-          }
-          
-          // Add door
-          gameState.mapData[y + 3][x + 1].type = "door";
-          gameState.mapData[y + 3][x + 1].canWalk = true;
-          gameState.mapData[y + 3][x + 1].isBuilding = true;
-          
-          break;
-        }
-        attempts++;
-      }
+    async function readFileAsText(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error);
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.readAsText(file, 'utf-8');
+      });
     }
 
-    function placeTreasureChest() {
-      let attempts = 0;
-      while (attempts < 100) {
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        const cell = gameState.mapData[y][x];
-        
-        if (cell.canWalk && !cell.occupant) {
-          cell.type = "chests";
-          cell.isChest = true;
-          cell.loot = generateLoot();
-          break;
-        }
-        attempts++;
-      }
-    }
+    processBtn.addEventListener('click', async () => {
+      let input = '';
 
-    function placeNPCs() {
-      const npcCount = 3 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < npcCount; i++) {
-        let attempts = 0;
-        while (attempts < 100) {
-          const x = Math.floor(Math.random() * GRID_WIDTH);
-          const y = Math.floor(Math.random() * GRID_HEIGHT);
-          const cell = gameState.mapData[y][x];
-          
-          if (cell.canWalk && !cell.occupant) {
-            const npc = {
-              type: "npc",
-              sprite: "guard_human",
-              name: generateNPCName(),
-              dialogue: generateNPCDialogue(),
-              x: x,
-              y: y
-            };
-            
-            cell.occupant = npc;
-            gameState.npcs.push(npc);
-            break;
-          }
-          attempts++;
-        }
-      }
-    }
-
-    function placeMonsters() {
-      const monsterCount = 5 + Math.floor(Math.random() * 8);
-      for (let i = 0; i < monsterCount; i++) {
-        let attempts = 0;
-        while (attempts < 100) {
-          const x = Math.floor(Math.random() * GRID_WIDTH);
-          const y = Math.floor(Math.random() * GRID_HEIGHT);
-          const cell = gameState.mapData[y][x];
-          
-          if (cell.canWalk && !cell.occupant) {
-            const monsterTypes = ["bat", "spider2", "rat", "ogre"];
-            const sprite = monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
-            
-            const monster = {
-              type: "monster",
-              sprite: sprite,
-              name: generateMonsterName(sprite),
-              hp: 5 + Math.floor(Math.random() * 10),
-              maxHp: 5 + Math.floor(Math.random() * 10),
-              attack: 2 + Math.floor(Math.random() * 4),
-              xp: 10 + Math.floor(Math.random() * 20),
-              gold: Math.floor(Math.random() * 15),
-              x: x,
-              y: y
-            };
-            monster.maxHp = monster.hp; // Ensure maxHp matches initial hp
-            
-            cell.occupant = monster;
-            gameState.monsters.push(monster);
-            break;
-          }
-          attempts++;
-        }
-      }
-    }
-
-    /*******************************************************
-     * UTILITY FUNCTIONS
-     *******************************************************/
-    function isWalkable(tileType) {
-      const unwalkable = ["water", "wall", "cliffs"];
-      return !unwalkable.includes(tileType);
-    }
-
-    function placePlayerSafely() {
-      // Find a safe grass tile
-      for (let attempts = 0; attempts < 1000; attempts++) {
-        const x = Math.floor(Math.random() * GRID_WIDTH);
-        const y = Math.floor(Math.random() * GRID_HEIGHT);
-        const cell = gameState.mapData[y][x];
-        
-        if (cell.canWalk && !cell.occupant) {
-          gameState.player.x = x;
-          gameState.player.y = y;
+      if (fileInput.files && fileInput.files[0]){
+        try {
+          input = await readFileAsText(fileInput.files[0]);
+        } catch (e){
+          alert('Could not read the file. ' + e);
           return;
         }
-      }
-      
-      // Fallback to center
-      gameState.player.x = Math.floor(GRID_WIDTH / 2);
-      gameState.player.y = Math.floor(GRID_HEIGHT / 2);
-    }
-
-    function generateQuest() {
-      const questTypes = Object.keys(storyTemplates);
-      const questType = questTypes[Math.floor(Math.random() * questTypes.length)];
-      const templates = storyTemplates[questType];
-      const template = templates[Math.floor(Math.random() * templates.length)];
-      
-      const directions = ["north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest"];
-      const direction = directions[Math.floor(Math.random() * directions.length)];
-      
-      gameState.activeQuest = template
-        .replace("{direction}", direction)
-        .replace("{biome}", gameState.currentBiome);
-    }
-
-    function generateLoot() {
-      const roll = Math.random();
-      let rarity, items;
-      
-      if (roll < 0.6) {
-        rarity = "common";
-        items = 1;
-      } else if (roll < 0.9) {
-        rarity = "uncommon"; 
-        items = 1 + Math.floor(Math.random() * 2);
       } else {
-        rarity = "rare";
-        items = 1;
+        input = pasteArea.value;
       }
-      
-      const loot = [];
-      for (let i = 0; i < items; i++) {
-        const item = lootTable[rarity][Math.floor(Math.random() * lootTable[rarity].length)];
-        loot.push(item);
-      }
-      
-      const gold = Math.floor(Math.random() * 50) + 10;
-      return { items: loot, gold: gold };
-    }
 
-    function generateNPCName() {
-      const prefixes = ["Elder", "Merchant", "Guard", "Priest", "Scholar", "Traveler"];
-      const names = ["Aldric", "Mira", "Thornwick", "Elena", "Gareth", "Lydia", "Bram", "Sera"];
-      const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-      const name = names[Math.floor(Math.random() * names.length)];
-      return `${prefix} ${name}`;
-    }
-
-    function generateMonsterName(sprite) {
-      const monsterNames = {
-        "bat": "Giant Bat",
-        "spider2": "Cave Spider", 
-        "rat": "Dire Rat",
-        "minotaur": "Minotaur Warrior",
-        "ogre": "Savage Ogre",
-        "serpent": "Venom Serpent"
-      };
-      return monsterNames[sprite] || "Unknown Beast";
-    }
-
-    function generateNPCDialogue() {
-      const greetings = [
-        "Greetings, traveler! The roads have been dangerous lately.",
-        "Well met, adventurer. I have tales of treasure if you're interested.",
-        "Be careful out there! Strange creatures roam these lands.",
-        "Welcome, friend. Perhaps you seek knowledge of these ancient ruins?",
-        "Hail and well met! Trade routes have been cut off by bandits."
-      ];
-      return greetings[Math.floor(Math.random() * greetings.length)];
-    }
-
-    /*******************************************************
-     * FOG OF WAR SYSTEM
-     *******************************************************/
-    function initFogOfWar() {
-      gameState.fogOfWar = [];
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        const row = [];
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          row.push(false); // false = not discovered
-        }
-        gameState.fogOfWar.push(row);
-      }
-    }
-
-    function updateFogOfWar() {
-      const px = gameState.player.x;
-      const py = gameState.player.y;
-      
-      for (let dy = -VISION_RADIUS; dy <= VISION_RADIUS; dy++) {
-        for (let dx = -VISION_RADIUS; dx <= VISION_RADIUS; dx++) {
-          const x = px + dx;
-          const y = py + dy;
-          
-          if (x >= 0 && y >= 0 && x < GRID_WIDTH && y < GRID_HEIGHT) {
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance <= VISION_RADIUS) {
-              gameState.fogOfWar[y][x] = true;
-              gameState.mapData[y][x].discovered = true;
-            }
-          }
-        }
-      }
-    }
-
-    /*******************************************************
-     * GAME MECHANICS
-     *******************************************************/
-    function movePlayer(dx, dy) {
-      const newX = gameState.player.x + dx;
-      const newY = gameState.player.y + dy;
-      
-      if (newX < 0 || newY < 0 || newX >= GRID_WIDTH || newY >= GRID_HEIGHT) return false;
-      
-      const targetCell = gameState.mapData[newY][newX];
-      if (!targetCell.canWalk) return false;
-      
-      // Check for occupant
-      if (targetCell.occupant) {
-        handleOccupantInteraction(targetCell.occupant);
-        return false;
-      }
-      
-      // Move player
-      gameState.player.x = newX;
-      gameState.player.y = newY;
-      
-      // Check for special tiles
-      handleTileInteraction(targetCell);
-      
-      updateFogOfWar();
-      centerCameraOnPlayer();
-      drawGame();
-      return true;
-    }
-
-    function handleOccupantInteraction(occupant) {
-      if (occupant.type === "npc") {
-        showDialogue(occupant);
-      } else if (occupant.type === "monster") {
-        startCombat(occupant);
-      }
-    }
-
-    function handleTileInteraction(cell) {
-      if (cell.isChest && cell.loot) {
-        openChest(cell);
-      } else if (cell.isDungeonEntrance) {
-        log("You found a dungeon entrance! A dark passage leads underground...", "story");
-      } else if (cell.isBuilding) {
-        log("You enter a ruined building. Dust and shadows fill the air.", "story");
-      }
-    }
-
-    function openChest(cell) {
-      const loot = cell.loot;
-      log(`You open a treasure chest!`, "loot");
-      
-      // Add gold
-      gameState.player.gold += loot.gold;
-      log(`Found ${loot.gold} gold!`, "loot");
-      
-      // Add items
-      for (const item of loot.items) {
-        if (gameState.player.inventory.length < 16) {
-          gameState.player.inventory.push(item);
-          log(`Found: ${item}`, "loot");
-        } else {
-          log(`Inventory full! Left behind: ${item}`, "loot");
-        }
-      }
-      
-      // Remove chest
-      cell.type = cell.type === "chests" ? "floor" : cell.type;
-      cell.isChest = false;
-      cell.loot = null;
-      
-      updateUI();
-    }
-
-    function startCombat(monster) {
-      log(`A ${monster.name} blocks your path!`, "combat");
-      
-      // Simple combat resolution
-      const playerDamage = Math.max(1, gameState.player.attack + Math.floor(Math.random() * 4) - (monster.defense || 0));
-      const monsterDamage = Math.max(1, monster.attack + Math.floor(Math.random() * 3) - gameState.player.defense);
-      
-      // Player attacks first
-      monster.hp -= playerDamage;
-      log(`You deal ${playerDamage} damage to the ${monster.name}!`, "combat");
-      
-      if (monster.hp <= 0) {
-        // Monster defeated
-        log(`You defeated the ${monster.name}!`, "combat");
-        gameState.player.xp += monster.xp;
-        gameState.player.gold += monster.gold;
-        log(`Gained ${monster.xp} XP and ${monster.gold} gold!`, "combat");
-        
-        // Remove monster from map
-        const cell = gameState.mapData[monster.y][monster.x];
-        cell.occupant = null;
-        
-        // Remove from monsters array
-        const index = gameState.monsters.indexOf(monster);
-        if (index > -1) {
-          gameState.monsters.splice(index, 1);
-        }
-        
-        checkLevelUp();
-      } else {
-        // Monster attacks back
-        gameState.player.hp -= monsterDamage;
-        log(`The ${monster.name} deals ${monsterDamage} damage to you!`, "combat");
-        
-        if (gameState.player.hp <= 0) {
-          gameOver();
-          return;
-        }
-      }
-      
-      updateUI();
-    }
-
-    function checkLevelUp() {
-      if (gameState.player.xp >= gameState.player.xpToNext) {
-        gameState.player.level++;
-        gameState.player.xp -= gameState.player.xpToNext;
-        gameState.player.xpToNext = Math.floor(gameState.player.xpToNext * 1.5);
-        
-        // Level up bonuses
-        const hpGain = 5 + Math.floor(Math.random() * 5);
-        gameState.player.maxHp += hpGain;
-        gameState.player.hp = gameState.player.maxHp; // Full heal on level up
-        gameState.player.attack += 1;
-        gameState.player.defense += 1;
-        
-        log(`LEVEL UP! You are now level ${gameState.player.level}!`, "story");
-        log(`Gained ${hpGain} max HP, +1 ATK, +1 DEF!`, "story");
-        
-        updateUI();
-      }
-    }
-
-    function rest() {
-      const healAmount = Math.min(5, gameState.player.maxHp - gameState.player.hp);
-      if (healAmount > 0) {
-        gameState.player.hp += healAmount;
-        log(`You rest and recover ${healAmount} HP.`, "story");
-        updateUI();
-      } else {
-        log("You are already at full health.", "story");
-      }
-    }
-
-    function gameOver() {
-      log("You have fallen! Your adventure ends here...", "combat");
-      alert("Game Over! Click 'New World' to start a new adventure.");
-    }
-
-    /*******************************************************
-     * DIALOGUE SYSTEM
-     *******************************************************/
-    function showDialogue(npc) {
-      gameState.currentDialogue = npc;
-      const dialogueBox = document.getElementById("dialogueBox");
-      const speakerEl = document.getElementById("dialogueSpeaker");
-      const textEl = document.getElementById("dialogueText");
-      const choicesEl = document.getElementById("dialogueChoices");
-      
-      speakerEl.textContent = npc.name;
-      textEl.textContent = npc.dialogue;
-      
-      choicesEl.innerHTML = "";
-      
-      // Generate dialogue choices
-      const choices = [
-        { text: "Tell me about this area.", action: () => tellAboutArea(npc) },
-        { text: "Any rumors or news?", action: () => tellRumors(npc) },
-        { text: "Farewell.", action: () => closeDialogue() }
-      ];
-      
-      choices.forEach(choice => {
-        const btn = document.createElement("div");
-        btn.className = "choice-btn";
-        btn.textContent = choice.text;
-        btn.onclick = choice.action;
-        choicesEl.appendChild(btn);
-      });
-      
-      dialogueBox.style.display = "block";
-    }
-
-    function tellAboutArea(npc) {
-      const areaInfo = [
-        `This ${gameState.currentBiome} holds many secrets. I've seen strange lights to the east.`,
-        "Ancient ruins dot this landscape. Some say they hold great treasures.",
-        "Beware the monsters that roam at night. They've grown bolder lately.",
-        "There's an old dungeon entrance nearby. Few who enter ever return.",
-        "Merchant caravans have been attacked. The roads are not safe."
-      ];
-      
-      const info = areaInfo[Math.floor(Math.random() * areaInfo.length)];
-      document.getElementById("dialogueText").textContent = info;
-      log(`${npc.name}: ${info}`, "story");
-    }
-
-    function tellRumors(npc) {
-      const rumors = [
-        "I heard tell of a legendary sword hidden in the northern caves.",
-        "Strange storms have been brewing. Some say it's magic.",
-        "A powerful wizard once lived in these parts. His tower still stands.",
-        "There are whispers of an ancient evil awakening.",
-        "Gold coins have been found near the old battlefield."
-      ];
-      
-      const rumor = rumors[Math.floor(Math.random() * rumors.length)];
-      document.getElementById("dialogueText").textContent = rumor;
-      log(`${npc.name}: ${rumor}`, "story");
-    }
-
-    function closeDialogue() {
-      document.getElementById("dialogueBox").style.display = "none";
-      gameState.currentDialogue = null;
-    }
-
-    /*******************************************************
-     * AUTO EXPLORATION
-     *******************************************************/
-    function toggleAutoExplore() {
-      gameState.autoExplore = !gameState.autoExplore;
-      const btn = document.getElementById("autoBtn");
-      btn.textContent = gameState.autoExplore ? "Stop Auto" : "Auto Explore";
-      
-      if (gameState.autoExplore) {
-        autoExploreStep();
-      }
-    }
-
-    function autoExploreStep() {
-      if (!gameState.autoExplore) return;
-      
-      // Simple AI: move towards unexplored areas
-      const directions = [
-        {dx: 0, dy: -1}, {dx: 1, dy: 0}, {dx: 0, dy: 1}, {dx: -1, dy: 0}
-      ];
-      
-      // Shuffle directions for variety
-      for (let i = directions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [directions[i], directions[j]] = [directions[j], directions[i]];
-      }
-      
-      for (const dir of directions) {
-        const newX = gameState.player.x + dir.dx;
-        const newY = gameState.player.y + dir.dy;
-        
-        if (newX >= 0 && newY >= 0 && newX < GRID_WIDTH && newY < GRID_HEIGHT) {
-          if (!gameState.fogOfWar[newY][newX] || Math.random() < 0.3) {
-            if (movePlayer(dir.dx, dir.dy)) {
-              break;
-            }
-          }
-        }
-      }
-      
-      // Continue auto-exploration
-      setTimeout(autoExploreStep, 500);
-    }
-
-    /*******************************************************
-     * DRAWING & RENDERING
-     *******************************************************/
-    function drawGame() {
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw map tiles
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          drawCell(ctx, x, y);
-        }
-      }
-      
-      // Draw player
-      drawPlayer(ctx);
-      
-      // Draw fog of war
-      drawFog();
-      
-      // Update minimap
-      drawMinimap();
-    }
-
-    function drawCell(ctx, gx, gy) {
-      const cell = gameState.mapData[gy][gx];
-      const px = gx * TILE_SIZE;
-      const py = gy * TILE_SIZE;
-      
-      // Don't draw undiscovered tiles
-      if (!gameState.fogOfWar[gy][gx]) {
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      if (!input.trim()){
+        alert('Please select a CSV file or paste CSV content.');
         return;
       }
-      
-      // Draw tile with fallback color
-      ctx.fillStyle = fallbackColors[cell.type] || "#FFFFFF";
-      ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-      
-      // Draw occupant
-      if (cell.occupant) {
-        drawOccupant(ctx, cell.occupant, px, py);
+
+      const { csv, kept, skipped, rows } = parseAndTriplicate(input);
+      outputArea.value = csv;
+      updateDownload(csv);
+
+      copyBtn.disabled = !csv;
+      stats.textContent = kept === 0 && skipped === 0
+        ? 'No parsable lines.'
+        : `Products kept: ${kept} · Lines skipped: ${skipped} · Output rows: ${rows}`;
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(outputArea.value);
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => copyBtn.textContent = 'Copy output', 1200);
+      } catch {
+        // Fallback
+        outputArea.select();
+        document.execCommand('copy');
       }
-      
-      // Subtle grid
-      ctx.strokeStyle = "rgba(0,0,0,0.1)";
-      ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
-    }
+    });
 
-    function drawOccupant(ctx, occupant, px, py) {
-      // Fallback colored square for sprites
-      ctx.fillStyle = occupant.type === "monster" ? "#ff4444" : "#44ff44";
-      ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-      
-      // Add symbol
-      ctx.fillStyle = "#000000";
-      ctx.font = "12px monospace";
-      ctx.textAlign = "center";
-      const symbol = occupant.type === "monster" ? "M" : "N";
-      ctx.fillText(symbol, px + TILE_SIZE/2, py + TILE_SIZE/2 + 4);
-      
-      // Health bar for monsters
-      if (occupant.type === "monster" && occupant.hp < occupant.maxHp) {
-        const barWidth = TILE_SIZE - 4;
-        const barHeight = 3;
-        const healthPercent = occupant.hp / occupant.maxHp;
-        
-        ctx.fillStyle = "#333";
-        ctx.fillRect(px + 2, py - 5, barWidth, barHeight);
-        ctx.fillStyle = "#ff4444";
-        ctx.fillRect(px + 2, py - 5, barWidth * healthPercent, barHeight);
+    // Drag & drop for convenience
+    document.addEventListener('dragover', e => { e.preventDefault(); });
+    document.addEventListener('drop', async e => {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files[0]){
+        fileInput.files = e.dataTransfer.files;
       }
-    }
-
-    function drawPlayer(ctx) {
-      const px = gameState.player.x * TILE_SIZE;
-      const py = gameState.player.y * TILE_SIZE;
-      
-      // Player as a bright character
-      ctx.fillStyle = "#ffff00";
-      ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-      
-      // Player outline
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-      ctx.lineWidth = 1;
-      
-      // Player symbol (@)
-      ctx.fillStyle = "#000000";
-      ctx.font = "14px monospace";
-      ctx.textAlign = "center";
-      ctx.fillText("@", px + TILE_SIZE/2, py + TILE_SIZE/2 + 4);
-    }
-
-    function drawFog() {
-      const fogCanvas = document.getElementById("fogCanvas");
-      const ctx = fogCanvas.getContext("2d");
-      ctx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
-      
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (!gameState.fogOfWar[y][x]) {
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-          }
-        }
-      }
-    }
-
-    function drawMinimap() {
-      const canvas = document.getElementById("minimap");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      const scaleX = canvas.width / GRID_WIDTH;
-      const scaleY = canvas.height / GRID_HEIGHT;
-      
-      for (let y = 0; y < GRID_HEIGHT; y++) {
-        for (let x = 0; x < GRID_WIDTH; x++) {
-          if (gameState.fogOfWar[y][x]) {
-            const cell = gameState.mapData[y][x];
-            ctx.fillStyle = getMinimapColor(cell);
-            ctx.fillRect(x * scaleX, y * scaleY, scaleX, scaleY);
-          }
-        }
-      }
-      
-      // Draw player on minimap
-      ctx.fillStyle = "#ffff00";
-      ctx.fillRect(
-        gameState.player.x * scaleX, 
-        gameState.player.y * scaleY, 
-        scaleX, scaleY
-      );
-    }
-
-    function getMinimapColor(cell) {
-      if (cell.occupant) {
-        return cell.occupant.type === "monster" ? "#ff4444" : "#44ff44";
-      }
-      
-      const colors = {
-        grass: "#9AE582", tree: "#2f6a16", water: "#2B64CF",
-        sand: "#DDD593", snow: "#dee0f7", stone: "#AAAAAA",
-        wall: "#8B4513", floor: "#666666", chests: "#DEB887"
-      };
-      
-      return colors[cell.type] || "#888888";
-    }
-
-    /*******************************************************
-     * CAMERA CONTROLS
-     *******************************************************/
-    function centerCameraOnPlayer() {
-      const canvas = document.getElementById("gameCanvas");
-      const viewport = canvas.parentElement;
-      
-      const playerScreenX = gameState.player.x * TILE_SIZE * scale;
-      const playerScreenY = gameState.player.y * TILE_SIZE * scale;
-      
-      offsetX = viewport.clientWidth / 2 - playerScreenX;
-      offsetY = viewport.clientHeight / 2 - playerScreenY;
-      
-      updateCanvasTransform();
-    }
-
-    function updateCanvasTransform() {
-      const canvas = document.getElementById("gameCanvas");
-      const fogCanvas = document.getElementById("fogCanvas");
-      
-      const transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-      canvas.style.transform = transform;
-      fogCanvas.style.transform = transform;
-    }
-
-    /*******************************************************
-     * UI FUNCTIONS
-     *******************************************************/
-    function initUI() {
-      updateUI();
-      updateInventoryDisplay();
-    }
-
-    function updateUI() {
-      const player = gameState.player;
-      
-      document.getElementById("playerLevel").textContent = player.level;
-      document.getElementById("playerClass").textContent = player.class;
-      document.getElementById("hpText").textContent = `${player.hp}/${player.maxHp}`;
-      document.getElementById("xpText").textContent = `${player.xp}/${player.xpToNext}`;
-      document.getElementById("playerAttack").textContent = player.attack;
-      document.getElementById("playerDefense").textContent = player.defense;
-      document.getElementById("goldAmount").textContent = player.gold;
-      
-      // Update bars
-      const hpPercent = (player.hp / player.maxHp) * 100;
-      const xpPercent = (player.xp / player.xpToNext) * 100;
-      
-      document.getElementById("hpFill").style.width = hpPercent + "%";
-      document.getElementById("xpFill").style.width = xpPercent + "%";
-      
-      updateInventoryDisplay();
-    }
-
-    function updateInventoryDisplay() {
-      const grid = document.getElementById("inventoryGrid");
-      grid.innerHTML = "";
-      
-      for (let i = 0; i < 16; i++) {
-        const slot = document.createElement("div");
-        slot.className = "inventory-slot";
-        
-        if (i < gameState.player.inventory.length) {
-          slot.className += " filled";
-          slot.textContent = gameState.player.inventory[i].substring(0, 3);
-          slot.title = gameState.player.inventory[i];
-        }
-        
-        grid.appendChild(slot);
-      }
-    }
-
-    function updateStoryText(text) {
-      document.getElementById("currentStory").textContent = text;
-    }
-
-    function log(message, type = "story") {
-      const logEl = document.getElementById("actionLog");
-      const entry = document.createElement("div");
-      entry.className = `log-entry log-${type}`;
-      entry.textContent = message;
-      
-      logEl.appendChild(entry);
-      logEl.scrollTop = logEl.scrollHeight;
-      
-      // Keep log manageable
-      while (logEl.children.length > 50) {
-        logEl.removeChild(logEl.firstChild);
-      }
-    }
-
-    function showInventory() {
-      if (gameState.player.inventory.length === 0) {
-        log("Your inventory is empty.", "story");
-        return;
-      }
-      
-      let inventoryText = "Inventory:\n";
-      gameState.player.inventory.forEach((item, index) => {
-        inventoryText += `${index + 1}. ${item}\n`;
-      });
-      
-      alert(inventoryText);
-    }
-
-    /*******************************************************
-     * EVENT HANDLERS
-     *******************************************************/
-    function addEventListeners() {
-      // Keyboard controls
-      document.addEventListener("keydown", (e) => {
-        if (gameState.currentDialogue) return; // Don't move during dialogue
-        
-        switch(e.key.toLowerCase()) {
-          case "w":
-          case "arrowup":
-            e.preventDefault();
-            movePlayer(0, -1);
-            break;
-          case "s":
-          case "arrowdown":
-            e.preventDefault();
-            movePlayer(0, 1);
-            break;
-          case "a":
-          case "arrowleft":
-            e.preventDefault();
-            movePlayer(-1, 0);
-            break;
-          case "d":
-          case "arrowright":
-            e.preventDefault();
-            movePlayer(1, 0);
-            break;
-          case "escape":
-            closeDialogue();
-            break;
-        }
-      });
-      
-      // Mouse controls for map
-      const canvas = document.getElementById("gameCanvas");
-      const viewport = canvas.parentElement;
-      
-      canvas.addEventListener("click", (e) => {
-        if (gameState.currentDialogue) return;
-        
-        const rect = viewport.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        
-        const wx = (mx - offsetX) / scale;
-        const wy = (my - offsetY) / scale;
-        
-        const tx = Math.floor(wx / TILE_SIZE);
-        const ty = Math.floor(wy / TILE_SIZE);
-        
-        if (tx >= 0 && ty >= 0 && tx < GRID_WIDTH && ty < GRID_HEIGHT) {
-          // Simple pathfinding: move towards clicked tile
-          const dx = Math.sign(tx - gameState.player.x);
-          const dy = Math.sign(ty - gameState.player.y);
-          
-          if (dx !== 0 || dy !== 0) {
-            movePlayer(dx, dy);
-          }
-        }
-      });
-      
-      // Mouse wheel zoom
-      viewport.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const zoomSpeed = 0.1;
-        let newScale = scale + (e.deltaY < 0 ? zoomSpeed : -zoomSpeed);
-        newScale = Math.min(Math.max(newScale, minScale), maxScale);
-        
-        const rect = viewport.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        
-        const wx = (mx - offsetX) / scale;
-        const wy = (my - offsetY) / scale;
-        
-        scale = newScale;
-        offsetX = mx - wx * scale;
-        offsetY = my - wy * scale;
-        
-        updateCanvasTransform();
-      });
-    }
-
-    /*******************************************************
-     * GAME COMMANDS
-     *******************************************************/
-    function newWorld() {
-      // Reset game state
-      gameState = {
-        player: {
-          x: 25, y: 25, level: 1, hp: 20, maxHp: 20, xp: 0, xpToNext: 100,
-          attack: 5, defense: 2, gold: 0, inventory: [], class: "Adventurer"
-        },
-        mapData: [], fogOfWar: [], currentBiome: "grassland", worldSeed: 0,
-        autoExplore: false, activeQuest: null, npcs: [], monsters: [], currentDialogue: null
-      };
-      
-      closeDialogue();
-      generateInitialWorld();
-      centerCameraOnPlayer();
-      drawGame();
-      updateUI();
-      log("A new adventure begins!", "story");
-    }
-
-    /*******************************************************
-     * INITIALIZATION
-     *******************************************************/
-    function initGame() {
-      initUI();
-      generateInitialWorld();
-      centerCameraOnPlayer();
-      drawGame();
-      addEventListeners();
-      log("Adventure begins! Explore the world to find quests and treasures.", "story");
-    }
-
-    window.onload = initGame;
+    });
   </script>
 </body>
 </html>
