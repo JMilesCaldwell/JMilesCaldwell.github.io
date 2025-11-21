@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SALARY QUEST - Level Up Required</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Press Start 2P', cursive;
+            overflow-x: hidden;
+            line-height: 1.8;
+        }
+        
+        /* CRT Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.97; }
+        }
+        
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                transparent 100%
+            );
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+            z-index: 3;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .screen {
+            background: rgba(0, 20, 0, 0.9);
+            border: 4px solid #00ff00;
+            box-shadow: 
+                0 0 20px #00ff00,
+                inset 0 0 40px rgba(0, 255, 0, 0.1);
+            padding: 40px;
+            margin: 40px 0;
+            position: relative;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 20px #00ff00, inset 0 0 40px rgba(0, 255, 0, 0.1); }
+            to { box-shadow: 0 0 40px #00ff00, inset 0 0 60px rgba(0, 255, 0, 0.2); }
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 
+                0 0 10px #00ff00,
+                0 0 20px #00ff00,
+                0 0 30px #00ff00;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        h2 {
+            font-size: 1.5em;
+            color: #ff00ff;
+            margin: 40px 0 20px 0;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+        
+        .blink {
+            animation: blink 1s step-start infinite;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #00ffff;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+        
+        .stat-label {
+            color: #ffff00;
+        }
+        
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .critical {
+            color: #ff0000;
+            animation: critical-flash 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes critical-flash {
+            0%, 100% { color: #ff0000; }
+            50% { color: #ff6666; }
+        }
+        
+        .skills-list {
+            list-style: none;
+            padding: 20px;
+        }
+        
+        .skills-list li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+            font-size: 0.8em;
+        }
+        
+        .skills-list li::before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #ff00ff;
+            animation: blink 1s step-start infinite;
+        }
+        
+        .comparison-bar {
+            background: rgba(0, 0, 0, 0.8);
+            height: 60px;
+            position: relative;
+            margin: 20px 0;
+            border: 2px solid #00ffff;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600, #ffff00);
+            position: relative;
+            animation: fill 2s ease-out forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        @keyframes fill {
+            from { width: 0; }
+        }
+        
+        .bar-target {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 20%;
+            background: rgba(0, 255, 0, 0.3);
+            border-left: 3px solid #00ff00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+        }
+        
+        .action-button {
+            display: block;
+            width: 100%;
+            padding: 30px;
+            background: linear-gradient(180deg, #00ff00, #00cc00);
+            border: 4px solid #00ff00;
+            color: #000;
+            text-align: center;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 40px 0;
+            text-decoration: none;
+            box-shadow: 0 0 30px #00ff00;
+            transition: all 0.3s;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        .action-button:hover {
+            background: linear-gradient(180deg, #00ffff, #00cccc);
+            border-color: #00ffff;
+            box-shadow: 0 0 50px #00ffff;
+            transform: scale(1.05);
+        }
+        
+        .coin {
+            display: inline-block;
+            animation: coin-spin 2s linear infinite;
+        }
+        
+        @keyframes coin-spin {
+            0%, 100% { transform: rotateY(0deg); }
+            50% { transform: rotateY(180deg); }
+        }
+        
+        .insert-coin {
+            text-align: center;
+            font-size: 1.5em;
+            margin: 40px 0;
+            color: #ffff00;
+            animation: blink 0.8s step-start infinite;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.5em; }
+            h2 { font-size: 1em; }
+            .screen { padding: 20px; }
+            .stat-row { font-size: 0.7em; }
+            .skills-list li { font-size: 0.7em; }
+        }
+        
+        .game-over {
+            color: #ff0000;
+            font-size: 2em;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .ai-evidence {
+            background: rgba(255, 0, 255, 0.1);
+            border: 2px solid #ff00ff;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 0.7em;
+        }
+        
+        .ai-evidence a {
+            color: #00ffff;
+            text-decoration: none;
+            display: block;
+            margin: 10px 0;
+        }
+        
+        .ai-evidence a:hover {
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+    
+    <div class="container">
+        <!-- Title Screen -->
+        <div class="screen">
+            <h1 class="blink">SALARY QUEST</h1>
+            <h2 style="text-align: center; color: #ffff00;">LEVEL UP REQUIRED</h2>
+            <p style="text-align: center; margin-top: 30px; font-size: 0.8em;">
+                Press START to continue...
+            </p>
+        </div>
+        
+        <!-- Current Status -->
+        <div class="screen">
+            <h2>⚠ CURRENT STATUS ⚠</h2>
+            <div class="stat-box">
+                <div class="stat-row">
+                    <span class="stat-label">PLAYER:</span>
+                    <span class="stat-value">JOUKE</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">LEVEL:</span>
+                    <span class="stat-value">36 MULTI-SPECIALIST</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">HUIDIGE SALARY:</span>
+                    <span class="critical">€2.421 NETTO/MAAND</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">STATUS:</span>
+                    <span class="critical">CRITICALLY UNDERPAID</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">WERKWEEK:</span>
+                    <span class="stat-value">35 UUR</span>
+                </div>
+            </div>
+            
+            <div class="game-over">
+                INSUFFICIENT FUNDS
+            </div>
+        </div>
+        
+        <!-- Skills/Abilities -->
+        <div class="screen">
+            <h2>💪 EQUIPPED ABILITIES 💪</h2>
+            <ul class="skills-list">
+                <li>COPYWRITING - 6 TALEN [MASTER]</li>
+                <li>MARKETING & COMMUNICATIE [EXPERT]</li>
+                <li>KLANTENSERVICE & DIRECTE VERKOOP [ACTIVE]</li>
+                <li>UI/UX & WEBSITE DEVELOPMENT [DEPLOYED]</li>
+                <li>AI-IMPLEMENTATIE & PROMPT ENGINEERING [NEXT-GEN]</li>
+                <li>TROUBLESHOOTING & PROCESOPTIMALISATIE [CRITICAL]</li>
+            </ul>
+            
+            <p style="margin-top: 30px; font-size: 0.8em; text-align: center; color: #ffff00;">
+                Combo multiplier: x6 [LEGENDARY STATUS]
+            </p>
+        </div>
+        
+        <!-- Market Comparison -->
+        <div class="screen">
+            <h2>📊 MARKET DATA ANALYSIS 📊</h2>
+            
+            <p style="margin: 20px 0; font-size: 0.8em;">
+                CURRENT COMPENSATION VS. MARKET RATE
+            </p>
+            
+            <div class="comparison-bar">
+                <div class="bar-fill" style="width: 83%;">
+                    €2.421 [HUIDIGE]
+                </div>
+                <div class="bar-target">
+                    €2.900 [TARGET]
+                </div>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat-row">
+                    <span class="stat-label">SALARY GAP:</span>
+                    <span class="critical">€479/MAAND</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">JAARLIJKS VERSCHIL:</span>
+                    <span class="critical">€5.748</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">PEER REVIEW:</span>
+                    <span class="critical">UNDERPAID</span>
+                </div>
+            </div>
+            
+            <div class="ai-evidence">
+                <h2 style="font-size: 1em; margin-bottom: 20px;">🤖 AI MARKET RESEARCH 🤖</h2>
+                <p style="margin-bottom: 15px; font-size: 0.9em;">
+                    VERIFIED BY MULTIPLE SYSTEMS:
+                </p>
+                <a href="https://chatgpt.com/share/6920ab52-45d8-8006-9670-233444c7571f" target="_blank">
+                    ▶ ChatGPT Analysis [EXTERNAL LINK]
+                </a>
+                <a href="https://www.perplexity.ai/search/mijn-werkzaamheden-omvatten-in-CUXMyX84SxWEGnCcUQ.DcA#0" target="_blank">
+                    ▶ Perplexity Research [EXTERNAL LINK]
+                </a>
+                <a href="https://claude.ai/share/64c773b6-f51e-4599-9004-0d7da5a7fa4f" target="_blank">
+                    ▶ Claude Assessment [EXTERNAL LINK]
+                </a>
+                <a href="https://chat.mistral.ai/chat/d3565f4e-177c-4465-862c-0c470058de85" target="_blank">
+                    ▶ Le Chat Mistral Evaluation [EXTERNAL LINK]
+                </a>
+            </div>
+        </div>
+        
+        <!-- The Ask -->
+        <div class="screen">
+            <h2>🎯 QUEST OBJECTIVE 🎯</h2>
+            
+            <div class="stat-box">
+                <div class="stat-row">
+                    <span class="stat-label">TARGET SALARY:</span>
+                    <span class="stat-value">€2.900 NETTO/MAAND</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">BASIS:</span>
+                    <span class="stat-value">MARKTCONFORME SALARISSEN</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">WERKWEEK:</span>
+                    <span class="stat-value">35 UUR (HUIDIG)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">TIMING:</span>
+                    <span class="stat-value">BINNENKORT</span>
+                </div>
+            </div>
+            
+            <p style="margin: 30px 0; font-size: 0.8em; line-height: 1.8;">
+                Op basis van marktconforme salarissen in vergelijkbare functies, 
+                gecombineerd met de unieke skill-set en multi-disciplinaire verantwoordelijkheden,
+                is €2.900 netto per maand een realistische en faire aanpassing.
+            </p>
+        </div>
+        
+        <!-- Call to Action -->
+        <div class="screen">
+            <div class="insert-coin">
+                <span class="coin">💰</span> INSERT COIN TO CONTINUE <span class="coin">💰</span>
+            </div>
+            
+            <p style="text-align: center; margin: 30px 0; font-size: 0.9em;">
+                READY PLAYER ONE?
+            </p>
+            
+            <p style="text-align: center; margin: 30px 0; font-size: 0.7em; color: #ffff00;">
+                Met vriendelijke groet,<br>
+                Jouke<br><br>
+                P.S. - Dit is ook een werkvoorbeeld. 😎
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Konami code easter egg
+            let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+            let konamiIndex = 0;
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === konamiCode[konamiIndex]) {
+                    konamiIndex++;
+                    if (konamiIndex === konamiCode.length) {
+                        alert('🎮 CHEAT CODE ACTIVATED: FAIR PAY UNLOCKED! 🎮');
+                        konamiIndex = 0;
+                    }
+                } else {
+                    konamiIndex = 0;
+                }
+            });
+            
+            // Random arcade sound effect simulation
+            const sounds = ['BEEP!', 'BOOP!', 'DING!'];
+            setInterval(() => {
+                if (Math.random() > 0.98) {
+                    console.log(sounds[Math.floor(Math.random() * sounds.length)]);
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
