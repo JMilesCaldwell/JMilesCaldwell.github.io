@@ -893,8 +893,14 @@
     function updateExplanationPanels(params, elementData, computedCarrier) {
       const leftPanel = document.getElementById('left-panel-content');
       const rightPanel = document.getElementById('right-panel-content');
-      const primaryAudioElement = Object.values(SOUND_ELEMENT_MAPPING).find(e => e.freq === computedCarrier);
-
+      
+      // FIX: Use a small tolerance for the floating point lookup to ensure the element is found.
+      let primaryAudioElement = Object.values(SOUND_ELEMENT_MAPPING).find(e => Math.abs(e.freq - computedCarrier) < 0.01);
+      
+      // Fallback in case of an extremely rare lookup failure
+      if (!primaryAudioElement) {
+          primaryAudioElement = SOUND_ELEMENT_MAPPING.EARTH; 
+      }
 
       // --- LEFT PANEL: COLOR & ELEMENT ---
       let leftHTML = `
@@ -974,8 +980,8 @@
     let animationId = null;
     let speed = 1.0;
     let isBloom = false;
-    let phase = 0; // bloom intensity 0..1
-    let bloomIntensity = 0.5;
+    let phase = 0; 
+    let bloomIntensity = 0.5; // Used for bloom display, even if boolean isBloom controls the effect
 
     function drawFrame(context, w, h) {
       context.save();
@@ -1144,6 +1150,10 @@
       beatRange.dataset.touched = "1";
       updateFrequencies();
     });
+
+    // FIX: Set initial UI display values for the fullscreen overlay
+    bloomDisplay.textContent = bloomIntensity.toFixed(2);
+    speedDisplay.textContent = speed.toFixed(2);
 
     // Initial setup must call update and setSeedAndAudio
     update();
