@@ -184,6 +184,86 @@
       transform: translateY(0);
     }
 
+    .btn.small {
+      padding: 0.5rem 0.8rem;
+      font-size: 0.75rem;
+      min-width: 2.5rem;
+    }
+
+    .speed-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .speed-display {
+      font-size: 0.75rem;
+      color: #606060;
+      min-width: 3rem;
+      text-align: center;
+    }
+
+    /* Fullscreen Mode */
+    .fullscreen-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .fullscreen-overlay.active {
+      display: flex;
+    }
+
+    .fullscreen-overlay canvas {
+      max-width: 95vmin;
+      max-height: 95vmin;
+      border-radius: 50%;
+    }
+
+    .fullscreen-controls {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .fullscreen-overlay:hover .fullscreen-controls,
+    .fullscreen-controls:focus-within {
+      opacity: 1;
+    }
+
+    .fullscreen-hint {
+      position: fixed;
+      top: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.8rem;
+      color: #404040;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .fullscreen-overlay:hover .fullscreen-hint {
+      opacity: 1;
+    }
+
     /* Info Panel */
     .info-panel {
       display: grid;
@@ -281,6 +361,13 @@
     <div class="controls">
       <button class="btn" id="random-btn">Random Seed</button>
       <button class="btn" id="animate-btn">Animate</button>
+      <div class="speed-controls">
+        <button class="btn small" id="slower-btn">−</button>
+        <span class="speed-display" id="speed-display">1.0x</span>
+        <button class="btn small" id="faster-btn">+</button>
+      </div>
+      <button class="btn" id="bloom-btn">Bloom</button>
+      <button class="btn" id="fullscreen-btn">Fullscreen</button>
       <button class="btn" id="save-btn">Save Image</button>
     </div>
 
@@ -301,6 +388,19 @@
         <div class="info-label">Palette</div>
         <div class="info-value" id="info-palette">-</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Overlay -->
+  <div class="fullscreen-overlay" id="fullscreen-overlay">
+    <canvas id="fullscreen-canvas" width="800" height="800"></canvas>
+    <div class="fullscreen-hint">ESC to exit · ← → to adjust speed · B to toggle bloom</div>
+    <div class="fullscreen-controls">
+      <button class="btn small" id="fs-slower-btn">−</button>
+      <span class="speed-display" id="fs-speed-display">1.0x</span>
+      <button class="btn small" id="fs-faster-btn">+</button>
+      <button class="btn" id="fs-bloom-btn">Bloom</button>
+      <button class="btn" id="fs-exit-btn">Exit</button>
     </div>
   </div>
 
@@ -403,13 +503,24 @@
 
     const canvas = document.getElementById('mandala-canvas');
     const ctx = canvas.getContext('2d');
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const maxRadius = Math.min(centerX, centerY) - 10;
+    const fsCanvas = document.getElementById('fullscreen-canvas');
+    const fsCtx = fsCanvas.getContext('2d');
 
     let currentParams = null;
     let animationId = null;
     let isAnimating = false;
+    let isFullscreen = false;
+    let animationSpeed = 1.0;
+    let isBloomEnabled = false;
+    let bloomPhase = 0;
+
+    // Get canvas properties dynamically
+    function getCanvasProps(targetCanvas) {
+      const centerX = targetCanvas.width / 2;
+      const centerY = targetCanvas.height / 2;
+      const maxRadius = Math.min(centerX, centerY) - 10;
+      return { centerX, centerY, maxRadius };
+    }
 
     function generateMandalaParams(seed) {
       const rand = mulberry32(seed);
@@ -419,15 +530,15 @@
       const layerCount = 4 + Math.floor(rand() * 5);
       const palette = generatePalette(rand);
 
-      // Generate layer specifications
+      // Generate layer specifications (as ratios, scaled at draw time)
       const layers = [];
       let totalElements = 0;
 
       for (let i = 0; i < layerCount; i++) {
-        const layerRadius = maxRadius * (0.15 + (i / layerCount) * 0.8);
+        const radiusRatio = 0.15 + (i / layerCount) * 0.8;
         const elementType = Math.floor(rand() * 7);
         const elementCount = symmetry * (1 + Math.floor(rand() * 2));
-        const color = palette.colors[Math.floor(rand() * palette.colors.length)];
+        const colorIndex = Math.floor(rand() * palette.colors.length);
         const strokeWidth = 0.5 + rand() * 2.5;
         const filled = rand() > 0.5;
         const rotationOffset = rand() * Math.PI * 2;
@@ -436,15 +547,15 @@
         totalElements += elementCount;
 
         layers.push({
-          radius: layerRadius,
+          radiusRatio: radiusRatio,
           type: elementType,
           count: elementCount,
-          color: color,
+          colorIndex: colorIndex,
           strokeWidth: strokeWidth,
           filled: filled,
           rotationOffset: rotationOffset,
           scale: scale,
-          secondaryColor: palette.colors[Math.floor(rand() * palette.colors.length)]
+          secondaryColorIndex: Math.floor(rand() * palette.colors.length)
         });
       }
 
@@ -465,108 +576,143 @@
       };
     }
 
-    function drawMandala(params, rotationPhase = 0) {
+    // Shift hue for bloom effect
+    function shiftColor(color, hueShift) {
+      const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (!match) return color;
+
+      let r = parseInt(match[1]) / 255;
+      let g = parseInt(match[2]) / 255;
+      let b = parseInt(match[3]) / 255;
+
+      // RGB to HSL
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+
+      // Shift hue
+      h = (h + hueShift) % 1;
+      if (h < 0) h += 1;
+
+      return hslToRgb(h, s, l);
+    }
+
+    function getBloomedColor(palette, colorIndex, bloomPhase) {
+      const baseColor = palette.colors[colorIndex];
+      if (!isBloomEnabled) return baseColor;
+      return shiftColor(baseColor, bloomPhase);
+    }
+
+    function drawMandala(params, rotationPhase = 0, targetCtx = ctx, targetCanvas = canvas) {
+      const { centerX, centerY, maxRadius } = getCanvasProps(targetCanvas);
+
       // Clear and draw background
-      ctx.fillStyle = '#0a0a0f';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      targetCtx.fillStyle = '#0a0a0f';
+      targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
 
       // Background decoration
-      drawBackground(params);
+      drawBackground(params, targetCtx, centerX, centerY, maxRadius);
 
       // Draw each layer
       params.layers.forEach((layer, idx) => {
-        drawLayer(layer, params.symmetry, rotationPhase, idx);
+        drawLayer(layer, params, rotationPhase, idx, targetCtx, centerX, centerY, maxRadius);
       });
 
       // Draw connectors if enabled
       if (params.hasConnectors) {
-        drawConnectors(params, rotationPhase);
+        drawConnectors(params, rotationPhase, targetCtx, centerX, centerY, maxRadius);
       }
 
       // Center decoration
-      drawCenter(params);
+      drawCenter(params, targetCtx, centerX, centerY, maxRadius);
     }
 
-    function drawBackground(params) {
-      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
+    function drawBackground(params, targetCtx, centerX, centerY, maxRadius) {
+      const gradient = targetCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
 
-      switch(params.backgroundStyle) {
-        case 0:
-          gradient.addColorStop(0, 'rgba(139, 92, 246, 0.1)');
-          gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.05)');
-          gradient.addColorStop(1, 'transparent');
-          break;
-        case 1:
-          gradient.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
-          gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.05)');
-          gradient.addColorStop(1, 'transparent');
-          break;
-        case 2:
-          gradient.addColorStop(0, 'rgba(16, 185, 129, 0.1)');
-          gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.05)');
-          gradient.addColorStop(1, 'transparent');
-          break;
-      }
+      // Get bloomed background colors
+      const bgColors = [
+        ['rgba(139, 92, 246, 0.1)', 'rgba(59, 130, 246, 0.05)'],
+        ['rgba(236, 72, 153, 0.1)', 'rgba(139, 92, 246, 0.05)'],
+        ['rgba(16, 185, 129, 0.1)', 'rgba(59, 130, 246, 0.05)']
+      ][params.backgroundStyle];
 
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
-      ctx.fill();
+      gradient.addColorStop(0, bgColors[0]);
+      gradient.addColorStop(0.5, bgColors[1]);
+      gradient.addColorStop(1, 'transparent');
+
+      targetCtx.fillStyle = gradient;
+      targetCtx.beginPath();
+      targetCtx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
+      targetCtx.fill();
     }
 
-    function drawLayer(layer, symmetry, rotationPhase, layerIndex) {
+    function drawLayer(layer, params, rotationPhase, layerIndex, targetCtx, centerX, centerY, maxRadius) {
       const angleStep = (Math.PI * 2) / layer.count;
+      const layerRadius = maxRadius * layer.radiusRatio;
+      const color = getBloomedColor(params.palette, layer.colorIndex, bloomPhase);
 
       for (let i = 0; i < layer.count; i++) {
         const angle = i * angleStep + layer.rotationOffset + rotationPhase * (layerIndex % 2 === 0 ? 1 : -1) * 0.5;
-        const x = centerX + Math.cos(angle) * layer.radius;
-        const y = centerY + Math.sin(angle) * layer.radius;
+        const x = centerX + Math.cos(angle) * layerRadius;
+        const y = centerY + Math.sin(angle) * layerRadius;
 
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle + Math.PI / 2);
+        targetCtx.save();
+        targetCtx.translate(x, y);
+        targetCtx.rotate(angle + Math.PI / 2);
 
         const size = (maxRadius / 15) * layer.scale;
 
-        ctx.strokeStyle = layer.color;
-        ctx.fillStyle = layer.filled ? layer.color : 'transparent';
-        ctx.lineWidth = layer.strokeWidth;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        targetCtx.strokeStyle = color;
+        targetCtx.fillStyle = layer.filled ? color : 'transparent';
+        targetCtx.lineWidth = layer.strokeWidth;
+        targetCtx.lineCap = 'round';
+        targetCtx.lineJoin = 'round';
 
-        drawElement(layer.type, size, layer);
+        drawElement(layer.type, size, layer, targetCtx);
 
-        ctx.restore();
+        targetCtx.restore();
       }
     }
 
-    function drawElement(type, size, layer) {
-      ctx.beginPath();
+    function drawElement(type, size, layer, targetCtx) {
+      targetCtx.beginPath();
 
       switch(type) {
         case 0: // Circle
-          ctx.arc(0, 0, size, 0, Math.PI * 2);
+          targetCtx.arc(0, 0, size, 0, Math.PI * 2);
           break;
 
         case 1: // Petal / Teardrop
-          ctx.moveTo(0, -size * 1.5);
-          ctx.bezierCurveTo(size, -size, size, size * 0.5, 0, size);
-          ctx.bezierCurveTo(-size, size * 0.5, -size, -size, 0, -size * 1.5);
+          targetCtx.moveTo(0, -size * 1.5);
+          targetCtx.bezierCurveTo(size, -size, size, size * 0.5, 0, size);
+          targetCtx.bezierCurveTo(-size, size * 0.5, -size, -size, 0, -size * 1.5);
           break;
 
         case 2: // Diamond
-          ctx.moveTo(0, -size);
-          ctx.lineTo(size * 0.6, 0);
-          ctx.lineTo(0, size);
-          ctx.lineTo(-size * 0.6, 0);
-          ctx.closePath();
+          targetCtx.moveTo(0, -size);
+          targetCtx.lineTo(size * 0.6, 0);
+          targetCtx.lineTo(0, size);
+          targetCtx.lineTo(-size * 0.6, 0);
+          targetCtx.closePath();
           break;
 
         case 3: // Triangle
-          ctx.moveTo(0, -size);
-          ctx.lineTo(size * 0.866, size * 0.5);
-          ctx.lineTo(-size * 0.866, size * 0.5);
-          ctx.closePath();
+          targetCtx.moveTo(0, -size);
+          targetCtx.lineTo(size * 0.866, size * 0.5);
+          targetCtx.lineTo(-size * 0.866, size * 0.5);
+          targetCtx.closePath();
           break;
 
         case 4: // Star
@@ -574,43 +720,46 @@
             const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
             const innerAngle = outerAngle + Math.PI / 5;
             if (i === 0) {
-              ctx.moveTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
+              targetCtx.moveTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
             } else {
-              ctx.lineTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
+              targetCtx.lineTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
             }
-            ctx.lineTo(Math.cos(innerAngle) * size * 0.4, Math.sin(innerAngle) * size * 0.4);
+            targetCtx.lineTo(Math.cos(innerAngle) * size * 0.4, Math.sin(innerAngle) * size * 0.4);
           }
-          ctx.closePath();
+          targetCtx.closePath();
           break;
 
         case 5: // Crescent
-          ctx.arc(0, 0, size, 0, Math.PI * 2);
-          ctx.moveTo(size * 0.5, 0);
-          ctx.arc(size * 0.3, 0, size * 0.7, 0, Math.PI * 2, true);
+          targetCtx.arc(0, 0, size, 0, Math.PI * 2);
+          targetCtx.moveTo(size * 0.5, 0);
+          targetCtx.arc(size * 0.3, 0, size * 0.7, 0, Math.PI * 2, true);
           break;
 
         case 6: // Lotus petal (complex)
-          ctx.moveTo(0, -size * 1.2);
-          ctx.quadraticCurveTo(size * 1.2, -size * 0.3, size * 0.8, size * 0.5);
-          ctx.quadraticCurveTo(size * 0.3, size * 0.8, 0, size);
-          ctx.quadraticCurveTo(-size * 0.3, size * 0.8, -size * 0.8, size * 0.5);
-          ctx.quadraticCurveTo(-size * 1.2, -size * 0.3, 0, -size * 1.2);
+          targetCtx.moveTo(0, -size * 1.2);
+          targetCtx.quadraticCurveTo(size * 1.2, -size * 0.3, size * 0.8, size * 0.5);
+          targetCtx.quadraticCurveTo(size * 0.3, size * 0.8, 0, size);
+          targetCtx.quadraticCurveTo(-size * 0.3, size * 0.8, -size * 0.8, size * 0.5);
+          targetCtx.quadraticCurveTo(-size * 1.2, -size * 0.3, 0, -size * 1.2);
           break;
       }
 
       if (layer.filled) {
-        ctx.fill();
+        targetCtx.fill();
       }
-      ctx.stroke();
+      targetCtx.stroke();
     }
 
-    function drawConnectors(params, rotationPhase) {
+    function drawConnectors(params, rotationPhase, targetCtx, centerX, centerY, maxRadius) {
       const innerLayer = params.layers[0];
       const outerLayer = params.layers[params.layers.length - 1];
+      const innerRadius = maxRadius * innerLayer.radiusRatio;
+      const outerRadius = maxRadius * outerLayer.radiusRatio;
 
-      ctx.strokeStyle = params.palette.colors[0];
-      ctx.lineWidth = 0.5;
-      ctx.globalAlpha = 0.3;
+      targetCtx.strokeStyle = getBloomedColor(params.palette, 0, bloomPhase);
+      targetCtx.fillStyle = getBloomedColor(params.palette, 0, bloomPhase);
+      targetCtx.lineWidth = 0.5;
+      targetCtx.globalAlpha = 0.3;
 
       const count = params.symmetry;
       const angleStep = (Math.PI * 2) / count;
@@ -620,74 +769,78 @@
 
         switch(params.connectorStyle) {
           case 0: // Straight lines
-            ctx.beginPath();
-            ctx.moveTo(
-              centerX + Math.cos(angle) * innerLayer.radius,
-              centerY + Math.sin(angle) * innerLayer.radius
+            targetCtx.beginPath();
+            targetCtx.moveTo(
+              centerX + Math.cos(angle) * innerRadius,
+              centerY + Math.sin(angle) * innerRadius
             );
-            ctx.lineTo(
-              centerX + Math.cos(angle) * outerLayer.radius,
-              centerY + Math.sin(angle) * outerLayer.radius
+            targetCtx.lineTo(
+              centerX + Math.cos(angle) * outerRadius,
+              centerY + Math.sin(angle) * outerRadius
             );
-            ctx.stroke();
+            targetCtx.stroke();
             break;
 
           case 1: // Curved lines
-            ctx.beginPath();
-            const midRadius = (innerLayer.radius + outerLayer.radius) / 2;
-            ctx.moveTo(
-              centerX + Math.cos(angle) * innerLayer.radius,
-              centerY + Math.sin(angle) * innerLayer.radius
+            targetCtx.beginPath();
+            const midRadius = (innerRadius + outerRadius) / 2;
+            targetCtx.moveTo(
+              centerX + Math.cos(angle) * innerRadius,
+              centerY + Math.sin(angle) * innerRadius
             );
-            ctx.quadraticCurveTo(
+            targetCtx.quadraticCurveTo(
               centerX + Math.cos(angle + 0.2) * midRadius,
               centerY + Math.sin(angle + 0.2) * midRadius,
-              centerX + Math.cos(angle) * outerLayer.radius,
-              centerY + Math.sin(angle) * outerLayer.radius
+              centerX + Math.cos(angle) * outerRadius,
+              centerY + Math.sin(angle) * outerRadius
             );
-            ctx.stroke();
+            targetCtx.stroke();
             break;
 
           case 2: // Dots along radii
-            for (let r = innerLayer.radius; r < outerLayer.radius; r += 15) {
-              ctx.beginPath();
-              ctx.arc(
+            const dotSpacing = maxRadius / 15;
+            for (let r = innerRadius; r < outerRadius; r += dotSpacing) {
+              targetCtx.beginPath();
+              targetCtx.arc(
                 centerX + Math.cos(angle) * r,
                 centerY + Math.sin(angle) * r,
                 1.5, 0, Math.PI * 2
               );
-              ctx.fill();
+              targetCtx.fill();
             }
             break;
         }
       }
 
-      ctx.globalAlpha = 1;
+      targetCtx.globalAlpha = 1;
     }
 
-    function drawCenter(params) {
+    function drawCenter(params, targetCtx, centerX, centerY, maxRadius) {
+      const color0 = getBloomedColor(params.palette, 0, bloomPhase);
+      const color1 = getBloomedColor(params.palette, 1 % params.palette.colors.length, bloomPhase);
+
       // Central circle
-      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius * 0.15);
-      gradient.addColorStop(0, params.palette.colors[0]);
-      gradient.addColorStop(0.5, params.palette.colors[1] || params.palette.colors[0]);
+      const gradient = targetCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius * 0.15);
+      gradient.addColorStop(0, color0);
+      gradient.addColorStop(0.5, color1);
       gradient.addColorStop(1, 'transparent');
 
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, maxRadius * 0.12, 0, Math.PI * 2);
-      ctx.fill();
+      targetCtx.fillStyle = gradient;
+      targetCtx.beginPath();
+      targetCtx.arc(centerX, centerY, maxRadius * 0.12, 0, Math.PI * 2);
+      targetCtx.fill();
 
       // Inner decoration
-      ctx.strokeStyle = params.palette.colors[0];
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, maxRadius * 0.08, 0, Math.PI * 2);
-      ctx.stroke();
+      targetCtx.strokeStyle = color0;
+      targetCtx.lineWidth = 1;
+      targetCtx.beginPath();
+      targetCtx.arc(centerX, centerY, maxRadius * 0.08, 0, Math.PI * 2);
+      targetCtx.stroke();
 
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, maxRadius * 0.03, 0, Math.PI * 2);
-      ctx.fillStyle = params.palette.colors[0];
-      ctx.fill();
+      targetCtx.beginPath();
+      targetCtx.arc(centerX, centerY, maxRadius * 0.03, 0, Math.PI * 2);
+      targetCtx.fillStyle = color0;
+      targetCtx.fill();
     }
 
     // ============================================
@@ -699,6 +852,17 @@
     const randomBtn = document.getElementById('random-btn');
     const animateBtn = document.getElementById('animate-btn');
     const saveBtn = document.getElementById('save-btn');
+    const slowerBtn = document.getElementById('slower-btn');
+    const fasterBtn = document.getElementById('faster-btn');
+    const speedDisplay = document.getElementById('speed-display');
+    const bloomBtn = document.getElementById('bloom-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+    const fsSlowerBtn = document.getElementById('fs-slower-btn');
+    const fsFasterBtn = document.getElementById('fs-faster-btn');
+    const fsSpeedDisplay = document.getElementById('fs-speed-display');
+    const fsBloomBtn = document.getElementById('fs-bloom-btn');
+    const fsExitBtn = document.getElementById('fs-exit-btn');
 
     function updateMandala(text) {
       const seed = stringToSeed(text);
@@ -740,14 +904,27 @@
       updateMandala(seedInput.value);
     });
 
-    // Animation toggle
+    // Animation
     let rotationPhase = 0;
 
     function animate() {
       if (!isAnimating) return;
 
-      rotationPhase += 0.005;
-      drawMandala(currentParams, rotationPhase);
+      rotationPhase += 0.005 * animationSpeed;
+
+      // Update bloom phase if enabled
+      if (isBloomEnabled) {
+        bloomPhase += 0.002 * animationSpeed;
+        if (bloomPhase > 1) bloomPhase -= 1;
+      }
+
+      // Draw to appropriate canvas
+      if (isFullscreen) {
+        drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
+      } else {
+        drawMandala(currentParams, rotationPhase);
+      }
+
       animationId = requestAnimationFrame(animate);
     }
 
@@ -759,7 +936,129 @@
         animate();
       } else {
         cancelAnimationFrame(animationId);
+        bloomPhase = 0;
         drawMandala(currentParams, 0);
+      }
+    });
+
+    // Speed controls
+    const speedSteps = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0];
+
+    function updateSpeedDisplay() {
+      const text = animationSpeed.toFixed(animationSpeed < 1 ? 2 : 1) + 'x';
+      speedDisplay.textContent = text;
+      fsSpeedDisplay.textContent = text;
+    }
+
+    function adjustSpeed(delta) {
+      const currentIdx = speedSteps.findIndex(s => s >= animationSpeed);
+      const newIdx = Math.max(0, Math.min(speedSteps.length - 1, currentIdx + delta));
+      animationSpeed = speedSteps[newIdx];
+      updateSpeedDisplay();
+    }
+
+    slowerBtn.addEventListener('click', () => adjustSpeed(-1));
+    fasterBtn.addEventListener('click', () => adjustSpeed(1));
+    fsSlowerBtn.addEventListener('click', () => adjustSpeed(-1));
+    fsFasterBtn.addEventListener('click', () => adjustSpeed(1));
+
+    // Bloom toggle
+    function toggleBloom() {
+      isBloomEnabled = !isBloomEnabled;
+      const text = isBloomEnabled ? 'Bloom On' : 'Bloom';
+      bloomBtn.textContent = text;
+      fsBloomBtn.textContent = text;
+
+      if (!isBloomEnabled) {
+        bloomPhase = 0;
+      }
+
+      // Redraw if not animating
+      if (!isAnimating) {
+        drawMandala(currentParams, rotationPhase);
+        if (isFullscreen) {
+          drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
+        }
+      }
+    }
+
+    bloomBtn.addEventListener('click', toggleBloom);
+    fsBloomBtn.addEventListener('click', toggleBloom);
+
+    // Fullscreen mode
+    function enterFullscreen() {
+      isFullscreen = true;
+      fullscreenOverlay.classList.add('active');
+
+      // Resize fullscreen canvas to fit viewport
+      const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+      fsCanvas.width = size;
+      fsCanvas.height = size;
+
+      // Start animation if not already running
+      if (!isAnimating) {
+        isAnimating = true;
+        animateBtn.textContent = 'Stop';
+        animate();
+      }
+
+      // Draw immediately
+      drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
+    }
+
+    function exitFullscreen() {
+      isFullscreen = false;
+      fullscreenOverlay.classList.remove('active');
+
+      // Redraw main canvas
+      if (isAnimating) {
+        drawMandala(currentParams, rotationPhase);
+      }
+    }
+
+    fullscreenBtn.addEventListener('click', enterFullscreen);
+    fsExitBtn.addEventListener('click', exitFullscreen);
+
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      if (isFullscreen) {
+        switch(e.key) {
+          case 'Escape':
+            exitFullscreen();
+            break;
+          case 'ArrowLeft':
+            adjustSpeed(-1);
+            e.preventDefault();
+            break;
+          case 'ArrowRight':
+            adjustSpeed(1);
+            e.preventDefault();
+            break;
+          case 'b':
+          case 'B':
+            toggleBloom();
+            break;
+          case ' ':
+            isAnimating = !isAnimating;
+            animateBtn.textContent = isAnimating ? 'Stop' : 'Animate';
+            if (isAnimating) {
+              animate();
+            } else {
+              cancelAnimationFrame(animationId);
+            }
+            e.preventDefault();
+            break;
+        }
+      }
+    });
+
+    // Handle window resize in fullscreen
+    window.addEventListener('resize', () => {
+      if (isFullscreen) {
+        const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+        fsCanvas.width = size;
+        fsCanvas.height = size;
+        drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
       }
     });
 
