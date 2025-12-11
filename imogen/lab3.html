@@ -3,27 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mandala Generator · Lab 3 · Imogen</title>
+  <title>SIG: Generative Geometry Model</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+Tibetan&display=swap" rel="stylesheet">
   <style>
     /* ---------------------------------------------------- */
-    /* 1. SWEDISH WELLNESS AESTHETIC */
+    /* 1. MINIMALIST DESIGN AESTHETIC */
     /* ---------------------------------------------------- */
     :root {
-      --color-primary-accent: #3A66A8; /* Muted Navy/Blue for highlight */
-      --color-primary-canvas: #A8B8CC; /* Canvas highlight color (the glow) */
-      --color-neutral-dark: #333333;   /* Text color */
-      --color-neutral-medium: #6B7280; /* Secondary text */
-      --color-bg-light: #F9F9F9;      /* Lightest background */
-      --color-bg-white: #FFFFFF;      /* Pure white for elements */
-      --color-border: #E0E0E0;        /* Light border color */
-      --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --color-primary-accent: #C8AA6E; /* Polished Brass / Metallic Accent */
+      --color-primary-canvas: #C8AA6E; /* Canvas highlight color */
+      --color-neutral-dark: #111111;   /* Primary Background */
+      --color-neutral-medium: #888888; /* Secondary text */
+      --color-bg-light: #EEEEEE;      /* White/Light Background for Contrast Elements */
+      --color-bg-panel: #1A1A1A;      /* Dark Panel Background */
+      --color-text-light: #EEEEEE;    /* Primary Text Color */
+      --color-border: #333333;        /* Dark Border Color */
+      --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--color-bg-light);
-      color: var(--color-neutral-dark);
+      background: var(--color-neutral-dark);
+      color: var(--color-text-light);
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
@@ -32,79 +33,79 @@
     }
     .navbar {
       display: flex; justify-content: center; align-items: center;
-      background: var(--color-bg-white); padding: 1.2rem 2rem;
+      background: var(--color-bg-panel); padding: 1.2rem 2rem;
       position: sticky; top: 0; width: 100%; z-index: 1000;
       border-bottom: 1px solid var(--color-border); box-shadow: var(--shadow-soft);
     }
-    .navbar a { color: var(--color-neutral-medium); font-size: 0.9rem; font-weight: 500; text-decoration: none; margin: 0 2rem; transition: color 0.3s ease; }
+    .navbar a { color: var(--color-neutral-medium); font-size: 0.8rem; font-weight: 500; text-decoration: none; margin: 0 2rem; transition: color 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
     .navbar a:hover { color: var(--color-primary-accent); }
 
-    .container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6rem 2rem 3rem; gap: 2rem; width: 95%; max-width: 1400px; margin: 0 auto; }
-    .main-content-grid { display: flex; gap: 3rem; width: 100%; align-items: flex-start; }
-    .center-column { display: flex; flex-direction: column; align-items: center; gap: 2rem; flex: 0 0 600px; }
+    .container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5rem 2rem 3rem; gap: 3rem; width: 95%; max-width: 1500px; margin: 0 auto; }
+    .main-content-grid { display: flex; gap: 4rem; width: 100%; align-items: flex-start; }
+    .center-column { display: flex; flex-direction: column; align-items: center; gap: 2rem; flex: 0 0 650px; }
 
-    /* Info Panels - Clean, Card Look */
-    .explanation-panel { flex: 1; max-width: 400px; padding: 2rem; background: var(--color-bg-white); border-radius: 12px; border: 1px solid var(--color-border); box-shadow: var(--shadow-soft); position: sticky; top: 8rem; min-height: 400px; }
-    .explanation-panel h3 { color: var(--color-primary-accent); font-size: 1.2rem; font-weight: 600; border-bottom: 2px solid var(--color-border); padding-bottom: 0.75rem; margin-bottom: 1rem; }
-    .explanation-panel h4 { color: var(--color-neutral-dark); font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.6rem; }
+    /* Info Panels - Structured, Technical Look */
+    .explanation-panel { flex: 1; max-width: 420px; padding: 2.2rem; background: var(--color-bg-panel); border-radius: 4px; border: 1px solid var(--color-border); box-shadow: var(--shadow-soft); position: sticky; top: 7rem; min-height: 400px; }
+    .explanation-panel h3 { color: var(--color-primary-accent); font-size: 1rem; font-weight: 500; border-bottom: 1px solid var(--color-border); padding-bottom: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+    .explanation-panel h4 { color: var(--color-text-light); font-size: 0.9rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.6rem; }
     .explanation-panel p, .explanation-panel ul, .explanation-panel li { font-size: 0.85rem; color: var(--color-neutral-medium); margin-bottom: 0.8rem; line-height: 1.5; list-style-position: inside; padding-left: 0; }
-    .explanation-panel strong { color: var(--color-neutral-dark); font-weight: 700; }
+    .explanation-panel strong { color: var(--color-text-light); font-weight: 600; }
     .color-block { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; border: 1px solid var(--color-border); vertical-align: middle;}
 
-    .header-group { text-align: center; max-width: 800px; padding: 0 1rem; margin-bottom: 1rem; }
-    .title { font-size: 2.8rem; font-weight: 300; color: var(--color-neutral-dark); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .subtitle { font-size: 1rem; color: var(--color-neutral-medium); font-weight: 400; }
+    .header-group { text-align: center; max-width: 900px; padding: 0 1rem; margin-bottom: 0rem; }
+    .title { font-size: 3rem; font-weight: 300; color: var(--color-text-light); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1rem; color: var(--color-neutral-medium); font-weight: 400; letter-spacing: 0.5px; }
 
-    /* Input Card */
-    .input-group { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; background: var(--color-bg-white); padding: 2rem; border-radius: 12px; border: 1px solid var(--color-border); box-shadow: var(--shadow-soft); }
+    /* Input Card - Dark and clean */
+    .input-group { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; background: var(--color-bg-panel); padding: 1.5rem 2rem; border-radius: 4px; border: 1px solid var(--color-border); box-shadow: var(--shadow-soft); }
     .input-row { display: flex; gap: 1rem; }
     
     .text-input, .date-input { 
-      background: var(--color-bg-light); border: 1px solid var(--color-border); border-radius: 8px; 
-      color: var(--color-neutral-dark); padding: 1rem; font-family: inherit; outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+      background: var(--color-neutral-dark); border: 1px solid var(--color-border); border-radius: 4px; 
+      color: var(--color-text-light); padding: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.3s, box-shadow 0.3s;
     }
-    .text-input { flex: 2; font-size: 1.1rem; }
-    .date-input { flex: 1; font-size: 1rem; text-align: center; cursor: pointer; }
-    .text-input:focus, .date-input:focus { border-color: var(--color-primary-accent); box-shadow: 0 0 0 3px rgba(58, 102, 168, 0.1); background: var(--color-bg-white); }
+    .text-input { flex: 2; font-size: 1rem; }
+    .date-input { flex: 1; font-size: 0.9rem; text-align: center; cursor: pointer; }
+    .text-input:focus, .date-input:focus { border-color: var(--color-primary-accent); box-shadow: 0 0 0 3px rgba(200, 170, 110, 0.2); background: #222; }
 
     /* Meta Info */
-    .meta-display { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--color-border); padding-top: 1.5rem; }
+    .meta-display { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--color-border); padding-top: 1.2rem; margin-top: 0.5rem; }
     .meta-box { display: flex; flex-direction: column; }
-    .meta-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--color-neutral-medium); margin-bottom: 4px; font-weight: 500; }
-    .meta-value { color: var(--color-primary-accent); font-size: 1.1rem; font-weight: 700; }
-    .tibetan-font { font-family: 'Noto Serif Tibetan', serif; font-size: 1.8rem; line-height: 1; color: var(--color-primary-accent); }
+    .meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--color-neutral-medium); margin-bottom: 4px; font-weight: 500; }
+    .meta-value { color: var(--color-primary-accent); font-size: 1rem; font-weight: 700; }
+    .tibetan-font { font-family: 'Noto Serif Tibetan', serif; font-size: 1.6rem; line-height: 1; color: var(--color-primary-accent); }
 
     /* Canvas */
-    .canvas-wrapper { position: relative; margin: 1rem 0; background: #080706; border-radius: 50%; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2), inset 0 0 10px rgba(255, 255, 255, 0.1); }
+    .canvas-wrapper { position: relative; margin: 1rem 0; background: #080706; border-radius: 50%; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 10px rgba(255, 255, 255, 0.1); }
     #mandala-canvas { border-radius: 50%; display: block; max-width: 90vw; height: auto; cursor: crosshair; }
 
-    /* Controls */
-    .controls { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; max-width: 650px; }
-    .btn { background: var(--color-bg-white); border: 1px solid var(--color-border); color: var(--color-neutral-medium); padding: 0.8rem 1.4rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-    .btn:hover { border-color: var(--color-primary-accent); color: var(--color-primary-accent); background: var(--color-bg-light); }
+    /* Controls - Clean, button-heavy */
+    .controls { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; max-width: 650px; }
+    .btn { background: var(--color-bg-panel); border: 1px solid var(--color-border); color: var(--color-neutral-medium); padding: 0.8rem 1.4rem; border-radius: 4px; cursor: pointer; transition: all 0.3s; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn:hover { border-color: var(--color-primary-accent); color: var(--color-primary-accent); background: #222; }
 
-    .audio-controls { display: flex; gap: 1rem; align-items: center; padding: 0.8rem 1.2rem; border-radius: 8px; background: var(--color-bg-light); border: 1px solid var(--color-border); }
-    .audio-controls label { font-size: 0.85rem; color: var(--color-neutral-medium); }
-    .audio-controls input[type="range"] { width: 100px; appearance: none; height: 4px; background: var(--color-border); border-radius: 2px; }
-    .audio-controls input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--color-primary-accent); cursor: pointer; }
+    .audio-controls { display: flex; gap: 1rem; align-items: center; padding: 0.8rem 1.2rem; border-radius: 4px; background: var(--color-bg-panel); border: 1px solid var(--color-border); }
+    .audio-controls label { font-size: 0.75rem; color: var(--color-neutral-medium); text-transform: uppercase; letter-spacing: 1px; }
+    .audio-controls input[type="range"] { width: 80px; appearance: none; height: 3px; background: var(--color-border); border-radius: 2px; }
+    .audio-controls input[type="range"]::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--color-primary-accent); cursor: pointer; }
 
     /* Fullscreen */
     .fullscreen-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; justify-content: center; align-items: center; }
     .fullscreen-overlay.active { display: flex; cursor: none; }
     
     .fs-hover-zone { position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; z-index: 10000; transition: opacity 0.3s; pointer-events: none; }
-    .fs-controls { background: rgba(255,255,255,0.95); padding: 15px 25px; border-radius: 25px; border: 1px solid #ccc; display: flex; gap: 15px; opacity: 0; transition: opacity 0.3s; pointer-events: auto; }
-    .fs-controls .btn { background: var(--color-primary-accent); color: var(--color-bg-white); border-color: var(--color-primary-accent); }
-    .fs-controls .btn:hover { background: #30588a; }
+    .fs-controls { background: rgba(30,30,30,0.95); border: 1px solid var(--color-border); padding: 15px 25px; border-radius: 4px; display: flex; gap: 15px; opacity: 0; transition: opacity 0.3s; pointer-events: auto; }
+    .fs-controls .btn { background: var(--color-primary-accent); color: var(--color-neutral-dark); border-color: var(--color-primary-accent); font-weight: 600; }
+    .fs-controls .btn:hover { background: #B99C5E; }
     .fullscreen-overlay.active:hover .fs-hover-zone { opacity: 1; pointer-events: auto; }
     .fs-hover-zone:hover .fs-controls { opacity: 1; }
 
-    .fs-stat { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 8px; position: fixed; top: 20px; right: 20px; color: var(--color-primary-canvas); font-size: 0.9rem; transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+    .fs-stat { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 4px; position: fixed; top: 20px; right: 20px; color: var(--color-primary-canvas); font-size: 0.8rem; transition: opacity 0.3s; opacity: 0; pointer-events: none; }
     .fs-stat.visible { opacity: 1; }
 
     @media (max-width: 1200px) {
       .main-content-grid { flex-direction: column; align-items: center; }
-      .explanation-panel { max-width: 600px; width: 100%; position: static; }
+      .explanation-panel { max-width: 650px; width: 100%; position: static; }
       .center-column { flex: 1; }
     }
     @media (max-width: 650px) {
@@ -118,17 +119,17 @@
 <body>
 
   <div class="navbar">
-    <a href="#creation">Creation</a>
-    <a href="#harmony">Harmony Principles</a>
-    <a href="#sound">Acoustic Alignment</a>
+    <a href="#signature">Signature Input</a>
+    <a href="#structure">Geometry Structure</a>
+    <a href="#acoustic">Acoustic Alignment</a>
   </div>
 
   <div class="container">
     <div class="header-group">
-      <h1 class="title">AURA: Generative Resonance</h1>
+      <h1 class="title">SIG.01: Generative Geometry</h1>
       <p class="subtitle">
-        **Your personal energetic blueprint, translated into light, geometry, and sound.**<br>
-        A moment of tranquility, derived from your core energetic data.
+        **An engineered visualization of semantic and temporal input data.**<br>
+        Rendering a unique structural diagram based on user-defined parameters.
       </p>
     </div>
 
@@ -141,45 +142,45 @@
       <div class="center-column">
         <div class="input-group">
           <div class="input-row">
-            <input type="text" class="text-input" id="seed-input" placeholder="Your Name or Intentional Word..." autocomplete="off">
+            <input type="text" class="text-input" id="seed-input" placeholder="Project Name or Data String..." autocomplete="off">
             <input type="date" class="date-input" id="date-input">
           </div>
           
           <div class="meta-display">
             <div class="meta-box">
-              <span class="meta-label">Personal Resonance Key</span>
+              <span class="meta-label">Tibetan Seed String</span>
               <span class="meta-value tibetan-font" id="tibetan-display"></span>
             </div>
             <div class="meta-box" style="align-items: flex-end;">
-              <span class="meta-label">Energetic Harmony</span>
-              <span class="meta-value" id="element-display">Void / Void</span>
+              <span class="meta-label">Input Signature</span>
+              <span class="meta-value" id="element-display">VOID / VOID</span>
             </div>
             <div class="meta-box" style="align-items: flex-end;">
-              <span class="meta-label">Design Intention Score</span>
-              <span class="meta-value" id="archetype-display">Vajra Palace / 5.0</span>
+              <span class="meta-label">Complexity Index</span>
+              <span class="meta-value" id="archetype-display">Grid Type / 0.0</span>
             </div>
           </div>
         </div>
 
         <div class="canvas-wrapper">
-          <canvas id="mandala-canvas" width="600" height="600"></canvas>
+          <canvas id="mandala-canvas" width="650" height="650"></canvas>
         </div>
 
         <div class="controls">
-          <button class="btn" id="random-btn">Generate Discovery</button>
-          <button class="btn" id="animate-btn">Activate Motion</button>
-          <button class="btn" id="bloom-btn">Enhance Light</button>
-          <button class="btn" id="save-btn">Download Art</button>
+          <button class="btn" id="random-btn">Generate New Data</button>
+          <button class="btn" id="animate-btn">Start Flow</button>
+          <button class="btn" id="bloom-btn">Toggle Light Spill</button>
+          <button class="btn" id="save-btn">Export Image (PNG)</button>
 
           <div class="audio-controls" id="audio-controls">
-            <button class="btn" id="audio-toggle">Sound Align ▶</button>
-            <label for="beat-range">Rhythm</label>
+            <button class="btn" id="audio-toggle">Acoustic Tone OFF</button>
+            <label for="beat-range">Beat Freq (Hz)</label>
             <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6" data-touched="0">
-            <label for="vol-range">Focus</label>
+            <label for="vol-range">Volume</label>
             <input id="vol-range" type="range" min="0" max="0.3" step="0.005" value="0.06">
           </div>
           
-          <button class="btn" id="fullscreen-btn">Focus Mode (F11)</button>
+          <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
         </div>
       </div>
 
@@ -199,10 +200,10 @@
     <div class="fs-hover-zone">
       <div class="fs-controls">
         <button class="btn" id="fs-exit">Exit (ESC)</button>
-        <div style="display:flex;flex-direction:column;align-items:flex-start;color:#333;margin-left:8px;font-size:0.8rem;">
-          <div>[↑/↓] Light Intensity: <span id="bloom-display">0.50</span></div>
-          <div>[←/→] Flow State: <span id="speed-display">1.00</span></div>
-          <div>[+/-] Focus Volume: <span id="volume-display">0.06</span></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;color:#EEE;margin-left:8px;font-size:0.8rem;">
+          <div>[↑/↓] Light Intensity: <span id="bloom-display">0.60</span></div>
+          <div>[←/→] Motion Index: <span id="speed-display">1.00</span></div>
+          <div>[+/-] Tone Volume: <span id="volume-display">0.06</span></div>
         </div>
       </div>
     </div>
@@ -210,9 +211,9 @@
 
   <script>
     // ====================================================================
-    // 1. CONSTANTS & UTILITIES (The core logic remains solid)
+    // 1. CONSTANTS & UTILITIES (Refined for Minimalist/Technical Language)
     // ====================================================================
-    const W = 600, H = 600; 
+    const W = 650, H = 650; 
 
     const LATIN_TO_TIBETAN = {
       'a': '\u0F68', 'b': '\u0F56', 'c': '\u0F45', 'd': '\u0F51', 'e': '\u0F7A', 'f': '\u0F55', 'g': '\u0F42', 'h': '\u0F67',
@@ -222,39 +223,39 @@
       'sh': '\u0F64', 'th': '\u0F50', 'ph': '\u0F55', 'ts': '\u0F59'
     };
 
-    // Updated Copy for Wellness Theme
+    // Updated Element Names for Technical Look (Material/System)
     const ELEMENTS = {
-      METAL: { name: 'Purity (Metal)', colors: ['#EBEFF2', '#A3B4C6', '#8FA8BE', '#D6DDE6', '#FFFFFF'], meaning: 'White/Silver. Represents Structure, Clarity, and Unwavering Focus.' },
-      WATER: { name: 'Flow (Water)', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#D3E1EE'], meaning: 'Deep Blues. Represents Fluidity, Intuition, and Emotional Depth.' },
-      WOOD: { name: 'Growth (Wood)', colors: ['#4F6B58', '#738C7D', '#97A99F', '#BCC8BF', '#E1EBE2'], meaning: 'Muted Greens. Represents Vitality, Expansion, and Calm Renewal.' },
-      FIRE: { name: 'Intensity (Fire)', colors: ['#A04A4E', '#C66C70', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Soft Reds/Pinks. Represents Transformation, Passion, and Focused Energy.' },
-      EARTH: { name: 'Grounding (Earth)', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#F9F5F0'], meaning: 'Warm Neutrals. Represents Stability, Foundation, and Deep Connection.' }
+      METAL: { name: 'Alloy (Metal)', colors: ['#D0D0D0', '#A0A0A0', '#707070', '#555555', '#FFFFFF'], meaning: 'Represents Structural Integrity and Data Clarity.' },
+      WATER: { name: 'Fluidic (Water)', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#B0B0B0'], meaning: 'Represents System Flow and Dynamic Input.' },
+      WOOD: { name: 'Composite (Wood)', colors: ['#4F6B58', '#738C7D', '#97A99F', '#BCC8BF', '#A0A0A0'], meaning: 'Represents Growth Vectors and Expansion.' },
+      FIRE: { name: 'Thermal (Fire)', colors: ['#D24B4F', '#A04A4E', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Represents Energy State and Transformation Rate.' },
+      EARTH: { name: 'Foundation (Earth)', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#909090'], meaning: 'Represents Core Stability and Base Coordinates.' }
     };
     const MONTH_ELEMENTS = [
       ELEMENTS.EARTH, ELEMENTS.EARTH, ELEMENTS.WOOD, ELEMENTS.WOOD, ELEMENTS.FIRE, ELEMENTS.FIRE,
       ELEMENTS.METAL, ELEMENTS.METAL, ELEMENTS.WATER, ELEMENTS.WATER, ELEMENTS.EARTH, ELEMENTS.EARTH
     ];
     const SOUND_ELEMENT_MAPPING = {
-      METAL: { freq: 432, note: "432 Hz Alignment", explanation: "For mental clarity and structural alignment." },
-      WATER: { freq: 194.18, note: "194 Hz Earth Resonance", explanation: "For emotional flow and inner connectivity." },
-      WOOD: { freq: 285, note: "285 Hz Restoration", explanation: "For cellular renewal and life vitality." },
-      FIRE: { freq: 396, note: "396 Hz Liberation", explanation: "For releasing underlying fear and promoting security." },
-      EARTH: { freq: 172.8, note: "172 Hz Grounding", explanation: "For deep stability and physical presence." }
+      METAL: { freq: 432, note: "432 Hz", explanation: "Target for Cognitive Clarity." },
+      WATER: { freq: 194.18, note: "194 Hz", explanation: "Target for System Dynamics." },
+      WOOD: { freq: 285, note: "285 Hz", explanation: "Target for Vector Optimization." },
+      FIRE: { freq: 396, note: "396 Hz", explanation: "Target for State Transition." },
+      EARTH: { freq: 172.8, note: "172 Hz", explanation: "Target for Base Stability." }
     };
     const TIBETAN_SYMBOLS = [
-      { char: '\u0F42', desc: 'Inner Compassion (GA)', meaning: 'A focus on empathy and primordial purity.' }, { char: '\u0F40', desc: 'Mindful Action (KA)', meaning: 'The union of body, speech, and intention.' },
-      { char: '\u0F68', desc: 'The Open Void (A)', meaning: 'Symbolizing the unconditioned, ultimate state of mind.' }, { char: '\u0F4F', desc: 'Non-Duality (TA)', meaning: 'The understanding of transcendence and interconnectedness.' },
-      { char: '⚔', desc: 'Clarity Blade', meaning: 'Cutting through confusion and achieving immediate clarity.' }, { char: '🔔', desc: 'Vajra Anchor', meaning: 'Representing diamond-like focus and structural integrity.' },
-      { char: '\u0F68\u0F7A', desc: 'Void Syllable (EH)', meaning: 'The elemental seed for ultimate openness and Space.' }, 
-      { char: '\u0F5D\u0F66', desc: 'Air Syllable (YAM)', meaning: 'The elemental seed for movement, breath, and purification.' }, 
-      { char: '\u0F62\u0F7A\u0F58', desc: 'Fire Syllable (RAM)', meaning: 'The elemental seed for inner transformation and focused energy.' },
-      { char: '\u0F63\u0F7A\u0F58', desc: 'Earth Syllable (LAM)', meaning: 'The elemental seed for deep rooting and material stability.' }, 
-      { char: '\u0F56\u0F7A\u0F58', desc: 'Water Syllable (BAM)', meaning: 'The elemental seed for emotional fluidity and potential.' } 
+      { char: '\u0F42', desc: 'GA (Module Command)', meaning: 'Focus on System Output and Efficiency.' }, { char: '\u0F40', desc: 'KA (Structural Integrity)', meaning: 'The union of Input, Process, and Result.' },
+      { char: '\u0F68', desc: 'A (Void State)', meaning: 'Symbolizing the unconditioned space for new data.' }, { char: '\u0F4F', desc: 'TA (Interconnect)', meaning: 'The understanding of non-linear system links.' },
+      { char: '⚔', desc: 'Cutter (Clarity)', meaning: 'Cutting through data noise for immediate clarity.' }, { char: '🔔', desc: 'Anchor (Fixed Point)', meaning: 'Representing a rigid, diamond-like structural focus.' },
+      { char: '\u0F68\u0F7A', desc: 'EH (Data Space)', meaning: 'The elemental seed for ultimate open system space.' }, 
+      { char: '\u0F5D\u0F66', desc: 'YAM (Airflow)', meaning: 'The elemental seed for processing speed and circulation.' }, 
+      { char: '\u0F62\u0F7A\u0F58', desc: 'RAM (Thermal Sink)', meaning: 'The elemental seed for internal transformation and focused energy.' },
+      { char: '\u0F63\u0F7A\u0F58', desc: 'LAM (Ground Plane)', meaning: 'The elemental seed for deep rooting and coordinate stability.' }, 
+      { char: '\u0F56\u0F7A\u0F58', desc: 'BAM (Liquid Vector)', meaning: 'The elemental seed for dynamic data fluidity and potential.' } 
     ];
     const ARCHETYPES = [
-      { name: 'Sanctuary Grid', index: 0, meaning: 'A traditional four-gate structure, representing a protected space for meditation and self-reflection.' },
-      { name: 'Cosmic Union Matrix', index: 1, meaning: 'A pattern of intersecting triangles, symbolizing the union of masculine and feminine energy and creative generation.' },
-      { name: 'Universal Flow Net', index: 2, meaning: 'A crystalline structure projection, focusing on fluidity, universal connection, and deep rest.' }
+      { name: 'Four-Gate Structure', index: 0, meaning: 'A traditional four-quadrant grid, representing a protected and symmetrical data processing environment.' },
+      { name: 'Triad Intersection Matrix', index: 1, meaning: 'A pattern of intersecting triangles, symbolizing the convergence of three primary data streams.' },
+      { name: 'Crystalline Flow Net', index: 2, meaning: 'A complex, high-density projection, focusing on distributed data flow and structural complexity.' }
     ];
 
     function hexToRgb(hex) {
@@ -262,7 +263,6 @@
       return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
     }
     
-    // Smooth Color Interpolation Function
     function interpolateColor(color1, color2, factor) {
       const rgb1 = hexToRgb(color1);
       const rgb2 = hexToRgb(color2);
@@ -362,10 +362,13 @@
         const d = [...this.elementData.day.colors];
         let colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
 
+        // We use the Polished Brass accent for the bright glow/detail
+        const ACCENT_BRASS = "#C8AA6E";
+
         const colorStrings = [ 
           colorPool[0] || p[0], // Primary color (Ring Base)
           colorPool[1] || m[0], // Secondary color (Inner Geometry)
-          colorPool[2] || d[0], // Tertiary color (Accent/Detail)
+          ACCENT_BRASS,         // Tertiary color (Primary Accent/Detail)
           colorPool[3] || p[1], // Accent 1 (Text/Center Fill)
           colorPool[4] || m[1]  // Accent 2 (Center outline/core)
         ];
@@ -385,15 +388,15 @@
         for(let i=0; i<ringCount; i++) {
           rings.push({
             r: 0.1 + (i/ringCount)*0.9,
-            style: Math.floor(rand() * 5), // 0: solid, 1: dots, 2: double, 3: symbols, 4: dashed
+            style: Math.floor(rand() * 5), 
             width: (1 + rand() * 4 * complexity) * (1 + randomnessFactor * 0.5),
-            colorIndex: Math.floor(rand()*3) // Primary, Secondary, Tertiary
+            colorIndex: i % 3 // Cycle through the first three (including the brass accent)
           });
         }
         
         // 3. Symbol Selection (Bias towards elemental syllable)
         let symbolIndex = seed % TIBETAN_SYMBOLS.length;
-        const elementalSyllables = { 'Purity (Metal)': 7, 'Flow (Water)': 11, 'Growth (Wood)': 8, 'Intensity (Fire)': 9, 'Grounding (Earth)': 10 };
+        const elementalSyllables = { 'Alloy (Metal)': 7, 'Fluidic (Water)': 11, 'Composite (Wood)': 8, 'Thermal (Fire)': 9, 'Foundation (Earth)': 10 };
         const yearElementKey = this.elementData.year.name;
 
         if (elementalSyllables[yearElementKey] && rand() < 0.35) {
@@ -405,9 +408,9 @@
         const polyhedrons = [];
         for(let i=0; i<polyCount; i++) {
             polyhedrons.push({
-                type: Math.floor(rand() * 4), // 0: Icosahedron, 1: Dodecahedron, 2: Cube, 3: Tetrahedron
+                type: Math.floor(rand() * 4), 
                 radiusFactor: 0.3 + rand() * 0.6,
-                color: colorStrings[Math.floor(rand()*5)],
+                color: ACCENT_BRASS, // Always use the brass accent for these wireframes
                 thickness: 0.8 + rand() * 3,
                 rotationSpeed: (rand() - 0.5) * 0.08,
             });
@@ -421,10 +424,8 @@
     }
 
     // ====================================================================
-    // 3. MANDALA RENDERER CLASS (No functional changes needed)
+    // 3. MANDALA RENDERER CLASS (Kept robust for visual effect)
     // ====================================================================
-    // Note: The drawing logic remains identical to the previous ultimate version
-    // to maintain the high-fidelity graphical effects (multi-pass glow).
 
     class MandalaRenderer {
       constructor(canvasId, fullscreenCanvasId) {
@@ -444,8 +445,8 @@
         this.canvas.height = this.height;
 
         this.speed = 1.0;
-        this.isBloom = true; /* Default to TRUE for the wellness aesthetic */
-        this.bloomIntensity = 0.6; /* Slight increase for ethereal look */
+        this.isBloom = true; 
+        this.bloomIntensity = 0.6; 
 
         this.icosaVertices = this.generateIcosahedronVertices();
         this.icosaEdges = this.generateIcosahedronEdges();
@@ -453,6 +454,12 @@
 
       setParams(params) {
         this.params = params;
+        this.drawInitialFrame(); // Ensure a static frame is drawn immediately
+      }
+      
+      drawInitialFrame() {
+        if (!this.params) return;
+        this.drawFrame(this.ctx, this.width, this.height, this.phase);
       }
 
       toggleAnimation(state) {
@@ -598,13 +605,19 @@
         if (isGlowPass) return;
 
         const symbolData = TIBETAN_SYMBOLS[params.symbolIndex];
-        ctx.fillStyle = params.palette[0];
+        ctx.fillStyle = params.palette[2]; // Use Brass Accent
         ctx.font = `${r*0.8}px 'Noto Serif Tibetan', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(symbolData.char, cx, cy);
       }
-
+      
+      // The rest of the MandalaRenderer methods (drawVajraPalace, drawSriYantra, 
+      // drawIcosahedronGrid, drawPolyhedron, etc.) remain the same for stability
+      // but will now use the new color palette via params.
+      
+      // ... [MandalaRenderer methods are assumed to be here, omitted for brevity]
+      
       drawVajraPalace(ctx, cx, cy, r, params, phase, isGlowPass) {
         ctx.fillStyle = params.palette[1];
         if (isGlowPass) return; 
@@ -812,7 +825,7 @@
 
 
     // ====================================================================
-    // 4. AUDIO ENGINE CLASS (No functional changes needed)
+    // 4. AUDIO ENGINE CLASS (Sound tone logic remains the same)
     // ====================================================================
 
     class AudioEngine {
@@ -927,7 +940,7 @@
 
 
     // ====================================================================
-    // 5. MAIN APPLICATION LOGIC (Updated Copy)
+    // 5. MAIN APPLICATION LOGIC (Cleaned up for reliability)
     // ====================================================================
     document.addEventListener('DOMContentLoaded', () => {
       const seedInput = document.getElementById('seed-input');
@@ -947,11 +960,13 @@
       let currentMandalaParams = null;
 
       dateInput.valueAsDate = new Date();
+      
+      // Initial call to set up the UI and initial render
       updateUI();
       
       // --- Core Update Function ---
       function updateUI() {
-        const name = seedInput.value || "Inner Tranquility";
+        const name = seedInput.value || "Initial Config";
         const date = dateInput.value;
         
         const paramsGenerator = new MandalaParams(name, date);
@@ -962,17 +977,17 @@
         // 2. Update Meta Displays
         document.getElementById('tibetan-display').textContent = currentMandalaParams.tibetan || '\u0F0B';
         document.getElementById('element-display').textContent = `${currentMandalaParams.elementData.year.name.split(' ')[0]} / ${currentMandalaParams.elementData.month.name.split(' ')[0]} / ${currentMandalaParams.elementData.day.name.split(' ')[0]}`;
-        document.getElementById('archetype-display').textContent = `${currentMandalaParams.params.archetype.name} / ${currentMandalaParams.params.complexity}`;
+        document.getElementById('archetype-display').textContent = `${currentMandalaParams.params.archetype.name.split(' ')[0]} / ${currentMandalaParams.params.complexity}`;
 
         // 3. Sync Audio Frequencies
         syncAudioFrequencies(false);
 
         // 4. Update Explanation Panels
         updateExplanationPanels(currentMandalaParams.params, currentMandalaParams.elementData);
-
-        // 5. Draw Static Frame
+        
+        // 5. Redraw static frame if not animating
         if (!renderer.isAnimating) {
-            renderer.drawFrame(renderer.ctx, W, H, renderer.phase);
+            renderer.drawInitialFrame();
         }
       }
 
@@ -994,7 +1009,7 @@
         volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
       }
 
-      /* --- Copy Overhaul for Wellness Look --- */
+      /* --- Copy Overhaul for Minimalist/Technical Look --- */
       function updateExplanationPanels(params, elementData) {
         const leftPanel = document.getElementById('left-panel-content');
         const rightPanel = document.getElementById('right-panel-content');
@@ -1002,48 +1017,48 @@
         const primaryElementKey = audioEngine.currentElementData.elementData.year.name.split(' ')[0].toUpperCase();
         const primaryAudioElement = SOUND_ELEMENT_MAPPING[primaryElementKey];
 
-        // LEFT PANEL: COLOR & ELEMENT
+        // LEFT PANEL: DATA AND COLOR SPECIFICATION
         let leftHTML = `
-          <h3>Core Energetic Harmony</h3>
-          <p>Your date of reflection determines the three dominant energetic forces that shape your personal color frequency. This creates a deeply resonant visual experience.</p>
-          <h4>Your Dominant Elements:</h4>
+          <h3>INPUT SIGNATURE SPECIFICATION</h3>
+          <p>The temporal and semantic inputs define three dominant elemental data types that drive the generative rendering process.</p>
+          <h4>Input Source Mapping:</h4>
           <ul>
-            <li><strong>Year:</strong> ${elementData.year.name}. ${elementData.year.meaning.split('. ')[0]}.</li>
-            <li><strong>Month:</strong> ${elementData.month.name}. ${elementData.month.meaning.split('. ')[0]}.</li>
-            <li><strong>Day:</strong> ${elementData.day.name}. ${elementData.day.meaning.split('. ')[0]}.</li>
+            <li><strong>Year Base:</strong> ${elementData.year.name}. ${elementData.year.meaning.split('. ')[0]}.</li>
+            <li><strong>Month Vector:</strong> ${elementData.month.name}. ${elementData.month.meaning.split('. ')[0]}.</li>
+            <li><strong>Day Modifier:</strong> ${elementData.day.name}. ${elementData.day.meaning.split('. ')[0]}.</li>
           </ul>
-          <h4>Design Palette: Soothing Tones</h4>
-          <p>These five blended shades are harmonized from your elements, designed to induce a state of calm and focus:</p>
+          <h4>Palette Specification: ${params.palette[0].replace('#', 'M-')}</h4>
+          <p>Five blended color points are derived from your inputs, optimized for contrast and light spill:</p>
           <ul>
-            <li><span class="color-block" style="background-color: ${params.palette[0]}"></span>Tone 1: Primary Resonance</li>
-            <li><span class="color-block" style="background-color: ${params.palette[1]}"></span>Tone 2: Inner Flow</li>
-            <li><span class="color-block" style="background-color: ${params.palette[2]}"></span>Tone 3: Detail Accent</li>
-            <li><span class="color-block" style="background-color: ${params.palette[3]}"></span>Tone 4: Foundation Base</li>
-            <li><span class="color-block" style="background-color: ${params.palette[4]}"></span>Tone 5: Core Integrity</li>
+            <li><span class="color-block" style="background-color: ${params.palette[0]}"></span>Tone 1: Primary Structure (${params.palette[0]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[1]}"></span>Tone 2: Secondary Flow (${params.palette[1]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[2]}"></span>Tone 3: Accent / Glow (${params.palette[2]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[3]}"></span>Tone 4: Central Fill (${params.palette[3]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[4]}"></span>Tone 5: Frame Detail (${params.palette[4]})</li>
           </ul>
         `;
         leftPanel.innerHTML = leftHTML;
 
-        // RIGHT PANEL: GEOMETRY, SYMBOL, & AUDIO
+        // RIGHT PANEL: GEOMETRY AND ACOUSTIC CONFIGURATION
         const primarySymbol = TIBETAN_SYMBOLS[params.symbolIndex];
         let rightHTML = `
-          <h3>Geometry of Intention</h3>
-          <p>Your entered phrase acts as a signature, defining the foundational geometry and the central point of reflection.</p>
-          <h4>Design Archetype: ${params.archetype.name} (Intention Score: ${params.complexity})</h4>
+          <h3>GEOMETRY & ACOUSTIC CONFIGURATION</h3>
+          <p>The core data string dictates the high-level structural matrix and the central operational symbol.</p>
+          <h4>Geometry Matrix: ${params.archetype.name} (Complexity Index: ${params.complexity})</h4>
           <p>${params.archetype.meaning}</p>
           
-          <h4>Central Focus Symbol</h4>
-          <p>The core image holds a powerful, singular intention drawn from your signature:</p>
+          <h4>Central Operational Symbol</h4>
+          <p>The core element holds a specific command or structural mandate:</p>
           <ul>
             <li><strong>${primarySymbol.desc}:</strong> ${primarySymbol.meaning}</li>
           </ul>
 
-          <h4>Acoustic Alignment Tone</h4>
-          <p>The most dominant element provides the carrier frequency for a subtle binaural beat, designed to gently guide your brain into a meditative state.</p>
+          <h4>Acoustic Tone Configuration (Binaural)</h4>
+          <p>The dominant input element provides a sub-carrier frequency for a differential stereo tone, promoting focused listening.</p>
           <ul>
-            <li><strong>Source Element:</strong> ${primaryAudioElement.note} (${(audioEngine.computedCarrier*2).toFixed(2)} Hz)</li>
-            <li><strong>Carrier Frequency:</strong> ${audioEngine.computedCarrier.toFixed(2)} Hz (Set low for background comfort)</li>
-            <li><strong>Binaural Rhythm:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz (Controls your meditative pace)</li>
+            <li><strong>Carrier Frequency:</strong> ${primaryAudioElement.note} (${(audioEngine.computedCarrier*2).toFixed(2)} Hz)</li>
+            <li><strong>Target Description:</strong> ${primaryAudioElement.explanation}</li>
+            <li><strong>Beat Frequency:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz (The binaural difference)</li>
           </ul>
         `;
         rightPanel.innerHTML = rightHTML;
@@ -1062,18 +1077,19 @@
       document.getElementById('animate-btn').addEventListener('click', () => {
         const newState = !renderer.isAnimating;
         renderer.toggleAnimation(newState);
-        document.getElementById('animate-btn').textContent = newState ? "Pause Motion" : "Activate Motion";
+        document.getElementById('animate-btn').textContent = newState ? "Stop Flow" : "Start Flow";
       });
 
       document.getElementById('bloom-btn').addEventListener('click', () => {
         renderer.isBloom = !renderer.isBloom;
+        document.getElementById('bloom-btn').textContent = renderer.isBloom ? "Disable Light Spill" : "Toggle Light Spill";
         updateBloomDisplay();
-        if(!renderer.isAnimating) renderer.drawFrame(renderer.ctx, W, H, renderer.phase);
+        if(!renderer.isAnimating) renderer.drawInitialFrame();
       });
 
       document.getElementById('save-btn').addEventListener('click', () => {
         const link = document.createElement('a');
-        link.download = `aura-resonance-${seedInput.value.replace(/ /g, '-')||'tranquility'}.png`;
+        link.download = `SIG01-${seedInput.value.replace(/ /g, '-')||'config'}.png`;
         link.href = renderer.canvas.toDataURL();
         link.click();
       });
@@ -1081,7 +1097,7 @@
       // Audio Controls
       audioToggle.addEventListener('click', () => {
         const isPlaying = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value);
-        audioToggle.textContent = isPlaying ? 'Sound Align ⏸' : 'Sound Align ▶';
+        audioToggle.textContent = isPlaying ? 'Acoustic Tone ON' : 'Acoustic Tone OFF';
       });
 
       volRange.addEventListener('input', () => {
@@ -1135,35 +1151,39 @@
             break;
           case 'ArrowLeft': 
             renderer.speed = Math.max(0.1, renderer.speed - 0.25);
-            showStat(`Flow State: ${renderer.speed.toFixed(2)}`);
+            showStat(`Motion Index: ${renderer.speed.toFixed(2)}`);
             speedDisplay.textContent = renderer.speed.toFixed(2);
             break;
           case 'ArrowRight': 
             renderer.speed = Math.min(10, renderer.speed + 0.25);
-            showStat(`Flow State: ${renderer.speed.toFixed(2)}`);
+            showStat(`Motion Index: ${renderer.speed.toFixed(2)}`);
             speedDisplay.textContent = renderer.speed.toFixed(2);
             break;
           case 'ArrowUp': 
             if (!renderer.isBloom) {
                 renderer.isBloom = true;
+                document.getElementById('bloom-btn').textContent = "Disable Light Spill";
             }
             renderer.bloomIntensity = Math.min(2.0, renderer.bloomIntensity + 0.1);
             showStat(`Light Intensity: ${renderer.bloomIntensity.toFixed(2)}`);
             updateBloomDisplay();
-            if(!renderer.isAnimating) renderer.drawFrame(renderer.ctx, W, H, renderer.phase);
+            if(!renderer.isAnimating) renderer.drawInitialFrame();
             break;
           case 'ArrowDown': 
             renderer.bloomIntensity = Math.max(0.1, renderer.bloomIntensity - 0.1);
-            if (renderer.bloomIntensity < 0.15) renderer.isBloom = false;
+            if (renderer.bloomIntensity < 0.15) {
+                renderer.isBloom = false;
+                document.getElementById('bloom-btn').textContent = "Toggle Light Spill";
+            }
             showStat(`Light Intensity: ${renderer.isBloom ? renderer.bloomIntensity.toFixed(2) : "Light OFF"}`);
             updateBloomDisplay();
-            if(!renderer.isAnimating) renderer.drawFrame(renderer.ctx, W, H, renderer.phase);
+            if(!renderer.isAnimating) renderer.drawInitialFrame();
             break;
           case 'NumpadAdd':
           case 'Equal': 
             volRange.value = (parseFloat(volRange.value) + 0.01).toFixed(3);
             audioEngine.setVolume(parseFloat(volRange.value));
-            showStat(`Focus Volume: ${parseFloat(volRange.value).toFixed(2)}`);
+            showStat(`Tone Volume: ${parseFloat(volRange.value).toFixed(2)}`);
             volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
             break;
           case 'NumpadSubtract':
@@ -1171,7 +1191,7 @@
             volRange.value = (parseFloat(volRange.value) - 0.01).toFixed(3);
             volRange.value = Math.max(0.005, parseFloat(volRange.value)).toFixed(3);
             audioEngine.setVolume(parseFloat(volRange.value));
-            showStat(`Focus Volume: ${parseFloat(volRange.value).toFixed(2)}`);
+            showStat(`Tone Volume: ${parseFloat(volRange.value).toFixed(2)}`);
             volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
             break;
         }
@@ -1187,6 +1207,7 @@
       updateBloomDisplay();
       speedDisplay.textContent = renderer.speed.toFixed(2);
       volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
+      document.getElementById('bloom-btn').textContent = renderer.isBloom ? "Disable Light Spill" : "Toggle Light Spill";
     });
   </script>
 </body>
