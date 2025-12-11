@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mandala Generator · Lab 3 · Imogen</title>
   <link rel="icon" href="resources/Imogen.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Tibetan&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     /* ---------------------------------------------------- */
     /* 1. MINIMALIST DESIGN AESTHETIC */
@@ -74,7 +74,7 @@
     .meta-box { display: flex; flex-direction: column; }
     .meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--color-neutral-medium); margin-bottom: 4px; font-weight: 500; }
     .meta-value { color: var(--color-primary-accent); font-size: 1rem; font-weight: 700; }
-    .tibetan-font { font-family: 'Noto Serif Tibetan', serif; font-size: 1.6rem; line-height: 1; color: var(--color-primary-accent); }
+    .rune-font { font-family: 'Segoe UI Symbol', 'Noto Sans Runic', sans-serif; font-size: 1.6rem; line-height: 1; color: var(--color-primary-accent); letter-spacing: 2px; }
 
     /* Canvas */
     .canvas-wrapper { position: relative; margin: 1rem 0; background: #080706; border-radius: 50%; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 10px rgba(255, 255, 255, 0.1); }
@@ -85,9 +85,9 @@
     .btn { background: var(--color-bg-panel); border: 1px solid var(--color-border); color: var(--color-neutral-medium); padding: 0.8rem 1.4rem; border-radius: 4px; cursor: pointer; transition: all 0.3s; font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
     .btn:hover { border-color: var(--color-primary-accent); color: var(--color-primary-accent); background: #222; }
 
-    .audio-controls { display: flex; gap: 1rem; align-items: center; padding: 0.8rem 1.2rem; border-radius: 4px; background: var(--color-bg-panel); border: 1px solid var(--color-border); }
-    .audio-controls label { font-size: 0.75rem; color: var(--color-neutral-medium); text-transform: uppercase; letter-spacing: 1px; }
-    .audio-controls input[type="range"] { width: 80px; appearance: none; height: 3px; background: var(--color-border); border-radius: 2px; }
+    .audio-controls { display: flex; gap: 0.5rem; align-items: center; padding: 0.6rem 1rem; border-radius: 4px; background: var(--color-bg-panel); border: 1px solid var(--color-border); flex-wrap: wrap; max-width: 650px; }
+    .audio-controls label { font-size: 0.65rem; color: var(--color-neutral-medium); text-transform: uppercase; letter-spacing: 0.5px; }
+    .audio-controls input[type="range"] { width: 50px; appearance: none; height: 3px; background: var(--color-border); border-radius: 2px; }
     .audio-controls input[type="range"]::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--color-primary-accent); cursor: pointer; }
 
     /* Fullscreen */
@@ -149,8 +149,8 @@
           
           <div class="meta-display">
             <div class="meta-box">
-              <span class="meta-label">Tibetan Seed String</span>
-              <span class="meta-value tibetan-font" id="tibetan-display"></span>
+              <span class="meta-label">Runic Signature</span>
+              <span class="meta-value rune-font" id="rune-display"></span>
             </div>
             <div class="meta-box" style="align-items: flex-end;">
               <span class="meta-label">Input Signature</span>
@@ -174,11 +174,19 @@
           <button class="btn" id="save-btn">Export Image (PNG)</button>
 
           <div class="audio-controls" id="audio-controls">
-            <button class="btn" id="audio-toggle">Acoustic Tone OFF</button>
-            <label for="beat-range">Beat Freq (Hz)</label>
+            <button class="btn" id="audio-toggle">Tone OFF</button>
+            <label for="beat-range">Beat</label>
             <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6" data-touched="0">
-            <label for="vol-range">Volume</label>
+            <label for="vol-range">Vol</label>
             <input id="vol-range" type="range" min="0" max="0.3" step="0.005" value="0.06">
+            <label for="filter-range">Filter</label>
+            <input id="filter-range" type="range" min="200" max="8000" step="50" value="4000">
+            <label for="detune-range">Detune</label>
+            <input id="detune-range" type="range" min="-50" max="50" step="1" value="0">
+            <label for="lfo-range">Drift</label>
+            <input id="lfo-range" type="range" min="0.01" max="0.5" step="0.01" value="0.05">
+            <label for="harmonics-range">Harmonics</label>
+            <input id="harmonics-range" type="range" min="0" max="1" step="0.05" value="0">
           </div>
           
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
@@ -216,12 +224,13 @@
     // ====================================================================
     const W = 650, H = 650; 
 
-    const LATIN_TO_TIBETAN = {
-      'a': '\u0F68', 'b': '\u0F56', 'c': '\u0F45', 'd': '\u0F51', 'e': '\u0F7A', 'f': '\u0F55', 'g': '\u0F42', 'h': '\u0F67',
-      'i': '\u0F72', 'j': '\u0F47', 'k': '\u0F40', 'l': '\u0F63', 'm': '\u0F58', 'n': '\u0F53', 'o': '\u0F7C', 'p': '\u0F54',
-      'q': '\u0F41', 'r': '\u0F62', 's': '\u0F66', 't': '\u0F4F', 'u': '\u0F74', 'v': '\u0F5D', 'w': '\u0F5D', 'x': '\u0F6A',
-      'y': '\u0F61', 'z': '\u0F5F', ' ': ' ',
-      'sh': '\u0F64', 'th': '\u0F50', 'ph': '\u0F55', 'ts': '\u0F59'
+    // Elder Futhark Rune Mappings (ᚠ-ᛟ Unicode block U+16A0-U+16FF)
+    const LATIN_TO_RUNE = {
+      'a': 'ᚨ', 'b': 'ᛒ', 'c': 'ᚲ', 'd': 'ᛞ', 'e': 'ᛖ', 'f': 'ᚠ', 'g': 'ᚷ', 'h': 'ᚺ',
+      'i': 'ᛁ', 'j': 'ᛃ', 'k': 'ᚲ', 'l': 'ᛚ', 'm': 'ᛗ', 'n': 'ᚾ', 'o': 'ᛟ', 'p': 'ᛈ',
+      'q': 'ᚲ', 'r': 'ᚱ', 's': 'ᛊ', 't': 'ᛏ', 'u': 'ᚢ', 'v': 'ᚹ', 'w': 'ᚹ', 'x': 'ᚲᛊ',
+      'y': 'ᛃ', 'z': 'ᛉ', ' ': '᛫',
+      'th': 'ᚦ', 'ng': 'ᛜ', 'ei': 'ᛇ', 'ae': 'ᚨᛖ'
     };
 
     // Element definitions with lookup keys
@@ -254,15 +263,20 @@
       'EARTH': 'sine'      // Stable, fundamental
     };
 
-    const TIBETAN_SYMBOLS = [
-      { char: '\u0F42', desc: 'GA (Module Command)', meaning: 'Focus on System Output and Efficiency.' }, { char: '\u0F40', desc: 'KA (Structural Integrity)', meaning: 'The union of Input, Process, and Result.' },
-      { char: '\u0F68', desc: 'A (Void State)', meaning: 'Symbolizing the unconditioned space for new data.' }, { char: '\u0F4F', desc: 'TA (Interconnect)', meaning: 'The understanding of non-linear system links.' },
-      { char: '⚔', desc: 'Cutter (Clarity)', meaning: 'Cutting through data noise for immediate clarity.' }, { char: '🔔', desc: 'Anchor (Fixed Point)', meaning: 'Representing a rigid, diamond-like structural focus.' },
-      { char: '\u0F68\u0F7A', desc: 'EH (Data Space)', meaning: 'The elemental seed for ultimate open system space.' }, 
-      { char: '\u0F5D\u0F66', desc: 'YAM (Airflow)', meaning: 'The elemental seed for processing speed and circulation.' }, 
-      { char: '\u0F62\u0F7A\u0F58', desc: 'RAM (Thermal Sink)', meaning: 'The elemental seed for internal transformation and focused energy.' },
-      { char: '\u0F63\u0F7A\u0F58', desc: 'LAM (Ground Plane)', meaning: 'The elemental seed for deep rooting and coordinate stability.' }, 
-      { char: '\u0F56\u0F7A\u0F58', desc: 'BAM (Liquid Vector)', meaning: 'The elemental seed for dynamic data fluidity and potential.' } 
+    // Elder Futhark Runes with traditional meanings
+    const RUNIC_SYMBOLS = [
+      { char: 'ᚠ', desc: 'Fehu (Wealth)', meaning: 'Abundance, prosperity, and mobile power. The primal fire of creation.' },
+      { char: 'ᚢ', desc: 'Uruz (Aurochs)', meaning: 'Strength, vitality, and raw untamed potential. The life force.' },
+      { char: 'ᚦ', desc: 'Thurisaz (Thor)', meaning: 'Protection, defense, and directed force. The hammer of change.' },
+      { char: 'ᚨ', desc: 'Ansuz (Odin)', meaning: 'Wisdom, communication, and divine breath. The voice of insight.' },
+      { char: 'ᚱ', desc: 'Raido (Journey)', meaning: 'Movement, rhythm, and right action. The path forward.' },
+      { char: 'ᚲ', desc: 'Kenaz (Torch)', meaning: 'Knowledge, illumination, and creative fire. The inner light.' },
+      // Elemental correspondences (indices 6-10)
+      { char: 'ᛊ', desc: 'Sowilo (Sun)', meaning: 'Success, victory, and vital energy. Solar power and clarity.' },      // METAL
+      { char: 'ᚹ', desc: 'Wunjo (Joy)', meaning: 'Harmony, fellowship, and aligned will. The binding force.' },           // WOOD
+      { char: 'ᛞ', desc: 'Dagaz (Dawn)', meaning: 'Transformation, breakthrough, and awakening. The turning point.' },    // FIRE
+      { char: 'ᛟ', desc: 'Othala (Heritage)', meaning: 'Ancestral power, foundation, and sacred enclosure. The roots.' }, // EARTH
+      { char: 'ᛚ', desc: 'Laguz (Water)', meaning: 'Flow, intuition, and the unconscious depths. The primal waters.' }    // WATER
     ];
 
     const ARCHETYPES = [
@@ -303,14 +317,14 @@
       constructor(name, dateStr) {
         this.name = name;
         this.dateStr = dateStr;
-        this.tibetan = this.convertToTibetan(name);
-        this.seed = this.getNumericSeed(this.tibetan);
+        this.runic = this.convertToRunic(name);
+        this.seed = this.getNumericSeed(this.runic);
         this.rand = mulberry32(this.seed);
         this.elementData = this.getElementsFromDate(dateStr);
         this.params = this.generateParams();
       }
 
-      convertToTibetan(text) {
+      convertToRunic(text) {
         if (!text) return "";
         let lower = text.toLowerCase();
         let result = "";
@@ -318,12 +332,12 @@
           let char = lower[i];
           if (i < lower.length - 1) {
             const digraph = lower.slice(i, i+2);
-            if (LATIN_TO_TIBETAN[digraph]) {
-              result += LATIN_TO_TIBETAN[digraph];
+            if (LATIN_TO_RUNE[digraph]) {
+              result += LATIN_TO_RUNE[digraph];
               i++; continue;
             }
           }
-          result += LATIN_TO_TIBETAN[char] || "";
+          result += LATIN_TO_RUNE[char] || "";
         }
         return result;
       }
@@ -410,7 +424,7 @@
         
         // 3. Symbol Selection (Bias towards elemental syllable)
         // Indices: 6=EH(Space), 7=YAM(Air), 8=RAM(Fire), 9=LAM(Earth), 10=BAM(Water)
-        let symbolIndex = seed % TIBETAN_SYMBOLS.length;
+        let symbolIndex = seed % RUNIC_SYMBOLS.length;
         const elementalSyllables = { METAL: 6, WATER: 10, WOOD: 7, FIRE: 8, EARTH: 9 };
         const yearKey = this.elementData.year.key;
 
@@ -593,9 +607,9 @@
           ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2);
           ctx.stroke();
         } else if (ring.style === 3) { 
-          const symbol = TIBETAN_SYMBOLS[params.symbolIndex].char;
+          const symbol = RUNIC_SYMBOLS[params.symbolIndex].char;
           const count = 15 + Math.floor(complexityFactor * 15);
-          ctx.font = `${ring.width * 5}px 'Noto Serif Tibetan', sans-serif`;
+          ctx.font = `${ring.width * 5}px 'Segoe UI Symbol', sans-serif`;
           ctx.fillStyle = interpolatedColor;
           for(let i=0; i<count; i++) {
             const a = (i/count)*Math.PI*2 + phase*0.1;
@@ -638,9 +652,9 @@
 
         if (isGlowPass) return;
 
-        const symbolData = TIBETAN_SYMBOLS[params.symbolIndex];
+        const symbolData = RUNIC_SYMBOLS[params.symbolIndex];
         ctx.fillStyle = params.palette[2]; // Use Brass Accent
-        ctx.font = `${r*0.8}px 'Noto Serif Tibetan', sans-serif`;
+        ctx.font = `${r*0.8}px 'Segoe UI Symbol', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(symbolData.char, cx, cy);
@@ -895,7 +909,7 @@
 
 
     // ====================================================================
-    // 4. AUDIO ENGINE CLASS (FIXED: Re-introduced carrierFreq / 2 + New Variety)
+    // 4. AUDIO ENGINE CLASS - Enhanced with Modulation Controls
     // ====================================================================
 
     class AudioEngine {
@@ -907,64 +921,124 @@
         this.leftPan = null;
         this.rightPan = null;
         this.isAudioPlaying = false;
-        
-        // LFO for Panning Modulation
+
+        // Modulation nodes
         this.panLFO = null;
         this.panLFOGain = null;
+        this.filter = null;
 
+        // Harmonic oscillators (overtones)
+        this.harmonicOscs = [];
+        this.harmonicGain = null;
 
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
         this.currentWaveform = 'sine';
+        this.currentDetune = 0;
       }
 
       initAudioIfNeeded(volume) {
         if (this.audioCtx) return;
         this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Create filter node (lowpass)
+        this.filter = this.audioCtx.createBiquadFilter();
+        this.filter.type = 'lowpass';
+        this.filter.frequency.value = 4000;
+        this.filter.Q.value = 0.7;
+
+        // Master gain
         this.masterGain = this.audioCtx.createGain();
         this.masterGain.gain.value = volume || 0.06;
 
+        // Main oscillators
         this.leftOsc = this.audioCtx.createOscillator();
         this.leftOsc.type = this.currentWaveform;
         this.leftPan = this.audioCtx.createStereoPanner();
-        this.leftPan.pan.value = -1; 
+        this.leftPan.pan.value = -1;
+
         this.rightOsc = this.audioCtx.createOscillator();
         this.rightOsc.type = this.currentWaveform;
         this.rightPan = this.audioCtx.createStereoPanner();
-        this.rightPan.pan.value = 1; 
+        this.rightPan.pan.value = 1;
 
+        // Harmonic overtones gain
+        this.harmonicGain = this.audioCtx.createGain();
+        this.harmonicGain.gain.value = 0;
+
+        // Create harmonic oscillators (2nd, 3rd, 5th partials)
+        [2, 3, 5].forEach((mult, i) => {
+          const osc = this.audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = 100 * mult;
+          const gain = this.audioCtx.createGain();
+          gain.gain.value = 1 / (mult * 1.5); // Decreasing amplitude for higher harmonics
+          osc.connect(gain);
+          gain.connect(this.harmonicGain);
+          osc.start();
+          this.harmonicOscs.push({ osc, gain, multiplier: mult });
+        });
+
+        // Signal chain: Oscillators -> Panners -> Filter -> Master -> Destination
         this.leftOsc.connect(this.leftPan);
-        this.leftPan.connect(this.masterGain);
+        this.leftPan.connect(this.filter);
         this.rightOsc.connect(this.rightPan);
-        this.rightPan.connect(this.masterGain);
+        this.rightPan.connect(this.filter);
+        this.harmonicGain.connect(this.filter);
+        this.filter.connect(this.masterGain);
         this.masterGain.connect(this.audioCtx.destination);
 
         this.leftOsc.start();
         this.rightOsc.start();
         this.isAudioPlaying = false;
-        
-        // --- NEW: Panning LFO Setup (Spatial Breathing) ---
-        // Creates a gentle, slow, spatial shift in the binaural tones
+
+        // Panning LFO (spatial drift)
         this.panLFO = this.audioCtx.createOscillator();
         this.panLFO.type = 'sine';
-        this.panLFO.frequency.setValueAtTime(0.05, this.audioCtx.currentTime); // ~20-second cycle
-        
+        this.panLFO.frequency.setValueAtTime(0.05, this.audioCtx.currentTime);
+
         this.panLFOGain = this.audioCtx.createGain();
-        this.panLFOGain.gain.setValueAtTime(0.3, this.audioCtx.currentTime); // Pan depth (-0.3 to +0.3)
+        this.panLFOGain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
 
         this.panLFO.connect(this.panLFOGain);
-        // LFO shifts the pan value, causing the left/right panners to move slightly
-        // We connect the LFO to the *parameter* of the panners, not the panner node itself
         this.panLFOGain.connect(this.leftPan.pan);
         this.panLFOGain.connect(this.rightPan.pan);
-        
+
         this.panLFO.start(0);
       }
 
       setVolume(volume) {
         if (!this.audioCtx) return;
         this.masterGain.gain.setTargetAtTime(volume, this.audioCtx.currentTime, 0.02);
+      }
+
+      setFilter(frequency) {
+        if (!this.filter) return;
+        this.filter.frequency.setTargetAtTime(frequency, this.audioCtx.currentTime, 0.05);
+      }
+
+      setDetune(cents) {
+        if (!this.leftOsc || !this.rightOsc) return;
+        this.currentDetune = cents;
+        this.leftOsc.detune.setTargetAtTime(cents, this.audioCtx.currentTime, 0.02);
+        this.rightOsc.detune.setTargetAtTime(-cents, this.audioCtx.currentTime, 0.02); // Opposite for width
+      }
+
+      setLFORate(rate) {
+        if (!this.panLFO) return;
+        this.panLFO.frequency.setTargetAtTime(rate, this.audioCtx.currentTime, 0.1);
+      }
+
+      setHarmonics(amount) {
+        if (!this.harmonicGain) return;
+        this.harmonicGain.gain.setTargetAtTime(amount * 0.15, this.audioCtx.currentTime, 0.05);
+      }
+
+      updateHarmonicFrequencies(baseFreq) {
+        this.harmonicOscs.forEach(({ osc, multiplier }) => {
+          osc.frequency.setTargetAtTime(baseFreq * multiplier, this.audioCtx.currentTime, 0.03);
+        });
       }
 
       togglePlay(volume, beat) {
@@ -1012,10 +1086,10 @@
 
       updateFrequencies(beatOverride) {
         if (!this.currentElementData) return;
-        
+
         const audioData = this.computeAudioFromSeed(
-          this.currentElementData.seed, 
-          this.currentElementData.dateStr, 
+          this.currentElementData.seed,
+          this.currentElementData.dateStr,
           this.currentElementData.elementData
         );
 
@@ -1029,9 +1103,12 @@
         if (this.leftOsc && this.rightOsc) {
           this.leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), this.audioCtx.currentTime, 0.03);
           this.rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), this.audioCtx.currentTime, 0.03);
-          
+
           this.leftOsc.type = this.currentWaveform;
           this.rightOsc.type = this.currentWaveform;
+
+          // Update harmonic oscillators based on carrier frequency
+          this.updateHarmonicFrequencies(this.computedCarrier);
         }
       }
 
@@ -1079,7 +1156,7 @@
         audioEngine.currentElementData = currentMandalaParams;
 
         // 2. Update Meta Displays
-        document.getElementById('tibetan-display').textContent = currentMandalaParams.tibetan || '\u0F0B';
+        document.getElementById('rune-display').textContent = currentMandalaParams.runic || '᛫';
         document.getElementById('element-display').textContent = `${currentMandalaParams.elementData.year.name.split(' ')[0]} / ${currentMandalaParams.elementData.month.name.split(' ')[0]} / ${currentMandalaParams.elementData.day.name.split(' ')[0]}`;
         document.getElementById('archetype-display').textContent = `${currentMandalaParams.params.archetype.name.split(' ')[0]} / ${currentMandalaParams.params.complexity}`;
 
@@ -1144,26 +1221,29 @@
         leftPanel.innerHTML = leftHTML;
 
         // RIGHT PANEL: GEOMETRY AND ACOUSTIC CONFIGURATION
-        const primarySymbol = TIBETAN_SYMBOLS[params.symbolIndex];
+        const primarySymbol = RUNIC_SYMBOLS[params.symbolIndex];
         let rightHTML = `
           <h3>GEOMETRY & ACOUSTIC CONFIGURATION</h3>
-          <p>The core data string dictates the high-level structural matrix and the central operational symbol.</p>
-          <h4>Geometry Matrix: ${params.archetype.name} (Complexity Index: ${params.complexity})</h4>
+          <p>The input string determines the structural matrix and central runic glyph from the Elder Futhark.</p>
+          <h4>Geometry Matrix: ${params.archetype.name}</h4>
           <p>${params.archetype.meaning}</p>
-          
-          <h4>Central Operational Symbol</h4>
-          <p>The core element holds a specific command or structural mandate:</p>
-          <ul>
-            <li><strong>${primarySymbol.desc}:</strong> ${primarySymbol.meaning}</li>
-          </ul>
 
-          <h4>Acoustic Tone Configuration (Binaural)</h4>
-          <p>The dominant input element provides a carrier frequency for a differential stereo tone, promoting focused listening.</p>
+          <h4>Central Rune: ${primarySymbol.char}</h4>
+          <p><strong>${primarySymbol.desc}</strong> — ${primarySymbol.meaning}</p>
+
+          <h4>Acoustic Configuration</h4>
+          <p>Binaural carrier derived from elemental correspondence:</p>
           <ul>
-            <li><strong>Carrier Waveform:</strong> ${audioData.waveform.toUpperCase()}</li>
-            <li><strong>Carrier Frequency:</strong> ${audioData.carrier.toFixed(2)} Hz (Halved from ${primaryAudioElement.note})</li>
-            <li><strong>Beat Frequency:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz (The binaural difference)</li>
-            <li><strong>Spatial Panning:</strong> ACTIVE (LFO-modulated)</li>
+            <li><strong>Waveform:</strong> ${audioData.waveform.toUpperCase()}</li>
+            <li><strong>Carrier:</strong> ${audioData.carrier.toFixed(2)} Hz</li>
+            <li><strong>Beat:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz</li>
+          </ul>
+          <h4>Modulation Controls</h4>
+          <ul>
+            <li><strong>Filter:</strong> Lowpass cutoff frequency</li>
+            <li><strong>Detune:</strong> Stereo width via pitch offset</li>
+            <li><strong>Drift:</strong> Spatial panning LFO rate</li>
+            <li><strong>Harmonics:</strong> Overtone blend (2nd, 3rd, 5th)</li>
           </ul>
         `;
         rightPanel.innerHTML = rightHTML;
@@ -1202,7 +1282,7 @@
       // Audio Controls
       audioToggle.addEventListener('click', () => {
         const isPlaying = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value);
-        audioToggle.textContent = isPlaying ? 'Acoustic Tone ON' : 'Acoustic Tone OFF';
+        audioToggle.textContent = isPlaying ? 'Tone ON' : 'Tone OFF';
       });
 
       volRange.addEventListener('input', () => {
@@ -1212,7 +1292,29 @@
 
       beatRange.addEventListener('input', () => {
         beatRange.dataset.touched = "1";
-        syncAudioFrequencies(true); 
+        syncAudioFrequencies(true);
+      });
+
+      // New modulation controls
+      const filterRange = document.getElementById('filter-range');
+      const detuneRange = document.getElementById('detune-range');
+      const lfoRange = document.getElementById('lfo-range');
+      const harmonicsRange = document.getElementById('harmonics-range');
+
+      filterRange.addEventListener('input', () => {
+        audioEngine.setFilter(parseFloat(filterRange.value));
+      });
+
+      detuneRange.addEventListener('input', () => {
+        audioEngine.setDetune(parseFloat(detuneRange.value));
+      });
+
+      lfoRange.addEventListener('input', () => {
+        audioEngine.setLFORate(parseFloat(lfoRange.value));
+      });
+
+      harmonicsRange.addEventListener('input', () => {
+        audioEngine.setHarmonics(parseFloat(harmonicsRange.value));
       });
 
       // Fullscreen Logic
