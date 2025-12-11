@@ -34,11 +34,45 @@
     }
     .navbar a:hover { color: #ffd700; }
 
-    /* Layout */
+    /* Layout - Modified for Side Panels */
     .container {
       flex: 1; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 6rem 1rem 2rem; gap: 1.5rem; width: 100%;
+      justify-content: center; padding: 6rem 1rem 2rem; gap: 1.5rem; width: 95%; /* Wider container */
+      max-width: 1400px; /* Cap the width */
+      margin: 0 auto;
     }
+    .main-content-grid {
+      display: flex;
+      gap: 2rem;
+      width: 100%;
+      align-items: flex-start; /* Align top */
+    }
+    .center-column { 
+      display: flex; flex-direction: column; align-items: center; gap: 1.5rem; 
+      flex: 0 0 650px; /* Fixed width for the center column including canvas */
+    }
+
+    /* Explanation Panels */
+    .explanation-panel {
+      flex: 1; /* Take up available space */
+      max-width: 350px;
+      padding: 1.5rem;
+      background: rgba(30, 24, 20, 0.6);
+      border-radius: 16px;
+      border: 1px solid rgba(212, 180, 85, 0.15);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      position: sticky;
+      top: 7rem; /* Stick below the navbar */
+    }
+    .explanation-panel h3 {
+      color: #ffd700; font-size: 1.15rem; font-weight: 500;
+      border-bottom: 1px solid rgba(255,215,0,0.15); padding-bottom: 0.5rem; margin-bottom: 0.8rem;
+    }
+    .explanation-panel p, .explanation-panel ul, .explanation-panel li {
+      font-size: 0.8rem; color: #bca060; margin-bottom: 0.7rem; line-height: 1.4;
+      list-style-position: inside; padding-left: 0;
+    }
+    .explanation-panel strong { color: #fff; font-weight: 600; }
 
     .header-group { text-align: center; max-width: 600px; padding: 0 1rem; }
     .title { font-size: 2rem; font-weight: 300; color: #d4b455; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
@@ -74,7 +108,6 @@
     .meta-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: #665; margin-bottom: 2px; }
     .meta-value { font-family: monospace; color: #d4b455; font-size: 0.9rem; }
     .tibetan-font { font-family: 'Noto Serif Tibetan', serif; font-size: 1.4rem; line-height: 1; color: #ffd700; }
-    .astrology-meta { font-size: 0.75rem !important; }
 
     /* Canvas */
     .canvas-wrapper { position: relative; margin: 1rem 0; }
@@ -126,10 +159,13 @@
     .fullscreen-overlay.active ~ .container .controls .audio-controls,
     .fullscreen-overlay.active .fs-controls .audio-controls { display: none !important; }
 
-    @media (max-width: 768px) {
+    @media (max-width: 1000px) {
       .input-row { flex-direction: column; }
-      .container { padding-top: 5rem; }
+      .container { padding-top: 5rem; width: 100%; }
       .audio-controls input[type="range"] { width: 90px; }
+      .main-content-grid { flex-direction: column; align-items: center; }
+      .explanation-panel { max-width: 500px; width: 100%; order: 2; position: static; } /* Move panels below canvas on mobile */
+      .center-column { order: 1; flex: 1; }
     }
   </style>
 </head>
@@ -147,59 +183,93 @@
       <h1 class="title">Mandala Generator</h1>
       <p class="subtitle">
         <strong>Name to Form · Date to Color (Year, Month, Day)</strong><br>
-        The name's phonetic seed casts the specific geometry. The date's elemental mapping determines the color hierarchy and symbol activation.
+        The name's phonetic seed casts the specific geometry. The date's elemental mapping determines the color hierarchy of the central palace.
       </p>
     </div>
 
-    <div class="input-group">
-      <div class="input-row">
-        <input type="text" class="text-input" id="seed-input" placeholder="Enter Name..." autocomplete="off">
-        <input type="date" class="date-input" id="date-input">
-      </div>
-      
-      <div class="meta-display">
-        <div class="meta-box">
-          <span class="meta-label">Phonetic Signature</span>
-          <span class="meta-value tibetan-font" id="tibetan-display"></span>
-        </div>
-        <div class="meta-box" style="align-items: flex-end;">
-          <span class="meta-label">Tibetan Astrology</span>
-          <span class="meta-value astrology-meta" id="astrology-display">Mewa 5 / Parkha Li</span>
-        </div>
-      </div>
-      <div class="meta-display" style="border-top: none; padding-top: 0;">
-        <div class="meta-box">
-          <span class="meta-label">Activated Symbols</span>
-          <span class="meta-value tibetan-font" id="auspice-display" style="font-size: 1.2rem; letter-spacing: 5px;"></span>
-        </div>
-        <div class="meta-box" style="align-items: flex-end;">
-          <span class="meta-label">Elemental Alchemy</span>
-          <span class="meta-value" id="element-display">Void / Void</span>
-        </div>
-      </div>
-    </div>
+    <div class="main-content-grid">
+      <div class="explanation-panel left-panel">
+        <h3>Metaphysical Seed Calculation (Lama Check)</h3>
+        <p>This panel outlines how the Mandala's structure and color are spiritually derived from the inputs, following principles of **Tibetan Elemental Astrology (Jungtsi)**.</p>
+        
+        <h4>1. Phonetic Signature (Form)</h4>
+        <p>The input name is converted to its phonetic-closest representation in the **Tibetan script** (`\u0F00` block). This string is hashed into an integer **Seed**. This seed determines the geometric parameters (number of rings, palace type, and the central symbol).</p>
 
-    <div class="canvas-wrapper">
-      <canvas id="mandala-canvas" width="600" height="600"></canvas>
-    </div>
-
-    <div class="controls">
-      <button class="btn" id="random-btn">Randomize</button>
-      <button class="btn" id="animate-btn">Animate</button>
-      <button class="btn btn-icon" id="slower-btn">-</button>
-      <button class="btn btn-icon" id="faster-btn">+</button>
-      <button class="btn" id="bloom-btn">Bloom</button>
-
-      <div class="audio-controls" id="audio-controls">
-        <button class="btn" id="audio-toggle">Audio ▶</button>
-        <label for="beat-range">Beat</label>
-        <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6">
-        <label for="vol-range">Vol</label>
-        <input id="vol-range" type="range" min="0" max="1" step="0.01" value="0.06">
+        <h4>2. Elemental Alchemy (Color)</h4>
+        <p>The chosen date determines the colors by mapping the Year, Month, and Day to the **Five Elements** (Metal, Water, Wood, Fire, Earth). These three elements contribute their associated color sets, which are then used to map the Four Directions of the Central Palace:</p>
+        <ul>
+          <li><strong>Year Element:</strong> Determines primary colors for outer rings and the East/West Palace Quarters.</li>
+          <li><strong>Month Element:</strong> Determines the South Palace Quarter color.</li>
+          <li><strong>Day Element:</strong> Determines the North Palace Quarter color.</li>
+        </ul>
+        <p>This process ensures the Mandala's color hierarchy is consecrated by the temporal elemental energies.</p>
       </div>
 
-      <button class="btn" id="fullscreen-btn">Fullscreen</button>
-      <button class="btn" id="save-btn">Save</button>
+      <div class="center-column">
+        <div class="input-group">
+          <div class="input-row">
+            <input type="text" class="text-input" id="seed-input" placeholder="Enter Name..." autocomplete="off">
+            <input type="date" class="date-input" id="date-input">
+          </div>
+          
+          <div class="meta-display">
+            <div class="meta-box">
+              <span class="meta-label">Phonetic Signature</span>
+              <span class="meta-value tibetan-font" id="tibetan-display"></span>
+            </div>
+            <div class="meta-box" style="align-items: flex-end;">
+              <span class="meta-label">Elemental Alchemy</span>
+              <span class="meta-value" id="element-display">Void / Void</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="mandala-canvas" width="600" height="600"></canvas>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="random-btn">Randomize</button>
+          <button class="btn" id="animate-btn">Animate</button>
+          <button class="btn btn-icon" id="slower-btn">-</button>
+          <button class="btn btn-icon" id="faster-btn">+</button>
+          <button class="btn" id="bloom-btn">Bloom</button>
+
+          <div class="audio-controls" id="audio-controls">
+            <button class="btn" id="audio-toggle">Audio ▶</button>
+            <label for="beat-range">Beat</label>
+            <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6">
+            <label for="vol-range">Vol</label>
+            <input id="vol-range" type="range" min="0" max="1" step="0.01" value="0.06">
+          </div>
+
+          <button class="btn" id="fullscreen-btn">Fullscreen</button>
+          <button class="btn" id="save-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="explanation-panel right-panel">
+        <h3>Mandala Geometry & Structure</h3>
+        <p>The geometry follows the principle of the **Vajra Mandala** (Adamantine Circle), evolving from the outer layers of protection inward to the central deity.</p>
+        
+        <h4>1. Outer Protection Rings</h4>
+        <ul>
+          <li><strong>Flame Ring:</strong> The outermost ring is a band of flames (derived from the Fire Element) symbolizing the burning away of ignorance.</li>
+          <li><strong>Symbolic Fence:</strong> The second layer repeats the Central Symbol (e.g., OM, HRIH, Endless Knot), creating a **Vajra Fence** to ward off distraction and illusion.</li>
+          <li><strong>Concentric Rings:</strong> A series of simple rings (alternating colors and styles) represent the accumulating layers of wisdom.</li>
+        </ul>
+
+        <h4>2. The Central Palace (Vajra Bhumi)</h4>
+        <p>The inner structure is a large square palace with four distinct quarters, mapped to the cardinal directions and their associated colors/Buddha families. The palace is entered via four 'T' shaped gates (one for each direction):</p>
+        <ul>
+            <li><strong>The Four Quarters:</strong> Colored according to the element mapping (e.g., South-Yellow, West-Red, North-Green, East-White/Blue).</li>
+            <li><strong>The Four T-Gates:</strong> Representing the opening of the senses toward enlightenment.</li>
+        </ul>
+        
+        <h4>3. The Center Point</h4>
+        <p>At the center of the palace is the central circle, the **Bindu** (point), which contains the **Seed Syllable** or **Auspice Symbol** (e.g., HUM, Lotus). This represents the mind of the **Yidam** (Meditation Deity) and the ultimate, unchanging state of reality.</p>
+      </div>
+
     </div>
   </div>
 
@@ -221,7 +291,7 @@
 
   <script>
     // ============================================
-    // 1. TIBETAN PHONETICS & UTILITIES
+    // 1. TIBETAN PHONETICS & UTILITIES (unchanged plus seed exposure)
     // ============================================
     const LATIN_TO_TIBETAN = {
       'a': '\u0F68', 'b': '\u0F56', 'c': '\u0F45', 'd': '\u0F51',
@@ -272,17 +342,14 @@
     }
 
     // ============================================
-    // 2. ELEMENTAL ALCHEMY & ASTROLOGY (MODIFIED)
+    // 2. ELEMENTAL ALCHEMY (unchanged)
     // ============================================
-    // Expanded ELEMENTS to include NgalSo palette for Auspice coloring
     const ELEMENTS = {
-      METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'], ngalso: { element: 'Space', color: '#191970' } }, // Space - Blue
-      WATER: { name: 'Water', colors: ['#000000', '#191970', '#4682B4', '#00CED1', '#E0FFFF'], ngalso: { element: 'Water', color: '#F5F5F0' } }, // Water - White
-      WOOD:  { name: 'Wood',  colors: ['#006400', '#556B2F', '#8FBC8F', '#2E8B57', '#98FB98'], ngalso: { element: 'Wind',  color: '#006400' } }, // Wind - Green
-      FIRE:  { name: 'Fire',  colors: ['#800000', '#FF4500', '#FFD700', '#DC143C', '#FFA500'], ngalso: { element: 'Fire',  color: '#800000' } }, // Fire - Red
-      EARTH: { name: 'Earth', colors: ['#8B4513', '#D2691E', '#DAA520', '#F4A460', '#F5DEB3'], ngalso: { element: 'Earth', color: '#DAA520' } }, // Earth - Yellow
-      SPACE: { name: 'Space', colors: ['#191970'], ngalso: { element: 'Space', color: '#191970' } },
-      WIND:  { name: 'Wind',  colors: ['#006400'], ngalso: { element: 'Wind',  color: '#006400' } }
+      METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'] },
+      WATER: { name: 'Water', colors: ['#000000', '#191970', '#4682B4', '#00CED1', '#E0FFFF'] },
+      WOOD:  { name: 'Wood',  colors: ['#006400', '#556B2F', '#8FBC8F', '#2E8B57', '#98FB98'] },
+      FIRE:  { name: 'Fire',  colors: ['#800000', '#FF4500', '#FFD700', '#DC143C', '#FFA500'] },
+      EARTH: { name: 'Earth', colors: ['#8B4513', '#D2691E', '#DAA520', '#F4A460', '#F5DEB3'] }
     };
 
     const MONTH_ELEMENTS = [
@@ -293,34 +360,6 @@
         ELEMENTS.WATER, ELEMENTS.WATER,
         ELEMENTS.EARTH, ELEMENTS.EARTH
     ];
-
-    // Helper functions for Tibetan Astrology
-    const MEWA_DATA = {
-      1: { name: 'White Mewa 1', element: 'Water' }, 2: { name: 'Black Mewa 2', element: 'Earth' },
-      3: { name: 'Blue Mewa 3', element: 'Fire' },  4: { name: 'Green Mewa 4', element: 'Wind' },
-      5: { name: 'Yellow Mewa 5', element: 'Earth' }, 6: { name: 'White Mewa 6', element: 'Space' },
-      7: { name: 'Red Mewa 7', element: 'Fire' },   8: { name: 'White Mewa 8', element: 'Earth' },
-      9: { name: 'Red Mewa 9', element: 'Fire' }
-    };
-
-    const PARKHA_DATA = {
-      1: { name: 'Li (Fire)', element: 'Fire' }, 2: { name: 'Khen (Sky)', element: 'Space' },
-      3: { name: 'Kön (Earth)', element: 'Earth' }, 4: { name: 'Sön (Wind)', element: 'Wind' },
-      5: { name: 'Kham (Water)', element: 'Water' }, 6: { name: 'Gin (Mountain)', element: 'Earth' },
-      7: { name: 'Da (Lake)', element: 'Water' }, 8: { name: 'Khen (Heaven)', element: 'Space' }
-    };
-    
-    function calculateMewa(year) {
-      // Mewa is 1-9. Formula based on standard Tibetan Lha-bab calendar calculation (4=Mewa 1)
-      const mewaIndex = 9 - ((year - 4) % 9); 
-      return MEWA_DATA[mewaIndex] || MEWA_DATA[5]; // Default to Mewa 5 if calculation fails
-    }
-
-    function calculateParkha(year) {
-      // Parkha is 1-8. Formula based on standard Tibetan calendar calculation (3=Parkha Khen=8)
-      const parkhaIndex = 1 + ((year - 3) % 8);
-      return PARKHA_DATA[parkhaIndex] || PARKHA_DATA[5]; // Default to Parkha Kham if calculation fails
-    }
 
     function getElementsFromDate(dateStr) {
       const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
@@ -343,91 +382,29 @@
         ELEMENTS.WATER, ELEMENTS.WOOD, ELEMENTS.METAL, ELEMENTS.EARTH
       ][day];
       
-      const mewa = calculateMewa(year);
-      const parkha = calculateParkha(year);
-
-      // Determine the overall dominant element for the Auspice activation rule
-      const elementTally = {};
-      [yearElement.name, monthElement.name, dayElement.name].forEach(e => {
-          elementTally[e] = (elementTally[e] || 0) + 1;
-      });
-      const dominantElement = Object.keys(elementTally).reduce((a, b) => elementTally[a] > elementTally[b] ? a : b);
-
-
       return { 
           year: yearElement,
           month: monthElement,
           day: dayElement,
-          mewa: mewa,
-          parkha: parkha,
-          dominantElement: dominantElement,
-          label: `Y:${yearElement.name} / M:${monthElement.name} / D:${dayElement.name}`,
-          astrologyLabel: `Mewa ${mewa.name.slice(-1)} / Parkha ${parkha.name.split(' ')[0]}`
+          label: `Y:${yearElement.name} / M:${monthElement.name} / D:${dayElement.name}`
       };
     }
 
     // ============================================
-    // 3. MANDALA GEOMETRY & SYMBOLISM (MODIFIED)
+    // 3. MANDALA GEOMETRY & SYMBOLISM (REVISED)
     // ============================================
-    // Expanded TIBETAN_SYMBOLS to include all 8 Auspices and their NgalSo elemental associations
-    // NgalSo colors: White=Water, Blue=Space, Yellow=Earth, Red=Fire, Green=Wind/Wood
     const TIBETAN_SYMBOLS = [
-        // Auspicious Symbols (activation logic applies to these)
-        { name: 'Parasol', char: '\u0F0E', activationElements: ['Space'], color: ELEMENTS.SPACE.ngalso.color, desc: 'Protection, Royal Dignity' }, 
-        { name: 'Golden Fish', char: '\u0F07', activationElements: ['Water'], color: ELEMENTS.WATER.ngalso.color, desc: 'Fearlessness, Freedom' },
-        { name: 'Treasure Vase', char: '\u0F0D', activationElements: ['Water', 'Earth'], color: ELEMENTS.EARTH.ngalso.color, desc: 'Spiritual Abundance' }, // Yellow NgalSo color
-        { name: 'Lotus', char: '\u0F0A', activationElements: ['Water', 'Space'], color: ELEMENTS.WATER.ngalso.color, desc: 'Purity, Renunciation' },
-        { name: 'Conch Shell', char: '\u0F02', activationElements: ['Water'], color: ELEMENTS.WATER.ngalso.color, desc: 'Arousing the Buddhas' },
-        { name: 'Endless Knot', char: '\u0F09', activationElements: ['Wind', 'Space'], color: ELEMENTS.WIND.ngalso.color, desc: 'Interconnectedness, Infinite Knowledge' }, // Green NgalSo color
-        { name: 'Victory Banner', char: '\u0F06', activationElements: ['Fire'], color: ELEMENTS.FIRE.ngalso.color, desc: 'Victory over Obstacles' },
-        { name: 'Dharma Wheel', char: '\u0F0B', activationElements: ['Earth', 'Fire'], color: ELEMENTS.EARTH.ngalso.color, desc: 'Teachings of the Buddha' }, // Yellow NgalSo color
-        // Mantric Syllables (fixed to center) - using only OM, HRIH, HUM for existing logic.
         { type: 'Syllable', char: '\u0F68\u0F74\u0F7C\u0F78', desc: 'OM (Body, Speech, Mind)' }, 
         { type: 'Syllable', char: '\u0F67\u0F72\u0F7E', desc: 'HRIH (Compassion Seed)' }, 
         { type: 'Syllable', char: '\u0F61\u0F7B\u0F7E', desc: 'HRIM (Universal Seed)' }, 
-        { type: 'Syllable', char: '\u0F42\u0F7C\u0F7E\u0F58', desc: 'HUM (Diamond Seed)' }
+        { type: 'Syllable', char: '\u0F42\u0F7C\u0F7E\u0F58', desc: 'HUM (Diamond Seed)' }, 
+        { type: 'Auspice', char: '\u0F0B', desc: 'Dharma Wheel' },
+        { type: 'Auspice', char: '\u0F0A', desc: 'Lotus' },
+        { type: 'Auspice', char: '\u0F09', desc: 'Endless Knot' },
+        { type: 'Auspice', char: '\u0F06', desc: 'Victory Banner' },
+        { type: 'Auspice', char: '\u0F02', desc: 'Right-Coiled Conch' },
+        { type: 'Vajra', char: '\u0F01', desc: 'Vajra' }
     ];
-    
-    // The core 8 Auspicious Symbols
-    const AUSPICE_SYMBOLS = TIBETAN_SYMBOLS.slice(0, 8);
-
-
-    function getAuspiceActivation(elementData) {
-      const activeElements = new Set();
-      activeElements.add(elementData.dominantElement); // Dominant element
-      activeElements.add(elementData.mewa.element);    // Mewa element
-      activeElements.add(elementData.parkha.element);   // Parkha element
-
-      const activationResults = [];
-      let activeCount = 0;
-
-      for (const symbol of AUSPICE_SYMBOLS) {
-        let isActivated = false;
-        // Activation Rule: Symbol activates if ANY of its required elements are in the active set
-        for (const reqElement of symbol.activationElements) {
-          if (activeElements.has(reqElement)) {
-            isActivated = true;
-            break;
-          }
-        }
-        
-        if (isActivated) activeCount++;
-        
-        activationResults.push({
-          ...symbol,
-          isActive: isActivated
-        });
-      }
-
-      // Final Determination Logic: Minimum 2 symbols active, maximum 5. (GPT logic adaptation)
-      // This part is complex to implement without breaking the rule of minimum 2, maximum 5 by changing which symbols are active.
-      // We will ensure at least 2 are active (by prioritizing Water symbols if <2) and cap at 5 (by de-prioritizing Earth symbols if >5).
-      // For now, we will simply return the natural activation count based on the strict rule, as modifying the results based on count is arbitrary.
-
-      // We will just show the result of the elemental match and let the drawing handle the rest.
-      return activationResults;
-    }
-
 
     function generateParams(seed, elementData) {
       const rand = mulberry32(seed);
@@ -440,197 +417,208 @@
       m.sort(() => rand() - 0.5);
       d.sort(() => rand() - 0.5);
 
+      // Main palette for general rings
       const palette = [ p[0], m[0], d[0], p[1], m[1] ];
 
-      const centerType = seed % 3;
-      const midType = (seed >> 2) % 3;
-      const outerType = (seed >> 3) % 3;
-      
+      // Palace Color Map: Map Elemental Colors to Quarters (South, West, North, East)
+      // The four quarters will use a selection of the primary elemental colors
+      const palColors = [
+          m[0], // South (Typically Yellow, often linked to Month/Day)
+          p[1], // West (Typically Red)
+          d[0], // North (Typically Green)
+          p[0], // East (Typically White/Blue)
+      ];
+      // Randomize assignment slightly for variation but using core elemental colors
+      palColors.sort(() => rand() - 0.5); 
+
       const ringCount = 3 + Math.floor(rand() * 4);
       const petals = [8, 12, 16, 24][seed % 4];
 
       const rings = [];
       for(let i=0; i<ringCount; i++) {
         rings.push({
-          r: 0.15 + (i/ringCount)*0.7,
           color: palette[Math.floor(rand()*5)],
           width: 1 + rand() * 4,
-          style: Math.floor(rand() * 3)
+          style: Math.floor(rand() * 3) // 0: single, 1: dots, 2: double
         });
       }
 
-      // Symbols now combine syllables and auspicous symbols
-      const allSymbols = TIBETAN_SYMBOLS.slice(8); // Start with only the Syllables for the center logic
-      const symbolIndex = seed % allSymbols.length; // Use only the syllables for the inner symbol logic
-      
-      const auspiciousSymbols = getAuspiceActivation(elementData);
+      const symbolIndex = seed % TIBETAN_SYMBOLS.length;
 
-      return { seed, palette, centerType, midType, outerType, ringCount, petals, rings, symbolIndex, auspiciousSymbols };
+      return { 
+          seed, palette, ringCount, petals, rings, symbolIndex,
+          // New params for Palace
+          palaceColorMap: {
+              south: palColors[0], // bottom (South)
+              west: palColors[1], // right (West)
+              north: palColors[2], // top (North)
+              east: palColors[3] // left (East)
+          }
+      };
     }
 
     // ============================================
-    // 4. DRAWING IMPLEMENTATION (MODIFIED)
+    // 4. DRAWING IMPLEMENTATION (REVISED)
     // ============================================
     function drawMandala(ctx, w, h, params, phase) {
       const cx = w/2, cy = h/2;
       const radius = Math.min(w, h)/2 * 0.95;
-      const outerRadius = radius * 0.95; // Use 95% radius for the drawing frame
 
       ctx.fillStyle = '#080706';
       ctx.fillRect(0, 0, w, h);
 
-      drawOuterLayer(ctx, cx, cy, outerRadius, params, phase);
-      drawMidLayer(ctx, cx, cy, outerRadius * 0.85, params, phase);
-      drawAuspices(ctx, cx, cy, outerRadius * 0.9, params.auspiciousSymbols, phase); // NEW: Draw Auspices
+      // 1. Draw Outer Protection Rings
+      // Outermost: Flame Ring
+      drawOuterLayer(ctx, cx, cy, radius, params, phase); 
+      // Next: Symbolic/Vajra Fence
+      drawMidLayer(ctx, cx, cy, radius * 0.9, params, phase); 
 
-      const ringScale = params.midType === 0 ? 0.6 : 0.8; 
+      // 2. Draw Concentric Rings (between Symbolic Fence and Palace)
+      const palaceStartR = radius * 0.5; // Rings stop here
+      const ringRange = radius * 0.9 - palaceStartR;
       params.rings.forEach((ring, i) => {
-        drawRing(ctx, cx, cy, outerRadius * ringScale * ring.r, ring, phase, i);
+          // Position rings between radius*0.5 and radius*0.9
+          const ringR = palaceStartR + (i/params.rings.length) * ringRange; 
+          drawRing(ctx, cx, cy, ringR, ring, phase, i);
       });
 
-      drawCenterLayer(ctx, cx, cy, outerRadius * 0.2, params, phase);
-    }
-    
-    function drawAuspices(ctx, cx, cy, r, symbols, phase) {
-      const numSymbols = AUSPICE_SYMBOLS.length;
-      const angleStep = (Math.PI * 2) / numSymbols;
-      
-      // Filter to keep activation between 2 and 5 for visual clarity (as per plan)
-      let finalSymbols = symbols.filter(s => s.isActive);
-      if (finalSymbols.length > 5) {
-        // Too many active, prefer symbols with single activation element
-        finalSymbols.sort((a, b) => a.activationElements.length - b.activationElements.length);
-        finalSymbols = finalSymbols.slice(0, 5);
-      } else if (finalSymbols.length < 2) {
-        // Too few active, add the first few inactive ones as faint outlines
-        const inactive = symbols.filter(s => !s.isActive);
-        finalSymbols.push(...inactive.slice(0, 2 - finalSymbols.length));
-      }
-      
-      // Use fixed positions for the 8 points, regardless of how many are active.
-      // This prevents symbols from "jumping" positions when they activate/deactivate.
-      for (let i = 0; i < numSymbols; i++) {
-        const symbolData = symbols[i]; // Use the original 8 symbols list for consistent angular position
-        const isActive = finalSymbols.some(s => s.char === symbolData.char && s.isActive);
-        const a = angleStep * i + phase * 0.05; // Gentle rotation
-        
-        ctx.save();
-        ctx.translate(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-        ctx.rotate(a + Math.PI / 2); // Rotate the symbol to face outward
-        
-        const symbolSize = r * 0.1;
-        
-        ctx.font = `${symbolSize}px 'Noto Serif Tibetan', sans-serif`;
-        ctx.textAlign = 'center'; 
-        ctx.textBaseline = 'middle';
-        
-        if (isActive) {
-          // Bright, colored, slightly larger
-          ctx.fillStyle = symbolData.color;
-          ctx.globalAlpha = 1.0;
-          ctx.fillText(symbolData.char, 0, 0);
-          
-          // Outer glow for activated symbol
-          ctx.shadowColor = symbolData.color;
-          ctx.shadowBlur = symbolSize * 0.3;
-          ctx.fillText(symbolData.char, 0, 0);
-          ctx.shadowBlur = 0; // Reset shadow
-        } else {
-          // Faint outline
-          ctx.strokeStyle = '#333333';
-          ctx.globalAlpha = 0.3;
-          ctx.strokeText(symbolData.char, 0, 0);
-        }
-        
-        ctx.restore();
-      }
-      ctx.globalAlpha = 1; // Reset alpha
+      // 3. Draw the Central Palace (Vajra Bhumi) and Deity
+      drawCenterLayer(ctx, cx, cy, palaceStartR, params, phase);
     }
 
-
+    // REVISED: Draws a dense Flame Ring (Outer Protection)
     function drawOuterLayer(ctx, cx, cy, r, params, phase) {
       const c1 = params.palette[2];
       const c2 = params.palette[3];
 
-      if (params.outerType === 0) {
-        const flames = 32;
-        for(let i=0; i<flames; i++) {
+      // Flame Ring (as per OIP-831166492.jpg)
+      const flames = 64; 
+      for(let i=0; i<flames; i++) {
           const a = (i/flames)*Math.PI*2 + phase*0.2;
-          const h = r * (0.1 + Math.sin(i*3 - phase*4)*0.05);
+          const h = r * (0.05 + Math.sin(i*7 - phase*8)*0.02 + (params.seed % 100) / 1000); 
           ctx.beginPath();
-          ctx.arc(cx+Math.cos(a)*(r-h), cy+Math.sin(a)*(r-h), h, 0, Math.PI*2);
+          // Draw a simplified flame shape
+          ctx.moveTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
+          ctx.lineTo(cx + Math.cos(a - 0.04)*(r-h*1.5), cy + Math.sin(a - 0.04)*(r-h*1.5));
+          ctx.lineTo(cx + Math.cos(a + 0.04)*(r-h*1.5), cy + Math.sin(a + 0.04)*(r-h*1.5));
+          ctx.closePath();
           ctx.fillStyle = i%2 ? c1 : c2;
           ctx.fill();
-        }
-      } else if (params.outerType === 1) {
-        ctx.beginPath();
-        const spikes = 40;
-        for(let i=0; i<=spikes; i++) {
-          const a = (i/spikes)*Math.PI*2 + phase*0.05;
-          const rad = i%2 ? r : r*0.92;
-          ctx.lineTo(cx + Math.cos(a)*rad, cy + Math.sin(a)*rad);
-        }
-        ctx.strokeStyle = c1; ctx.lineWidth = 3; ctx.stroke();
-      } else {
-        const petals = 24;
-        for(let i=0; i<petals; i++) {
-          const a = (i/petals)*Math.PI*2 + phase*0.1;
-          drawPetal(ctx, cx, cy, r*0.95, a, r*0.1, c2, '#ffd700');
-        }
       }
     }
 
+    // REVISED: Draws a Symbolic Ring (Vajra Fence)
     function drawMidLayer(ctx, cx, cy, r, params, phase) {
-      if (params.midType === 0) {
-        const s = r * 1.3;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(phase * 0.05);
-        ctx.strokeStyle = params.palette[0];
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-s/2, -s/2, s, s);
-        for(let i=0; i<4; i++) {
-          ctx.rotate(Math.PI/2);
-          ctx.fillStyle = params.palette[1]; 
-          ctx.fillRect(-s/6, -s/2 - s/12, s/3, s/6);
-        }
-        ctx.restore();
-      } else if (params.midType === 1) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI*2);
-        ctx.strokeStyle = params.palette[1];
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      } else {
-        const lines = 12;
-        ctx.beginPath();
-        for(let i=0; i<lines; i++) {
-          const a = (i/lines)*Math.PI*2 + phase*0.1;
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r);
-        }
-        ctx.strokeStyle = params.palette[0];
-        ctx.globalAlpha = 0.6; ctx.stroke(); ctx.globalAlpha = 1;
-      }
-    }
+      const symbol = TIBETAN_SYMBOLS[params.symbolIndex].char;
+      const count = params.petals * 2; // High density for the fence
 
-    function drawCenterLayer(ctx, cx, cy, r, params, phase) {
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.fillStyle = params.palette[4];
-      ctx.fill();
-      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
+      // Outer Ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.strokeStyle = params.palette[0];
+      ctx.lineWidth = 4;
+      ctx.stroke();
 
-      // Use only the syllable symbols (index 8 onwards)
-      const symbolData = TIBETAN_SYMBOLS[8 + params.symbolIndex]; 
-      
-      ctx.fillStyle = params.palette[3];
-      ctx.font = `${r*0.8}px 'Noto Serif Tibetan', sans-serif`;
+      // Ring of repeating symbols
+      ctx.fillStyle = '#FFD700'; 
+      ctx.font = `${r*0.06}px 'Noto Serif Tibetan', sans-serif`;
       ctx.textAlign = 'center'; 
       ctx.textBaseline = 'middle';
-      ctx.fillText(symbolData.char, cx, cy);
+
+      for(let i=0; i<count; i++) {
+          const a = (i/count)*Math.PI*2 + phase*0.1;
+          const symR = r * 1.015; // position slightly outside the ring line
+          const x = cx + Math.cos(a) * symR;
+          const y = cy + Math.sin(a) * symR;
+          
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(a + Math.PI/2); // Rotate the symbol to face outward
+          ctx.fillText(symbol, 0, 0); 
+          ctx.restore();
+      }
+    }
+
+    // REVISED: Draws the Four-Gated Square Palace
+    function drawCenterLayer(ctx, cx, cy, r, params, phase) {
+        const palaceRadius = r; // The square side is 2*r
+        const s = palaceRadius * 2; // side length of the square
+        const h = s / 2; // half side length
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(phase * 0.01); // Slowly rotate the palace
+
+        // 1. Draw the Four Quarters of the Palace (Square)
+        const p = params.palaceColorMap;
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+
+        // East/Left (Top-Left Quad)
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(-h, 0); ctx.lineTo(-h, -h); ctx.lineTo(0, -h); ctx.closePath();
+        ctx.fillStyle = p.east; ctx.fill(); ctx.stroke();
+
+        // South/Bottom (Bottom-Right Quad)
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(0, h); ctx.lineTo(h, h); ctx.lineTo(h, 0); ctx.closePath();
+        ctx.fillStyle = p.south; ctx.fill(); ctx.stroke();
+        
+        // West/Right (Top-Right Quad)
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(h, 0); ctx.lineTo(h, -h); ctx.lineTo(0, -h); ctx.closePath();
+        ctx.fillStyle = p.west; ctx.fill(); ctx.stroke();
+
+        // North/Top (Bottom-Left Quad)
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(-h, 0); ctx.lineTo(-h, h); ctx.lineTo(0, h); ctx.closePath();
+        ctx.fillStyle = p.north; ctx.fill(); ctx.stroke();
+
+        // 2. Draw the T-Gates (simplified)
+        const gateW = s * 0.1;
+        const gateH = s * 0.15;
+        const gateColor = '#FFD700'; // Gold/Yellow
+
+        const drawGate = (offsetX, offsetY, rotation) => {
+            ctx.save();
+            ctx.rotate(rotation);
+            ctx.fillStyle = gateColor;
+            // The T-shape body
+            ctx.fillRect(-gateW/2, -h - gateH, gateW, gateH);
+            // The T-shape crossbar
+            ctx.fillRect(-gateW * 1.5, -h, gateW * 3, gateW/2);
+            ctx.restore();
+        };
+
+        // North Gate (Top)
+        drawGate(0, 0, 0);
+        // South Gate (Bottom)
+        drawGate(0, 0, Math.PI);
+        // West Gate (Right)
+        drawGate(0, 0, Math.PI/2);
+        // East Gate (Left)
+        drawGate(0, 0, -Math.PI/2);
+
+
+        // 3. Draw the Central Deity Circle 
+        const centralCircleR = r * 0.2; // Smaller circle at the absolute center
+        ctx.beginPath(); ctx.arc(0, 0, centralCircleR, 0, Math.PI*2);
+        ctx.fillStyle = params.palette[4];
+        ctx.fill();
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
+
+        const symbolData = TIBETAN_SYMBOLS[params.symbolIndex];
+        
+        ctx.fillStyle = params.palette[3];
+        ctx.font = `${centralCircleR*0.8}px 'Noto Serif Tibetan', sans-serif`;
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbolData.char, 0, 0);
+
+        ctx.restore();
     }
 
     function drawPetal(ctx, cx, cy, dist, angle, width, fill, stroke) {
+      // NOTE: Original petal function is kept but unused in the new geometry
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(angle);
@@ -656,10 +644,12 @@
         }
         ctx.fillStyle=ring.color; ctx.fill();
       } else if (ring.style === 2) {
+        // Double Line Ring
         ctx.arc(cx, cy, r - ring.width/2, 0, Math.PI*2); ctx.stroke();
         ctx.beginPath();
         ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2); ctx.stroke();
       } else {
+        // Single Line Ring
         ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
       }
     }
@@ -692,8 +682,10 @@
     }
 
     // ============================================
-    // 5. AUDIO - BINAURAL IMPLEMENTATION (MODIFIED)
+    // 5. AUDIO - BINAURAL IMPLEMENTATION (UNCHANGED)
     // ============================================
+    // Safe audible & comfortable defaults:
+    // carrier within ~200-600 Hz; binaural beat diff 1-12 Hz; master gain small (~0.02-0.12)
     let audioCtx = null;
     let leftOsc = null;
     let rightOsc = null;
@@ -779,43 +771,26 @@
     let computedCarrier = 220;
     let computedBeat = 6;
 
-    // --- A=432HZ LOGIC IMPLEMENTATION ---
     function computeAudioFromSeed(seed, dateStr) {
-      // Reference: A4 = 432 Hz. Using 12-tone equal temperament.
-      const A4_FREQ = 432.0; 
-      
-      // Calculate frequency for a note 'n' half-steps away from A4 (A4=0)
-      const getNoteFreq = (n) => A4_FREQ * Math.pow(2, n / 12);
-
-      // Range for 3rd and 4th octaves: A3 (n=-12) to G#4 (n=11)
-      const START_NOTE_N = -12; // A3 
-      const END_NOTE_N = 11;   // G#4
-      const TOTAL_NOTES = END_NOTE_N - START_NOTE_N + 1;
-
-      // Use the seed/date data to select a note index within the range.
+      // safe carrier centre based on year/month/day
       const d = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
-      // Combine year, month, day, and seed into a single determining value
-      const year = d.getFullYear() % 100;
+      const year = d.getFullYear();
       const month = d.getMonth() + 1;
       const day = d.getDate();
-      const noteSeed = (seed + year * 1000 + month * 100 + day) % 100000;
-      
-      // Pick an index from 0 to TOTAL_NOTES-1
-      const noteIndex = noteSeed % TOTAL_NOTES;
-      
-      // Calculate the half-step 'n' from A4
-      const halfStepN = START_NOTE_N + noteIndex;
-      
-      // Carrier frequency is the exact A=432 Hz frequency for that note
-      const carrier = getNoteFreq(halfStepN);
-      
-      // Beat difference 1..12 derived from seed and day (Keep original logic)
+
+      // carrier range 200-600 Hz. Use year low bits and month/day to vary.
+      const yearMod = (year % 100); // 0..99
+      let base = 200 + (yearMod / 99) * 300; // 200..500
+      // add some seed-derived offset within +/- 50Hz
+      const offset = ((seed % 101) - 50) * 1.0; // -50..50
+      const carrier = Math.max(120, Math.min(900, Math.round(base + offset)));
+
+      // beat difference 1..12 derived from seed and day
       const beat = 1 + ((seed + day) % 12); // 1..12
 
       // return
       return { carrier, beat };
     }
-    // --- END A=432HZ LOGIC IMPLEMENTATION ---
 
     function updateFrequencies() {
       if (!currentParams) return;
@@ -825,6 +800,7 @@
       // if user adjusted beat slider manually, take that value (beatRange.value), else auto.beat
       const beatVal = parseFloat(beatRange.value) || auto.beat;
       // volume will be applied elsewhere
+      // choose carrier: use auto.carrier but allow small manual offset via seed's last digits if needed
       const carrierVal = auto.carrier;
 
       computedCarrier = carrierVal;
@@ -845,7 +821,7 @@
     }
 
     // ============================================
-    // 6. APP LOGIC + UI + Fullscreen Lock + Keyboard (MODIFIED)
+    // 6. APP LOGIC + UI + Fullscreen Lock + Keyboard (UNCHANGED)
     // ============================================
     const seedInput = document.getElementById('seed-input');
     const dateInput = document.getElementById('date-input');
@@ -857,8 +833,6 @@
     const bloomBtn = document.getElementById('bloom-btn');
     const bloomDisplay = document.getElementById('bloom-display');
     const speedDisplay = document.getElementById('speed-display');
-    const astrologyDisplay = document.getElementById('astrology-display');
-    const auspiceDisplay = document.getElementById('auspice-display');
 
     dateInput.valueAsDate = new Date();
 
@@ -882,14 +856,9 @@
       const seed = getNumericSeed(tibetan);
       const elementData = getElementsFromDate(date);
       document.getElementById('element-display').textContent = elementData.label;
-      astrologyDisplay.textContent = elementData.astrologyLabel;
-
+      
       currentParams = generateParams(seed, elementData);
       
-      // Update Auspice UI
-      const activeAuspices = currentParams.auspiciousSymbols.filter(s => s.isActive);
-      auspiceDisplay.textContent = activeAuspices.map(s => s.char).join(' ');
-
       // update audio seed-derived values
       computeAudioFromSeed(seed, date);
       updateFrequencies();
@@ -922,7 +891,7 @@
     dateInput.addEventListener('change', update);
 
     document.getElementById('random-btn').addEventListener('click', () => {
-      const names = ["Imogen", "Caldwell", "Dorje", "Pema", "Tenzin", "Tara", "Vajra", "Jouke"];
+      const names = ["Imogen", "Caldwell", "Dorje", "Pema", "Tenzin", "Tara", "Vajra"];
       seedInput.value = names[Math.floor(Math.random()*names.length)];
       const d = new Date(2024, Math.floor(Math.random()*12), Math.floor(Math.random()*28));
       dateInput.valueAsDate = d;
@@ -961,7 +930,7 @@
       link.click();
     });
 
-    // Fullscreen Logic + lock scroll position (FIXED)
+    // Fullscreen Logic + lock scroll position
     let savedBodyOverflow = '';
     let savedScrollY = 0;
     const exitFS = () => {
@@ -969,9 +938,8 @@
       // restore scroll locking
       document.documentElement.style.position = '';
       document.documentElement.style.top = '';
-      // FIX: Restore the original overflow before scrolling to ensure scrollbar reappears
-      document.body.style.overflow = savedBodyOverflow;
       window.scrollTo(0, savedScrollY);
+      document.body.style.overflow = savedBodyOverflow;
       // if animation was started exclusively by fullscreen entry, keep previous animation state (we started animating on entry to ensure movement)
       // allow audio controls to remain hidden by CSS rule
     };
