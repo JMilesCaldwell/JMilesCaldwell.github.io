@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lab 1 · Imogen</title>
+  <title>Mandala Generator · Lab 1 · Imogen</title>
   <link rel="icon" href="resources/Imogen.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -16,14 +16,12 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
-      color: #2F4F4F;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+      color: #e0e0e0;
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
     }
 
     /* Navigation Bar */
@@ -31,18 +29,19 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #FFFFFF;
+      background: rgba(10, 10, 15, 0.95);
       padding: 1rem 2rem;
       position: fixed;
       top: 0;
       width: 100%;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(47, 79, 79, 0.08);
-      border-bottom: 1px solid #E8E8E8;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
     }
 
     .navbar a {
-      color: #36454F;
+      color: #a0a0a0;
       font-size: 0.95rem;
       font-weight: 500;
       text-decoration: none;
@@ -54,38 +53,166 @@
     }
 
     .navbar a:hover {
-      color: #2F4F4F;
-      border-bottom-color: #2F4F4F;
+      color: #ffffff;
+      border-bottom-color: #8b5cf6;
     }
 
-    /* Main Content */
-    .content {
-      text-align: center;
-      padding: 2rem;
+    /* Main Container */
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 2rem;
+      gap: 2rem;
     }
 
-    .lab-title {
-      font-size: 2rem;
+    /* Title */
+    .title {
+      font-size: 1.8rem;
       font-weight: 300;
-      color: #708090;
-      margin-bottom: 3rem;
+      color: #8b5cf6;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #606060;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    /* Input Section */
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .seed-input {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
+      font-family: inherit;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: #ffffff;
+      text-align: center;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .seed-input::placeholder {
+      color: #505050;
+    }
+
+    .seed-input:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .seed-display {
+      font-size: 0.8rem;
+      color: #505050;
+      font-family: monospace;
       letter-spacing: 1px;
     }
 
-    .construction-text {
-      font-size: 1.5rem;
-      font-weight: 300;
-      color: #A9A9A9;
-      animation: fadeInOut 3s ease-in-out infinite;
+    /* Canvas Container */
+    .canvas-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    @keyframes fadeInOut {
-      0%, 100% {
-        opacity: 0.3;
-      }
-      50% {
-        opacity: 1;
-      }
+    #mandala-canvas {
+      border-radius: 50%;
+      box-shadow:
+        0 0 60px rgba(139, 92, 246, 0.2),
+        0 0 120px rgba(139, 92, 246, 0.1),
+        inset 0 0 60px rgba(0, 0, 0, 0.5);
+      transition: box-shadow 0.5s ease;
+    }
+
+    #mandala-canvas:hover {
+      box-shadow:
+        0 0 80px rgba(139, 92, 246, 0.3),
+        0 0 160px rgba(139, 92, 246, 0.15),
+        inset 0 0 60px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 0.7rem 1.5rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+      font-weight: 500;
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 8px;
+      color: #c4b5fd;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:hover {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* Info Panel */
+    .info-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      max-width: 500px;
+      width: 100%;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .info-item {
+      text-align: center;
+    }
+
+    .info-label {
+      font-size: 0.7rem;
+      color: #505050;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.3rem;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: #8b5cf6;
+      font-weight: 500;
     }
 
     /* Responsive Design */
@@ -97,25 +224,31 @@
 
       .navbar a {
         margin: 0.5rem 1rem;
+        font-size: 0.85rem;
       }
 
-      .lab-title {
-        font-size: 1.5rem;
+      .title {
+        font-size: 1.4rem;
       }
 
-      .construction-text {
-        font-size: 1.2rem;
+      .container {
+        padding: 5rem 1rem 1rem;
+        gap: 1.5rem;
+      }
+
+      #mandala-canvas {
+        max-width: 90vw;
+        max-height: 90vw;
+      }
+
+      .info-panel {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
 </head>
 
 <body>
-
-  <!-- Remove any inherited favicons -->
-  <script>
-    document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
-  </script>
 
   <!-- Navigation Bar -->
   <div class="navbar">
@@ -124,11 +257,524 @@
     <a href="../imogen.html">Imogen</a>
   </div>
 
-  <!-- Main Content -->
-  <div class="content">
-    <h1 class="lab-title">Lab 1</h1>
-    <p class="construction-text">under construction</p>
+  <!-- Main Container -->
+  <div class="container">
+    <h1 class="title">Mandala Generator</h1>
+    <p class="subtitle">Enter any text to generate a unique mandala. Each character shapes the pattern.</p>
+
+    <div class="input-section">
+      <input
+        type="text"
+        class="seed-input"
+        id="seed-input"
+        placeholder="Enter your seed text..."
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <div class="seed-display" id="seed-display">seed: 0</div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="mandala-canvas" width="500" height="500"></canvas>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="random-btn">Random Seed</button>
+      <button class="btn" id="animate-btn">Animate</button>
+      <button class="btn" id="save-btn">Save Image</button>
+    </div>
+
+    <div class="info-panel">
+      <div class="info-item">
+        <div class="info-label">Symmetry</div>
+        <div class="info-value" id="info-symmetry">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Layers</div>
+        <div class="info-value" id="info-layers">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Elements</div>
+        <div class="info-value" id="info-elements">-</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Palette</div>
+        <div class="info-value" id="info-palette">-</div>
+      </div>
+    </div>
   </div>
+
+  <script>
+    // ============================================
+    // SEEDED PSEUDO-RANDOM NUMBER GENERATOR
+    // ============================================
+
+    // Mulberry32 - fast, high-quality 32-bit PRNG
+    function mulberry32(seed) {
+      return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    // Convert any unicode string to a numeric seed
+    function stringToSeed(str) {
+      if (!str || str.length === 0) return 0;
+
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.codePointAt(i);
+        hash = ((hash << 5) - hash + char) | 0;
+        // Handle surrogate pairs
+        if (char > 0xFFFF) i++;
+      }
+      return Math.abs(hash);
+    }
+
+    // ============================================
+    // COLOR GENERATION
+    // ============================================
+
+    function hslToRgb(h, s, l) {
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+      }
+      return `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+    }
+
+    function generatePalette(rand) {
+      const baseHue = rand();
+      const scheme = Math.floor(rand() * 4);
+      const palette = [];
+
+      const paletteName = ['Analogous', 'Complementary', 'Triadic', 'Split'][scheme];
+
+      switch(scheme) {
+        case 0: // Analogous
+          for (let i = 0; i < 5; i++) {
+            palette.push(hslToRgb((baseHue + i * 0.08) % 1, 0.6 + rand() * 0.3, 0.4 + rand() * 0.3));
+          }
+          break;
+        case 1: // Complementary
+          for (let i = 0; i < 3; i++) {
+            palette.push(hslToRgb(baseHue, 0.6 + rand() * 0.3, 0.3 + rand() * 0.4));
+          }
+          for (let i = 0; i < 2; i++) {
+            palette.push(hslToRgb((baseHue + 0.5) % 1, 0.6 + rand() * 0.3, 0.3 + rand() * 0.4));
+          }
+          break;
+        case 2: // Triadic
+          for (let i = 0; i < 5; i++) {
+            palette.push(hslToRgb((baseHue + (i % 3) * 0.333) % 1, 0.5 + rand() * 0.4, 0.35 + rand() * 0.35));
+          }
+          break;
+        case 3: // Split complementary
+          palette.push(hslToRgb(baseHue, 0.6 + rand() * 0.3, 0.4 + rand() * 0.3));
+          palette.push(hslToRgb((baseHue + 0.42) % 1, 0.6 + rand() * 0.3, 0.4 + rand() * 0.3));
+          palette.push(hslToRgb((baseHue + 0.58) % 1, 0.6 + rand() * 0.3, 0.4 + rand() * 0.3));
+          palette.push(hslToRgb(baseHue, 0.3 + rand() * 0.2, 0.2 + rand() * 0.2));
+          palette.push(hslToRgb(baseHue, 0.3 + rand() * 0.2, 0.6 + rand() * 0.2));
+          break;
+      }
+
+      return { colors: palette, name: paletteName };
+    }
+
+    // ============================================
+    // MANDALA DRAWING
+    // ============================================
+
+    const canvas = document.getElementById('mandala-canvas');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(centerX, centerY) - 10;
+
+    let currentParams = null;
+    let animationId = null;
+    let isAnimating = false;
+
+    function generateMandalaParams(seed) {
+      const rand = mulberry32(seed);
+
+      // Core parameters
+      const symmetry = [6, 8, 10, 12, 16, 18, 20, 24][Math.floor(rand() * 8)];
+      const layerCount = 4 + Math.floor(rand() * 5);
+      const palette = generatePalette(rand);
+
+      // Generate layer specifications
+      const layers = [];
+      let totalElements = 0;
+
+      for (let i = 0; i < layerCount; i++) {
+        const layerRadius = maxRadius * (0.15 + (i / layerCount) * 0.8);
+        const elementType = Math.floor(rand() * 7);
+        const elementCount = symmetry * (1 + Math.floor(rand() * 2));
+        const color = palette.colors[Math.floor(rand() * palette.colors.length)];
+        const strokeWidth = 0.5 + rand() * 2.5;
+        const filled = rand() > 0.5;
+        const rotationOffset = rand() * Math.PI * 2;
+        const scale = 0.3 + rand() * 0.7;
+
+        totalElements += elementCount;
+
+        layers.push({
+          radius: layerRadius,
+          type: elementType,
+          count: elementCount,
+          color: color,
+          strokeWidth: strokeWidth,
+          filled: filled,
+          rotationOffset: rotationOffset,
+          scale: scale,
+          secondaryColor: palette.colors[Math.floor(rand() * palette.colors.length)]
+        });
+      }
+
+      // Add some connecting elements
+      const hasConnectors = rand() > 0.4;
+      const connectorStyle = Math.floor(rand() * 3);
+
+      return {
+        seed: seed,
+        symmetry: symmetry,
+        layerCount: layerCount,
+        layers: layers,
+        palette: palette,
+        totalElements: totalElements,
+        hasConnectors: hasConnectors,
+        connectorStyle: connectorStyle,
+        backgroundStyle: Math.floor(rand() * 3)
+      };
+    }
+
+    function drawMandala(params, rotationPhase = 0) {
+      // Clear and draw background
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Background decoration
+      drawBackground(params);
+
+      // Draw each layer
+      params.layers.forEach((layer, idx) => {
+        drawLayer(layer, params.symmetry, rotationPhase, idx);
+      });
+
+      // Draw connectors if enabled
+      if (params.hasConnectors) {
+        drawConnectors(params, rotationPhase);
+      }
+
+      // Center decoration
+      drawCenter(params);
+    }
+
+    function drawBackground(params) {
+      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius);
+
+      switch(params.backgroundStyle) {
+        case 0:
+          gradient.addColorStop(0, 'rgba(139, 92, 246, 0.1)');
+          gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.05)');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 1:
+          gradient.addColorStop(0, 'rgba(236, 72, 153, 0.1)');
+          gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.05)');
+          gradient.addColorStop(1, 'transparent');
+          break;
+        case 2:
+          gradient.addColorStop(0, 'rgba(16, 185, 129, 0.1)');
+          gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.05)');
+          gradient.addColorStop(1, 'transparent');
+          break;
+      }
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawLayer(layer, symmetry, rotationPhase, layerIndex) {
+      const angleStep = (Math.PI * 2) / layer.count;
+
+      for (let i = 0; i < layer.count; i++) {
+        const angle = i * angleStep + layer.rotationOffset + rotationPhase * (layerIndex % 2 === 0 ? 1 : -1) * 0.5;
+        const x = centerX + Math.cos(angle) * layer.radius;
+        const y = centerY + Math.sin(angle) * layer.radius;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
+
+        const size = (maxRadius / 15) * layer.scale;
+
+        ctx.strokeStyle = layer.color;
+        ctx.fillStyle = layer.filled ? layer.color : 'transparent';
+        ctx.lineWidth = layer.strokeWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        drawElement(layer.type, size, layer);
+
+        ctx.restore();
+      }
+    }
+
+    function drawElement(type, size, layer) {
+      ctx.beginPath();
+
+      switch(type) {
+        case 0: // Circle
+          ctx.arc(0, 0, size, 0, Math.PI * 2);
+          break;
+
+        case 1: // Petal / Teardrop
+          ctx.moveTo(0, -size * 1.5);
+          ctx.bezierCurveTo(size, -size, size, size * 0.5, 0, size);
+          ctx.bezierCurveTo(-size, size * 0.5, -size, -size, 0, -size * 1.5);
+          break;
+
+        case 2: // Diamond
+          ctx.moveTo(0, -size);
+          ctx.lineTo(size * 0.6, 0);
+          ctx.lineTo(0, size);
+          ctx.lineTo(-size * 0.6, 0);
+          ctx.closePath();
+          break;
+
+        case 3: // Triangle
+          ctx.moveTo(0, -size);
+          ctx.lineTo(size * 0.866, size * 0.5);
+          ctx.lineTo(-size * 0.866, size * 0.5);
+          ctx.closePath();
+          break;
+
+        case 4: // Star
+          for (let i = 0; i < 5; i++) {
+            const outerAngle = (i * Math.PI * 2 / 5) - Math.PI / 2;
+            const innerAngle = outerAngle + Math.PI / 5;
+            if (i === 0) {
+              ctx.moveTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
+            } else {
+              ctx.lineTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
+            }
+            ctx.lineTo(Math.cos(innerAngle) * size * 0.4, Math.sin(innerAngle) * size * 0.4);
+          }
+          ctx.closePath();
+          break;
+
+        case 5: // Crescent
+          ctx.arc(0, 0, size, 0, Math.PI * 2);
+          ctx.moveTo(size * 0.5, 0);
+          ctx.arc(size * 0.3, 0, size * 0.7, 0, Math.PI * 2, true);
+          break;
+
+        case 6: // Lotus petal (complex)
+          ctx.moveTo(0, -size * 1.2);
+          ctx.quadraticCurveTo(size * 1.2, -size * 0.3, size * 0.8, size * 0.5);
+          ctx.quadraticCurveTo(size * 0.3, size * 0.8, 0, size);
+          ctx.quadraticCurveTo(-size * 0.3, size * 0.8, -size * 0.8, size * 0.5);
+          ctx.quadraticCurveTo(-size * 1.2, -size * 0.3, 0, -size * 1.2);
+          break;
+      }
+
+      if (layer.filled) {
+        ctx.fill();
+      }
+      ctx.stroke();
+    }
+
+    function drawConnectors(params, rotationPhase) {
+      const innerLayer = params.layers[0];
+      const outerLayer = params.layers[params.layers.length - 1];
+
+      ctx.strokeStyle = params.palette.colors[0];
+      ctx.lineWidth = 0.5;
+      ctx.globalAlpha = 0.3;
+
+      const count = params.symmetry;
+      const angleStep = (Math.PI * 2) / count;
+
+      for (let i = 0; i < count; i++) {
+        const angle = i * angleStep + rotationPhase * 0.3;
+
+        switch(params.connectorStyle) {
+          case 0: // Straight lines
+            ctx.beginPath();
+            ctx.moveTo(
+              centerX + Math.cos(angle) * innerLayer.radius,
+              centerY + Math.sin(angle) * innerLayer.radius
+            );
+            ctx.lineTo(
+              centerX + Math.cos(angle) * outerLayer.radius,
+              centerY + Math.sin(angle) * outerLayer.radius
+            );
+            ctx.stroke();
+            break;
+
+          case 1: // Curved lines
+            ctx.beginPath();
+            const midRadius = (innerLayer.radius + outerLayer.radius) / 2;
+            ctx.moveTo(
+              centerX + Math.cos(angle) * innerLayer.radius,
+              centerY + Math.sin(angle) * innerLayer.radius
+            );
+            ctx.quadraticCurveTo(
+              centerX + Math.cos(angle + 0.2) * midRadius,
+              centerY + Math.sin(angle + 0.2) * midRadius,
+              centerX + Math.cos(angle) * outerLayer.radius,
+              centerY + Math.sin(angle) * outerLayer.radius
+            );
+            ctx.stroke();
+            break;
+
+          case 2: // Dots along radii
+            for (let r = innerLayer.radius; r < outerLayer.radius; r += 15) {
+              ctx.beginPath();
+              ctx.arc(
+                centerX + Math.cos(angle) * r,
+                centerY + Math.sin(angle) * r,
+                1.5, 0, Math.PI * 2
+              );
+              ctx.fill();
+            }
+            break;
+        }
+      }
+
+      ctx.globalAlpha = 1;
+    }
+
+    function drawCenter(params) {
+      // Central circle
+      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius * 0.15);
+      gradient.addColorStop(0, params.palette.colors[0]);
+      gradient.addColorStop(0.5, params.palette.colors[1] || params.palette.colors[0]);
+      gradient.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, maxRadius * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner decoration
+      ctx.strokeStyle = params.palette.colors[0];
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, maxRadius * 0.08, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, maxRadius * 0.03, 0, Math.PI * 2);
+      ctx.fillStyle = params.palette.colors[0];
+      ctx.fill();
+    }
+
+    // ============================================
+    // UI & INTERACTION
+    // ============================================
+
+    const seedInput = document.getElementById('seed-input');
+    const seedDisplay = document.getElementById('seed-display');
+    const randomBtn = document.getElementById('random-btn');
+    const animateBtn = document.getElementById('animate-btn');
+    const saveBtn = document.getElementById('save-btn');
+
+    function updateMandala(text) {
+      const seed = stringToSeed(text);
+      seedDisplay.textContent = `seed: ${seed}`;
+
+      currentParams = generateMandalaParams(seed);
+      drawMandala(currentParams);
+
+      // Update info panel
+      document.getElementById('info-symmetry').textContent = currentParams.symmetry + '-fold';
+      document.getElementById('info-layers').textContent = currentParams.layerCount;
+      document.getElementById('info-elements').textContent = currentParams.totalElements;
+      document.getElementById('info-palette').textContent = currentParams.palette.name;
+    }
+
+    // Input handling with debounce for smooth typing
+    let debounceTimer;
+    seedInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        updateMandala(e.target.value);
+      }, 100);
+    });
+
+    // Random seed generation
+    const randomWords = [
+      'cosmos', 'serenity', 'aurora', 'ethereal', 'zenith',
+      'harmony', 'celestial', 'whisper', 'infinity', 'solstice',
+      'nebula', 'tranquil', 'luminous', 'mystical', 'radiant',
+      'echoes', 'velvet', 'crystal', 'twilight', 'sacred',
+      'om', 'namaste', 'shanti', 'dharma', 'karma',
+      '42', 'fibonacci', 'golden', 'fractal', 'mandala'
+    ];
+
+    randomBtn.addEventListener('click', () => {
+      const word = randomWords[Math.floor(Math.random() * randomWords.length)];
+      const suffix = Math.floor(Math.random() * 1000);
+      seedInput.value = `${word}${suffix}`;
+      updateMandala(seedInput.value);
+    });
+
+    // Animation toggle
+    let rotationPhase = 0;
+
+    function animate() {
+      if (!isAnimating) return;
+
+      rotationPhase += 0.005;
+      drawMandala(currentParams, rotationPhase);
+      animationId = requestAnimationFrame(animate);
+    }
+
+    animateBtn.addEventListener('click', () => {
+      isAnimating = !isAnimating;
+      animateBtn.textContent = isAnimating ? 'Stop' : 'Animate';
+
+      if (isAnimating) {
+        animate();
+      } else {
+        cancelAnimationFrame(animationId);
+        drawMandala(currentParams, 0);
+      }
+    });
+
+    // Save image
+    saveBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      const seedText = seedInput.value || 'mandala';
+      link.download = `mandala-${seedText.replace(/[^a-z0-9]/gi, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // Initialize with a default seed
+    updateMandala('');
+  </script>
 
 </body>
 </html>
