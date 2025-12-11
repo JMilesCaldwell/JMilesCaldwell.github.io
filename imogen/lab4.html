@@ -231,8 +231,8 @@
         <div class="controls">
           <button class="btn" id="random-btn">Randomize</button>
           <button class="btn" id="animate-btn">Animate</button>
-          <button class="btn btn-icon" id="slower-btn">-</button>
-          <button class="btn btn-icon" id="faster-btn">+</button>
+          <button class="btn btn-icon" id="slower-btn">Speed -</button>
+          <button class="btn btn-icon" id="faster-btn">Speed +</button>
           <button class="btn" id="bloom-btn">Bloom</button>
 
           <div class="audio-controls" id="audio-controls">
@@ -251,7 +251,7 @@
       <div class="explanation-panel right-panel">
         <div id="right-panel-content">
           <h3>Geometric Seed: Archetype & Symbolism</h3>
-          <p>The phonetic seed determines the base geometry, and the symbol placed at the center, representing the core Yidam or focus of the meditation.</p>
+          <p>The phonetic seed determines the base geometry, and the symbol placed at the center, representing the core focus of the form.</p>
         </div>
       </div>
 
@@ -264,8 +264,8 @@
       <div class="fs-controls">
         <button class="btn" id="fs-exit">Exit</button>
         <button class="btn" id="fs-bloom">Bloom</button>
-        <button class="btn btn-icon" id="fs-slower">-</button>
-        <button class="btn btn-icon" id="fs-faster">+</button>
+        <button class="btn btn-icon" id="fs-slower">Speed -</button>
+        <button class="btn btn-icon" id="fs-faster">Speed +</button>
         <div style="display:flex;flex-direction:column;align-items:flex-start;color:#bca060;margin-left:8px;font-size:0.8rem;">
           <div>Bloom: <span id="bloom-display">0.50</span></div>
           <div>Speed: <span id="speed-display">1.00</span></div>
@@ -331,7 +331,7 @@
     // ============================================
     // Expanded Elements with colors and meanings for dynamic UI
     const ELEMENTS = {
-      METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'], meaning: 'White/Silver/Gold. Symbolizes Clarity, Purity, Autumn, and Solidity. Represents the qualities of concentration and indestructibility.' },
+      METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'], meaning: 'White/Silver/Gold. Symbolizes Clarity, Purity, Autumn, and Solidity. Represents the qualities of concentration and structural stability.' },
       WATER: { name: 'Water', colors: ['#000000', '#191970', '#4682B4', '#00CED1', '#E0FFFF'], meaning: 'Black/Blue. Symbolizes Fluidity, Potential, Winter, and Wisdom. Represents the qualities of formlessness and adaptability.' },
       WOOD: { name: 'Wood', colors: ['#006400', '#556B2F', '#8FBC8F', '#2E8B57', '#98FB98'], meaning: 'Green. Symbolizes Growth, Vitality, Spring, and Expansion. Represents the qualities of energy and upward motion.' },
       FIRE: { name: 'Fire', colors: ['#800000', '#FF4500', '#FFD700', '#DC143C', '#FFA500'], meaning: 'Red/Orange. Symbolizes Transformation, Power, Summer, and Action. Represents the qualities of heat and purification.' },
@@ -383,25 +383,36 @@
     // ============================================
     // 3. GEOMETRY SEEDING & ARCHETYPES
     // ============================================
+    // Updated TIBETAN_SYMBOLS including the Eh Yam Ram Lam Bam seed syllables.
     const TIBETAN_SYMBOLS = [
       { char: '\u0F42', desc: 'GA', meaning: 'The letter G. Core sound of compassion and primordial purity.' },
       { char: '\u0F40', desc: 'KA', meaning: 'The letter K. Core sound for the manifestation of body, speech, and mind.' },
-      { char: '\u0F68', desc: 'A', meaning: 'The syllable A. Symbolizes the uncreated, primordial pure state of mind (Dzogchen).' },
+      { char: '\u0F68', desc: 'A', meaning: 'The syllable A. Symbolizes the uncreated, primordial pure state of mind.' },
       { char: '\u0F4F', desc: 'TA', meaning: 'The letter T. Symbolizes non-duality and transcendence.' },
       { char: '\u0F66', desc: 'SA', meaning: 'The letter S. Associated with the essence of all phenomena.' },
-      { char: '\u0F51', desc: 'DA', meaning: 'The letter D. Represents the stability and indestructibility.' },
-      { char: '⚔', desc: 'Sword', meaning: 'Wisdom Sword (Manjushri). Focus on cutting through illusion.' },
-      { char: '🔔', desc: 'Bell/Vajra', meaning: 'Vajra (Dorje). Represents diamond-like hardness and indestructibility.' } 
+      { char: '\u0F51', desc: 'DA', meaning: 'The letter D. Represents structural stability and clarity.' },
+      { char: '⚔', desc: 'Wisdom Sword', meaning: 'Focus on cutting through complexity and finding clarity.' },
+      { char: '🔔', desc: 'Vajra (Dorje)', meaning: 'Represents diamond-like hardness and structural stability.' }, 
+      // Eh Yam Ram Lam Bam Seed Syllables (Elemental Purifications)
+      { char: '\u0F68\u0F7A', desc: 'EH', meaning: 'Elemental seed for SPACE/VOID, symbolizing ultimate openness and potential.' }, // Space/Void
+      { char: '\u0F5D\u0F66', desc: 'YAM', meaning: 'Elemental seed for WIND/AIR, symbolizing movement, speed, and purification.' }, // Wind/Air
+      { char: '\u0F62\u0F7A\u0F58', desc: 'RAM', meaning: 'Elemental seed for FIRE, symbolizing transformation, heat, and focused energy.' }, // Fire
+      { char: '\u0F63\u0F7A\u0F58', desc: 'LAM', meaning: 'Elemental seed for EARTH, symbolizing foundation, grounding, and material reality.' }, // Earth
+      { char: '\u0F56\u0F7A\u0F58', desc: 'BAM', meaning: 'Elemental seed for WATER, symbolizing fluidity, potential, and the accumulation of resources.' } // Water
     ];
 
     const ARCHETYPES = [
-      { name: 'Vajra Palace', index: 0, meaning: 'The Traditional square structure of the Tibetan Mandala, representing a purified heavenly dwelling (Bhumi) and the five Dhyani Buddhas.' },
-      { name: 'Sri Yantra', index: 1, meaning: 'A Hindu/Tantric structure of nine intersecting triangles, representing the cosmic union (Shiva and Shakti). Focus on creation and dissolution.' },
+      { name: 'Vajra Palace', index: 0, meaning: 'The Traditional square structure, representing a purified heavenly dwelling (Bhumi) and the five directions.' },
+      { name: 'Sri Yantra', index: 1, meaning: 'A Hindu/Tantric structure of nine intersecting triangles, representing the cosmic union. Focus on geometric generation and dissolution.' },
       { name: 'Icosahedron Grid', index: 2, meaning: 'A Platonic Solid with 20 faces, symbolizing the element of Water in Sacred Geometry. Focus on fluidity, motion, and universal connection.' }
     ];
 
     function generateParams(seed, elementData) {
       const rand = mulberry32(seed);
+
+      // --- MINISCULE RANDOMNESS INJECTION ---
+      const randomnessFactor = (rand() - 0.5) * 0.05; // -0.025 to +0.025
+      // -------------------------------------
 
       // Get colors from the three elements and randomize
       const p = [...elementData.year.colors];
@@ -410,11 +421,10 @@
 
       let colorPool = [...p, ...m, ...d];
 
-      // --- FIX: Ensure Water (Blue) Representation (Requested by user) ---
+      // Ensure Water (Blue) Representation
       const WATER_COLORS = ELEMENTS.WATER.colors;
-      colorPool.push(WATER_COLORS[1]); // '#191970' (Dark Blue)
-      colorPool.push(WATER_COLORS[2]); // '#4682B4' (Medium Blue)
-      // --- END FIX ---
+      colorPool.push(WATER_COLORS[1]); 
+      colorPool.push(WATER_COLORS[2]);
       
       // Assign colors randomly from the pool of three elemental palettes (now expanded)
       colorPool.sort(() => rand() - 0.5);
@@ -438,19 +448,43 @@
         });
       }
 
+      // 3. Central Symbol Selection: Bias towards the primary date element (Year)
+      let symbolIndex = seed % TIBETAN_SYMBOLS.length;
+    
+      const yearElementName = elementData.year.name.toUpperCase();
+      const elementalSyllables = {
+          'WOOD': '\u0F68\u0F7A',     // EH (Mapped to Space/Wood) - Index 8
+          'METAL': '\u0F5D\u0F66',    // YAM (Mapped to Wind/Metal) - Index 9
+          'FIRE': '\u0F62\u0F7A\u0F58', // RAM - Index 10
+          'EARTH': '\u0F63\u0F7A\u0F58',// LAM - Index 11
+          'WATER': '\u0F56\u0F7A\u0F58' // BAM - Index 12
+      };
+
+      // 25% chance to use the elemental syllable corresponding to the Year element
+      if (elementalSyllables[yearElementName] && rand() < 0.25) {
+          const char = elementalSyllables[yearElementName];
+          const index = TIBETAN_SYMBOLS.findIndex(s => s.char === char);
+          if (index !== -1) {
+              symbolIndex = index;
+          }
+      }
+      
       // Mandala Geometry/Archetype Selection
       const archetypeIndex = seed % ARCHETYPES.length;
       const archetype = ARCHETYPES[archetypeIndex];
 
-      // Complexity Factor (from 0.1 to 1.0, based on seed's variety)
-      let complexity = ((seed % 900) / 900) + 0.1; // Range 0.1 to 1.0
+      // Complexity Factor (from 0.1 to 1.0, based on seed's variety, with minor randomness)
+      let complexity = ((seed % 900) / 900) + 0.1;
+      complexity = parseFloat((complexity + randomnessFactor).toFixed(2));
+      complexity = Math.max(0.1, Math.min(1.0, complexity)); // Clamp
 
       // Geometry parameters based on seed
       const centerType = seed % 3; // 0: circle, 1: square, 2: star
-      const midType = Math.floor(rand() * 4); // 0: petals, 1: simple, 2: star, 3: complex
-      const outerType = Math.floor(rand() * 2); // 0: lines, 1: waves
+      const midType = Math.floor(rand() * 4); 
+      const outerType = Math.floor(rand() * 2); 
 
-      const ringCount = 5 + Math.floor(complexity * 10);
+      const ringCountBase = 5 + Math.floor(complexity * 10);
+      const ringCount = Math.max(3, ringCountBase + Math.floor(randomnessFactor * 10)); // Minor randomness variation
       const petals = [8, 12, 16, 24][seed % 4];
 
       const rings = [];
@@ -458,22 +492,35 @@
         rings.push({
           r: 0.15 + (i/ringCount)*0.85 * (archetype.index === 0 ? 0.7 : 1),
           color: colorStrings[Math.floor(rand()*5)],
-          width: 1 + rand() * 4 * (1 + complexity*0.5),
-          style: Math.floor(rand() * 4) // Style 0: Line, 1: Dots, 2: Double Line, 3: Symbols
+          width: (1 + rand() * 4 * (1 + complexity*0.5)) * (1 + randomnessFactor * 0.5), // Miniscule width variation
+          style: Math.floor(rand() * 4) 
         });
       }
 
-      const symbolIndex = seed % TIBETAN_SYMBOLS.length;
       const secondarySymbolIndex = (seed + 1) % TIBETAN_SYMBOLS.length;
 
       // Archetype specific parameters
       const sriYantraDepth = 5 + Math.floor(complexity * 4);
       const solidRotation = rand() * Math.PI * 2;
 
+      // --- RANDOM POLYHEDRONS (FOR UNPREDICTABILITY) ---
+      const polyCount = rand() < 0.35 ? Math.floor(rand() * 3) + 1 : 0; // 35% chance of 1-3 polyhedrons
+      const polyhedrons = [];
+      for(let i=0; i<polyCount; i++) {
+          polyhedrons.push({
+              type: Math.floor(rand() * 4), // 0: Cube, 1: Octahedron, 2: Dodecahedron, 3: Tetrahedron
+              radiusFactor: 0.3 + rand() * 0.6,
+              color: colorStrings[Math.floor(rand()*5)], // Random color from palette
+              thickness: 0.5 + rand() * 3,
+              rotationSpeed: (rand() - 0.5) * 0.05,
+          });
+      }
+      // --------------------------------------------------
+
       return {
         seed,
         palette: colorStrings,
-        paletteMapping, // For UI explanation
+        paletteMapping, 
         centerType,
         midType,
         outerType,
@@ -485,12 +532,13 @@
         archetype: ARCHETYPES[archetypeIndex],
         complexity: complexity.toFixed(2),
         sriYantraDepth,
-        solidRotation
+        solidRotation,
+        polyhedrons // Add polyhedrons to params
       };
     }
 
     // ============================================
-    // 4. DRAWING IMPLEMENTATION (REVISED FOR ARCHETYPES)
+    // 4. DRAWING IMPLEMENTATION (REVISED FOR ARCHETYPES + POLYHEDRONS)
     // ============================================
 
     // Main Draw Function
@@ -498,12 +546,16 @@
       const cx = w/2, cy = h/2;
       const radius = Math.min(w, h)/2 * 0.95;
 
-      // *** REMOVED BACKGROUND CLEAR - NOW HANDLED BY drawFrame ***
-      
       // Draw all concentric rings first, up to the central geometry
       params.rings.forEach((ring, i) => {
         drawRing(ctx, cx, cy, radius * ring.r, ring, params, phase, i);
       });
+
+      // Draw random, non-meaningful polyhedrons
+      params.polyhedrons.forEach(poly => {
+          drawPolyhedronProjection(ctx, cx, cy, radius * poly.radiusFactor, poly, params, phase);
+      });
+
 
       // Switch based on Archetype
       switch(params.archetype.index) {
@@ -516,6 +568,71 @@
       // Draw the central syllable last for maximum visual impact
       drawCenterSyllable(ctx, cx, cy, radius * 0.1, params, phase);
     }
+
+    // --- RANDOM POLYHEDRON PROJECTION (Simplified 2D wireframe) ---
+    function drawPolyhedronProjection(ctx, cx, cy, r, poly, params, phase) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(phase * poly.rotationSpeed);
+      
+      let vertices = [];
+      let edges = [];
+
+      // Simplified Projection Logic based on poly.type
+      if (poly.type === 0) { // Cube/Octagon projection
+          const N = 8;
+          for (let i = 0; i < N; i++) {
+              const angle = (i / N) * Math.PI * 2;
+              vertices.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+              if (i < N - 1) edges.push([i, i + 1]); else edges.push([N - 1, 0]);
+          }
+          edges.push([0, 4]); edges.push([1, 5]); edges.push([2, 6]); edges.push([3, 7]); // Add cross-braces
+      } else if (poly.type === 1) { // Octahedron/Diamond projection
+          // 6 vertices of an octahedron projected onto 2D
+          vertices.push({x: 0, y: r}, {x: r*0.866, y: -r*0.5}, {x: -r*0.866, y: -r*0.5}, {x: 0, y: -r}, {x: r*0.4, y: r*0.4}, {x: -r*0.4, y: r*0.4});
+          edges.push([0,1],[1,2],[2,0], [3,1],[3,2],[3,0], [4,5],[0,4],[1,4],[2,5]);
+      } else if (poly.type === 2) { // Dodecahedron/Pentagon-star projection
+          const N = 5;
+          const rInner = r * 0.5;
+          for (let i = 0; i < N; i++) {
+              const angle = (i / N) * Math.PI * 2;
+              vertices.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+              vertices.push({ x: Math.cos(angle + Math.PI/5) * rInner, y: Math.sin(angle + Math.PI/5) * rInner });
+          }
+          for(let i=0; i<N; i++) { 
+            edges.push([i*2, (i*2+2)%10]); 
+            edges.push([i*2+1, (i*2+3)%10]); 
+            edges.push([i*2, i*2+1]); 
+          }
+      } else if (poly.type === 3) { // Tetrahedron projection
+          const N = 3;
+          const rInner = r * 0.3;
+          for (let i = 0; i < N; i++) {
+              const angle = (i / N) * Math.PI * 2;
+              vertices.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
+          }
+          vertices.push({ x: 0, y: rInner }); // Center top
+          edges.push([0,1],[1,2],[2,0]); // Triangle base
+          edges.push([0,3],[1,3],[2,3]); // To center
+      }
+      
+      ctx.strokeStyle = poly.color;
+      ctx.lineWidth = poly.thickness;
+
+      edges.forEach(([i, j]) => {
+          const v1 = vertices[i];
+          const v2 = vertices[j];
+          if (v1 && v2) {
+              ctx.beginPath();
+              ctx.moveTo(v1.x, v1.y);
+              ctx.lineTo(v2.x, v2.y);
+              ctx.stroke();
+          }
+      });
+
+      ctx.restore();
+    }
+    // -------------------------------------------------------------
 
     // --- ARCHETYPE 0: VAJRA PALACE (Traditional Tibetan Mandala) ---
     function drawVajraPalace(ctx, cx, cy, r, params, phase) {
@@ -755,7 +872,7 @@
     // ============================================
     // Mapping of Five Elements to Solfeggio/Planetary Frequencies (approximate)
     const SOUND_ELEMENT_MAPPING = {
-      METAL: { freq: 432, note: "A4 (Universal Tuner)", explanation: "Corresponds to the Crown Chakra, representing the highest clarity, perfection, and connection to the divine." },
+      METAL: { freq: 432, note: "A4 (Universal Tuner)", explanation: "Corresponds to the Crown Chakra, representing the highest clarity, perfection, and structural stability." },
       WATER: { freq: 194.18, note: "G#2 (Earth Day Tone)", explanation: "Corresponds to the Sacral Chakra, influencing flow, emotion, and creativity." },
       WOOD: { freq: 285, note: "Rejuvenation Frequency", explanation: "Corresponds to the Throat Chakra, promoting growth, expression, and vitality." },
       FIRE: { freq: 396, note: "UT Solfeggio", explanation: "Corresponds to the Solar Plexus Chakra, releasing fear, promoting transformation, and strengthening will." },
@@ -897,7 +1014,7 @@
 
 
     // ============================================
-    // 6. UI & EXPLANATION PANELS
+    // 6. UI & EXPLANATION PANELS (REMOVED 'YIDAM' AND 'MEDITATION')
     // ============================================
 
     function updateExplanationPanels(params, elementData, computedCarrier) {
@@ -941,15 +1058,20 @@
       const archetype = params.archetype;
       const complexityText = `The density factor (C: ${params.complexity}) determines the number of rings and pattern complexity.`;
 
+      // Update the main header text to remove 'Yidam' and 'meditation'
+      const mainRightHeader = document.querySelector('.right-panel p');
+      if (mainRightHeader) {
+          mainRightHeader.textContent = "The phonetic seed determines the base geometry, and the central symbol represents the core focus of the form.";
+      }
 
       let rightHTML = `
         <h3>Geometric Seed: Archetype & Symbolism</h3>
         <p>The phonetic signature of the name casts the Mandala's base geometry (Archetype) and the core central symbol.</p>
         <h4>Archetype: ${archetype.name}</h4>
-        <p>${archetype.meaning}</p>
+        <p>${archetype.meaning.replace('Focus on creation and dissolution.', 'Focus on geometric generation and dissolution.')}</p>
         <p>${complexityText}</p>
         
-        <h4>Central Symbol (Yidam)</h4>
+        <h4>Central Symbol (Core Focus)</h4>
         <ul>
           <li><strong>${primarySymbol.desc}:</strong> ${primarySymbol.meaning}</li>
           <li><strong>Ring Symbol:</strong> ${secondarySymbol.desc}</li>
@@ -1065,6 +1187,46 @@
       drawFrame(ctx, size, size);
     }
 
+    // --- Control Functions ---
+    const changeSpeed = (dir) => {
+      speed = Math.max(0.1, Math.min(10, speed + dir));
+      speedDisplay.textContent = speed.toFixed(2);
+      if(!isAnimating) update();
+    }
+
+    const changeBloomIntensity = (dir) => {
+      const newIntensity = Math.max(0.01, Math.min(2.0, bloomIntensity + dir));
+      if (newIntensity !== bloomIntensity) {
+          bloomIntensity = newIntensity;
+          bloomDisplay.textContent = bloomIntensity.toFixed(2);
+          if (!isBloom && dir > 0) { // If increasing from 0, turn bloom on
+            setBloom(true);
+          } else if (bloomIntensity < 0.1 && dir < 0) {
+             setBloom(false);
+          }
+          if(!isAnimating) update();
+      }
+    }
+
+    const changeVolume = (dir) => {
+        if (!audioCtx) initAudioIfNeeded();
+        const currentVol = parseFloat(volRange.value);
+        const newVol = Math.max(0.005, Math.min(parseFloat(volRange.max), currentVol + dir));
+        volRange.value = newVol.toFixed(3);
+        masterGain.gain.setTargetAtTime(newVol, audioCtx.currentTime, 0.02);
+    }
+
+    const setBloom = (state) => {
+      isBloom = state;
+      // Toggle button visual state
+      bloomBtn.style.color = isBloom ? '#fff' : '';
+      bloomBtn.style.borderColor = isBloom ? '#ffd700' : '';
+      document.getElementById('fs-bloom').style.color = isBloom ? '#fff' : '';
+      document.getElementById('fs-bloom').style.borderColor = isBloom ? '#ffd700' : '';
+      if(!isAnimating) update();
+    }
+    // -------------------------
+
     // --- Event Listeners ---
     seedInput.addEventListener('input', update);
     dateInput.addEventListener('change', update);
@@ -1083,23 +1245,10 @@
       else cancelAnimationFrame(animationId);
     });
 
-    const setBloom = (state) => {
-      isBloom = state;
-      // Toggle button visual state
-      bloomBtn.style.color = isBloom ? '#fff' : '';
-      bloomBtn.style.borderColor = isBloom ? '#ffd700' : '';
-      document.getElementById('fs-bloom').style.color = isBloom ? '#fff' : '';
-      document.getElementById('fs-bloom').style.borderColor = isBloom ? '#ffd700' : '';
-      if(!isAnimating) update();
-    }
     bloomBtn.addEventListener('click', () => setBloom(!isBloom));
     document.getElementById('fs-bloom').addEventListener('click', () => setBloom(!isBloom));
-
-    const changeSpeed = (dir) => {
-      speed = Math.max(0.1, Math.min(10, speed + dir));
-      speedDisplay.textContent = speed.toFixed(2);
-      if(!isAnimating) update();
-    }
+    
+    // UI Button Controls
     document.getElementById('slower-btn').addEventListener('click', () => changeSpeed(-0.5));
     document.getElementById('faster-btn').addEventListener('click', () => changeSpeed(0.5));
     document.getElementById('fs-slower').addEventListener('click', () => changeSpeed(-0.5));
@@ -1128,21 +1277,35 @@
     // Keyboard controls (only in fullscreen)
     document.addEventListener('keydown', (e) => {
       if (!fsOverlay.classList.contains('active')) return;
-      switch(e.key) {
+      switch(e.code) {
         case 'Escape':
           document.getElementById('fs-exit').click();
           e.preventDefault();
           break;
-        case ' ': // Space bar for Bloom
-          setBloom(!isBloom);
+        case 'ArrowLeft': // Decrease speed
+          changeSpeed(-0.25); 
           e.preventDefault();
           break;
-        case 'ArrowLeft':
-          changeSpeed(-0.1);
+        case 'ArrowRight': // Increase speed
+          changeSpeed(0.25);
           e.preventDefault();
           break;
-        case 'ArrowRight':
-          changeSpeed(0.1);
+        case 'ArrowUp': // Increase bloom
+          changeBloomIntensity(0.1);
+          e.preventDefault();
+          break;
+        case 'ArrowDown': // Decrease bloom
+          changeBloomIntensity(-0.1);
+          e.preventDefault();
+          break;
+        case 'NumpadAdd':
+        case 'Equal': // For non-numpad +
+          changeVolume(0.01);
+          e.preventDefault();
+          break;
+        case 'NumpadSubtract':
+        case 'Minus': // For non-numpad -
+          changeVolume(-0.01);
           e.preventDefault();
           break;
       }
