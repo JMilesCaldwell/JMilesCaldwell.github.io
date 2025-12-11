@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mandala Generator · Lab 3 · Imogen</title>
+  <title>Mandala Generator · Lab 4 · Imogen</title>
   <link rel="icon" href="resources/Imogen.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Tibetan&display=swap" rel="stylesheet">
 
@@ -179,7 +179,6 @@
       <button class="btn btn-icon" id="faster-btn">+</button>
       <button class="btn" id="bloom-btn">Bloom</button>
 
-      <!-- Audio controls (hidden while in fullscreen) -->
       <div class="audio-controls" id="audio-controls">
         <button class="btn" id="audio-toggle">Audio ▶</button>
         <label for="beat-range">Beat</label>
@@ -201,7 +200,6 @@
         <button class="btn" id="fs-bloom">Bloom</button>
         <button class="btn btn-icon" id="fs-slower">-</button>
         <button class="btn btn-icon" id="fs-faster">+</button>
-        <!-- small indicator for bloom intensity & speed -->
         <div style="display:flex;flex-direction:column;align-items:flex-start;color:#bca060;margin-left:8px;font-size:0.8rem;">
           <div>Bloom: <span id="bloom-display">0.50</span></div>
           <div>Speed: <span id="speed-display">1.00</span></div>
@@ -614,26 +612,47 @@
     let computedCarrier = 220;
     let computedBeat = 6;
 
+    // --- UPDATED A=432HZ LOGIC ---
     function computeAudioFromSeed(seed, dateStr) {
-      // safe carrier centre based on year/month/day
+      // Reference: A4 = 432 Hz. Using 12-tone equal temperament.
+      const A4_FREQ = 432.0; 
+      // All note frequencies are relative to A4 (the 0th half-step reference).
+      // Note indices: A=0, A#=1, B=2, C=3, C#=4, D=5, D#=6, E=7, F=8, F#=9, G=10, G#=11.
+      // Total half steps in an octave = 12.
+      
+      // Calculate frequency for a note 'n' half-steps away from A4 (A4=0)
+      const getNoteFreq = (n) => A4_FREQ * Math.pow(2, n / 12);
+
+      // Determine the range of half-step indices for 3rd and 4th octaves:
+      // A3 (n=-12) to G#4 (n=11)
+      const START_NOTE_N = -12; // A3 is -12 half steps from A4 (A3 = 216.0 Hz)
+      const END_NOTE_N = 11;   // G#4 is 11 half steps from A4 (G#4 = 407.97 Hz)
+      const TOTAL_NOTES = END_NOTE_N - START_NOTE_N + 1;
+
+      // Use the seed/date data to select a note index within the range.
       const d = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
-      const year = d.getFullYear();
+      // Combine year, month, day, and seed into a single determining value
+      const year = d.getFullYear() % 100;
       const month = d.getMonth() + 1;
       const day = d.getDate();
-
-      // carrier range 200-600 Hz. Use year low bits and month/day to vary.
-      const yearMod = (year % 100); // 0..99
-      let base = 200 + (yearMod / 99) * 300; // 200..500
-      // add some seed-derived offset within +/- 50Hz
-      const offset = ((seed % 101) - 50) * 1.0; // -50..50
-      const carrier = Math.max(120, Math.min(900, Math.round(base + offset)));
-
-      // beat difference 1..12 derived from seed and day
+      const noteSeed = (seed + year * 1000 + month * 100 + day) % 100000;
+      
+      // Pick an index from 0 to TOTAL_NOTES-1
+      const noteIndex = noteSeed % TOTAL_NOTES;
+      
+      // Calculate the half-step 'n' from A4
+      const halfStepN = START_NOTE_N + noteIndex;
+      
+      // Carrier frequency is the exact A=432 Hz frequency for that note
+      const carrier = getNoteFreq(halfStepN);
+      
+      // Beat difference 1..12 derived from seed and day (Keep original logic)
       const beat = 1 + ((seed + day) % 12); // 1..12
 
       // return
       return { carrier, beat };
     }
+    // --- END UPDATED A=432HZ LOGIC ---
 
     function updateFrequencies() {
       if (!currentParams) return;
@@ -781,8 +800,9 @@
       // restore scroll locking
       document.documentElement.style.position = '';
       document.documentElement.style.top = '';
+      // FIX: Restore the *original* overflow value from the saved variable
+      document.body.style.overflow = savedBodyOverflow; 
       window.scrollTo(0, savedScrollY);
-      document.body.style.overflow = savedBodyOverflow;
       // if animation was started exclusively by fullscreen entry, keep previous animation state (we started animating on entry to ensure movement)
       // allow audio controls to remain hidden by CSS rule
     };
