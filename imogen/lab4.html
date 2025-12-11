@@ -410,7 +410,7 @@
 
       let colorPool = [...p, ...m, ...d];
 
-      // --- FIX: Ensure Water (Blue) Representation ---
+      // --- FIX: Ensure Water (Blue) Representation (Requested by user) ---
       const WATER_COLORS = ELEMENTS.WATER.colors;
       colorPool.push(WATER_COLORS[1]); // '#191970' (Dark Blue)
       colorPool.push(WATER_COLORS[2]); // '#4682B4' (Medium Blue)
@@ -834,7 +834,7 @@
 
     volRange.addEventListener('input', () => {
       if (!audioCtx) return;
-      const vol = parseFloat(volRange.value);
+      const vol = parseFloat(vol.range.value);
       masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.02);
     });
 
@@ -871,7 +871,10 @@
 
       // If user adjusted beat slider manually, take that value, else auto.beat
       const beatVal = parseFloat(beatRange.value) || audioData.beat;
-      const carrierVal = audioData.carrier;
+      let carrierVal = audioData.carrier; // Use 'let' to allow modification
+
+      // Halve the carrier frequency as requested (one octave lower)
+      carrierVal = carrierVal / 2; 
 
       computedCarrier = carrierVal;
       computedBeat = beatVal;
@@ -903,7 +906,7 @@
       const rightPanel = document.getElementById('right-panel-content');
       
       // FIX: Use a small tolerance for the floating point lookup to ensure the element is found.
-      let primaryAudioElement = Object.values(SOUND_ELEMENT_MAPPING).find(e => Math.abs(e.freq - computedCarrier) < 0.01);
+      let primaryAudioElement = Object.values(SOUND_ELEMENT_MAPPING).find(e => Math.abs(e.freq - computedCarrier*2) < 0.01);
       
       // Fallback in case of an extremely rare lookup failure
       if (!primaryAudioElement) {
@@ -953,10 +956,11 @@
           <li><strong>Ring Symbol:</strong> ${secondarySymbol.desc}</li>
         </ul>
 
-        <h4>Sound Healing Frequency</h4>
+        <h4>Sound Healing Frequency (Halved for comfort)</h4>
         <p>The dominant elemental tone is used as the Carrier Frequency for the binaural beat, tuned to the energetic properties of that element.</p>
         <ul>
-          <li><strong>Carrier:</strong> ${primaryAudioElement.note} (${computedCarrier.toFixed(2)} Hz)</li>
+          <li><strong>Original Carrier:</strong> ${primaryAudioElement.note} (${(computedCarrier*2).toFixed(2)} Hz)</li>
+          <li><strong>New Carrier:</strong> ${(computedCarrier).toFixed(2)} Hz</li>
           <li><strong>Beat:</strong> ${computedBeat.toFixed(2)} Hz (Determined by Day of Month)</li>
           <li><strong>Purpose:</strong> ${primaryAudioElement.explanation}</li>
         </ul>
