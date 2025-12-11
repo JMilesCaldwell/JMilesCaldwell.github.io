@@ -367,6 +367,11 @@
         <button class="btn small" id="faster-btn">+</button>
       </div>
       <button class="btn" id="bloom-btn">Bloom</button>
+      <div class="speed-controls" id="bloom-controls" style="display: none;">
+        <button class="btn small" id="bloom-down-btn">−</button>
+        <span class="speed-display" id="bloom-display">60%</span>
+        <button class="btn small" id="bloom-up-btn">+</button>
+      </div>
       <button class="btn" id="fullscreen-btn">Fullscreen</button>
       <button class="btn" id="save-btn">Save Image</button>
     </div>
@@ -394,12 +399,17 @@
   <!-- Fullscreen Overlay -->
   <div class="fullscreen-overlay" id="fullscreen-overlay">
     <canvas id="fullscreen-canvas" width="800" height="800"></canvas>
-    <div class="fullscreen-hint">ESC to exit · ← → to adjust speed · B to toggle bloom</div>
+    <div class="fullscreen-hint">ESC to exit · ← → speed · ↑ ↓ bloom intensity · B toggle bloom</div>
     <div class="fullscreen-controls">
       <button class="btn small" id="fs-slower-btn">−</button>
       <span class="speed-display" id="fs-speed-display">1.0x</span>
       <button class="btn small" id="fs-faster-btn">+</button>
       <button class="btn" id="fs-bloom-btn">Bloom</button>
+      <div class="speed-controls" id="fs-bloom-controls" style="display: none;">
+        <button class="btn small" id="fs-bloom-down-btn">−</button>
+        <span class="speed-display" id="fs-bloom-display">60%</span>
+        <button class="btn small" id="fs-bloom-up-btn">+</button>
+      </div>
       <button class="btn" id="fs-exit-btn">Exit</button>
     </div>
   </div>
@@ -875,6 +885,14 @@
     const fsSpeedDisplay = document.getElementById('fs-speed-display');
     const fsBloomBtn = document.getElementById('fs-bloom-btn');
     const fsExitBtn = document.getElementById('fs-exit-btn');
+    const bloomControls = document.getElementById('bloom-controls');
+    const bloomDisplay = document.getElementById('bloom-display');
+    const bloomDownBtn = document.getElementById('bloom-down-btn');
+    const bloomUpBtn = document.getElementById('bloom-up-btn');
+    const fsBloomControls = document.getElementById('fs-bloom-controls');
+    const fsBloomDisplay = document.getElementById('fs-bloom-display');
+    const fsBloomDownBtn = document.getElementById('fs-bloom-down-btn');
+    const fsBloomUpBtn = document.getElementById('fs-bloom-up-btn');
 
     function updateMandala(text) {
       const seed = stringToSeed(text);
@@ -974,6 +992,10 @@
       bloomBtn.textContent = text;
       fsBloomBtn.textContent = text;
 
+      // Show/hide intensity controls
+      bloomControls.style.display = isBloomEnabled ? 'flex' : 'none';
+      fsBloomControls.style.display = isBloomEnabled ? 'flex' : 'none';
+
       // Redraw to show/hide bloom effect
       if (isFullscreen) {
         drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
@@ -984,6 +1006,30 @@
 
     bloomBtn.addEventListener('click', toggleBloom);
     fsBloomBtn.addEventListener('click', toggleBloom);
+
+    // Bloom intensity controls
+    function updateBloomDisplay() {
+      const text = Math.round(bloomIntensity * 100) + '%';
+      bloomDisplay.textContent = text;
+      fsBloomDisplay.textContent = text;
+    }
+
+    function adjustBloom(delta) {
+      bloomIntensity = Math.max(0.1, Math.min(1.5, bloomIntensity + delta));
+      updateBloomDisplay();
+
+      // Redraw to show updated bloom
+      if (isFullscreen) {
+        drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
+      } else {
+        drawMandala(currentParams, rotationPhase);
+      }
+    }
+
+    bloomDownBtn.addEventListener('click', () => adjustBloom(-0.1));
+    bloomUpBtn.addEventListener('click', () => adjustBloom(0.1));
+    fsBloomDownBtn.addEventListener('click', () => adjustBloom(-0.1));
+    fsBloomUpBtn.addEventListener('click', () => adjustBloom(0.1));
 
     // Fullscreen mode
     function enterFullscreen() {
@@ -1033,6 +1079,18 @@
           case 'ArrowRight':
             adjustSpeed(1);
             e.preventDefault();
+            break;
+          case 'ArrowUp':
+            if (isBloomEnabled) {
+              adjustBloom(0.1);
+              e.preventDefault();
+            }
+            break;
+          case 'ArrowDown':
+            if (isBloomEnabled) {
+              adjustBloom(-0.1);
+              e.preventDefault();
+            }
             break;
           case 'b':
           case 'B':
