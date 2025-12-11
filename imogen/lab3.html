@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIG: Generative Geometry Model</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+Tibetan&display=swap" rel="stylesheet">
+  <title>Mandala Generator · Lab 3 · Imogen</title>
+  <link rel="icon" href="resources/Imogen.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Tibetan&display=swap" rel="stylesheet">
   <style>
     /* ---------------------------------------------------- */
     /* 1. MINIMALIST DESIGN AESTHETIC */
@@ -119,16 +120,16 @@
 <body>
 
   <div class="navbar">
-    <a href="#signature">Signature Input</a>
-    <a href="#structure">Geometry Structure</a>
-    <a href="#acoustic">Acoustic Alignment</a>
+    <a href="../index.html">Caldwell's Repository</a>
+    <a href="../apocrypha.html">Apocrypha</a>
+    <a href="../imogen.html">Imogen</a>
   </div>
 
   <div class="container">
     <div class="header-group">
       <h1 class="title">SIG.01: Generative Geometry</h1>
       <p class="subtitle">
-        **An engineered visualization of semantic and temporal input data.**<br>
+        An engineered visualization of semantic and temporal input data.<br>
         Rendering a unique structural diagram based on user-defined parameters.
       </p>
     </div>
@@ -223,14 +224,13 @@
       'sh': '\u0F64', 'th': '\u0F50', 'ph': '\u0F55', 'ts': '\u0F59'
     };
 
-    // Updated Element Names for Technical Look (Material/System)
+    // Element definitions with lookup keys
     const ELEMENTS = {
-      METAL: { name: 'Alloy (Metal)', colors: ['#D0D0D0', '#A0A0A0', '#707070', '#555555', '#FFFFFF'], meaning: 'Represents Structural Integrity and Data Clarity.' },
-      WATER: { name: 'Fluidic (Water)', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#B0B0B0'], meaning: 'Represents System Flow and Dynamic Input.' },
-      // Updated WOOD Element for Green
-      WOOD: { name: 'Composite (Wood)', colors: ['#2D5743', '#4E8A6E', '#7DB49A', '#BCC8BF', '#A0A0A0'], meaning: 'Represents Growth Vectors and Expansion.' },
-      FIRE: { name: 'Thermal (Fire)', colors: ['#D24B4F', '#A04A4E', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Represents Energy State and Transformation Rate.' },
-      EARTH: { name: 'Foundation (Earth)', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#909090'], meaning: 'Represents Core Stability and Base Coordinates.' }
+      METAL: { key: 'METAL', name: 'Alloy (Metal)', colors: ['#D0D0D0', '#A0A0A0', '#707070', '#555555', '#FFFFFF'], meaning: 'Represents Structural Integrity and Data Clarity.' },
+      WATER: { key: 'WATER', name: 'Fluidic (Water)', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#B0B0B0'], meaning: 'Represents System Flow and Dynamic Input.' },
+      WOOD: { key: 'WOOD', name: 'Composite (Wood)', colors: ['#2D5743', '#4E8A6E', '#7DB49A', '#BCC8BF', '#A0A0A0'], meaning: 'Represents Growth Vectors and Expansion.' },
+      FIRE: { key: 'FIRE', name: 'Thermal (Fire)', colors: ['#D24B4F', '#A04A4E', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Represents Energy State and Transformation Rate.' },
+      EARTH: { key: 'EARTH', name: 'Foundation (Earth)', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#909090'], meaning: 'Represents Core Stability and Base Coordinates.' }
     };
     const MONTH_ELEMENTS = [
       ELEMENTS.EARTH, ELEMENTS.EARTH, ELEMENTS.WOOD, ELEMENTS.WOOD, ELEMENTS.FIRE, ELEMENTS.FIRE,
@@ -245,7 +245,7 @@
       EARTH: { freq: 172.8, note: "172 Hz", explanation: "Target for Base Stability." }
     };
 
-    // NEW: Waveform selection based on Element
+    // Waveform selection based on Element
     const WAVEFORM_MAP = {
       'METAL': 'triangle', // Sharp, clear, structural
       'WATER': 'sine',     // Smooth, fluid
@@ -265,12 +265,11 @@
       { char: '\u0F56\u0F7A\u0F58', desc: 'BAM (Liquid Vector)', meaning: 'The elemental seed for dynamic data fluidity and potential.' } 
     ];
 
-    // UPDATED: Added Archetype 3
     const ARCHETYPES = [
       { name: 'Four-Gate Structure', index: 0, meaning: 'A traditional four-quadrant grid, representing a protected and symmetrical data processing environment.' },
       { name: 'Triad Intersection Matrix', index: 1, meaning: 'A pattern of intersecting triangles, symbolizing the convergence of three primary data streams.' },
       { name: 'Crystalline Flow Net', index: 2, meaning: 'A complex, high-density projection, focusing on distributed data flow and structural complexity.' },
-      { name: 'Spiral Recursion Field', index: 3, meaning: 'A logarithmic spiral pattern, reflecting iterative data generation and exponential growth vectors.' } // NEW
+      { name: 'Spiral Recursion Field', index: 3, meaning: 'A logarithmic spiral pattern, reflecting iterative data generation and exponential growth vectors.' }
     ];
 
     function hexToRgb(hex) {
@@ -410,12 +409,13 @@
         }
         
         // 3. Symbol Selection (Bias towards elemental syllable)
+        // Indices: 6=EH(Space), 7=YAM(Air), 8=RAM(Fire), 9=LAM(Earth), 10=BAM(Water)
         let symbolIndex = seed % TIBETAN_SYMBOLS.length;
-        const elementalSyllables = { 'Alloy (Metal)': 7, 'Fluidic (Water)': 11, 'Composite (Wood)': 8, 'Thermal (Fire)': 9, 'Foundation (Earth)': 10 };
-        const yearElementKey = this.elementData.year.name;
+        const elementalSyllables = { METAL: 6, WATER: 10, WOOD: 7, FIRE: 8, EARTH: 9 };
+        const yearKey = this.elementData.year.key;
 
-        if (elementalSyllables[yearElementKey] && rand() < 0.35) {
-            symbolIndex = elementalSyllables[yearElementKey];
+        if (elementalSyllables[yearKey] !== undefined && rand() < 0.35) {
+            symbolIndex = elementalSyllables[yearKey];
         }
 
         // 4. Random Polyhedrons (Complex 3D-like wireframes)
@@ -543,12 +543,11 @@
           this.drawPolyhedron(ctx, cx, cy, radius * poly.radiusFactor, poly, phase, isGlowPass);
         });
 
-        // UPDATED: Added new archetype (index 3)
         switch(this.params.archetype.index) {
           case 0: this.drawVajraPalace(ctx, cx, cy, radius * 0.4, this.params, phase, isGlowPass); break;
           case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
           case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
-          case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break; // NEW SPIRAL
+          case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break;
         }
 
         this.drawCenterSyllable(ctx, cx, cy, radius * 0.1, this.params, phase, isGlowPass);
@@ -607,7 +606,7 @@
             ctx.fillText(symbol, 0, 0);
             ctx.restore();
           }
-        } else if (ring.style === 5) { // NEW: Undulating Wave
+        } else if (ring.style === 5) { // Undulating Wave
           const points = 360;
           // Frequency scales with complexity, offset by rotation phase
           const frequency = 8 + complexityFactor * 20; 
@@ -740,7 +739,6 @@
         ctx.restore();
       }
       
-      // NEW: Fibonacci Spiral Archetype
       drawFibonacciSpiral(ctx, cx, cy, r, params, phase, isGlowPass) {
           ctx.save();
           ctx.translate(cx, cy);
@@ -910,7 +908,7 @@
         this.rightPan = null;
         this.isAudioPlaying = false;
         
-        // NEW: LFO for Panning Modulation
+        // LFO for Panning Modulation
         this.panLFO = null;
         this.panLFOGain = null;
 
@@ -986,13 +984,13 @@
       computeAudioFromSeed(seed, dateStr, elementData) {
         const elements = [elementData.year, elementData.month, elementData.day];
         const primaryElement = elements.reduce((prev, current) => {
-          const prevFreq = SOUND_ELEMENT_MAPPING[prev.name.split(' ')[0].toUpperCase()].freq;
-          const currentFreq = SOUND_ELEMENT_MAPPING[current.name.split(' ')[0].toUpperCase()].freq;
+          const prevFreq = SOUND_ELEMENT_MAPPING[prev.key].freq;
+          const currentFreq = SOUND_ELEMENT_MAPPING[current.key].freq;
           return (currentFreq > prevFreq) ? current : prev;
         });
 
-        let carrierFreq = SOUND_ELEMENT_MAPPING[primaryElement.name.split(' ')[0].toUpperCase()].freq;
-        const elementalBaseFreq = carrierFreq; // Store the original for display
+        let carrierFreq = SOUND_ELEMENT_MAPPING[primaryElement.key].freq;
+        const elementalBaseFreq = carrierFreq;
 
         // Halve the carrier frequency to drop it an octave
         carrierFreq = carrierFreq / 2;
@@ -1000,17 +998,15 @@
         const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
         const dayOfMonth = date.getDate();
         const beat = 2.0 + (dayOfMonth / 31) * 8.0;
-        
-        // NEW: Select waveform
-        const primaryElementKey = primaryElement.name.split(' ')[0].toUpperCase();
-        const waveformType = WAVEFORM_MAP[primaryElementKey] || 'sine';
+
+        const waveformType = WAVEFORM_MAP[primaryElement.key] || 'sine';
 
         return {
           carrier: carrierFreq,
           beat: beat,
           element: primaryElement,
-          elementalBaseFreq: elementalBaseFreq, 
-          waveform: waveformType, // NEW
+          elementalBaseFreq: elementalBaseFreq,
+          waveform: waveformType,
         };
       }
 
@@ -1034,7 +1030,6 @@
           this.leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), this.audioCtx.currentTime, 0.03);
           this.rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), this.audioCtx.currentTime, 0.03);
           
-          // NEW: Update Waveform
           this.leftOsc.type = this.currentWaveform;
           this.rightOsc.type = this.currentWaveform;
         }
@@ -1120,13 +1115,11 @@
         return audioData; // Return the audioData for display
       }
 
-      /* --- Copy Overhaul for Minimalist/Technical Look --- */
       function updateExplanationPanels(params, elementData, audioData) {
         const leftPanel = document.getElementById('left-panel-content');
         const rightPanel = document.getElementById('right-panel-content');
-        
-        const primaryElementKey = audioData.element.name.split(' ')[0].toUpperCase();
-        const primaryAudioElement = SOUND_ELEMENT_MAPPING[primaryElementKey];
+
+        const primaryAudioElement = SOUND_ELEMENT_MAPPING[audioData.element.key];
 
         // LEFT PANEL: DATA AND COLOR SPECIFICATION
         let leftHTML = `
@@ -1249,12 +1242,20 @@
           bloomDisplay.textContent = renderer.isBloom ? renderer.bloomIntensity.toFixed(2) : "OFF";
       }
 
-      // --- Global Keyboard Controls (in Fullscreen) ---
+      // --- Global Keyboard Controls ---
       document.addEventListener('keydown', (e) => {
         const inFullscreen = fsOverlay.classList.contains('active');
-        
+
+        // F11 toggles fullscreen from anywhere
+        if (e.code === 'F11') {
+          e.preventDefault();
+          if (inFullscreen) exitFullscreen();
+          else enterFullscreen();
+          return;
+        }
+
         if (inFullscreen) {
-            e.preventDefault(); 
+          e.preventDefault();
         }
 
         switch(e.code) {
