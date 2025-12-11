@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lab 1 · Imogen</title>
+  <title>Multiplayer Pool · Lab 1</title>
   <link rel="icon" href="resources/Imogen.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -16,79 +16,104 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
-      color: #2F4F4F;
+      background: #ffffff;
+      color: #000000;
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      overflow-x: hidden;
     }
 
-    /* Navigation Bar */
     .navbar {
       display: flex;
       justify-content: center;
       align-items: center;
       background: #FFFFFF;
       padding: 1rem 2rem;
-      position: fixed;
-      top: 0;
       width: 100%;
-      z-index: 1000;
-      box-shadow: 0 2px 8px rgba(47, 79, 79, 0.08);
-      border-bottom: 1px solid #E8E8E8;
+      border-bottom: 1px solid #000000;
     }
 
     .navbar a {
-      color: #36454F;
+      color: #000000;
       font-size: 0.95rem;
-      font-weight: 500;
+      font-weight: 400;
       text-decoration: none;
       margin: 0 1.5rem;
       padding: 0.5rem 0;
-      border-bottom: 2px solid transparent;
-      transition: all 0.3s ease;
-      letter-spacing: 0.3px;
+      transition: opacity 0.3s ease;
     }
 
     .navbar a:hover {
-      color: #2F4F4F;
-      border-bottom-color: #2F4F4F;
+      opacity: 0.6;
     }
 
-    /* Main Content */
-    .content {
-      text-align: center;
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 2rem;
+      width: 100%;
+      max-width: 1200px;
     }
 
-    .lab-title {
-      font-size: 2rem;
-      font-weight: 300;
-      color: #708090;
-      margin-bottom: 3rem;
-      letter-spacing: 1px;
-    }
-
-    .construction-text {
+    .title {
       font-size: 1.5rem;
       font-weight: 300;
-      color: #A9A9A9;
-      animation: fadeInOut 3s ease-in-out infinite;
+      margin-bottom: 1rem;
+      letter-spacing: 2px;
     }
 
-    @keyframes fadeInOut {
-      0%, 100% {
-        opacity: 0.3;
-      }
-      50% {
-        opacity: 1;
-      }
+    .room-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: center;
     }
 
-    /* Responsive Design */
+    input {
+      padding: 0.5rem 1rem;
+      border: 1px solid #000000;
+      background: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+    }
+
+    button {
+      padding: 0.5rem 1.5rem;
+      border: 1px solid #000000;
+      background: #ffffff;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .info {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    #gameCanvas {
+      border: 2px solid #000000;
+      cursor: crosshair;
+      background: #ffffff;
+    }
+
+    .status {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      min-height: 1.5rem;
+    }
+
     @media (max-width: 768px) {
       .navbar {
         flex-wrap: wrap;
@@ -99,36 +124,503 @@
         margin: 0.5rem 1rem;
       }
 
-      .lab-title {
-        font-size: 1.5rem;
+      .container {
+        padding: 1rem;
       }
 
-      .construction-text {
-        font-size: 1.2rem;
+      .room-controls {
+        flex-direction: column;
       }
     }
   </style>
 </head>
 
 <body>
-
-  <!-- Remove any inherited favicons -->
-  <script>
-    document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
-  </script>
-
-  <!-- Navigation Bar -->
   <div class="navbar">
     <a href="../index.html">Caldwell's Repository</a>
     <a href="../apocrypha.html">Apocrypha</a>
     <a href="../imogen.html">Imogen</a>
   </div>
 
-  <!-- Main Content -->
-  <div class="content">
-    <h1 class="lab-title">Lab 1</h1>
-    <p class="construction-text">under construction</p>
+  <div class="container">
+    <h1 class="title">MULTIPLAYER POOL</h1>
+
+    <div class="room-controls">
+      <input type="text" id="roomInput" placeholder="Room ID" maxlength="20">
+      <button onclick="joinRoom()">Join Room</button>
+      <button onclick="createRoom()">Create Room</button>
+      <button onclick="resetTable()">Reset</button>
+    </div>
+
+    <div class="info" id="roomInfo">Enter a room ID to play multiplayer</div>
+
+    <canvas id="gameCanvas" width="900" height="500"></canvas>
+
+    <div class="status" id="status"></div>
   </div>
 
+  <script type="module">
+    // Firebase configuration (using a public demo database - replace with your own for production)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDummyKeyForDemoOnly",
+      authDomain: "demo.firebaseapp.com",
+      databaseURL: "https://pooltable-demo-default-rtdb.firebaseio.com",
+      projectId: "demo"
+    };
+
+    // Initialize Firebase (will fall back to localStorage if Firebase fails)
+    let database = null;
+    let currentRoomRef = null;
+    let currentRoom = null;
+    let useFirebase = false;
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      database = getDatabase(app);
+      useFirebase = true;
+    } catch (e) {
+      console.log('Firebase not available, using localStorage only');
+    }
+
+    // Canvas setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Pool table constants
+    const TABLE = {
+      width: 800,
+      height: 400,
+      x: 50,
+      y: 50,
+      pocketRadius: 18
+    };
+
+    const POCKETS = [
+      { x: TABLE.x, y: TABLE.y },
+      { x: TABLE.x + TABLE.width / 2, y: TABLE.y },
+      { x: TABLE.x + TABLE.width, y: TABLE.y },
+      { x: TABLE.x, y: TABLE.y + TABLE.height },
+      { x: TABLE.x + TABLE.width / 2, y: TABLE.y + TABLE.height },
+      { x: TABLE.x + TABLE.width, y: TABLE.y + TABLE.height }
+    ];
+
+    const BALL_RADIUS = 10;
+    const FRICTION = 0.985;
+    const MIN_VELOCITY = 0.05;
+    const MAX_CUE_POWER = 15;
+
+    // Game state
+    let balls = [];
+    let cue = {
+      visible: false,
+      x: 0,
+      y: 0,
+      angle: 0,
+      power: 0
+    };
+
+    let dragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let cueBall = null;
+    let lastUpdateTime = Date.now();
+
+    // Initialize balls in triangle formation
+    function initBalls() {
+      balls = [];
+
+      // Cue ball
+      cueBall = {
+        x: TABLE.x + TABLE.width * 0.25,
+        y: TABLE.y + TABLE.height / 2,
+        vx: 0,
+        vy: 0,
+        radius: BALL_RADIUS,
+        color: '#ffffff',
+        stroke: '#000000',
+        type: 'cue',
+        pocketed: false
+      };
+      balls.push(cueBall);
+
+      // Object balls in triangle
+      const startX = TABLE.x + TABLE.width * 0.75;
+      const startY = TABLE.y + TABLE.height / 2;
+      const spacing = BALL_RADIUS * 2.1;
+
+      const colors = ['#000000', '#ff0000', '#ffff00', '#0000ff', '#ff00ff',
+                      '#00ff00', '#ff8800', '#8800ff', '#00ffff', '#ff0088',
+                      '#88ff00', '#0088ff', '#ff8888', '#88ff88', '#8888ff'];
+
+      let ballIndex = 0;
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col <= row; col++) {
+          if (ballIndex < colors.length) {
+            balls.push({
+              x: startX + row * spacing * Math.cos(0),
+              y: startY + (col - row / 2) * spacing,
+              vx: 0,
+              vy: 0,
+              radius: BALL_RADIUS,
+              color: colors[ballIndex],
+              stroke: colors[ballIndex] === '#ffffff' ? '#000000' : colors[ballIndex],
+              type: 'object',
+              number: ballIndex + 1,
+              pocketed: false
+            });
+            ballIndex++;
+          }
+        }
+      }
+    }
+
+    // Physics and collision detection
+    function updatePhysics(deltaTime) {
+      const dt = Math.min(deltaTime / 16.67, 2); // Normalize to ~60fps
+
+      // Update ball positions
+      balls.forEach(ball => {
+        if (ball.pocketed) return;
+
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
+
+        // Apply friction
+        ball.vx *= Math.pow(FRICTION, dt);
+        ball.vy *= Math.pow(FRICTION, dt);
+
+        // Stop slow balls
+        if (Math.abs(ball.vx) < MIN_VELOCITY) ball.vx = 0;
+        if (Math.abs(ball.vy) < MIN_VELOCITY) ball.vy = 0;
+
+        // Wall collisions
+        if (ball.x - ball.radius < TABLE.x) {
+          ball.x = TABLE.x + ball.radius;
+          ball.vx *= -0.8;
+        }
+        if (ball.x + ball.radius > TABLE.x + TABLE.width) {
+          ball.x = TABLE.x + TABLE.width - ball.radius;
+          ball.vx *= -0.8;
+        }
+        if (ball.y - ball.radius < TABLE.y) {
+          ball.y = TABLE.y + ball.radius;
+          ball.vy *= -0.8;
+        }
+        if (ball.y + ball.radius > TABLE.y + TABLE.height) {
+          ball.y = TABLE.y + TABLE.height - ball.radius;
+          ball.vy *= -0.8;
+        }
+      });
+
+      // Ball-to-ball collisions
+      for (let i = 0; i < balls.length; i++) {
+        if (balls[i].pocketed) continue;
+        for (let j = i + 1; j < balls.length; j++) {
+          if (balls[j].pocketed) continue;
+          handleBallCollision(balls[i], balls[j]);
+        }
+      }
+
+      // Check pockets
+      balls.forEach(ball => {
+        if (ball.pocketed) return;
+        POCKETS.forEach(pocket => {
+          const dx = ball.x - pocket.x;
+          const dy = ball.y - pocket.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < TABLE.pocketRadius) {
+            ball.pocketed = true;
+            if (ball.type === 'cue') {
+              // Respawn cue ball after a delay
+              setTimeout(() => {
+                ball.x = TABLE.x + TABLE.width * 0.25;
+                ball.y = TABLE.y + TABLE.height / 2;
+                ball.vx = 0;
+                ball.vy = 0;
+                ball.pocketed = false;
+              }, 1000);
+            }
+          }
+        });
+      });
+    }
+
+    function handleBallCollision(b1, b2) {
+      const dx = b2.x - b1.x;
+      const dy = b2.y - b1.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < b1.radius + b2.radius) {
+        // Normalize collision vector
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        // Relative velocity
+        const dvx = b2.vx - b1.vx;
+        const dvy = b2.vy - b1.vy;
+
+        // Relative velocity in collision normal direction
+        const dvn = dvx * nx + dvy * ny;
+
+        // Do not resolve if velocities are separating
+        if (dvn > 0) return;
+
+        // Collision impulse
+        const impulse = 2 * dvn / 2; // Equal mass
+
+        // Apply impulse
+        b1.vx += impulse * nx;
+        b1.vy += impulse * ny;
+        b2.vx -= impulse * nx;
+        b2.vy -= impulse * ny;
+
+        // Separate balls
+        const overlap = (b1.radius + b2.radius - dist) / 2;
+        b1.x -= overlap * nx;
+        b1.y -= overlap * ny;
+        b2.x += overlap * nx;
+        b2.y += overlap * ny;
+      }
+    }
+
+    function ballsMoving() {
+      return balls.some(b => !b.pocketed && (Math.abs(b.vx) > MIN_VELOCITY || Math.abs(b.vy) > MIN_VELOCITY));
+    }
+
+    // Rendering
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw table
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(TABLE.x, TABLE.y, TABLE.width, TABLE.height);
+
+      // Draw pockets
+      POCKETS.forEach(pocket => {
+        ctx.beginPath();
+        ctx.arc(pocket.x, pocket.y, TABLE.pocketRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+      });
+
+      // Draw center line
+      ctx.beginPath();
+      ctx.setLineDash([5, 5]);
+      ctx.moveTo(TABLE.x + TABLE.width / 2, TABLE.y);
+      ctx.lineTo(TABLE.x + TABLE.width / 2, TABLE.y + TABLE.height);
+      ctx.strokeStyle = '#cccccc';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw balls
+      balls.forEach(ball => {
+        if (ball.pocketed) return;
+
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ball.color;
+        ctx.fill();
+        ctx.strokeStyle = ball.stroke;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Draw ball number for colored balls
+        if (ball.type === 'object') {
+          ctx.fillStyle = ball.color === '#000000' || ball.color === '#0000ff' || ball.color === '#ff00ff' ? '#ffffff' : '#000000';
+          ctx.font = '9px Inter';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ball.number, ball.x, ball.y);
+        }
+      });
+
+      // Draw cue stick
+      if (cue.visible && !ballsMoving()) {
+        const cueLength = 200;
+        const cueBack = cue.power * 2;
+
+        const x1 = cue.x + Math.cos(cue.angle) * (BALL_RADIUS + 5 + cueBack);
+        const y1 = cue.y + Math.sin(cue.angle) * (BALL_RADIUS + 5 + cueBack);
+        const x2 = cue.x + Math.cos(cue.angle) * (cueLength + cueBack);
+        const y2 = cue.y + Math.sin(cue.angle) * (cueLength + cueBack);
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Draw power indicator
+        if (cue.power > 0) {
+          ctx.beginPath();
+          ctx.arc(cue.x, cue.y, BALL_RADIUS + 15 + cue.power, 0, Math.PI * 2);
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+    }
+
+    // Game loop
+    function gameLoop() {
+      const currentTime = Date.now();
+      const deltaTime = currentTime - lastUpdateTime;
+      lastUpdateTime = currentTime;
+
+      updatePhysics(deltaTime);
+      draw();
+
+      // Sync to Firebase/localStorage periodically if balls are moving
+      if (ballsMoving() && Math.random() < 0.1) {
+        syncGameState();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Mouse controls
+    canvas.addEventListener('mousedown', (e) => {
+      if (ballsMoving()) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Check if clicking near cue ball
+      const dx = mouseX - cueBall.x;
+      const dy = mouseY - cueBall.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < BALL_RADIUS + 50) {
+        dragging = true;
+        dragStartX = mouseX;
+        dragStartY = mouseY;
+        cue.visible = true;
+        cue.x = cueBall.x;
+        cue.y = cueBall.y;
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const dx = mouseX - cueBall.x;
+      const dy = mouseY - cueBall.y;
+      cue.angle = Math.atan2(dy, dx);
+
+      const pullDist = Math.sqrt((mouseX - dragStartX) ** 2 + (mouseY - dragStartY) ** 2);
+      cue.power = Math.min(pullDist / 10, MAX_CUE_POWER);
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      if (!dragging) return;
+
+      dragging = false;
+
+      // Apply force to cue ball
+      if (cue.power > 0.5) {
+        const power = cue.power * 0.8;
+        cueBall.vx = -Math.cos(cue.angle) * power;
+        cueBall.vy = -Math.sin(cue.angle) * power;
+        syncGameState();
+      }
+
+      cue.visible = false;
+      cue.power = 0;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      dragging = false;
+      cue.visible = false;
+    });
+
+    // Multiplayer functions
+    window.createRoom = function() {
+      const roomId = 'room_' + Math.random().toString(36).substr(2, 9);
+      document.getElementById('roomInput').value = roomId;
+      joinRoom();
+    };
+
+    window.joinRoom = function() {
+      const roomId = document.getElementById('roomInput').value.trim();
+      if (!roomId) {
+        alert('Please enter a room ID');
+        return;
+      }
+
+      currentRoom = roomId;
+      document.getElementById('roomInfo').textContent = `Connected to room: ${roomId}`;
+
+      if (useFirebase && database) {
+        currentRoomRef = ref(database, 'rooms/' + roomId);
+
+        // Listen for changes
+        onValue(currentRoomRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data && data.balls) {
+            // Only update if we're not currently shooting
+            if (!ballsMoving() && !dragging) {
+              balls = data.balls;
+              cueBall = balls.find(b => b.type === 'cue');
+            }
+          } else {
+            // Initialize room with current state
+            syncGameState();
+          }
+        });
+      } else {
+        // Use localStorage for persistence
+        const stored = localStorage.getItem('poolTable_' + roomId);
+        if (stored) {
+          balls = JSON.parse(stored);
+          cueBall = balls.find(b => b.type === 'cue');
+        }
+      }
+
+      document.getElementById('status').textContent = 'Room joined! Share this room ID with others to play together.';
+    };
+
+    function syncGameState() {
+      if (!currentRoom) return;
+
+      const gameState = {
+        balls: balls,
+        timestamp: Date.now()
+      };
+
+      if (useFirebase && currentRoomRef) {
+        update(currentRoomRef, gameState).catch(err => {
+          console.log('Firebase sync failed, using localStorage');
+          localStorage.setItem('poolTable_' + currentRoom, JSON.stringify(balls));
+        });
+      } else {
+        localStorage.setItem('poolTable_' + currentRoom, JSON.stringify(balls));
+      }
+    }
+
+    window.resetTable = function() {
+      initBalls();
+      if (currentRoom) {
+        syncGameState();
+      }
+      document.getElementById('status').textContent = 'Table reset!';
+    };
+
+    // Initialize
+    initBalls();
+    gameLoop();
+  </script>
 </body>
 </html>
