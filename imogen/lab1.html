@@ -367,6 +367,11 @@
         <button class="btn small" id="faster-btn">+</button>
       </div>
       <button class="btn" id="bloom-btn">Bloom</button>
+      <div class="speed-controls" id="bloom-controls" style="display: none;">
+        <button class="btn small" id="bloom-down-btn">−</button>
+        <span class="speed-display" id="bloom-display">60%</span>
+        <button class="btn small" id="bloom-up-btn">+</button>
+      </div>
       <button class="btn" id="fullscreen-btn">Fullscreen</button>
       <button class="btn" id="save-btn">Save Image</button>
     </div>
@@ -394,12 +399,17 @@
   <!-- Fullscreen Overlay -->
   <div class="fullscreen-overlay" id="fullscreen-overlay">
     <canvas id="fullscreen-canvas" width="800" height="800"></canvas>
-    <div class="fullscreen-hint">ESC to exit · ← → to adjust speed · B to toggle bloom</div>
+    <div class="fullscreen-hint">ESC to exit · ← → speed · ↑ ↓ bloom intensity · B toggle bloom</div>
     <div class="fullscreen-controls">
       <button class="btn small" id="fs-slower-btn">−</button>
       <span class="speed-display" id="fs-speed-display">1.0x</span>
       <button class="btn small" id="fs-faster-btn">+</button>
       <button class="btn" id="fs-bloom-btn">Bloom</button>
+      <div class="speed-controls" id="fs-bloom-controls" style="display: none;">
+        <button class="btn small" id="fs-bloom-down-btn">−</button>
+        <span class="speed-display" id="fs-bloom-display">60%</span>
+        <button class="btn small" id="fs-bloom-up-btn">+</button>
+      </div>
       <button class="btn" id="fs-exit-btn">Exit</button>
     </div>
   </div>
@@ -506,13 +516,17 @@
     const fsCanvas = document.getElementById('fullscreen-canvas');
     const fsCtx = fsCanvas.getContext('2d');
 
+    // Offscreen canvas for bloom effect
+    let bloomCanvas = document.createElement('canvas');
+    let bloomCtx = bloomCanvas.getContext('2d');
+
     let currentParams = null;
     let animationId = null;
     let isAnimating = false;
     let isFullscreen = false;
     let animationSpeed = 1.0;
     let isBloomEnabled = false;
-    let bloomPhase = 0;
+    let bloomIntensity = 0.6;
 
     // Get canvas properties dynamically
     function getCanvasProps(targetCanvas) {
@@ -576,42 +590,47 @@
       };
     }
 
-    // Shift hue for bloom effect
-    function shiftColor(color, hueShift) {
-      const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-      if (!match) return color;
-
-      let r = parseInt(match[1]) / 255;
-      let g = parseInt(match[2]) / 255;
-      let b = parseInt(match[3]) / 255;
-
-      // RGB to HSL
-      const max = Math.max(r, g, b), min = Math.min(r, g, b);
-      let h, s, l = (max + min) / 2;
-
-      if (max === min) {
-        h = s = 0;
-      } else {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-          case g: h = ((b - r) / d + 2) / 6; break;
-          case b: h = ((r - g) / d + 4) / 6; break;
-        }
-      }
-
-      // Shift hue
-      h = (h + hueShift) % 1;
-      if (h < 0) h += 1;
-
-      return hslToRgb(h, s, l);
+    function getColor(palette, colorIndex) {
+      return palette.colors[colorIndex];
     }
 
-    function getBloomedColor(palette, colorIndex, bloomPhase) {
-      const baseColor = palette.colors[colorIndex];
-      if (!isBloomEnabled) return baseColor;
-      return shiftColor(baseColor, bloomPhase);
+    // Apply bloom post-processing effect
+    function applyBloom(targetCtx, targetCanvas) {
+      if (!isBloomEnabled) return;
+
+      // Ensure bloom canvas matches target size
+      if (bloomCanvas.width !== targetCanvas.width || bloomCanvas.height !== targetCanvas.height) {
+        bloomCanvas.width = targetCanvas.width;
+        bloomCanvas.height = targetCanvas.height;
+      }
+
+      // Copy the original image to bloom canvas
+      bloomCtx.clearRect(0, 0, bloomCanvas.width, bloomCanvas.height);
+      bloomCtx.drawImage(targetCanvas, 0, 0);
+
+      // Apply blur filter for the glow
+      bloomCtx.filter = 'blur(15px) brightness(1.5)';
+      bloomCtx.globalCompositeOperation = 'source-over';
+      bloomCtx.drawImage(targetCanvas, 0, 0);
+      bloomCtx.filter = 'none';
+
+      // Composite the blurred glow back onto the original with additive blending
+      targetCtx.globalCompositeOperation = 'lighter';
+      targetCtx.globalAlpha = bloomIntensity;
+      targetCtx.drawImage(bloomCanvas, 0, 0);
+
+      // Second pass for extra dreamy glow
+      bloomCtx.filter = 'blur(30px) brightness(1.2)';
+      bloomCtx.clearRect(0, 0, bloomCanvas.width, bloomCanvas.height);
+      bloomCtx.drawImage(targetCanvas, 0, 0);
+      bloomCtx.filter = 'none';
+
+      targetCtx.globalAlpha = bloomIntensity * 0.5;
+      targetCtx.drawImage(bloomCanvas, 0, 0);
+
+      // Reset composite mode
+      targetCtx.globalCompositeOperation = 'source-over';
+      targetCtx.globalAlpha = 1;
     }
 
     function drawMandala(params, rotationPhase = 0, targetCtx = ctx, targetCanvas = canvas) {
@@ -636,6 +655,9 @@
 
       // Center decoration
       drawCenter(params, targetCtx, centerX, centerY, maxRadius);
+
+      // Apply bloom post-processing
+      applyBloom(targetCtx, targetCanvas);
     }
 
     function drawBackground(params, targetCtx, centerX, centerY, maxRadius) {
@@ -661,7 +683,7 @@
     function drawLayer(layer, params, rotationPhase, layerIndex, targetCtx, centerX, centerY, maxRadius) {
       const angleStep = (Math.PI * 2) / layer.count;
       const layerRadius = maxRadius * layer.radiusRatio;
-      const color = getBloomedColor(params.palette, layer.colorIndex, bloomPhase);
+      const color = getColor(params.palette, layer.colorIndex);
 
       for (let i = 0; i < layer.count; i++) {
         const angle = i * angleStep + layer.rotationOffset + rotationPhase * (layerIndex % 2 === 0 ? 1 : -1) * 0.5;
@@ -756,8 +778,8 @@
       const innerRadius = maxRadius * innerLayer.radiusRatio;
       const outerRadius = maxRadius * outerLayer.radiusRatio;
 
-      targetCtx.strokeStyle = getBloomedColor(params.palette, 0, bloomPhase);
-      targetCtx.fillStyle = getBloomedColor(params.palette, 0, bloomPhase);
+      targetCtx.strokeStyle = getColor(params.palette, 0);
+      targetCtx.fillStyle = getColor(params.palette, 0);
       targetCtx.lineWidth = 0.5;
       targetCtx.globalAlpha = 0.3;
 
@@ -816,8 +838,8 @@
     }
 
     function drawCenter(params, targetCtx, centerX, centerY, maxRadius) {
-      const color0 = getBloomedColor(params.palette, 0, bloomPhase);
-      const color1 = getBloomedColor(params.palette, 1 % params.palette.colors.length, bloomPhase);
+      const color0 = getColor(params.palette, 0);
+      const color1 = getColor(params.palette, 1 % params.palette.colors.length);
 
       // Central circle
       const gradient = targetCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius * 0.15);
@@ -863,6 +885,14 @@
     const fsSpeedDisplay = document.getElementById('fs-speed-display');
     const fsBloomBtn = document.getElementById('fs-bloom-btn');
     const fsExitBtn = document.getElementById('fs-exit-btn');
+    const bloomControls = document.getElementById('bloom-controls');
+    const bloomDisplay = document.getElementById('bloom-display');
+    const bloomDownBtn = document.getElementById('bloom-down-btn');
+    const bloomUpBtn = document.getElementById('bloom-up-btn');
+    const fsBloomControls = document.getElementById('fs-bloom-controls');
+    const fsBloomDisplay = document.getElementById('fs-bloom-display');
+    const fsBloomDownBtn = document.getElementById('fs-bloom-down-btn');
+    const fsBloomUpBtn = document.getElementById('fs-bloom-up-btn');
 
     function updateMandala(text) {
       const seed = stringToSeed(text);
@@ -912,12 +942,6 @@
 
       rotationPhase += 0.005 * animationSpeed;
 
-      // Update bloom phase if enabled
-      if (isBloomEnabled) {
-        bloomPhase += 0.002 * animationSpeed;
-        if (bloomPhase > 1) bloomPhase -= 1;
-      }
-
       // Draw to appropriate canvas
       if (isFullscreen) {
         drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
@@ -936,7 +960,6 @@
         animate();
       } else {
         cancelAnimationFrame(animationId);
-        bloomPhase = 0;
         drawMandala(currentParams, 0);
       }
     });
@@ -962,28 +985,51 @@
     fsSlowerBtn.addEventListener('click', () => adjustSpeed(-1));
     fsFasterBtn.addEventListener('click', () => adjustSpeed(1));
 
-    // Bloom toggle
+    // Bloom toggle (HDR glow effect)
     function toggleBloom() {
       isBloomEnabled = !isBloomEnabled;
       const text = isBloomEnabled ? 'Bloom On' : 'Bloom';
       bloomBtn.textContent = text;
       fsBloomBtn.textContent = text;
 
-      if (!isBloomEnabled) {
-        bloomPhase = 0;
-      }
+      // Show/hide intensity controls
+      bloomControls.style.display = isBloomEnabled ? 'flex' : 'none';
+      fsBloomControls.style.display = isBloomEnabled ? 'flex' : 'none';
 
-      // Redraw if not animating
-      if (!isAnimating) {
+      // Redraw to show/hide bloom effect
+      if (isFullscreen) {
+        drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
+      } else {
         drawMandala(currentParams, rotationPhase);
-        if (isFullscreen) {
-          drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
-        }
       }
     }
 
     bloomBtn.addEventListener('click', toggleBloom);
     fsBloomBtn.addEventListener('click', toggleBloom);
+
+    // Bloom intensity controls
+    function updateBloomDisplay() {
+      const text = Math.round(bloomIntensity * 100) + '%';
+      bloomDisplay.textContent = text;
+      fsBloomDisplay.textContent = text;
+    }
+
+    function adjustBloom(delta) {
+      bloomIntensity = Math.max(0.1, Math.min(1.5, bloomIntensity + delta));
+      updateBloomDisplay();
+
+      // Redraw to show updated bloom
+      if (isFullscreen) {
+        drawMandala(currentParams, rotationPhase, fsCtx, fsCanvas);
+      } else {
+        drawMandala(currentParams, rotationPhase);
+      }
+    }
+
+    bloomDownBtn.addEventListener('click', () => adjustBloom(-0.1));
+    bloomUpBtn.addEventListener('click', () => adjustBloom(0.1));
+    fsBloomDownBtn.addEventListener('click', () => adjustBloom(-0.1));
+    fsBloomUpBtn.addEventListener('click', () => adjustBloom(0.1));
 
     // Fullscreen mode
     function enterFullscreen() {
@@ -1033,6 +1079,18 @@
           case 'ArrowRight':
             adjustSpeed(1);
             e.preventDefault();
+            break;
+          case 'ArrowUp':
+            if (isBloomEnabled) {
+              adjustBloom(0.1);
+              e.preventDefault();
+            }
+            break;
+          case 'ArrowDown':
+            if (isBloomEnabled) {
+              adjustBloom(-0.1);
+              e.preventDefault();
+            }
             break;
           case 'b':
           case 'B':
