@@ -227,7 +227,8 @@
     const ELEMENTS = {
       METAL: { name: 'Alloy (Metal)', colors: ['#D0D0D0', '#A0A0A0', '#707070', '#555555', '#FFFFFF'], meaning: 'Represents Structural Integrity and Data Clarity.' },
       WATER: { name: 'Fluidic (Water)', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#B0B0B0'], meaning: 'Represents System Flow and Dynamic Input.' },
-      WOOD: { name: 'Composite (Wood)', colors: ['#4F6B58', '#738C7D', '#97A99F', '#BCC8BF', '#A0A0A0'], meaning: 'Represents Growth Vectors and Expansion.' },
+      // Updated WOOD Element for Green
+      WOOD: { name: 'Composite (Wood)', colors: ['#2D5743', '#4E8A6E', '#7DB49A', '#BCC8BF', '#A0A0A0'], meaning: 'Represents Growth Vectors and Expansion.' },
       FIRE: { name: 'Thermal (Fire)', colors: ['#D24B4F', '#A04A4E', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Represents Energy State and Transformation Rate.' },
       EARTH: { name: 'Foundation (Earth)', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#909090'], meaning: 'Represents Core Stability and Base Coordinates.' }
     };
@@ -235,6 +236,7 @@
       ELEMENTS.EARTH, ELEMENTS.EARTH, ELEMENTS.WOOD, ELEMENTS.WOOD, ELEMENTS.FIRE, ELEMENTS.FIRE,
       ELEMENTS.METAL, ELEMENTS.METAL, ELEMENTS.WATER, ELEMENTS.WATER, ELEMENTS.EARTH, ELEMENTS.EARTH
     ];
+    // Solfeggio / Planetary Frequencies
     const SOUND_ELEMENT_MAPPING = {
       METAL: { freq: 432, note: "432 Hz", explanation: "Target for Cognitive Clarity." },
       WATER: { freq: 194.18, note: "194 Hz", explanation: "Target for System Dynamics." },
@@ -242,6 +244,16 @@
       FIRE: { freq: 396, note: "396 Hz", explanation: "Target for State Transition." },
       EARTH: { freq: 172.8, note: "172 Hz", explanation: "Target for Base Stability." }
     };
+
+    // NEW: Waveform selection based on Element
+    const WAVEFORM_MAP = {
+      'METAL': 'triangle', // Sharp, clear, structural
+      'WATER': 'sine',     // Smooth, fluid
+      'WOOD': 'sawtooth',  // Growing, forward
+      'FIRE': 'square',    // Intense, energetic
+      'EARTH': 'sine'      // Stable, fundamental
+    };
+
     const TIBETAN_SYMBOLS = [
       { char: '\u0F42', desc: 'GA (Module Command)', meaning: 'Focus on System Output and Efficiency.' }, { char: '\u0F40', desc: 'KA (Structural Integrity)', meaning: 'The union of Input, Process, and Result.' },
       { char: '\u0F68', desc: 'A (Void State)', meaning: 'Symbolizing the unconditioned space for new data.' }, { char: '\u0F4F', desc: 'TA (Interconnect)', meaning: 'The understanding of non-linear system links.' },
@@ -252,10 +264,13 @@
       { char: '\u0F63\u0F7A\u0F58', desc: 'LAM (Ground Plane)', meaning: 'The elemental seed for deep rooting and coordinate stability.' }, 
       { char: '\u0F56\u0F7A\u0F58', desc: 'BAM (Liquid Vector)', meaning: 'The elemental seed for dynamic data fluidity and potential.' } 
     ];
+
+    // UPDATED: Added Archetype 3
     const ARCHETYPES = [
       { name: 'Four-Gate Structure', index: 0, meaning: 'A traditional four-quadrant grid, representing a protected and symmetrical data processing environment.' },
       { name: 'Triad Intersection Matrix', index: 1, meaning: 'A pattern of intersecting triangles, symbolizing the convergence of three primary data streams.' },
-      { name: 'Crystalline Flow Net', index: 2, meaning: 'A complex, high-density projection, focusing on distributed data flow and structural complexity.' }
+      { name: 'Crystalline Flow Net', index: 2, meaning: 'A complex, high-density projection, focusing on distributed data flow and structural complexity.' },
+      { name: 'Spiral Recursion Field', index: 3, meaning: 'A logarithmic spiral pattern, reflecting iterative data generation and exponential growth vectors.' } // NEW
     ];
 
     function hexToRgb(hex) {
@@ -282,7 +297,7 @@
     }
 
     // ====================================================================
-    // 2. MANDALA PARAMETERS CLASS (No functional changes needed)
+    // 2. MANDALA PARAMETERS CLASS
     // ====================================================================
 
     class MandalaParams {
@@ -374,7 +389,7 @@
         ];
 
         // 2. Geometry Parameters
-        const archetypeIndex = seed % ARCHETYPES.length;
+        const archetypeIndex = seed % ARCHETYPES.length; // Max is now 3
         const archetype = ARCHETYPES[archetypeIndex];
 
         let complexity = ((seed % 900) / 900) + 0.1;
@@ -388,7 +403,7 @@
         for(let i=0; i<ringCount; i++) {
           rings.push({
             r: 0.1 + (i/ringCount)*0.9,
-            style: Math.floor(rand() * 5), 
+            style: Math.floor(rand() * 6), // Max ring style is now 5 (0-5)
             width: (1 + rand() * 4 * complexity) * (1 + randomnessFactor * 0.5),
             colorIndex: i % 3 // Cycle through the first three (including the brass accent)
           });
@@ -424,7 +439,7 @@
     }
 
     // ====================================================================
-    // 3. MANDALA RENDERER CLASS (Kept robust for visual effect)
+    // 3. MANDALA RENDERER CLASS
     // ====================================================================
 
     class MandalaRenderer {
@@ -528,10 +543,12 @@
           this.drawPolyhedron(ctx, cx, cy, radius * poly.radiusFactor, poly, phase, isGlowPass);
         });
 
+        // UPDATED: Added new archetype (index 3)
         switch(this.params.archetype.index) {
           case 0: this.drawVajraPalace(ctx, cx, cy, radius * 0.4, this.params, phase, isGlowPass); break;
           case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
           case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
+          case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break; // NEW SPIRAL
         }
 
         this.drawCenterSyllable(ctx, cx, cy, radius * 0.1, this.params, phase, isGlowPass);
@@ -590,6 +607,24 @@
             ctx.fillText(symbol, 0, 0);
             ctx.restore();
           }
+        } else if (ring.style === 5) { // NEW: Undulating Wave
+          const points = 360;
+          // Frequency scales with complexity, offset by rotation phase
+          const frequency = 8 + complexityFactor * 20; 
+          const amplitude = ring.width * 2; 
+
+          ctx.beginPath();
+          for(let i=0; i<=points; i++) {
+            const a = (i/points)*Math.PI*2;
+            const displacement = Math.sin(a * frequency + phase * 4) * amplitude;
+            const currentR = r + displacement;
+            const x = cx + Math.cos(a)*currentR;
+            const y = cy + Math.sin(a)*currentR;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
         }
       }
 
@@ -611,12 +646,6 @@
         ctx.textBaseline = 'middle';
         ctx.fillText(symbolData.char, cx, cy);
       }
-      
-      // The rest of the MandalaRenderer methods (drawVajraPalace, drawSriYantra, 
-      // drawIcosahedronGrid, drawPolyhedron, etc.) remain the same for stability
-      // but will now use the new color palette via params.
-      
-      // ... [MandalaRenderer methods are assumed to be here, omitted for brevity]
       
       drawVajraPalace(ctx, cx, cy, r, params, phase, isGlowPass) {
         ctx.fillStyle = params.palette[1];
@@ -709,6 +738,49 @@
         });
 
         ctx.restore();
+      }
+      
+      // NEW: Fibonacci Spiral Archetype
+      drawFibonacciSpiral(ctx, cx, cy, r, params, phase, isGlowPass) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(params.solidRotation + phase * 0.05);
+
+          const segments = 20 + Math.floor(parseFloat(params.complexity) * 20);
+          const goldenRatio = (1 + Math.sqrt(5)) / 2;
+          const color = params.palette[1];
+          const accent = params.palette[2];
+          
+          ctx.strokeStyle = color;
+          ctx.lineWidth = isGlowPass ? 4 : 2;
+          
+          let a = 0.5; // Controls tightness
+          let angle = 0;
+          
+          ctx.beginPath();
+          for(let i=0; i<segments; i++) {
+              let currentR = a * Math.exp(0.12 * angle); // Logarithmic spiral, tightness controlled by 0.12
+              if (currentR > r) break;
+              
+              const x = Math.cos(angle) * currentR;
+              const y = Math.sin(angle) * currentR;
+              
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+              
+              angle += Math.PI * 2 / goldenRatio; // Golden Angle step
+              
+              if (!isGlowPass && i % 4 === 0) {
+                  // Draw small markers
+                  ctx.fillStyle = accent;
+                  ctx.beginPath();
+                  ctx.arc(x, y, 2 + params.complexity * 2, 0, Math.PI * 2);
+                  ctx.fill();
+              }
+          }
+          ctx.stroke();
+
+          ctx.restore();
       }
 
       generateIcosahedronVertices() {
@@ -825,7 +897,7 @@
 
 
     // ====================================================================
-    // 4. AUDIO ENGINE CLASS (Sound tone logic remains the same)
+    // 4. AUDIO ENGINE CLASS (FIXED: Re-introduced carrierFreq / 2 + New Variety)
     // ====================================================================
 
     class AudioEngine {
@@ -837,10 +909,16 @@
         this.leftPan = null;
         this.rightPan = null;
         this.isAudioPlaying = false;
+        
+        // NEW: LFO for Panning Modulation
+        this.panLFO = null;
+        this.panLFOGain = null;
+
 
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
+        this.currentWaveform = 'sine';
       }
 
       initAudioIfNeeded(volume) {
@@ -850,11 +928,11 @@
         this.masterGain.gain.value = volume || 0.06;
 
         this.leftOsc = this.audioCtx.createOscillator();
-        this.leftOsc.type = 'sine';
+        this.leftOsc.type = this.currentWaveform;
         this.leftPan = this.audioCtx.createStereoPanner();
         this.leftPan.pan.value = -1; 
         this.rightOsc = this.audioCtx.createOscillator();
-        this.rightOsc.type = 'sine';
+        this.rightOsc.type = this.currentWaveform;
         this.rightPan = this.audioCtx.createStereoPanner();
         this.rightPan.pan.value = 1; 
 
@@ -867,6 +945,23 @@
         this.leftOsc.start();
         this.rightOsc.start();
         this.isAudioPlaying = false;
+        
+        // --- NEW: Panning LFO Setup (Spatial Breathing) ---
+        // Creates a gentle, slow, spatial shift in the binaural tones
+        this.panLFO = this.audioCtx.createOscillator();
+        this.panLFO.type = 'sine';
+        this.panLFO.frequency.setValueAtTime(0.05, this.audioCtx.currentTime); // ~20-second cycle
+        
+        this.panLFOGain = this.audioCtx.createGain();
+        this.panLFOGain.gain.setValueAtTime(0.3, this.audioCtx.currentTime); // Pan depth (-0.3 to +0.3)
+
+        this.panLFO.connect(this.panLFOGain);
+        // LFO shifts the pan value, causing the left/right panners to move slightly
+        // We connect the LFO to the *parameter* of the panners, not the panner node itself
+        this.panLFOGain.connect(this.leftPan.pan);
+        this.panLFOGain.connect(this.rightPan.pan);
+        
+        this.panLFO.start(0);
       }
 
       setVolume(volume) {
@@ -897,16 +992,25 @@
         });
 
         let carrierFreq = SOUND_ELEMENT_MAPPING[primaryElement.name.split(' ')[0].toUpperCase()].freq;
-        carrierFreq = carrierFreq / 2; 
+        const elementalBaseFreq = carrierFreq; // Store the original for display
+
+        // Halve the carrier frequency to drop it an octave
+        carrierFreq = carrierFreq / 2;
 
         const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
         const dayOfMonth = date.getDate();
         const beat = 2.0 + (dayOfMonth / 31) * 8.0;
+        
+        // NEW: Select waveform
+        const primaryElementKey = primaryElement.name.split(' ')[0].toUpperCase();
+        const waveformType = WAVEFORM_MAP[primaryElementKey] || 'sine';
 
         return {
           carrier: carrierFreq,
           beat: beat,
           element: primaryElement,
+          elementalBaseFreq: elementalBaseFreq, 
+          waveform: waveformType, // NEW
         };
       }
 
@@ -921,6 +1025,7 @@
 
         this.computedCarrier = audioData.carrier;
         this.computedBeat = parseFloat(beatOverride) || audioData.beat;
+        this.currentWaveform = audioData.waveform;
 
         const leftFreq = this.computedCarrier - (this.computedBeat / 2);
         const rightFreq = this.computedCarrier + (this.computedBeat / 2);
@@ -928,6 +1033,10 @@
         if (this.leftOsc && this.rightOsc) {
           this.leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), this.audioCtx.currentTime, 0.03);
           this.rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), this.audioCtx.currentTime, 0.03);
+          
+          // NEW: Update Waveform
+          this.leftOsc.type = this.currentWaveform;
+          this.rightOsc.type = this.currentWaveform;
         }
       }
 
@@ -940,7 +1049,7 @@
 
 
     // ====================================================================
-    // 5. MAIN APPLICATION LOGIC (Cleaned up for reliability)
+    // 5. MAIN APPLICATION LOGIC 
     // ====================================================================
     document.addEventListener('DOMContentLoaded', () => {
       const seedInput = document.getElementById('seed-input');
@@ -980,10 +1089,10 @@
         document.getElementById('archetype-display').textContent = `${currentMandalaParams.params.archetype.name.split(' ')[0]} / ${currentMandalaParams.params.complexity}`;
 
         // 3. Sync Audio Frequencies
-        syncAudioFrequencies(false);
+        const audioData = syncAudioFrequencies(false);
 
         // 4. Update Explanation Panels
-        updateExplanationPanels(currentMandalaParams.params, currentMandalaParams.elementData);
+        updateExplanationPanels(currentMandalaParams.params, currentMandalaParams.elementData, audioData);
         
         // 5. Redraw static frame if not animating
         if (!renderer.isAnimating) {
@@ -1007,14 +1116,16 @@
         audioEngine.updateFrequencies(beatRange.value);
         
         volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
+        
+        return audioData; // Return the audioData for display
       }
 
       /* --- Copy Overhaul for Minimalist/Technical Look --- */
-      function updateExplanationPanels(params, elementData) {
+      function updateExplanationPanels(params, elementData, audioData) {
         const leftPanel = document.getElementById('left-panel-content');
         const rightPanel = document.getElementById('right-panel-content');
         
-        const primaryElementKey = audioEngine.currentElementData.elementData.year.name.split(' ')[0].toUpperCase();
+        const primaryElementKey = audioData.element.name.split(' ')[0].toUpperCase();
         const primaryAudioElement = SOUND_ELEMENT_MAPPING[primaryElementKey];
 
         // LEFT PANEL: DATA AND COLOR SPECIFICATION
@@ -1054,11 +1165,12 @@
           </ul>
 
           <h4>Acoustic Tone Configuration (Binaural)</h4>
-          <p>The dominant input element provides a sub-carrier frequency for a differential stereo tone, promoting focused listening.</p>
+          <p>The dominant input element provides a carrier frequency for a differential stereo tone, promoting focused listening.</p>
           <ul>
-            <li><strong>Carrier Frequency:</strong> ${primaryAudioElement.note} (${(audioEngine.computedCarrier*2).toFixed(2)} Hz)</li>
-            <li><strong>Target Description:</strong> ${primaryAudioElement.explanation}</li>
+            <li><strong>Carrier Waveform:</strong> ${audioData.waveform.toUpperCase()}</li>
+            <li><strong>Carrier Frequency:</strong> ${audioData.carrier.toFixed(2)} Hz (Halved from ${primaryAudioElement.note})</li>
             <li><strong>Beat Frequency:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz (The binaural difference)</li>
+            <li><strong>Spatial Panning:</strong> ACTIVE (LFO-modulated)</li>
           </ul>
         `;
         rightPanel.innerHTML = rightHTML;
