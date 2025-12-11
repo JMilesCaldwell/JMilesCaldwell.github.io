@@ -69,6 +69,10 @@
       color: #ffd700; font-size: 1.15rem; font-weight: 500;
       border-bottom: 1px solid rgba(255,215,0,0.15); padding-bottom: 0.5rem; margin-bottom: 0.8rem;
     }
+    .explanation-panel h4 {
+      color: #e0d5c5; font-size: 0.95rem; font-weight: 500;
+      margin-top: 1rem; margin-bottom: 0.5rem;
+    }
     .explanation-panel p, .explanation-panel ul, .explanation-panel li {
       font-size: 0.8rem; color: #bca060; margin-bottom: 0.7rem; line-height: 1.4;
       list-style-position: inside; padding-left: 0;
@@ -406,17 +410,25 @@
       m.sort(() => rand() - 0.5);
       d.sort(() => rand() - 0.5);
 
-      // Final palette uses the top three primary colors and two secondary colors, guaranteeing five diverse colors.
-      const palette = [ p[0], m[0], d[0], p[1], m[1] ];
+      // 1. Create the palette strings for drawing (Used by canvas rendering)
+      const colorStrings = [ p[0], m[0], d[0], p[1], m[1] ];
 
-      // NEW VARIABLES
+      // 2. Create the mapping for UI explanation 
+      const paletteMapping = [
+        { color: p[0], source: `Year's ${elementData.year.name} (Primary)` },
+        { color: m[0], source: `Month's ${elementData.month.name} (Primary)` },
+        { color: d[0], source: `Day's ${elementData.day.name} (Primary)` },
+        { color: p[1], source: `Year's ${elementData.year.name} (Secondary)` },
+        { color: m[1], source: `Month's ${elementData.month.name} (Secondary)` }
+      ];
+
+      // Existing variables, adjusted by complexity
       const archetypeIndex = seed % ARCHETYPES.length;
       const complexity = ((seed >> 4) % 10) / 10.0; // 0.0 to 0.9 scale
       const sriYantraDepth = (seed % 5) + 3; // 3 to 7 nested triangles
       const solidRotation = rand() * 2 * Math.PI;
       const secondarySymbolIndex = (seed >> 8) % TIBETAN_SYMBOLS.length;
       
-      // Existing variables, adjusted by complexity
       const ringCount = 3 + Math.floor(complexity * 10); // up to 12 rings
       const petals = [8, 12, 16, 24, 32][seed % 5];
 
@@ -424,7 +436,7 @@
       for(let i=0; i<ringCount; i++) {
         rings.push({
           r: 0.15 + (i/ringCount)*0.7,
-          color: palette[Math.floor(rand()*5)],
+          color: colorStrings[Math.floor(rand()*5)],
           width: 1 + rand() * 4 * complexity, 
           style: Math.floor(rand() * 4) 
         });
@@ -433,7 +445,10 @@
       const symbolIndex = seed % TIBETAN_SYMBOLS.length;
 
       return { 
-        seed, palette, ringCount, petals, rings, symbolIndex, secondarySymbolIndex,
+        seed, 
+        palette: colorStrings, // Used by drawing code
+        paletteMapping,        // Used by UI explanation
+        ringCount, petals, rings, symbolIndex, secondarySymbolIndex,
         archetype: ARCHETYPES[archetypeIndex],
         complexity: complexity.toFixed(2),
         sriYantraDepth,
@@ -683,9 +698,18 @@
     }
     
     // ============================================
-    // 5. DYNAMIC UI EXPLANATION LOGIC
+    // 5. DYNAMIC UI EXPLANATION LOGIC (UPDATED)
     // ============================================
-    function updateExplanationPanels(params, elementData) {
+    // NEW: Base frequencies for the 5 elements based on 432 Hz tuning (A=432)
+    const ELEMENT_FREQUENCIES = {
+        METAL: { freq: 432.0, note: "A3 (Highest Tone)", explanation: "Corresponds to the highest vibrational tone (e.g., Crown Chakra/Akasha), promoting clarity and spiritual connection." },
+        FIRE:  { freq: 343.4, note: "F3 (High Tone)", explanation: "Corresponds to the Heart or Solar Plexus, fostering transformation, action, and illumination." },
+        WOOD:  { freq: 288.0, note: "D3 (Mid Tone)", explanation: "Corresponds to the Throat or Liver (expansion), supporting vitality, growth, and expression." },
+        WATER: { freq: 216.0, note: "A2 (Low Tone)", explanation: "Corresponds to the Sacral Chakra (flow), encouraging contemplation, wisdom, and fluidity." },
+        EARTH: { freq: 172.8, note: "F2 (Lowest Tone)", explanation: "Corresponds to the Root Chakra, providing stability, grounding, and physical foundation." }
+    };
+    
+    function updateExplanationPanels(params, elementData, computedCarrier) {
         const leftPanel = document.getElementById('left-panel-content');
         const rightPanel = document.getElementById('right-panel-content');
 
@@ -705,16 +729,16 @@
             <p>These five colors were randomly selected and assigned from the dominant elements' color ranges, controlling all ring colors:</p>
             <ul>
         `;
-        params.palette.forEach((color, index) => {
+        params.paletteMapping.forEach((item, index) => {
             leftHTML += `
-                <li><span class="color-block" style="background-color: ${color}"></span>Color ${index + 1}: ${color}</li>
+                <li><span class="color-block" style="background-color: ${item.color}"></span>Color ${index + 1}: ${item.color} (from <strong>${item.source}</strong>)</li>
             `;
         });
         leftHTML += `</ul>`;
         leftPanel.innerHTML = leftHTML;
 
 
-        // --- RIGHT PANEL: GEOMETRY & SYMBOL ---
+        // --- RIGHT PANEL: GEOMETRY, SYMBOL, & AUDIO ---
         const primarySymbol = TIBETAN_SYMBOLS[params.symbolIndex];
         const secondarySymbol = TIBETAN_SYMBOLS[params.secondarySymbolIndex];
         const archetype = params.archetype;
@@ -745,12 +769,26 @@
             <p>The outer rings also frequently utilize the **${secondarySymbol.desc}** (<span class="tibetan-font">${secondarySymbol.char}</span>) as a secondary protective/decorative glyph.</p>
         `;
 
+        // NEW: Audio Explanation
+        const dayElementData = ELEMENT_FREQUENCIES[elementData.day.name.toUpperCase()];
+        rightHTML += `
+            <h4>Elemental Resonant Frequencies</h4>
+            <p>The **Day Element** (${elementData.day.name}) sets the fundamental therapeutic carrier frequency based on popular 432 Hz tuning systems to support its inherent qualities.</p>
+            <ul>
+                <li><strong>Elemental Tone:</strong> ${dayElementData.note} (Base ${dayElementData.freq.toFixed(1)} Hz)</li>
+                <li><strong>Interpretation:</strong> ${dayElementData.explanation}</li>
+                <li><strong>Final Carrier:</strong> ${computedCarrier.toFixed(1)} Hz 
+                    <span style="font-size:0.7em; color:#8a7a6a;">(within 2nd/3rd Octave, adjusted by name seed)</span>
+                </li>
+            </ul>
+        `;
+
         rightPanel.innerHTML = rightHTML;
     }
 
 
     // ============================================
-    // 6. AUDIO - BINAURAL IMPLEMENTATION (UNCHANGED)
+    // 6. AUDIO - BINAURAL IMPLEMENTATION (UPDATED)
     // ============================================
     let audioCtx = null;
     let leftOsc = null;
@@ -828,28 +866,42 @@
     let computedCarrier = 220;
     let computedBeat = 6;
 
-    function computeAudioFromSeed(seed, dateStr) {
+    // NEW: Function to compute carrier based on element and ensure it's in the 2nd/3rd octave range
+    function computeAudioFromSeed(seed, dateStr, elementData) {
+      // 1. Get Base Carrier from Day's Main Element
+      const dayElement = elementData.day.name; 
+      const baseFreq = ELEMENT_FREQUENCIES[dayElement.toUpperCase()].freq;
+
+      // 2. Use the name seed to create a small offset for variation (ensures full range use)
+      const rand = mulberry32(seed);
+      // Offset by +/- 50 Hz for variation around the base tone
+      const offset = (rand() * 100) - 50; 
+
+      let carrier = baseFreq + offset;
+      
+      // Clamp the final carrier to the desired 2nd/3rd octave range (approx 100 Hz to 450 Hz)
+      carrier = Math.max(100, Math.min(450, carrier)); 
+      carrier = Math.round(carrier * 10) / 10; // Round to 1 decimal place
+
+      // 3. Compute Beat Frequency (based on seed and day of month)
       const d = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
-      const year = d.getFullYear();
       const day = d.getDate();
-
-      const yearMod = (year % 100); 
-      let base = 200 + (yearMod / 99) * 300; 
-      const offset = ((seed % 101) - 50) * 1.0; 
-      const carrier = Math.max(120, Math.min(900, Math.round(base + offset)));
-
       const beat = 1 + ((seed + day) % 12); 
 
       return { carrier, beat };
     }
 
+
     function updateFrequencies() {
-      if (!currentParams) return;
+      if (!currentParams || !currentElementData) return;
       const seedVal = currentParams.seed || 12345;
       const dateVal = dateInput.value;
-      const auto = computeAudioFromSeed(seedVal, dateVal);
-      const beatVal = parseFloat(beatRange.value) || auto.beat;
-      const carrierVal = auto.carrier;
+
+      // Now pass elementData to computeAudioFromSeed
+      const audioData = computeAudioFromSeed(seedVal, dateVal, currentElementData);
+
+      const beatVal = parseFloat(beatRange.value) || audioData.beat;
+      const carrierVal = audioData.carrier;
 
       computedCarrier = carrierVal;
       computedBeat = beatVal;
@@ -866,7 +918,7 @@
     }
 
     // ============================================
-    // 7. APP LOGIC + UI + Fullscreen Lock + Keyboard (UPDATED)
+    // 7. APP LOGIC + UI + Fullscreen Lock + Keyboard 
     // ============================================
     const seedInput = document.getElementById('seed-input');
     const dateInput = document.getElementById('date-input');
@@ -906,10 +958,12 @@
       currentParams = generateParams(seed, currentElementData);
       archetypeDisplay.textContent = `${currentParams.archetype.name} / ${currentParams.complexity}`;
 
-      updateExplanationPanels(currentParams, currentElementData); // NEW: Update the dynamic panels
-      
-      computeAudioFromSeed(seed, date);
+      // Update audio first to get the computedCarrier before updating the UI panels
       updateFrequencies();
+
+      // Pass the computedCarrier to the explanation panels
+      updateExplanationPanels(currentParams, currentElementData, computedCarrier); 
+      
 
       if(!isAnimating) {
         drawMandala(ctx, 600, 600, currentParams, phase);
@@ -1045,8 +1099,9 @@
     function setSeedAndAudio() {
       const tib = convertToTibetan(seedInput.value || '');
       const seed = getNumericSeed(tib);
-      const date = dateInput.value;
-      const audioData = computeAudioFromSeed(seed, date);
+      currentElementData = getElementsFromDate(dateInput.value); // Ensure element data is fetched first
+      const audioData = computeAudioFromSeed(seed, dateInput.value, currentElementData);
+      
       if(!beatRange.dataset.touched) {
         beatRange.value = audioData.beat;
       }
@@ -1060,6 +1115,7 @@
       updateFrequencies();
     });
 
+    // Initial setup must call update and setSeedAndAudio
     update();
     setSeedAndAudio();
 
