@@ -408,8 +408,16 @@
       const m = [...elementData.month.colors];
       const d = [...elementData.day.colors];
 
-      // Assign colors randomly from the pool of three elemental palettes
-      const colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
+      let colorPool = [...p, ...m, ...d];
+
+      // --- FIX: Ensure Water (Blue) Representation ---
+      const WATER_COLORS = ELEMENTS.WATER.colors;
+      colorPool.push(WATER_COLORS[1]); // '#191970' (Dark Blue)
+      colorPool.push(WATER_COLORS[2]); // '#4682B4' (Medium Blue)
+      // --- END FIX ---
+      
+      // Assign colors randomly from the pool of three elemental palettes (now expanded)
+      colorPool.sort(() => rand() - 0.5);
 
       // 1. Create the palette strings for drawing (Used by canvas rendering)
       const colorStrings = [ 
