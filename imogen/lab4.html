@@ -498,8 +498,7 @@
       const cx = w/2, cy = h/2;
       const radius = Math.min(w, h)/2 * 0.95;
 
-      ctx.fillStyle = '#080706';
-      ctx.fillRect(0, 0, w, h);
+      // *** REMOVED BACKGROUND CLEAR - NOW HANDLED BY drawFrame ***
       
       // Draw all concentric rings first, up to the central geometry
       params.rings.forEach((ring, i) => {
@@ -834,7 +833,7 @@
 
     volRange.addEventListener('input', () => {
       if (!audioCtx) return;
-      const vol = parseFloat(vol.range.value);
+      const vol = parseFloat(volRange.value);
       masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.02);
     });
 
@@ -993,23 +992,29 @@
     let speed = 1.0;
     let isBloom = false;
     let phase = 0; 
-    let bloomIntensity = 0.5; // Used for bloom display, even if boolean isBloom controls the effect
+    let bloomIntensity = 0.5; // Controls the strength of the blur
 
     function drawFrame(context, w, h) {
       context.save();
+      
+      // 1. Clear Background (Moved from drawMandala)
+      context.fillStyle = '#080706';
+      context.fillRect(0, 0, w, h);
+      
       if (isBloom) {
-        // Draw low-res bloom layer
-        const blurSize = 10 * bloomIntensity;
+        // --- 2. BLURRED LAYER (The Glow) ---
+        const blurSize = 10 * bloomIntensity; 
         context.filter = `blur(${blurSize}px)`;
-        context.globalAlpha = 0.5;
+        context.globalAlpha = 0.6; // Slightly more visible glow
         drawMandala(context, w, h, currentParams, phase);
 
-        // Draw overlay for the center to keep it sharp
+        // --- 3. SHARP LAYER (The Detail) ---
         context.filter = 'none';
         context.globalAlpha = 1.0;
-        const centerR = Math.min(w, h)/2 * 0.95 * 0.15;
-        drawCenterSyllable(context, w/2, h/2, centerR, currentParams, phase);
+        // Draw the full mandala again, sharp, over the glow
+        drawMandala(context, w, h, currentParams, phase); 
       } else {
+        // --- STANDARD DRAWING ---
         context.filter = 'none';
         context.globalAlpha = 1.0;
         drawMandala(context, w, h, currentParams, phase);
@@ -1080,8 +1085,11 @@
 
     const setBloom = (state) => {
       isBloom = state;
-      document.getElementById('bloom-btn').style.color = isBloom ? '#fff' : '';
+      // Toggle button visual state
+      bloomBtn.style.color = isBloom ? '#fff' : '';
+      bloomBtn.style.borderColor = isBloom ? '#ffd700' : '';
       document.getElementById('fs-bloom').style.color = isBloom ? '#fff' : '';
+      document.getElementById('fs-bloom').style.borderColor = isBloom ? '#ffd700' : '';
       if(!isAnimating) update();
     }
     bloomBtn.addEventListener('click', () => setBloom(!isBloom));
@@ -1127,7 +1135,6 @@
           break;
         case ' ': // Space bar for Bloom
           setBloom(!isBloom);
-          update();
           e.preventDefault();
           break;
         case 'ArrowLeft':
