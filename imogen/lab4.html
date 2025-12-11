@@ -331,124 +331,149 @@
     // ============================================
     // Expanded Elements with colors and meanings for dynamic UI
     const ELEMENTS = {
-      METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'], meaning: 'White/Silver/Gold. Symbolizes Clarity, Structure, Autumn, and Rigidity. Represents the qualities of the sky and space.' },
-      WATER: { name: 'Water', colors: ['#000000', '#191970', '#4682B4', '#00CED1', '#E0FFFF'], meaning: 'Black/Dark Blue. Symbolizes Wisdom, Fluidity, Winter, and Contemplation. Represents the qualities of depth and consciousness.' },
-      WOOD:  { name: 'Wood',  colors: ['#006400', '#556B2F', '#8FBC8F', '#2E8B57', '#98FB98'], meaning: 'Green. Symbolizes Growth, Vitality, Spring, and Expansion. Represents the qualities of energy and upward motion.' },
-      FIRE:  { name: 'Fire',  colors: ['#800000', '#FF4500', '#FFD700', '#DC143C', '#FFA500'], meaning: 'Red/Orange. Symbolizes Transformation, Power, Summer, and Action. Represents the qualities of heat and purification.' },
+      METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'], meaning: 'White/Silver/Gold. Symbolizes Clarity, Purity, Autumn, and Solidity. Represents the qualities of concentration and indestructibility.' },
+      WATER: { name: 'Water', colors: ['#000000', '#191970', '#4682B4', '#00CED1', '#E0FFFF'], meaning: 'Black/Blue. Symbolizes Fluidity, Potential, Winter, and Wisdom. Represents the qualities of formlessness and adaptability.' },
+      WOOD: { name: 'Wood', colors: ['#006400', '#556B2F', '#8FBC8F', '#2E8B57', '#98FB98'], meaning: 'Green. Symbolizes Growth, Vitality, Spring, and Expansion. Represents the qualities of energy and upward motion.' },
+      FIRE: { name: 'Fire', colors: ['#800000', '#FF4500', '#FFD700', '#DC143C', '#FFA500'], meaning: 'Red/Orange. Symbolizes Transformation, Power, Summer, and Action. Represents the qualities of heat and purification.' },
       EARTH: { name: 'Earth', colors: ['#8B4513', '#D2691E', '#DAA520', '#F4A460', '#F5DEB3'], meaning: 'Yellow/Brown. Symbolizes Stability, Grounding, Center, and Accumulation. Represents the qualities of foundation and stability.' }
     };
 
     const MONTH_ELEMENTS = [
-        ELEMENTS.EARTH, ELEMENTS.EARTH,
-        ELEMENTS.WOOD,  ELEMENTS.WOOD,
-        ELEMENTS.FIRE,  ELEMENTS.FIRE,
-        ELEMENTS.METAL, ELEMENTS.METAL,
-        ELEMENTS.WATER, ELEMENTS.WATER,
-        ELEMENTS.EARTH, ELEMENTS.EARTH
+      ELEMENTS.EARTH, ELEMENTS.EARTH, // Jan, Feb
+      ELEMENTS.WOOD, ELEMENTS.WOOD, // Mar, Apr
+      ELEMENTS.FIRE, ELEMENTS.FIRE, // May, Jun
+      ELEMENTS.METAL, ELEMENTS.METAL, // Jul, Aug
+      ELEMENTS.WATER, ELEMENTS.WATER, // Sep, Oct
+      ELEMENTS.EARTH, ELEMENTS.EARTH  // Nov, Dec (Looping the cycle)
     ];
 
     function getElementsFromDate(dateStr) {
       const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
       const year = date.getFullYear();
       const month = date.getMonth(); // 0-11
-      const day = date.getDay(); // 0-6 (Sun=0)
+      const day = date.getDay(); // 0-6 (Sun=0, Sat=6)
 
-      const lastDigit = year % 10;
+      // 1. Year Element (Simplified 5-element cycle for visualization)
+      // Cycle: Wood(4,9) Fire(5,0) Earth(6,1) Metal(7,2) Water(8,3)
+      const yearDigit = year % 10;
       let yearElement;
-      if (lastDigit <= 1) yearElement = ELEMENTS.METAL;
-      else if (lastDigit <= 3) yearElement = ELEMENTS.WATER;
-      else if (lastDigit <= 5) yearElement = ELEMENTS.WOOD;
-      else if (lastDigit <= 7) yearElement = ELEMENTS.FIRE;
-      else yearElement = ELEMENTS.EARTH;
+      if (yearDigit === 4 || yearDigit === 9) yearElement = ELEMENTS.WOOD;
+      else if (yearDigit === 5 || yearDigit === 0) yearElement = ELEMENTS.FIRE;
+      else if (yearDigit === 6 || yearDigit === 1) yearElement = ELEMENTS.EARTH;
+      else if (yearDigit === 7 || yearDigit === 2) yearElement = ELEMENTS.METAL;
+      else yearElement = ELEMENTS.WATER; // 8, 3
 
+      // 2. Month Element (Simplified to 5 elements, two months per element)
       const monthElement = MONTH_ELEMENTS[month];
 
-      const dayElement = [
-        ELEMENTS.FIRE, ELEMENTS.WATER, ELEMENTS.FIRE,
-        ELEMENTS.WATER, ELEMENTS.WOOD, ELEMENTS.METAL, ELEMENTS.EARTH
-      ][day];
-      
-      return { 
-          year: yearElement,
-          month: monthElement,
-          day: dayElement,
-          label: `Y:${yearElement.name} / M:${monthElement.name} / D:${dayElement.name}`
-      };
+      // 3. Day Element (Simplified: Map Day of week to a primary element)
+      let dayElement;
+      if (day === 0) dayElement = ELEMENTS.EARTH; // Sunday -> Earth/Center
+      else if (day === 1) dayElement = ELEMENTS.WATER; // Monday -> Water
+      else if (day === 2) dayElement = ELEMENTS.FIRE; // Tuesday -> Fire
+      else if (day === 3) dayElement = ELEMENTS.WOOD; // Wednesday -> Wood
+      else if (day === 4) dayElement = ELEMENTS.WATER; // Thursday -> Water
+      else if (day === 5) dayElement = ELEMENTS.METAL; // Friday -> Metal
+      else dayElement = ELEMENTS.FIRE; // Saturday -> Fire
+
+      return { year: yearElement, month: monthElement, day: dayElement };
     }
 
+
     // ============================================
-    // 3. MANDALA GEOMETRY & SYMBOLISM (EXPANDED)
+    // 3. GEOMETRY SEEDING & ARCHETYPES
     // ============================================
     const TIBETAN_SYMBOLS = [
-        { char: '\u0F68\u0F74\u0F7C\u0F78', desc: 'OM', meaning: 'Body, Speech, and Mind (The Three Jewels). Focus on purity of action.' }, 
-        { char: '\u0F67\u0F72\u0F7E', desc: 'HRIH', meaning: 'Seed Syllable of Compassion (Avalokiteshvara). Focus on enlightened love.' }, 
-        { char: '\u0F61\u0F7B\u0F7E', desc: 'HRIM', meaning: 'Universal Seed Syllable. Focus on the integration of cosmic energies.' }, 
-        { char: '\u0F42\u0F7C\u0F7E\u0F58', desc: 'HUM', meaning: 'Diamond Seed Syllable (Vajra). Focus on indestructible awareness.' }, 
-        { char: '\u0F0B', desc: 'Dharma Wheel', meaning: 'The Eightfold Path. Focus on continuous spiritual progress.' },
-        { char: '\u0F0A', desc: 'Lotus', meaning: 'Purity and Non-attachment. Focus on rising above Samsara.' },
-        { char: '\u0F09', desc: 'Endless Knot', meaning: 'Interconnectedness of Cause and Effect. Focus on karmic continuity.' },
-        { char: '\u0F06', desc: 'Victory Banner', meaning: 'Victory over Ignorance. Focus on attainment of Enlightenment.' },
-        { char: '⚡', desc: 'Vajra', meaning: 'Adamantine Nature. Focus on power and indestructibility.' },
-        { char: '⚔', desc: 'Sword', meaning: 'Wisdom Sword (Manjushri). Focus on cutting through illusion.' }
+      { char: '\u0F42', desc: 'GA', meaning: 'The letter G. Core sound of compassion and primordial purity.' },
+      { char: '\u0F40', desc: 'KA', meaning: 'The letter K. Core sound for the manifestation of body, speech, and mind.' },
+      { char: '\u0F68', desc: 'A', meaning: 'The syllable A. Symbolizes the uncreated, primordial pure state of mind (Dzogchen).' },
+      { char: '\u0F4F', desc: 'TA', meaning: 'The letter T. Symbolizes non-duality and transcendence.' },
+      { char: '\u0F66', desc: 'SA', meaning: 'The letter S. Associated with the essence of all phenomena.' },
+      { char: '\u0F51', desc: 'DA', meaning: 'The letter D. Represents the stability and indestructibility.' },
+      { char: '⚔', desc: 'Sword', meaning: 'Wisdom Sword (Manjushri). Focus on cutting through illusion.' },
+      { char: '🔔', desc: 'Bell/Vajra', meaning: 'Vajra (Dorje). Represents diamond-like hardness and indestructibility.' } 
     ];
-    
+
     const ARCHETYPES = [
-        { name: 'Vajra Palace', index: 0, meaning: 'The Traditional square structure of the Tibetan Mandala, representing a purified heavenly dwelling (Bhumi) and the five Dhyani Buddhas.' },
-        { name: 'Sri Yantra', index: 1, meaning: 'A Hindu/Tantric structure of nine intersecting triangles, representing the cosmic union (Shiva and Shakti). Focus on creation and dissolution.' },
-        { name: 'Icosahedron Grid', index: 2, meaning: 'A Platonic Solid with 20 faces, symbolizing the element of Water in Sacred Geometry. Focus on fluidity, motion, and universal connection.' }
+      { name: 'Vajra Palace', index: 0, meaning: 'The Traditional square structure of the Tibetan Mandala, representing a purified heavenly dwelling (Bhumi) and the five Dhyani Buddhas.' },
+      { name: 'Sri Yantra', index: 1, meaning: 'A Hindu/Tantric structure of nine intersecting triangles, representing the cosmic union (Shiva and Shakti). Focus on creation and dissolution.' },
+      { name: 'Icosahedron Grid', index: 2, meaning: 'A Platonic Solid with 20 faces, symbolizing the element of Water in Sacred Geometry. Focus on fluidity, motion, and universal connection.' }
     ];
 
     function generateParams(seed, elementData) {
       const rand = mulberry32(seed);
-      
+
       // Get colors from the three elements and randomize
       const p = [...elementData.year.colors];
       const m = [...elementData.month.colors];
       const d = [...elementData.day.colors];
 
-      p.sort(() => rand() - 0.5);
-      m.sort(() => rand() - 0.5);
-      d.sort(() => rand() - 0.5);
+      // Assign colors randomly from the pool of three elemental palettes
+      const colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
 
       // 1. Create the palette strings for drawing (Used by canvas rendering)
-      const colorStrings = [ p[0], m[0], d[0], p[1], m[1] ];
-
-      // 2. Create the mapping for UI explanation 
-      const paletteMapping = [
-        { color: p[0], source: `Year's ${elementData.year.name} (Primary)` },
-        { color: m[0], source: `Month's ${elementData.month.name} (Primary)` },
-        { color: d[0], source: `Day's ${elementData.day.name} (Primary)` },
-        { color: p[1], source: `Year's ${elementData.year.name} (Secondary)` },
-        { color: m[1], source: `Month's ${elementData.month.name} (Secondary)` }
+      const colorStrings = [ 
+        colorPool[0] || p[0], // Primary color
+        colorPool[1] || m[0], // Secondary color
+        colorPool[2] || d[0], // Tertiary color
+        colorPool[3] || p[1], // Accent 1
+        colorPool[4] || m[1]  // Accent 2 (Center)
       ];
 
-      // Existing variables, adjusted by complexity
+      // 2. Create the mapping for UI explanation
+      const paletteMapping = [];
+      const sources = ['Year', 'Month', 'Day', 'Year', 'Month', 'Day'];
+      for(let i=0; i<5; i++) {
+        paletteMapping.push({
+          color: colorStrings[i],
+          source: sources[Math.floor(rand()*3)] // Random source tag for visual explanation
+        });
+      }
+
+      // Mandala Geometry/Archetype Selection
       const archetypeIndex = seed % ARCHETYPES.length;
-      const complexity = ((seed >> 4) % 10) / 10.0; // 0.0 to 0.9 scale
-      const sriYantraDepth = (seed % 5) + 3; // 3 to 7 nested triangles
-      const solidRotation = rand() * 2 * Math.PI;
-      const secondarySymbolIndex = (seed >> 8) % TIBETAN_SYMBOLS.length;
-      
-      const ringCount = 3 + Math.floor(complexity * 10); // up to 12 rings
-      const petals = [8, 12, 16, 24, 32][seed % 5];
+      const archetype = ARCHETYPES[archetypeIndex];
+
+      // Complexity Factor (from 0.1 to 1.0, based on seed's variety)
+      let complexity = ((seed % 900) / 900) + 0.1; // Range 0.1 to 1.0
+
+      // Geometry parameters based on seed
+      const centerType = seed % 3; // 0: circle, 1: square, 2: star
+      const midType = Math.floor(rand() * 4); // 0: petals, 1: simple, 2: star, 3: complex
+      const outerType = Math.floor(rand() * 2); // 0: lines, 1: waves
+
+      const ringCount = 5 + Math.floor(complexity * 10);
+      const petals = [8, 12, 16, 24][seed % 4];
 
       const rings = [];
       for(let i=0; i<ringCount; i++) {
         rings.push({
-          r: 0.15 + (i/ringCount)*0.7,
+          r: 0.15 + (i/ringCount)*0.85 * (archetype.index === 0 ? 0.7 : 1),
           color: colorStrings[Math.floor(rand()*5)],
-          width: 1 + rand() * 4 * complexity, 
-          style: Math.floor(rand() * 4) 
+          width: 1 + rand() * 4 * (1 + complexity*0.5),
+          style: Math.floor(rand() * 4) // Style 0: Line, 1: Dots, 2: Double Line, 3: Symbols
         });
       }
 
       const symbolIndex = seed % TIBETAN_SYMBOLS.length;
+      const secondarySymbolIndex = (seed + 1) % TIBETAN_SYMBOLS.length;
 
-      return { 
-        seed, 
-        palette: colorStrings, // Used by drawing code
-        paletteMapping,        // Used by UI explanation
-        ringCount, petals, rings, symbolIndex, secondarySymbolIndex,
+      // Archetype specific parameters
+      const sriYantraDepth = 5 + Math.floor(complexity * 4);
+      const solidRotation = rand() * Math.PI * 2;
+
+      return {
+        seed,
+        palette: colorStrings,
+        paletteMapping, // For UI explanation
+        centerType,
+        midType,
+        outerType,
+        ringCount,
+        petals,
+        rings,
+        symbolIndex,
+        secondarySymbolIndex,
         archetype: ARCHETYPES[archetypeIndex],
         complexity: complexity.toFixed(2),
         sriYantraDepth,
@@ -459,13 +484,15 @@
     // ============================================
     // 4. DRAWING IMPLEMENTATION (REVISED FOR ARCHETYPES)
     // ============================================
+
+    // Main Draw Function
     function drawMandala(ctx, w, h, params, phase) {
       const cx = w/2, cy = h/2;
       const radius = Math.min(w, h)/2 * 0.95;
 
       ctx.fillStyle = '#080706';
       ctx.fillRect(0, 0, w, h);
-
+      
       // Draw all concentric rings first, up to the central geometry
       params.rings.forEach((ring, i) => {
         drawRing(ctx, cx, cy, radius * ring.r, ring, params, phase, i);
@@ -473,161 +500,203 @@
 
       // Switch based on Archetype
       switch(params.archetype.index) {
-        case 0:
-          drawVajraPalace(ctx, cx, cy, radius * 0.4, params, phase);
-          break;
-        case 1:
-          drawSriYantra(ctx, cx, cy, radius * 0.7, params, phase);
-          break;
-        case 2:
-          drawIcosahedron(ctx, cx, cy, radius * 0.7, params, phase);
-          break;
-        default:
-          drawVajraPalace(ctx, cx, cy, radius * 0.4, params, phase);
+        case 0: drawVajraPalace(ctx, cx, cy, radius * 0.4, params, phase); break;
+        case 1: drawSriYantra(ctx, cx, cy, radius * 0.7, params, phase); break;
+        case 2: drawIcosahedron(ctx, cx, cy, radius * 0.7, params, phase); break;
+        default: drawVajraPalace(ctx, cx, cy, radius * 0.4, params, phase); 
       }
       
       // Draw the central syllable last for maximum visual impact
-      drawCenterSyllable(ctx, cx, cy, radius * 0.1, params);
+      drawCenterSyllable(ctx, cx, cy, radius * 0.1, params, phase);
     }
 
-    // --- ARCHETYPE 0: VAJRA PALACE (Traditional) ---
+    // --- ARCHETYPE 0: VAJRA PALACE (Traditional Tibetan Mandala) ---
     function drawVajraPalace(ctx, cx, cy, r, params, phase) {
-      const s = r * 2;
+      // 1. Draw Inner Circle/Square
+      ctx.fillStyle = params.palette[3];
+      if (params.centerType === 0) {
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.9, 0, Math.PI * 2); ctx.fill();
+      } else if (params.centerType === 1) {
+        ctx.fillRect(cx - r * 0.9, cy - r * 0.9, r * 1.8, r * 1.8);
+      } else {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(phase * 0.05);
+        drawStar(ctx, r * 0.9, 8, 0.5); ctx.restore();
+      }
+      
+      // 2. Draw Petals / Inner Geometry (Mid Layer)
+      const petalDist = r * 1.5;
+      const petalWidth = 0.02 * petalDist;
+      const petalCount = params.petals;
+
+      if (params.midType === 0) { // Petals
+        for (let i = 0; i < petalCount; i++) {
+          const angle = (i / petalCount) * Math.PI * 2 + phase * 0.02;
+          drawPetal(ctx, cx, cy, petalDist, angle, petalWidth, params.palette[1], params.palette[3]);
+        }
+      } else if (params.midType === 1) { // Simple Lines
+        ctx.strokeStyle = params.palette[1];
+        ctx.lineWidth = 1;
+        for (let i = 0; i < petalCount; i++) {
+          const a = (i / petalCount) * Math.PI * 2 + phase * 0.02;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a) * petalDist, cy + Math.sin(a) * petalDist);
+          ctx.stroke();
+        }
+      } else if (params.midType === 2) { // Star Pattern
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(phase * -0.01);
+        ctx.strokeStyle = params.palette[1]; ctx.lineWidth = 2;
+        drawStar(ctx, r*2.5, 5, 0.4); ctx.stroke();
+        ctx.restore();
+      } else if (params.midType === 3) { // Grid Pattern
+         ctx.save(); ctx.translate(cx, cy); ctx.rotate(phase * 0.005);
+         ctx.strokeStyle = params.palette[1]; ctx.lineWidth = 1;
+         const lines = 12;
+         for (let i=0; i<lines; i++) {
+            const a = (i/lines)*Math.PI*2;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a)*r*0.2, Math.sin(a)*r*0.2);
+            ctx.lineTo(Math.cos(a)*r*2.5, Math.sin(a)*r*2.5);
+            ctx.stroke();
+         }
+         ctx.restore();
+      }
+    }
+
+    // --- ARCHETYPE 1: SRI YANTRA (Interlocking Triangles) ---
+    function drawSriYantra(ctx, cx, cy, r, params, phase) {
+      const depth = params.sriYantraDepth; // 5-9 depth
+      let currentSize = r * 0.9;
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(phase * 0.01);
-      
-      ctx.strokeStyle = params.palette[3]; 
-      ctx.lineWidth = 4;
-      ctx.strokeRect(-r, -r, s, s);
+      let currentRotation = params.solidRotation + phase * 0.005;
 
-      const gateW = s * 0.1;
-      const gateH = s * 0.15;
-      const gateColor = params.palette[0]; 
-
-      const drawGate = (offsetX, offsetY, rotation) => {
-          ctx.save();
-          ctx.rotate(rotation);
-          ctx.fillStyle = gateColor;
-          ctx.fillRect(-gateW/2, -r - gateH, gateW, gateH);
-          ctx.restore();
-      };
-      drawGate(0, 0, 0); drawGate(0, 0, Math.PI);
-      drawGate(0, 0, Math.PI/2); drawGate(0, 0, -Math.PI/2);
-      
-      ctx.restore();
-    }
-
-    // --- ARCHETYPE 1: SRI YANTRA ---
-    function drawSriYantra(ctx, cx, cy, r, params, phase) {
-        const depth = params.sriYantraDepth;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(phase * 0.05);
-
+      // Draw the interlocking triangles
+      for(let i=0; i<depth; i++) {
+        // Upward triangle
         ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.strokeStyle = params.palette[1];
-        ctx.lineWidth = 5;
+        ctx.moveTo(Math.cos(currentRotation) * currentSize, Math.sin(currentRotation) * currentSize);
+        ctx.lineTo(Math.cos(currentRotation + 2 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 2 * Math.PI / 3) * currentSize);
+        ctx.lineTo(Math.cos(currentRotation + 4 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 4 * Math.PI / 3) * currentSize);
+        ctx.closePath();
+        ctx.strokeStyle = i % 2 === 0 ? params.palette[1] : params.palette[2];
+        ctx.lineWidth = 2 + (depth - i) * 0.5;
         ctx.stroke();
 
-        const baseSize = r * 0.9;
-        let currentSize = baseSize;
-        let currentRotation = 0;
+        // Downward triangle, slightly offset
+        ctx.beginPath();
+        currentRotation += Math.PI / 3;
+        ctx.moveTo(Math.cos(currentRotation) * currentSize, Math.sin(currentRotation) * currentSize);
+        ctx.lineTo(Math.cos(currentRotation + 2 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 2 * Math.PI / 3) * currentSize);
+        ctx.lineTo(Math.cos(currentRotation + 4 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 4 * Math.PI / 3) * currentSize);
+        ctx.closePath();
+        ctx.strokeStyle = i % 2 === 0 ? params.palette[4] : params.palette[3];
+        ctx.lineWidth = 2 + (depth - i) * 0.5;
+        ctx.stroke();
 
-        for (let i = 0; i < depth; i++) {
-            // Upward triangle
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(currentRotation) * currentSize, Math.sin(currentRotation) * currentSize);
-            ctx.lineTo(Math.cos(currentRotation + 2 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 2 * Math.PI / 3) * currentSize);
-            ctx.lineTo(Math.cos(currentRotation + 4 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 4 * Math.PI / 3) * currentSize);
-            ctx.closePath();
-            
-            ctx.strokeStyle = i % 2 === 0 ? params.palette[2] : params.palette[0];
-            ctx.lineWidth = 2 + (depth - i) * 0.5;
-            ctx.stroke();
-
-            // Downward triangle, slightly offset
-            ctx.beginPath();
-            currentRotation += Math.PI / 3;
-            ctx.moveTo(Math.cos(currentRotation) * currentSize, Math.sin(currentRotation) * currentSize);
-            ctx.lineTo(Math.cos(currentRotation + 2 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 2 * Math.PI / 3) * currentSize);
-            ctx.lineTo(Math.cos(currentRotation + 4 * Math.PI / 3) * currentSize, Math.sin(currentRotation + 4 * Math.PI / 3) * currentSize);
-            ctx.closePath();
-            ctx.strokeStyle = i % 2 === 0 ? params.palette[4] : params.palette[3];
-            ctx.lineWidth = 2 + (depth - i) * 0.5;
-            ctx.stroke();
-            currentRotation -= Math.PI / 3;
-
-            currentSize *= 0.7;
-            currentRotation += phase * 0.01; 
-        }
-
-        ctx.restore();
+        currentRotation -= Math.PI / 3;
+        currentSize *= 0.7;
+        currentRotation += phase * 0.01;
+      }
+      ctx.restore();
     }
 
     // --- ARCHETYPE 2: ICOSAHEDRON GRID ---
     function drawIcosahedron(ctx, cx, cy, r, params, phase) {
-        const vertices = 12;
-        const radius = r * 0.9;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(params.solidRotation + phase * 0.1);
+      const vertices = 12;
+      const radius = r * 0.9;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(params.solidRotation + phase * 0.005);
+      
+      const goldenRatio = (1 + Math.sqrt(5)) / 2;
+      const vertexPositions = [];
+      const offsetAngle = phase * 0.05;
 
-        const goldenRatio = (1 + Math.sqrt(5)) / 2;
-        const vertexPositions = [];
-        
-        const offsetAngle = phase * 0.05;
-
-        for (let i = 0; i < vertices; i++) {
-            const angle = (i / vertices) * Math.PI * 2 + offsetAngle;
-            const r_eff = radius * (1 + Math.sin(i * goldenRatio + phase*5) * 0.1); 
-            vertexPositions.push({
-                x: Math.cos(angle) * r_eff,
-                y: Math.sin(angle) * r_eff,
-            });
-        }
-
-        ctx.strokeStyle = params.palette[0];
-        ctx.lineWidth = 1 + params.complexity * 5;
-        ctx.globalAlpha = 0.5;
-        
-        for (let i = 0; i < vertices; i++) {
-            for (let j = i + 1; j < vertices; j++) {
-                if ((j - i) % vertices <= 2 || (j - i) % vertices >= vertices - 2) { 
-                    ctx.beginPath();
-                    ctx.moveTo(vertexPositions[i].x, vertexPositions[i].y);
-                    ctx.lineTo(vertexPositions[j].x, vertexPositions[j].y);
-                    ctx.stroke();
-                }
-            }
-        }
-        ctx.globalAlpha = 1.0;
-
-        ctx.fillStyle = params.palette[2];
-        vertexPositions.forEach(v => {
+      // Generate 12 vertices of an Icosahedron (projection)
+      // Six vertices on each of the two horizontal planes
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        // Upper layer (z=1)
+        vertexPositions.push({ x: radius * Math.cos(angle + offsetAngle) / goldenRatio, y: radius * Math.sin(angle + offsetAngle) / goldenRatio });
+        // Lower layer (z=-1)
+        vertexPositions.push({ x: radius * Math.cos(angle - offsetAngle + Math.PI/6) / goldenRatio, y: radius * Math.sin(angle - offsetAngle + Math.PI/6) / goldenRatio });
+      }
+      
+      // Draw all connections (edges of the Icosahedron)
+      ctx.strokeStyle = params.palette[2];
+      ctx.lineWidth = 1;
+      for (let i = 0; i < vertices; i++) {
+        for (let j = i + 1; j < vertices; j++) {
+          const p1 = vertexPositions[i];
+          const p2 = vertexPositions[j];
+          // Simple distance check to simulate 3D proximity/connection (only connect vertices that are 'close')
+          const distSq = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
+          if (distSq < (radius * 0.7) ** 2) {
             ctx.beginPath();
-            ctx.arc(v.x, v.y, 4 + params.complexity * 5, 0, Math.PI * 2);
-            ctx.fill();
-        });
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      }
+      
+      // Draw a dot on each vertex
+      ctx.fillStyle = params.palette[4];
+      vertexPositions.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
 
-        ctx.restore();
+      ctx.restore();
     }
 
-    // --- UNIVERSAL LAYERS ---
-    function drawCenterSyllable(ctx, cx, cy, r, params) {
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-        ctx.fillStyle = params.palette[4];
-        ctx.fill();
-        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
+    // Helper functions
+    function drawCenterSyllable(ctx, cx, cy, r, params, phase) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fillStyle = params.palette[4];
+      ctx.fill();
+      ctx.strokeStyle = params.palette[0];
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-        const symbolData = TIBETAN_SYMBOLS[params.symbolIndex];
-        
-        ctx.fillStyle = params.palette[3];
-        ctx.font = `${r*0.8}px 'Noto Serif Tibetan', sans-serif`;
-        ctx.textAlign = 'center'; 
-        ctx.textBaseline = 'middle';
-        ctx.fillText(symbolData.char, cx, cy);
+      const symbolData = TIBETAN_SYMBOLS[params.symbolIndex];
+      ctx.fillStyle = params.palette[3];
+      ctx.font = `${r*0.8}px 'Noto Serif Tibetan', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(symbolData.char, cx, cy);
+    }
+
+    function drawPetal(ctx, cx, cy, dist, angle, width, fill, stroke) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.quadraticCurveTo(dist*0.6, width, dist, 0);
+      ctx.quadraticCurveTo(dist*0.6, -width, 0, 0);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawStar(ctx, r, points, innerRatio) {
+      ctx.beginPath();
+      for (let i = 0; i < points * 2; i++) {
+        const radius = i % 2 === 0 ? r : r * innerRatio;
+        const angle = (i / (points * 2)) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
     }
 
     function drawRing(ctx, cx, cy, r, ring, params, phase, idx) {
@@ -635,161 +704,57 @@
       ctx.lineWidth = ring.width;
       ctx.beginPath();
       
-      const complexityFactor = parseFloat(params.complexity) + 0.1;
+      const complexityFactor = parseFloat(params.complexity) * 0.5;
 
-      if(ring.style === 1) { // Dots
+      if (ring.style === 1) { // Dots
         const dots = 24 + Math.floor(complexityFactor * 30);
         for(let i=0; i<dots; i++) {
           const a = (i/dots)*Math.PI*2 + phase*(idx%2?0.1:-0.1);
           const x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
-          ctx.moveTo(x, y); ctx.arc(x, y, ring.width*1.5, 0, Math.PI*2);
+          ctx.moveTo(x, y);
+          ctx.arc(x, y, ring.width*1.5, 0, Math.PI*2);
         }
-        ctx.fillStyle=ring.color; ctx.fill();
+        ctx.fillStyle=ring.color;
+        ctx.fill();
       } else if (ring.style === 2) { // Double Line
-        ctx.arc(cx, cy, r - ring.width/2, 0, Math.PI*2); ctx.stroke();
+        ctx.arc(cx, cy, r - ring.width/2, 0, Math.PI*2);
+        ctx.stroke();
         ctx.beginPath();
-        ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2); ctx.stroke();
+        ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2);
+        ctx.stroke();
       } else if (ring.style === 3) { // Symbols along path
         const symbol = TIBETAN_SYMBOLS[params.secondarySymbolIndex].char;
         const count = 12 + Math.floor(complexityFactor * 10);
-        
         ctx.font = `${ring.width * 5}px 'Noto Serif Tibetan', sans-serif`;
         ctx.fillStyle = ring.color;
-        
         for(let i=0; i<count; i++) {
-            const a = (i/count)*Math.PI*2 + phase*0.1;
-            const x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
-            
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(a + Math.PI/2); 
-            ctx.fillText(symbol, 0, 0); 
-            ctx.restore();
+          const a = (i/count)*Math.PI*2 + phase*0.1;
+          const x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(a + Math.PI/2);
+          ctx.fillText(symbol, 0, 0);
+          ctx.restore();
         }
-      } else { // Single Line
-        ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+      } else { // Single Line (Style 0)
+        ctx.arc(cx, cy, r, 0, Math.PI*2);
+        ctx.stroke();
       }
     }
 
 
-    // Bloom uses intensity to set blur and alpha (UNCHANGED)
-    function applyBloom(source, destCtx, w, h, intensity) {
-      if (!window.bloomCvs) { window.bloomCvs = document.createElement('canvas'); }
-      window.bloomCvs.width = w; window.bloomCvs.height = h;
-      const bCtx = window.bloomCvs.getContext('2d');
-      
-      bCtx.clearRect(0,0,w,h);
-      bCtx.drawImage(source, 0, 0, w, h);
-
-      const blurPx = 2 + intensity * 30;
-      bCtx.filter = `blur(${blurPx}px)`;
-
-      const temp = document.createElement('canvas');
-      temp.width = w; temp.height = h;
-      const tctx = temp.getContext('2d');
-      tctx.filter = `blur(${blurPx}px)`;
-      tctx.drawImage(window.bloomCvs, 0, 0, w, h);
-
-      destCtx.save();
-      destCtx.globalCompositeOperation = 'lighter';
-      destCtx.globalAlpha = 0.15 + intensity * 0.6;
-      destCtx.drawImage(temp, 0, 0);
-      destCtx.restore();
-    }
-    
     // ============================================
-    // 5. DYNAMIC UI EXPLANATION LOGIC (UPDATED)
+    // 5. AUDIO INTEGRATION (REVISED)
     // ============================================
-    // NEW: Base frequencies for the 5 elements based on 432 Hz tuning (A=432)
-    const ELEMENT_FREQUENCIES = {
-        METAL: { freq: 432.0, note: "A3 (Highest Tone)", explanation: "Corresponds to the highest vibrational tone (e.g., Crown Chakra/Akasha), promoting clarity and spiritual connection." },
-        FIRE:  { freq: 343.4, note: "F3 (High Tone)", explanation: "Corresponds to the Heart or Solar Plexus, fostering transformation, action, and illumination." },
-        WOOD:  { freq: 288.0, note: "D3 (Mid Tone)", explanation: "Corresponds to the Throat or Liver (expansion), supporting vitality, growth, and expression." },
-        WATER: { freq: 216.0, note: "A2 (Low Tone)", explanation: "Corresponds to the Sacral Chakra (flow), encouraging contemplation, wisdom, and fluidity." },
-        EARTH: { freq: 172.8, note: "F2 (Lowest Tone)", explanation: "Corresponds to the Root Chakra, providing stability, grounding, and physical foundation." }
+    // Mapping of Five Elements to Solfeggio/Planetary Frequencies (approximate)
+    const SOUND_ELEMENT_MAPPING = {
+      METAL: { freq: 432, note: "A4 (Universal Tuner)", explanation: "Corresponds to the Crown Chakra, representing the highest clarity, perfection, and connection to the divine." },
+      WATER: { freq: 194.18, note: "G#2 (Earth Day Tone)", explanation: "Corresponds to the Sacral Chakra, influencing flow, emotion, and creativity." },
+      WOOD: { freq: 285, note: "Rejuvenation Frequency", explanation: "Corresponds to the Throat Chakra, promoting growth, expression, and vitality." },
+      FIRE: { freq: 396, note: "UT Solfeggio", explanation: "Corresponds to the Solar Plexus Chakra, releasing fear, promoting transformation, and strengthening will." },
+      EARTH: { freq: 172.8, note: "F2 (Lowest Tone)", explanation: "Corresponds to the Root Chakra, providing stability, grounding, and physical foundation." }
     };
-    
-    function updateExplanationPanels(params, elementData, computedCarrier) {
-        const leftPanel = document.getElementById('left-panel-content');
-        const rightPanel = document.getElementById('right-panel-content');
 
-        // --- LEFT PANEL: COLOR & ELEMENT ---
-        let leftHTML = `
-            <h3>Elemental Alchemy (Jungtsi)</h3>
-            <p>The date determines three dominant elements (Year, Month, Day), which collectively set the color harmony of this Mandala.</p>
-            
-            <h4>Source Elements & Meaning</h4>
-            <ul>
-                <li><strong>Year:</strong> ${elementData.year.name} (${elementData.year.colors[0]}) - ${elementData.year.meaning.split('. ')[0]}.</li>
-                <li><strong>Month:</strong> ${elementData.month.name} (${elementData.month.colors[0]}) - ${elementData.month.meaning.split('. ')[0]}.</li>
-                <li><strong>Day:</strong> ${elementData.day.name} (${elementData.day.colors[0]}) - ${elementData.day.meaning.split('. ')[0]}.</li>
-            </ul>
-
-            <h4>Assigned Palette (Primary Colors)</h4>
-            <p>These five colors were randomly selected and assigned from the dominant elements' color ranges, controlling all ring colors:</p>
-            <ul>
-        `;
-        params.paletteMapping.forEach((item, index) => {
-            leftHTML += `
-                <li><span class="color-block" style="background-color: ${item.color}"></span>Color ${index + 1}: ${item.color} (from <strong>${item.source}</strong>)</li>
-            `;
-        });
-        leftHTML += `</ul>`;
-        leftPanel.innerHTML = leftHTML;
-
-
-        // --- RIGHT PANEL: GEOMETRY, SYMBOL, & AUDIO ---
-        const primarySymbol = TIBETAN_SYMBOLS[params.symbolIndex];
-        const secondarySymbol = TIBETAN_SYMBOLS[params.secondarySymbolIndex];
-        const archetype = params.archetype;
-        const complexityText = `The density factor is ${params.complexity} (max 0.9). This value controls the number of concentric rings (${params.ringCount}) and the intricacy (line thickness/detail) of the symbolic patterns in the borders.`;
-        
-        let rightHTML = `
-            <h3>Geometric Seed & Structure</h3>
-            <p>The phonetic signature of the name input determines the entire geometric configuration (Archetype, Complexity, and Symbols).</p>
-
-            <h4>Mandala Archetype: ${archetype.name}</h4>
-            <p><strong>Meaning:</strong> ${archetype.meaning}</p>
-            
-        `;
-
-        if (archetype.index === 1) { // Sri Yantra Specific Detail
-            rightHTML += `<p><strong>Structure Detail:</strong> This yantra uses ${params.sriYantraDepth} nested triangle layers to represent the hierarchy of planes.</p>`;
-        }
-        
-        rightHTML += `
-            <h4>Central Symbol (Bindu)</h4>
-            <ul>
-                <li><strong>Symbol:</strong> <span class="tibetan-font">${primarySymbol.char}</span> (${primarySymbol.desc})</li>
-                <li><strong>Focus:</strong> ${primarySymbol.meaning}</li>
-            </ul>
-
-            <h4>Geometric Parameters</h4>
-            <p>${complexityText}</p>
-            <p>The outer rings also frequently utilize the **${secondarySymbol.desc}** (<span class="tibetan-font">${secondarySymbol.char}</span>) as a secondary protective/decorative glyph.</p>
-        `;
-
-        // NEW: Audio Explanation
-        const dayElementData = ELEMENT_FREQUENCIES[elementData.day.name.toUpperCase()];
-        rightHTML += `
-            <h4>Elemental Resonant Frequencies</h4>
-            <p>The **Day Element** (${elementData.day.name}) sets the fundamental therapeutic carrier frequency based on popular 432 Hz tuning systems to support its inherent qualities.</p>
-            <ul>
-                <li><strong>Elemental Tone:</strong> ${dayElementData.note} (Base ${dayElementData.freq.toFixed(1)} Hz)</li>
-                <li><strong>Interpretation:</strong> ${dayElementData.explanation}</li>
-                <li><strong>Final Carrier:</strong> ${computedCarrier.toFixed(1)} Hz 
-                    <span style="font-size:0.7em; color:#8a7a6a;">(within 2nd/3rd Octave, adjusted by name seed)</span>
-                </li>
-            </ul>
-        `;
-
-        rightPanel.innerHTML = rightHTML;
-    }
-
-
-    // ============================================
-    // 6. AUDIO - BINAURAL IMPLEMENTATION (UPDATED)
-    // ============================================
     let audioCtx = null;
     let leftOsc = null;
     let rightOsc = null;
@@ -797,7 +762,11 @@
     let rightPan = null;
     let masterGain = null;
     let isAudioPlaying = false;
+    let computedCarrier = 0;
+    let computedBeat = 0;
+    let currentElementData = null; // Stored element data
 
+    // UI elements
     const beatRange = document.getElementById('beat-range');
     const volRange = document.getElementById('vol-range');
     const audioToggle = document.getElementById('audio-toggle');
@@ -808,27 +777,28 @@
       masterGain = audioCtx.createGain();
       masterGain.gain.value = parseFloat(volRange.value) || 0.06;
 
+      // left chain
       leftOsc = audioCtx.createOscillator();
       leftOsc.type = 'sine';
       leftPan = audioCtx.createStereoPanner();
-      leftPan.pan.value = -1;
+      leftPan.pan.value = -1; 
 
+      // right chain
       rightOsc = audioCtx.createOscillator();
       rightOsc.type = 'sine';
       rightPan = audioCtx.createStereoPanner();
-      rightPan.pan.value = 1;
+      rightPan.pan.value = 1; 
 
+      // combine -> master
       leftOsc.connect(leftPan);
       leftPan.connect(masterGain);
-
       rightOsc.connect(rightPan);
       rightPan.connect(masterGain);
-
       masterGain.connect(audioCtx.destination);
 
+      // start oscillators but set gain to zero until play pressed
       leftOsc.start();
       rightOsc.start();
-
       isAudioPlaying = false;
     }
 
@@ -838,6 +808,7 @@
       isAudioPlaying = true;
       audioToggle.textContent = 'Audio ⏸';
       masterGain.gain.setTargetAtTime(parseFloat(volRange.value) || 0.06, audioCtx.currentTime, 0.02);
+      updateFrequencies();
     }
 
     function pauseAudio() {
@@ -855,70 +826,133 @@
 
     volRange.addEventListener('input', () => {
       if (!audioCtx) return;
-      const v = parseFloat(volRange.value);
-      masterGain.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), audioCtx.currentTime, 0.02);
+      const vol = parseFloat(volRange.value);
+      masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.02);
     });
 
-    beatRange.addEventListener('input', () => {
-      updateFrequencies(); 
-    });
-
-    let computedCarrier = 220;
-    let computedBeat = 6;
-
-    // NEW: Function to compute carrier based on element and ensure it's in the 2nd/3rd octave range
+    // Audio Seeding Logic
     function computeAudioFromSeed(seed, dateStr, elementData) {
-      // 1. Get Base Carrier from Day's Main Element
-      const dayElement = elementData.day.name; 
-      const baseFreq = ELEMENT_FREQUENCIES[dayElement.toUpperCase()].freq;
+      // Prioritize the element with the highest frequency to set the carrier tone
+      const elements = [elementData.year, elementData.month, elementData.day];
+      const primaryElement = elements.reduce((prev, current) => {
+        const prevFreq = SOUND_ELEMENT_MAPPING[prev.name.toUpperCase()].freq;
+        const currentFreq = SOUND_ELEMENT_MAPPING[current.name.toUpperCase()].freq;
+        return (currentFreq > prevFreq) ? current : prev;
+      });
 
-      // 2. Use the name seed to create a small offset for variation (ensures full range use)
-      const rand = mulberry32(seed);
-      // Offset by +/- 50 Hz for variation around the base tone
-      const offset = (rand() * 100) - 50; 
+      const carrierFreq = SOUND_ELEMENT_MAPPING[primaryElement.name.toUpperCase()].freq;
 
-      let carrier = baseFreq + offset;
-      
-      // Clamp the final carrier to the desired 2nd/3rd octave range (approx 100 Hz to 450 Hz)
-      carrier = Math.max(100, Math.min(450, carrier)); 
-      carrier = Math.round(carrier * 10) / 10; // Round to 1 decimal place
+      // The beat frequency is based on the day of the month
+      const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
+      const dayOfMonth = date.getDate();
+      // Map 1-31 days to a beat range (e.g., 2.0Hz to 10.0Hz)
+      const beat = 2.0 + (dayOfMonth / 31) * 8.0;
 
-      // 3. Compute Beat Frequency (based on seed and day of month)
-      const d = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
-      const day = d.getDate();
-      const beat = 1 + ((seed + day) % 12); 
-
-      return { carrier, beat };
+      return {
+        carrier: carrierFreq,
+        beat: beat,
+        element: primaryElement,
+      };
     }
 
-
     function updateFrequencies() {
-      if (!currentParams || !currentElementData) return;
-      const seedVal = currentParams.seed || 12345;
+      const seedVal = seedInput.value || "phonetic";
       const dateVal = dateInput.value;
-
       // Now pass elementData to computeAudioFromSeed
-      const audioData = computeAudioFromSeed(seedVal, dateVal, currentElementData);
+      const audioData = computeAudioFromSeed(getNumericSeed(convertToTibetan(seedVal)), dateVal, currentElementData);
 
+      // If user adjusted beat slider manually, take that value, else auto.beat
       const beatVal = parseFloat(beatRange.value) || audioData.beat;
       const carrierVal = audioData.carrier;
 
       computedCarrier = carrierVal;
       computedBeat = beatVal;
 
+      // left & right frequencies:
       const leftFreq = computedCarrier - (computedBeat / 2);
       const rightFreq = computedCarrier + (computedBeat / 2);
 
+      // ensure audio nodes exist
       if (!audioCtx) return;
 
+      // Set oscillator frequencies smoothly if playing
       if (leftOsc && rightOsc) {
         leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), audioCtx.currentTime, 0.03);
         rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), audioCtx.currentTime, 0.03);
       }
+      
+      // Update explanation panels with final carrier frequency
+      updateExplanationPanels(currentParams, currentElementData, computedCarrier);
     }
 
+
     // ============================================
-    // 7. APP LOGIC + UI + Fullscreen Lock + Keyboard 
+    // 6. UI & EXPLANATION PANELS
+    // ============================================
+
+    function updateExplanationPanels(params, elementData, computedCarrier) {
+      const leftPanel = document.getElementById('left-panel-content');
+      const rightPanel = document.getElementById('right-panel-content');
+      const primaryAudioElement = Object.values(SOUND_ELEMENT_MAPPING).find(e => e.freq === computedCarrier);
+
+
+      // --- LEFT PANEL: COLOR & ELEMENT ---
+      let leftHTML = `
+        <h3>Elemental Alchemy (Jungtsi)</h3>
+        <p>The date determines three dominant elements (Year, Month, Day), which collectively set the color harmony of this Mandala.</p>
+        <h4>Source Elements & Meaning</h4>
+        <ul>
+          <li><strong>Year:</strong> ${elementData.year.name} - ${elementData.year.meaning.split('. ')[0]}.</li>
+          <li><strong>Month:</strong> ${elementData.month.name} - ${elementData.month.meaning.split('. ')[0]}.</li>
+          <li><strong>Day:</strong> ${elementData.day.name} - ${elementData.day.meaning.split('. ')[0]}.</li>
+        </ul>
+        <h4>Assigned Palette (Primary Colors)</h4>
+        <p>These five colors were randomly selected and assigned from the dominant elements' color ranges, controlling all ring colors:</p>
+        <ul>
+      `;
+      params.paletteMapping.forEach((item, index) => {
+        leftHTML += ` 
+          <li><span class="color-block" style="background-color: ${item.color}"></span>Color ${index + 1}: ${item.color} (from <strong>${item.source}</strong>)</li>
+        `;
+      });
+      leftHTML += `</ul>`;
+      leftPanel.innerHTML = leftHTML;
+
+
+      // --- RIGHT PANEL: GEOMETRY, SYMBOL, & AUDIO ---
+      const primarySymbol = TIBETAN_SYMBOLS[params.symbolIndex];
+      const secondarySymbol = TIBETAN_SYMBOLS[params.secondarySymbolIndex];
+      const archetype = params.archetype;
+      const complexityText = `The density factor (C: ${params.complexity}) determines the number of rings and pattern complexity.`;
+
+
+      let rightHTML = `
+        <h3>Geometric Seed: Archetype & Symbolism</h3>
+        <p>The phonetic signature of the name casts the Mandala's base geometry (Archetype) and the core central symbol.</p>
+        <h4>Archetype: ${archetype.name}</h4>
+        <p>${archetype.meaning}</p>
+        <p>${complexityText}</p>
+        
+        <h4>Central Symbol (Yidam)</h4>
+        <ul>
+          <li><strong>${primarySymbol.desc}:</strong> ${primarySymbol.meaning}</li>
+          <li><strong>Ring Symbol:</strong> ${secondarySymbol.desc}</li>
+        </ul>
+
+        <h4>Sound Healing Frequency</h4>
+        <p>The dominant elemental tone is used as the Carrier Frequency for the binaural beat, tuned to the energetic properties of that element.</p>
+        <ul>
+          <li><strong>Carrier:</strong> ${primaryAudioElement.note} (${computedCarrier.toFixed(2)} Hz)</li>
+          <li><strong>Beat:</strong> ${computedBeat.toFixed(2)} Hz (Determined by Day of Month)</li>
+          <li><strong>Purpose:</strong> ${primaryAudioElement.explanation}</li>
+        </ul>
+      `;
+      rightPanel.innerHTML = rightHTML;
+    }
+
+
+    // ============================================
+    // 7. APP LOGIC + UI + Fullscreen Lock + Keyboard
     // ============================================
     const seedInput = document.getElementById('seed-input');
     const dateInput = document.getElementById('date-input');
@@ -927,22 +961,64 @@
     const fsOverlay = document.getElementById('fullscreen-overlay');
     const fsCanvas = document.getElementById('fullscreen-canvas');
     const fsCtx = fsCanvas.getContext('2d');
+    const randomBtn = document.getElementById('random-btn');
+    const animateBtn = document.getElementById('animate-btn');
     const bloomBtn = document.getElementById('bloom-btn');
     const bloomDisplay = document.getElementById('bloom-display');
     const speedDisplay = document.getElementById('speed-display');
     const archetypeDisplay = document.getElementById('archetype-display');
 
     dateInput.valueAsDate = new Date();
-
     let currentParams = null;
-    let currentElementData = null;
     let isAnimating = false;
     let animationId = null;
     let speed = 1.0;
     let isBloom = false;
-    let phase = 0;
-
+    let phase = 0; // bloom intensity 0..1
     let bloomIntensity = 0.5;
+
+    function drawFrame(context, w, h) {
+      context.save();
+      if (isBloom) {
+        // Draw low-res bloom layer
+        const blurSize = 10 * bloomIntensity;
+        context.filter = `blur(${blurSize}px)`;
+        context.globalAlpha = 0.5;
+        drawMandala(context, w, h, currentParams, phase);
+
+        // Draw overlay for the center to keep it sharp
+        context.filter = 'none';
+        context.globalAlpha = 1.0;
+        const centerR = Math.min(w, h)/2 * 0.95 * 0.15;
+        drawCenterSyllable(context, w/2, h/2, centerR, currentParams, phase);
+      } else {
+        context.filter = 'none';
+        context.globalAlpha = 1.0;
+        drawMandala(context, w, h, currentParams, phase);
+      }
+      context.restore();
+    }
+
+    function loop() {
+      if (!isAnimating) return;
+      phase += 0.01 * speed;
+
+      // Update main canvas
+      const size = Math.min(canvas.width, canvas.height);
+      drawFrame(ctx, size, size);
+
+      // Update fullscreen canvas if active
+      if (fsOverlay.classList.contains('active')) {
+        // Resize fullscreen canvas to fit window
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        fsCanvas.width = w;
+        fsCanvas.height = h;
+        drawFrame(fsCtx, w, h);
+      }
+
+      animationId = requestAnimationFrame(loop);
+    }
 
     function update() {
       const name = seedInput.value || "phonetic";
@@ -950,74 +1026,53 @@
       
       const tibetan = convertToTibetan(name);
       document.getElementById('tibetan-display').textContent = tibetan || '\u0F0B';
-      
+
       const seed = getNumericSeed(tibetan);
       currentElementData = getElementsFromDate(date);
-      document.getElementById('element-display').textContent = currentElementData.label;
+      document.getElementById('element-display').textContent = `${currentElementData.year.name} / ${currentElementData.month.name} / ${currentElementData.day.name}`;
       
       currentParams = generateParams(seed, currentElementData);
       archetypeDisplay.textContent = `${currentParams.archetype.name} / ${currentParams.complexity}`;
 
-      // Update audio first to get the computedCarrier before updating the UI panels
-      updateFrequencies();
+      // Recalculate and update frequencies (will also call updateExplanationPanels)
+      setSeedAndAudio(); 
 
-      // Pass the computedCarrier to the explanation panels
-      updateExplanationPanels(currentParams, currentElementData, computedCarrier); 
-      
-
-      if(!isAnimating) {
-        drawMandala(ctx, 600, 600, currentParams, phase);
-        if(isBloom) applyBloom(canvas, ctx, 600, 600, bloomIntensity);
-      }
+      // Draw the static frame
+      const size = Math.min(canvas.width, canvas.height);
+      drawFrame(ctx, size, size);
     }
 
-    function loop() {
-      if(!isAnimating) return;
-      phase += 0.005 * speed;
-      
-      drawMandala(ctx, 600, 600, currentParams, phase);
-      if(isBloom) applyBloom(canvas, ctx, 600, 600, bloomIntensity);
-      
-      if(fsOverlay.classList.contains('active')) {
-        const w = window.innerWidth, h = window.innerHeight;
-        fsCanvas.width = w; fsCanvas.height = h;
-        drawMandala(fsCtx, w, h, currentParams, phase);
-        if(isBloom) applyBloom(fsCanvas, fsCtx, w, h, bloomIntensity);
-      }
-      
-      animationId = requestAnimationFrame(loop);
-    }
-
+    // --- Event Listeners ---
     seedInput.addEventListener('input', update);
     dateInput.addEventListener('change', update);
 
-    document.getElementById('random-btn').addEventListener('click', () => {
-      const names = ["Imogen", "Caldwell", "Dorje", "Pema", "Tenzin", "Tara", "Vajra", "Shri", "Icosa", "Yantra"];
-      seedInput.value = names[Math.floor(Math.random()*names.length)];
-      const d = new Date(2024, Math.floor(Math.random()*12), Math.floor(Math.random()*28));
-      dateInput.valueAsDate = d;
+    randomBtn.addEventListener('click', () => {
+      // Clear input and use new date
+      seedInput.value = '';
+      dateInput.valueAsDate = new Date(new Date().getTime() - Math.floor(Math.random()*365*24*60*60*1000));
       update();
     });
 
-    document.getElementById('animate-btn').addEventListener('click', function() {
+    animateBtn.addEventListener('click', () => {
       isAnimating = !isAnimating;
-      this.textContent = isAnimating ? "Stop" : "Animate";
-      if(isAnimating) loop(); else cancelAnimationFrame(animationId);
+      animateBtn.textContent = isAnimating ? "Pause" : "Animate";
+      if(isAnimating) loop();
+      else cancelAnimationFrame(animationId);
     });
 
     const setBloom = (state) => {
-        isBloom = state;
-        document.getElementById('bloom-btn').style.color = isBloom ? '#fff' : '';
-        document.getElementById('fs-bloom').style.color = isBloom ? '#fff' : '';
-        if(!isAnimating) update();
+      isBloom = state;
+      document.getElementById('bloom-btn').style.color = isBloom ? '#fff' : '';
+      document.getElementById('fs-bloom').style.color = isBloom ? '#fff' : '';
+      if(!isAnimating) update();
     }
     bloomBtn.addEventListener('click', () => setBloom(!isBloom));
     document.getElementById('fs-bloom').addEventListener('click', () => setBloom(!isBloom));
 
     const changeSpeed = (dir) => {
-        speed = Math.max(0.1, Math.min(10, speed + dir));
-        speedDisplay.textContent = speed.toFixed(2);
-        if(!isAnimating) update();
+      speed = Math.max(0.1, Math.min(10, speed + dir));
+      speedDisplay.textContent = speed.toFixed(2);
+      if(!isAnimating) update();
     }
     document.getElementById('slower-btn').addEventListener('click', () => changeSpeed(-0.5));
     document.getElementById('faster-btn').addEventListener('click', () => changeSpeed(0.5));
@@ -1031,54 +1086,29 @@
       link.click();
     });
 
+    // Fullscreen Logic + lock scroll position
     let savedBodyOverflow = '';
-    let savedScrollY = 0;
-    const exitFS = () => {
-      fsOverlay.classList.remove('active');
-      document.documentElement.style.position = '';
-      document.documentElement.style.top = '';
-      window.scrollTo(0, savedScrollY);
-      document.body.style.overflow = savedBodyOverflow;
-    };
     document.getElementById('fullscreen-btn').addEventListener('click', () => {
-      savedScrollY = window.scrollY || window.pageYOffset;
-      savedBodyOverflow = document.body.style.overflow;
-      document.documentElement.style.position = 'fixed';
-      document.documentElement.style.top = `-${savedScrollY}px`;
-      document.body.style.overflow = 'hidden';
       fsOverlay.classList.add('active');
-      if(!isAnimating) { 
-        isAnimating = true; 
-        document.getElementById('animate-btn').textContent = "Stop";
-        loop(); 
-      }
+      savedBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      if (!isAnimating) { isAnimating = true; loop(); } // Start animation if not running
+    });
+    document.getElementById('fs-exit').addEventListener('click', () => {
+      fsOverlay.classList.remove('active');
+      document.body.style.overflow = savedBodyOverflow;
     });
 
-    document.getElementById('fs-exit').addEventListener('click', exitFS);
-    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') exitFS(); });
-
-    function isTyping() {
-      const el = document.activeElement;
-      if (!el) return false;
-      const tag = el.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable) return true;
-      return false;
-    }
-
-    window.addEventListener('keydown', (e) => {
-      if (isTyping()) return;
+    // Keyboard controls (only in fullscreen)
+    document.addEventListener('keydown', (e) => {
+      if (!fsOverlay.classList.contains('active')) return;
       switch(e.key) {
-        case 'ArrowUp':
-          bloomIntensity = Math.min(1, +(bloomIntensity + 0.05).toFixed(3));
-          bloomDisplay.textContent = bloomIntensity.toFixed(2);
-          if (!isBloom) setBloom(true);
-          update(); 
+        case 'Escape':
+          document.getElementById('fs-exit').click();
           e.preventDefault();
           break;
-        case 'ArrowDown':
-          bloomIntensity = Math.max(0, +(bloomIntensity - 0.05).toFixed(3));
-          bloomDisplay.textContent = bloomIntensity.toFixed(2);
-          if (!isBloom) setBloom(true);
+        case ' ': // Space bar for Bloom
+          setBloom(!isBloom);
           update();
           e.preventDefault();
           break;
@@ -1093,15 +1123,14 @@
       }
     });
 
-    bloomDisplay.textContent = bloomIntensity.toFixed(2);
-    speedDisplay.textContent = speed.toFixed(2);
-
+    // --- Audio Initialisation & Sync ---
     function setSeedAndAudio() {
       const tib = convertToTibetan(seedInput.value || '');
       const seed = getNumericSeed(tib);
       currentElementData = getElementsFromDate(dateInput.value); // Ensure element data is fetched first
       const audioData = computeAudioFromSeed(seed, dateInput.value, currentElementData);
       
+      // if user hasn't moved beatRange manually, set its default to audioData.beat
       if(!beatRange.dataset.touched) {
         beatRange.value = audioData.beat;
       }
@@ -1110,6 +1139,7 @@
       updateFrequencies();
     }
 
+    // detect user touching beat slider (so their manual choice persists)
     beatRange.addEventListener('input', () => {
       beatRange.dataset.touched = "1";
       updateFrequencies();
@@ -1119,12 +1149,12 @@
     update();
     setSeedAndAudio();
 
+    // Keep audio nodes in sync when page regains focus (resume AudioContext)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && audioCtx && isAudioPlaying) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
       }
     });
-
   </script>
 </body>
 </html>
