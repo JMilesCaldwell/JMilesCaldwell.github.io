@@ -92,6 +92,13 @@
     .btn:hover { border-color: #ffd700; color: #ffd700; background: rgba(212, 180, 85, 0.05); }
     .btn-icon { padding: 0.6rem 1rem; }
 
+    .audio-controls {
+      display: flex; gap: 0.6rem; align-items: center;
+      padding: 0.4rem 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.02);
+    }
+    .audio-controls label { font-size: 0.7rem; color: #bca060; margin-right: 0.3rem; }
+    .audio-controls input[type="range"] { width: 120px; }
+
     /* Fullscreen - CLEAN */
     .fullscreen-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -114,9 +121,14 @@
     .fullscreen-overlay.active:hover .fs-hover-zone { opacity: 1; pointer-events: auto; }
     .fs-hover-zone:hover .fs-controls { opacity: 1; }
 
+    /* Hide audio controls while in fullscreen */
+    .fullscreen-overlay.active ~ .container .controls .audio-controls,
+    .fullscreen-overlay.active .fs-controls .audio-controls { display: none !important; }
+
     @media (max-width: 768px) {
       .input-row { flex-direction: column; }
       .container { padding-top: 5rem; }
+      .audio-controls input[type="range"] { width: 90px; }
     }
   </style>
 </head>
@@ -166,6 +178,16 @@
       <button class="btn btn-icon" id="slower-btn">-</button>
       <button class="btn btn-icon" id="faster-btn">+</button>
       <button class="btn" id="bloom-btn">Bloom</button>
+
+      <!-- Audio controls (hidden while in fullscreen) -->
+      <div class="audio-controls" id="audio-controls">
+        <button class="btn" id="audio-toggle">Audio ▶</button>
+        <label for="beat-range">Beat</label>
+        <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6">
+        <label for="vol-range">Vol</label>
+        <input id="vol-range" type="range" min="0" max="1" step="0.01" value="0.06">
+      </div>
+
       <button class="btn" id="fullscreen-btn">Fullscreen</button>
       <button class="btn" id="save-btn">Save</button>
     </div>
@@ -179,13 +201,18 @@
         <button class="btn" id="fs-bloom">Bloom</button>
         <button class="btn btn-icon" id="fs-slower">-</button>
         <button class="btn btn-icon" id="fs-faster">+</button>
+        <!-- small indicator for bloom intensity & speed -->
+        <div style="display:flex;flex-direction:column;align-items:flex-start;color:#bca060;margin-left:8px;font-size:0.8rem;">
+          <div>Bloom: <span id="bloom-display">0.50</span></div>
+          <div>Speed: <span id="speed-display">1.00</span></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     // ============================================
-    // 1. TIBETAN PHONETICS & UTILITIES
+    // 1. TIBETAN PHONETICS & UTILITIES (unchanged plus seed exposure)
     // ============================================
     const LATIN_TO_TIBETAN = {
       'a': '\u0F68', 'b': '\u0F56', 'c': '\u0F45', 'd': '\u0F51',
@@ -218,7 +245,7 @@
 
     function getNumericSeed(str) {
       let hash = 0;
-      if (str.length === 0) return 123456789;
+      if (!str || str.length === 0) return 123456789;
       for (let i = 0; i < str.length; i++) {
         hash = ((hash << 5) - hash) + str.charCodeAt(i);
         hash |= 0; 
@@ -236,7 +263,7 @@
     }
 
     // ============================================
-    // 2. ELEMENTAL ALCHEMY (TRIPLE-TIERED)
+    // 2. ELEMENTAL ALCHEMY (unchanged)
     // ============================================
     const ELEMENTS = {
       METAL: { name: 'Metal', colors: ['#F5F5F0', '#B0C4DE', '#DAA520', '#708090', '#FFFFFF'] },
@@ -246,14 +273,13 @@
       EARTH: { name: 'Earth', colors: ['#8B4513', '#D2691E', '#DAA520', '#F4A460', '#F5DEB3'] }
     };
 
-    // Simplified Month Element mapping (Tibetan 12-month cycle)
     const MONTH_ELEMENTS = [
-        ELEMENTS.EARTH, ELEMENTS.EARTH, // Jan, Feb
-        ELEMENTS.WOOD,  ELEMENTS.WOOD,  // Mar, Apr
-        ELEMENTS.FIRE,  ELEMENTS.FIRE,  // May, Jun
-        ELEMENTS.METAL, ELEMENTS.METAL, // Jul, Aug
-        ELEMENTS.WATER, ELEMENTS.WATER, // Sep, Oct
-        ELEMENTS.EARTH, ELEMENTS.EARTH  // Nov, Dec
+        ELEMENTS.EARTH, ELEMENTS.EARTH,
+        ELEMENTS.WOOD,  ELEMENTS.WOOD,
+        ELEMENTS.FIRE,  ELEMENTS.FIRE,
+        ELEMENTS.METAL, ELEMENTS.METAL,
+        ELEMENTS.WATER, ELEMENTS.WATER,
+        ELEMENTS.EARTH, ELEMENTS.EARTH
     ];
 
     function getElementsFromDate(dateStr) {
@@ -262,7 +288,6 @@
       const month = date.getMonth(); // 0-11
       const day = date.getDay(); // 0-6 (Sun=0)
 
-      // 1. Year Element (Primary Color Source)
       const lastDigit = year % 10;
       let yearElement;
       if (lastDigit <= 1) yearElement = ELEMENTS.METAL;
@@ -271,13 +296,11 @@
       else if (lastDigit <= 7) yearElement = ELEMENTS.FIRE;
       else yearElement = ELEMENTS.EARTH;
 
-      // 2. Month Element (Secondary Color Source)
       const monthElement = MONTH_ELEMENTS[month];
 
-      // 3. Day Element (Tertiary Color/Accent Source)
       const dayElement = [
-        ELEMENTS.FIRE, ELEMENTS.WATER, ELEMENTS.FIRE, // Sun, Mon, Tue
-        ELEMENTS.WATER, ELEMENTS.WOOD, ELEMENTS.METAL, ELEMENTS.EARTH // Wed, Thu, Fri, Sat
+        ELEMENTS.FIRE, ELEMENTS.WATER, ELEMENTS.FIRE,
+        ELEMENTS.WATER, ELEMENTS.WOOD, ELEMENTS.METAL, ELEMENTS.EARTH
       ][day];
       
       return { 
@@ -289,10 +312,8 @@
     }
 
     // ============================================
-    // 3. MANDALA GEOMETRY & SYMBOLISM
+    // 3. MANDALA GEOMETRY & SYMBOLISM (unchanged)
     // ============================================
-
-    // TIBETAN SYMBOLS AND SEED SYLLABLES
     const TIBETAN_SYMBOLS = [
         { type: 'Syllable', char: '\u0F68\u0F74\u0F7C\u0F78', desc: 'OM (Body, Speech, Mind)' }, 
         { type: 'Syllable', char: '\u0F67\u0F72\u0F7E', desc: 'HRIH (Compassion Seed)' }, 
@@ -308,23 +329,19 @@
     function generateParams(seed, elementData) {
       const rand = mulberry32(seed);
       
-      // COLOR PALETTE (From 3 Elements)
-      const p = elementData.year.colors;
-      const m = elementData.month.colors;
-      const d = elementData.day.colors;
+      const p = [...elementData.year.colors];
+      const m = [...elementData.month.colors];
+      const d = [...elementData.day.colors];
 
-      // Shuffle for name variance (Name determines which shades are used)
       p.sort(() => rand() - 0.5);
       m.sort(() => rand() - 0.5);
       d.sort(() => rand() - 0.5);
 
-      // Palette: Base(Y), Secondary(M), Accent(D), Darker(Y), Center(M)
       const palette = [ p[0], m[0], d[0], p[1], m[1] ];
 
-      // Geometry Mix (3x3 Matrix)
-      const centerType = seed % 3;     // 0:Lotus, 1:Vajra, 2:Symbol
-      const midType = (seed >> 2) % 3; // 0:Palace, 1:Cosmic, 2:Web
-      const outerType = (seed >> 3) % 3; // 0:Fire, 1:Mountain, 2:Lotus
+      const centerType = seed % 3;
+      const midType = (seed >> 2) % 3;
+      const outerType = (seed >> 3) % 3;
       
       const ringCount = 3 + Math.floor(rand() * 4);
       const petals = [8, 12, 16, 24][seed % 4];
@@ -335,7 +352,7 @@
           r: 0.15 + (i/ringCount)*0.7,
           color: palette[Math.floor(rand()*5)],
           width: 1 + rand() * 4,
-          style: Math.floor(rand() * 3) // 0:solid, 1:dots, 2:double
+          style: Math.floor(rand() * 3)
         });
       }
 
@@ -345,9 +362,8 @@
     }
 
     // ============================================
-    // 4. DRAWING IMPLEMENTATION
+    // 4. DRAWING IMPLEMENTATION (unchanged)
     // ============================================
-
     function drawMandala(ctx, w, h, params, phase) {
       const cx = w/2, cy = h/2;
       const radius = Math.min(w, h)/2 * 0.95;
@@ -355,27 +371,22 @@
       ctx.fillStyle = '#080706';
       ctx.fillRect(0, 0, w, h);
 
-      // 1. Outer Boundary
       drawOuterLayer(ctx, cx, cy, radius, params, phase);
-
-      // 2. Mid Structure
       drawMidLayer(ctx, cx, cy, radius * 0.85, params, phase);
 
-      // 3. Rings (Always draw, but scale to fit inner geometry)
       const ringScale = params.midType === 0 ? 0.6 : 0.8; 
       params.rings.forEach((ring, i) => {
         drawRing(ctx, cx, cy, radius * ringScale * ring.r, ring, phase, i);
       });
 
-      // 4. Center Core
       drawCenterLayer(ctx, cx, cy, radius * 0.2, params, phase);
     }
 
     function drawOuterLayer(ctx, cx, cy, r, params, phase) {
-      const c1 = params.palette[2]; // Day Element (Accent)
-      const c2 = params.palette[3]; // Darker Year
+      const c1 = params.palette[2];
+      const c2 = params.palette[3];
 
-      if (params.outerType === 0) { // FIRE
+      if (params.outerType === 0) {
         const flames = 32;
         for(let i=0; i<flames; i++) {
           const a = (i/flames)*Math.PI*2 + phase*0.2;
@@ -385,7 +396,7 @@
           ctx.fillStyle = i%2 ? c1 : c2;
           ctx.fill();
         }
-      } else if (params.outerType === 1) { // MOUNTAIN FENCE
+      } else if (params.outerType === 1) {
         ctx.beginPath();
         const spikes = 40;
         for(let i=0; i<=spikes; i++) {
@@ -394,7 +405,7 @@
           ctx.lineTo(cx + Math.cos(a)*rad, cy + Math.sin(a)*rad);
         }
         ctx.strokeStyle = c1; ctx.lineWidth = 3; ctx.stroke();
-      } else { // LOTUS BORDER
+      } else {
         const petals = 24;
         for(let i=0; i<petals; i++) {
           const a = (i/petals)*Math.PI*2 + phase*0.1;
@@ -404,28 +415,27 @@
     }
 
     function drawMidLayer(ctx, cx, cy, r, params, phase) {
-      if (params.midType === 0) { // PALACE
+      if (params.midType === 0) {
         const s = r * 1.3;
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(phase * 0.05);
-        ctx.strokeStyle = params.palette[0]; // Year Element
+        ctx.strokeStyle = params.palette[0];
         ctx.lineWidth = 2;
         ctx.strokeRect(-s/2, -s/2, s, s);
-        // Gates (Month Element color)
         for(let i=0; i<4; i++) {
           ctx.rotate(Math.PI/2);
           ctx.fillStyle = params.palette[1]; 
           ctx.fillRect(-s/6, -s/2 - s/12, s/3, s/6);
         }
         ctx.restore();
-      } else if (params.midType === 1) { // COSMIC RINGS (Draw outer ring)
+      } else if (params.midType === 1) {
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI*2);
         ctx.strokeStyle = params.palette[1];
         ctx.lineWidth = 2;
         ctx.stroke();
-      } else { // WEB
+      } else {
         const lines = 12;
         ctx.beginPath();
         for(let i=0; i<lines; i++) {
@@ -440,14 +450,13 @@
 
     function drawCenterLayer(ctx, cx, cy, r, params, phase) {
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.fillStyle = params.palette[4]; // Center color from Month Element
+      ctx.fillStyle = params.palette[4];
       ctx.fill();
       ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
 
       const symbolData = TIBETAN_SYMBOLS[params.symbolIndex];
       
-      // Draw the Symbol
-      ctx.fillStyle = params.palette[3]; // Darker Year Element contrast
+      ctx.fillStyle = params.palette[3];
       ctx.font = `${r*0.8}px 'Noto Serif Tibetan', sans-serif`;
       ctx.textAlign = 'center'; 
       ctx.textBaseline = 'middle';
@@ -471,7 +480,7 @@
       ctx.strokeStyle = ring.color;
       ctx.lineWidth = ring.width;
       ctx.beginPath();
-      if(ring.style === 1) { // DOTS
+      if(ring.style === 1) {
         const dots = 24;
         for(let i=0; i<dots; i++) {
           const a = (i/dots)*Math.PI*2 + phase*(idx%2?0.1:-0.1);
@@ -479,32 +488,183 @@
           ctx.moveTo(x, y); ctx.arc(x, y, ring.width*1.5, 0, Math.PI*2);
         }
         ctx.fillStyle=ring.color; ctx.fill();
-      } else if (ring.style === 2) { // DOUBLE LINE
+      } else if (ring.style === 2) {
         ctx.arc(cx, cy, r - ring.width/2, 0, Math.PI*2); ctx.stroke();
         ctx.beginPath();
         ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2); ctx.stroke();
-      } else { // SOLID LINE
+      } else {
         ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
       }
     }
 
-    function applyBloom(source, destCtx, w, h) {
+    // Bloom uses intensity to set blur and alpha
+    function applyBloom(source, destCtx, w, h, intensity) {
       if (!window.bloomCvs) { window.bloomCvs = document.createElement('canvas'); }
       window.bloomCvs.width = w; window.bloomCvs.height = h;
       const bCtx = window.bloomCvs.getContext('2d');
       
+      bCtx.clearRect(0,0,w,h);
       bCtx.drawImage(source, 0, 0, w, h);
-      bCtx.filter = 'blur(15px)';
-      
+
+      // dynamic blur value based on intensity (0..1 => blur 0..30)
+      const blurPx = 2 + intensity * 30;
+      bCtx.filter = `blur(${blurPx}px)`;
+
+      // re-draw blurred content into temp canvas
+      const temp = document.createElement('canvas');
+      temp.width = w; temp.height = h;
+      const tctx = temp.getContext('2d');
+      tctx.filter = `blur(${blurPx}px)`;
+      tctx.drawImage(window.bloomCvs, 0, 0, w, h);
+
       destCtx.save();
       destCtx.globalCompositeOperation = 'lighter';
-      destCtx.globalAlpha = 0.5;
-      destCtx.drawImage(window.bloomCvs, 0, 0);
+      destCtx.globalAlpha = 0.15 + intensity * 0.6; // stronger intensity => brighter bloom
+      destCtx.drawImage(temp, 0, 0);
       destCtx.restore();
     }
 
     // ============================================
-    // 5. APP LOGIC
+    // 5. AUDIO - BINAURAL IMPLEMENTATION
+    // ============================================
+    // Safe audible & comfortable defaults:
+    // carrier within ~200-600 Hz; binaural beat diff 1-12 Hz; master gain small (~0.02-0.12)
+    let audioCtx = null;
+    let leftOsc = null;
+    let rightOsc = null;
+    let leftPan = null;
+    let rightPan = null;
+    let masterGain = null;
+    let stereoMerger = null;
+    let isAudioPlaying = false;
+
+    // UI elements
+    const beatRange = document.getElementById('beat-range');
+    const volRange = document.getElementById('vol-range');
+    const audioToggle = document.getElementById('audio-toggle');
+
+    function initAudioIfNeeded() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = parseFloat(volRange.value) || 0.06;
+
+      // left chain
+      leftOsc = audioCtx.createOscillator();
+      leftOsc.type = 'sine';
+      leftPan = audioCtx.createStereoPanner();
+      leftPan.pan.value = -1;
+
+      // right chain
+      rightOsc = audioCtx.createOscillator();
+      rightOsc.type = 'sine';
+      rightPan = audioCtx.createStereoPanner();
+      rightPan.pan.value = 1;
+
+      // combine -> master
+      leftOsc.connect(leftPan);
+      leftPan.connect(masterGain);
+
+      rightOsc.connect(rightPan);
+      rightPan.connect(masterGain);
+
+      masterGain.connect(audioCtx.destination);
+
+      // start oscillators but set gain to zero until play pressed
+      leftOsc.start();
+      rightOsc.start();
+
+      isAudioPlaying = false;
+    }
+
+    function playAudio() {
+      if (!audioCtx) initAudioIfNeeded();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      isAudioPlaying = true;
+      audioToggle.textContent = 'Audio ⏸';
+      masterGain.gain.setTargetAtTime(parseFloat(volRange.value) || 0.06, audioCtx.currentTime, 0.02);
+    }
+
+    function pauseAudio() {
+      if (!audioCtx) return;
+      isAudioPlaying = false;
+      audioToggle.textContent = 'Audio ▶';
+      masterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.02);
+    }
+
+    audioToggle.addEventListener('click', () => {
+      initAudioIfNeeded();
+      if (!isAudioPlaying) playAudio();
+      else pauseAudio();
+    });
+
+    volRange.addEventListener('input', () => {
+      if (!audioCtx) return;
+      const v = parseFloat(volRange.value);
+      // clamp to safe range
+      masterGain.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), audioCtx.currentTime, 0.02);
+    });
+
+    beatRange.addEventListener('input', () => {
+      // live override; updateFrequencies will use range value if present
+      updateFrequencies(); 
+    });
+
+    // derive carrier frequency & beat difference from seed + date
+    let computedCarrier = 220;
+    let computedBeat = 6;
+
+    function computeAudioFromSeed(seed, dateStr) {
+      // safe carrier centre based on year/month/day
+      const d = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+
+      // carrier range 200-600 Hz. Use year low bits and month/day to vary.
+      const yearMod = (year % 100); // 0..99
+      let base = 200 + (yearMod / 99) * 300; // 200..500
+      // add some seed-derived offset within +/- 50Hz
+      const offset = ((seed % 101) - 50) * 1.0; // -50..50
+      const carrier = Math.max(120, Math.min(900, Math.round(base + offset)));
+
+      // beat difference 1..12 derived from seed and day
+      const beat = 1 + ((seed + day) % 12); // 1..12
+
+      // return
+      return { carrier, beat };
+    }
+
+    function updateFrequencies() {
+      if (!currentParams) return;
+      const seedVal = currentParams.seed || 12345;
+      const dateVal = dateInput.value;
+      const auto = computeAudioFromSeed(seedVal, dateVal);
+      // if user adjusted beat slider manually, take that value (beatRange.value), else auto.beat
+      const beatVal = parseFloat(beatRange.value) || auto.beat;
+      // volume will be applied elsewhere
+      // choose carrier: use auto.carrier but allow small manual offset via seed's last digits if needed
+      const carrierVal = auto.carrier;
+
+      computedCarrier = carrierVal;
+      computedBeat = beatVal;
+
+      // left & right frequencies:
+      const leftFreq = computedCarrier - (computedBeat / 2);
+      const rightFreq = computedCarrier + (computedBeat / 2);
+
+      // ensure audio nodes exist
+      if (!audioCtx) return;
+
+      // Set oscillator frequencies smoothly if playing
+      if (leftOsc && rightOsc) {
+        leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), audioCtx.currentTime, 0.03);
+        rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), audioCtx.currentTime, 0.03);
+      }
+    }
+
+    // ============================================
+    // 6. APP LOGIC + UI + Fullscreen Lock + Keyboard
     // ============================================
     const seedInput = document.getElementById('seed-input');
     const dateInput = document.getElementById('date-input');
@@ -513,7 +673,10 @@
     const fsOverlay = document.getElementById('fullscreen-overlay');
     const fsCanvas = document.getElementById('fullscreen-canvas');
     const fsCtx = fsCanvas.getContext('2d');
-    
+    const bloomBtn = document.getElementById('bloom-btn');
+    const bloomDisplay = document.getElementById('bloom-display');
+    const speedDisplay = document.getElementById('speed-display');
+
     dateInput.valueAsDate = new Date();
 
     let currentParams = null;
@@ -522,6 +685,9 @@
     let speed = 1.0;
     let isBloom = false;
     let phase = 0;
+
+    // bloom intensity 0..1
+    let bloomIntensity = 0.5;
 
     function update() {
       const name = seedInput.value || "phonetic";
@@ -536,9 +702,13 @@
       
       currentParams = generateParams(seed, elementData);
       
+      // update audio seed-derived values
+      computeAudioFromSeed(seed, date);
+      updateFrequencies();
+
       if(!isAnimating) {
         drawMandala(ctx, 600, 600, currentParams, phase);
-        if(isBloom) applyBloom(canvas, ctx, 600, 600);
+        if(isBloom) applyBloom(canvas, ctx, 600, 600, bloomIntensity);
       }
     }
 
@@ -546,16 +716,14 @@
       if(!isAnimating) return;
       phase += 0.005 * speed;
       
-      // Main
       drawMandala(ctx, 600, 600, currentParams, phase);
-      if(isBloom) applyBloom(canvas, ctx, 600, 600);
+      if(isBloom) applyBloom(canvas, ctx, 600, 600, bloomIntensity);
       
-      // Fullscreen
       if(fsOverlay.classList.contains('active')) {
         const w = window.innerWidth, h = window.innerHeight;
         fsCanvas.width = w; fsCanvas.height = h;
         drawMandala(fsCtx, w, h, currentParams, phase);
-        if(isBloom) applyBloom(fsCanvas, fsCtx, w, h);
+        if(isBloom) applyBloom(fsCanvas, fsCtx, w, h, bloomIntensity);
       }
       
       animationId = requestAnimationFrame(loop);
@@ -585,12 +753,13 @@
         document.getElementById('fs-bloom').style.color = isBloom ? '#fff' : '';
         if(!isAnimating) update();
     }
-    document.getElementById('bloom-btn').addEventListener('click', () => setBloom(!isBloom));
+    bloomBtn.addEventListener('click', () => setBloom(!isBloom));
     document.getElementById('fs-bloom').addEventListener('click', () => setBloom(!isBloom));
 
     const changeSpeed = (dir) => {
         speed = Math.max(0.1, Math.min(10, speed + dir));
-        if(!isAnimating) update(); // Update draw if static to reflect changes
+        speedDisplay.textContent = speed.toFixed(2);
+        if(!isAnimating) update();
     }
     document.getElementById('slower-btn').addEventListener('click', () => changeSpeed(-0.5));
     document.getElementById('faster-btn').addEventListener('click', () => changeSpeed(0.5));
@@ -604,22 +773,120 @@
       link.click();
     });
 
-    // Fullscreen Logic
-    const exitFS = () => fsOverlay.classList.remove('active');
+    // Fullscreen Logic + lock scroll position
+    let savedBodyOverflow = '';
+    let savedScrollY = 0;
+    const exitFS = () => {
+      fsOverlay.classList.remove('active');
+      // restore scroll locking
+      document.documentElement.style.position = '';
+      document.documentElement.style.top = '';
+      window.scrollTo(0, savedScrollY);
+      document.body.style.overflow = savedBodyOverflow;
+      // if animation was started exclusively by fullscreen entry, keep previous animation state (we started animating on entry to ensure movement)
+      // allow audio controls to remain hidden by CSS rule
+    };
     document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      // lock current scroll
+      savedScrollY = window.scrollY || window.pageYOffset;
+      savedBodyOverflow = document.body.style.overflow;
+      document.documentElement.style.position = 'fixed';
+      document.documentElement.style.top = `-${savedScrollY}px`;
+      document.body.style.overflow = 'hidden';
       fsOverlay.classList.add('active');
       if(!isAnimating) { 
         isAnimating = true; 
         document.getElementById('animate-btn').textContent = "Stop";
         loop(); 
       }
+      // hide cursor after small timeout (existing CSS uses cursor:none when active)
     });
 
     document.getElementById('fs-exit').addEventListener('click', exitFS);
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') exitFS(); });
 
-    // Init
+    // Keyboard controls: Up/Down => bloom intensity, Left/Right => speed
+    // Ignore when typing in input fields
+    function isTyping() {
+      const el = document.activeElement;
+      if (!el) return false;
+      const tag = el.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable) return true;
+      return false;
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (isTyping()) return;
+      switch(e.key) {
+        case 'ArrowUp':
+          // increase bloom
+          bloomIntensity = Math.min(1, +(bloomIntensity + 0.05).toFixed(3));
+          bloomDisplay.textContent = bloomIntensity.toFixed(2);
+          if (!isBloom) setBloom(true);
+          update(); // redraw to reflect new bloom
+          e.preventDefault();
+          break;
+        case 'ArrowDown':
+          bloomIntensity = Math.max(0, +(bloomIntensity - 0.05).toFixed(3));
+          bloomDisplay.textContent = bloomIntensity.toFixed(2);
+          if (!isBloom) setBloom(true);
+          update();
+          e.preventDefault();
+          break;
+        case 'ArrowLeft':
+          changeSpeed(-0.1);
+          e.preventDefault();
+          break;
+        case 'ArrowRight':
+          changeSpeed(0.1);
+          e.preventDefault();
+          break;
+      }
+    });
+
+    // update bloom display initially
+    bloomDisplay.textContent = bloomIntensity.toFixed(2);
+    speedDisplay.textContent = speed.toFixed(2);
+
+    // Ensure audio frequencies update as the name/date change
+    function setSeedAndAudio() {
+      const tib = convertToTibetan(seedInput.value || '');
+      const seed = getNumericSeed(tib);
+      const date = dateInput.value;
+      const audioData = computeAudioFromSeed(seed, date);
+      // if user hasn't moved beatRange manually, set its default to audioData.beat
+      if(!beatRange.dataset.touched) {
+        beatRange.value = audioData.beat;
+      }
+      computedCarrier = audioData.carrier;
+      computedBeat = parseFloat(beatRange.value) || audioData.beat;
+      updateFrequencies();
+    }
+
+    // detect user touching beat slider (so their manual choice persists)
+    beatRange.addEventListener('input', () => {
+      beatRange.dataset.touched = "1";
+      updateFrequencies();
+    });
+
+    // initial update
     update();
+    setSeedAndAudio();
+
+    // Keep audio nodes in sync when page regains focus (resume AudioContext)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && audioCtx && isAudioPlaying) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+      }
+    });
+
+    // also update frequencies whenever audio exists and params change
+    // ensure safe startup: user must interact (audio will initialise on first audioToggle click)
+    // done above in update() and computeAudioFromSeed
+
+    // Prevent accidental scroll while in fullscreen: handled by position fixed on documentElement.
+    // Also ensure fsOverlay occupies full viewport and canvas is sized each frame in loop().
+
   </script>
 </body>
 </html>
