@@ -912,7 +912,13 @@
         // Interaction
         toyX: 650,
         toyY: 480,
+        toyVX: 0,  // Toy velocity X
+        toyVY: 0,  // Toy velocity Y
+        toyRotation: 0, // Toy rotation angle
         toyDragging: false,
+        toyLastX: 650,
+        toyLastY: 480,
+        toyLastTime: 0,
         playStartTime: null,
 
         // Cursor
@@ -1219,6 +1225,11 @@
         const bone = state.creature.skeleton.bones.find(b => b.id === boneId);
         if (!bone || state.strokes.length === 0) return;
 
+        // Get the bone's current angle to store as reference
+        const jointA = state.creature.skeleton.joints.find(j => j.id === bone.a);
+        const jointB = state.creature.skeleton.joints.find(j => j.id === bone.b);
+        const initialBoneAngle = Math.atan2(jointB.y - jointA.y, jointB.x - jointA.x) * 180 / Math.PI;
+
         // Create combined path from all strokes
         const allStrokes = [...state.strokes];
         const part = {
@@ -1227,7 +1238,8 @@
           bindBones: [{
             boneId: boneId,
             anchorRatio: 0.5,
-            offset: { x: 0, y: 0, rot: 0, scale: 1 }
+            offset: { x: 0, y: 0, rot: 0, scale: 1 },
+            initialBoneAngle: initialBoneAngle // Store reference angle
           }]
         };
 
@@ -1302,13 +1314,20 @@
         const preset = presets[type];
         if (!preset) return;
 
+        // Get the bone's current angle to store as reference
+        const bone = state.creature.skeleton.bones.find(b => b.id === preset.bone);
+        const jointA = state.creature.skeleton.joints.find(j => j.id === bone.a);
+        const jointB = state.creature.skeleton.joints.find(j => j.id === bone.b);
+        const initialBoneAngle = Math.atan2(jointB.y - jointA.y, jointB.x - jointA.x) * 180 / Math.PI;
+
         const part = {
           partId: 'part_' + Date.now(),
           svgPaths: preset.paths,
           bindBones: [{
             boneId: preset.bone,
             anchorRatio: 0.5,
-            offset: preset.offset
+            offset: preset.offset,
+            initialBoneAngle: initialBoneAngle
           }]
         };
 
@@ -1426,12 +1445,17 @@
             if (bone) {
               const a = jointsById[bone.a];
               const b = jointsById[bone.b];
-              const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+              const currentAngle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
               const ax = a.x + (b.x - a.x) * binding.anchorRatio;
               const ay = a.y + (b.y - a.y) * binding.anchorRatio;
               const offset = binding.offset || {};
 
-              const transform = `translate(${ax} ${ay}) rotate(${angle + (offset.rot || 0)}) scale(${offset.scale || 1}) translate(${offset.x || 0} ${offset.y || 0}) translate(-50 -50)`;
+              // Only apply the rotation delta from when the part was bound
+              // This keeps parts stable in their drawn orientation
+              const initialAngle = binding.initialBoneAngle || 0;
+              const rotationDelta = currentAngle - initialAngle;
+
+              const transform = `translate(${ax} ${ay}) rotate(${rotationDelta + (offset.rot || 0)}) scale(${offset.scale || 1}) translate(${offset.x || 0} ${offset.y || 0}) translate(-50 -50)`;
               g.setAttribute('transform', transform);
             }
           }
@@ -1453,6 +1477,7 @@
           updateNeeds(dt);
           updateBehavior(dt);
           updateAnimation(dt);
+          updateToyPhysics(dt);
           updateUI();
         }
 
@@ -1953,39 +1978,131 @@
       }
 
       // ============================================
-      // TOY INTERACTION
+      // TOY INTERACTION (with throw physics)
       // ============================================
       function initToy() {
         const toy = elements.toyGroup;
-        let dragging = false;
         let offsetX = 0, offsetY = 0;
 
         toy.addEventListener('mousedown', (e) => {
-          dragging = true;
+          e.preventDefault();
+          state.toyDragging = true;
+          state.toyVX = 0;
+          state.toyVY = 0;
           toy.classList.add('dragging');
           const rect = elements.playgroundSvg.getBoundingClientRect();
           const svgX = (e.clientX - rect.left) / rect.width * CONFIG.playgroundWidth;
           const svgY = (e.clientY - rect.top) / rect.height * CONFIG.playgroundHeight;
           offsetX = state.toyX - svgX;
           offsetY = state.toyY - svgY;
+          state.toyLastX = state.toyX;
+          state.toyLastY = state.toyY;
+          state.toyLastTime = performance.now();
         });
 
         document.addEventListener('mousemove', (e) => {
-          if (!dragging) return;
+          if (!state.toyDragging) return;
           const rect = elements.playgroundSvg.getBoundingClientRect();
           const svgX = (e.clientX - rect.left) / rect.width * CONFIG.playgroundWidth;
           const svgY = (e.clientY - rect.top) / rect.height * CONFIG.playgroundHeight;
-          state.toyX = Math.max(30, Math.min(CONFIG.playgroundWidth - 30, svgX + offsetX));
-          state.toyY = Math.max(30, Math.min(CONFIG.groundY - 10, svgY + offsetY));
+
+          const newX = Math.max(30, Math.min(CONFIG.playgroundWidth - 30, svgX + offsetX));
+          const newY = Math.max(30, Math.min(CONFIG.groundY - 10, svgY + offsetY));
+
+          // Track velocity for throwing
+          const now = performance.now();
+          const dt = (now - state.toyLastTime) / 1000;
+          if (dt > 0.01) {
+            state.toyVX = (newX - state.toyLastX) / dt * 0.3; // Scale down for reasonable throw
+            state.toyVY = (newY - state.toyLastY) / dt * 0.3;
+            state.toyLastX = newX;
+            state.toyLastY = newY;
+            state.toyLastTime = now;
+          }
+
+          state.toyX = newX;
+          state.toyY = newY;
           toy.setAttribute('transform', `translate(${state.toyX}, ${state.toyY})`);
         });
 
         document.addEventListener('mouseup', () => {
-          if (dragging) {
-            dragging = false;
+          if (state.toyDragging) {
+            state.toyDragging = false;
             toy.classList.remove('dragging');
+            // Velocity is already set from mousemove tracking
+            // Clamp max throw speed
+            const maxSpeed = 400;
+            const speed = Math.hypot(state.toyVX, state.toyVY);
+            if (speed > maxSpeed) {
+              state.toyVX = (state.toyVX / speed) * maxSpeed;
+              state.toyVY = (state.toyVY / speed) * maxSpeed;
+            }
           }
         });
+      }
+
+      function updateToyPhysics(dt) {
+        if (state.toyDragging) return;
+
+        const toy = elements.toyGroup;
+        const gravity = 600; // pixels per second squared
+        const friction = 0.98; // ground friction
+        const airResistance = 0.995;
+        const bounceFactor = 0.6;
+        const groundY = CONFIG.groundY - 25; // toy radius
+        const minVelocity = 5;
+
+        // Apply gravity
+        state.toyVY += gravity * dt;
+
+        // Apply air resistance
+        state.toyVX *= airResistance;
+        state.toyVY *= airResistance;
+
+        // Update position
+        state.toyX += state.toyVX * dt;
+        state.toyY += state.toyVY * dt;
+
+        // Bounce off walls
+        if (state.toyX < 30) {
+          state.toyX = 30;
+          state.toyVX = -state.toyVX * bounceFactor;
+        }
+        if (state.toyX > CONFIG.playgroundWidth - 30) {
+          state.toyX = CONFIG.playgroundWidth - 30;
+          state.toyVX = -state.toyVX * bounceFactor;
+        }
+
+        // Bounce off ground
+        if (state.toyY > groundY) {
+          state.toyY = groundY;
+          state.toyVY = -state.toyVY * bounceFactor;
+          // Apply ground friction to horizontal velocity
+          state.toyVX *= friction;
+
+          // Stop tiny bounces
+          if (Math.abs(state.toyVY) < minVelocity) {
+            state.toyVY = 0;
+          }
+        }
+
+        // Bounce off ceiling
+        if (state.toyY < 30) {
+          state.toyY = 30;
+          state.toyVY = -state.toyVY * bounceFactor;
+        }
+
+        // Stop if moving very slowly on ground
+        if (state.toyY >= groundY - 1 && Math.abs(state.toyVX) < minVelocity) {
+          state.toyVX = 0;
+        }
+
+        // Update rotation based on horizontal movement (rolling effect)
+        const toyRadius = 25;
+        state.toyRotation += (state.toyVX * dt / toyRadius) * (180 / Math.PI);
+
+        // Update visual with rotation
+        toy.setAttribute('transform', `translate(${state.toyX}, ${state.toyY}) rotate(${state.toyRotation})`);
       }
 
       // ============================================
