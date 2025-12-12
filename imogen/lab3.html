@@ -182,6 +182,15 @@
             <option value="hebrew">Hebrew</option>
           </select>
 
+          <select class="btn" id="color-mode-selector" style="cursor: pointer;">
+            <option value="elemental">Elemental (Default)</option>
+            <option value="primary">Primary Colors</option>
+            <option value="secondary">Secondary Colors</option>
+            <option value="rainbow">Rainbow Spectrum</option>
+            <option value="monochrome">Monochrome</option>
+            <option value="neon">Neon Glow</option>
+          </select>
+
           <div class="audio-controls" id="audio-controls">
             <button class="btn" id="audio-toggle">Tone OFF</button>
 
@@ -203,15 +212,33 @@
             <label for="detune-range">Detune</label>
             <input id="detune-range" type="range" min="-50" max="50" step="1" value="0">
             <label for="lfo-range">Drift</label>
-            <input id="lfo-range" type="range" min="0.01" max="0.5" step="0.01" value="0.05">
+            <input id="lfo-range" type="range" min="0.01" max="2" step="0.01" value="0.1">
             <label for="harmonics-range">Harmonics</label>
             <input id="harmonics-range" type="range" min="0" max="1" step="0.05" value="0">
             <label for="interval-range">Interval</label>
             <input id="interval-range" type="range" min="0" max="12" step="1" value="0">
             <label for="reverb-range">Reverb</label>
             <input id="reverb-range" type="range" min="0" max="1" step="0.05" value="0">
+            <label for="iso-range">Isochronic</label>
+            <input id="iso-range" type="range" min="0" max="1" step="0.05" value="0">
+            <label for="am-range">AM Depth</label>
+            <input id="am-range" type="range" min="0" max="1" step="0.05" value="0">
           </div>
-          
+
+          <div class="audio-controls" id="kick-controls">
+            <button class="btn" id="kick-toggle">Kick OFF</button>
+            <label for="kick-bpm">BPM</label>
+            <input id="kick-bpm" type="range" min="30" max="180" step="1" value="60">
+            <label for="kick-pitch">Pitch</label>
+            <input id="kick-pitch" type="range" min="30" max="100" step="1" value="50">
+            <label for="kick-decay">Decay</label>
+            <input id="kick-decay" type="range" min="0.05" max="0.5" step="0.01" value="0.15">
+            <label for="kick-punch">Punch</label>
+            <input id="kick-punch" type="range" min="0" max="1" step="0.05" value="0.5">
+            <label for="kick-vol">Vol</label>
+            <input id="kick-vol" type="range" min="0" max="1" step="0.05" value="0.5">
+          </div>
+
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
         </div>
       </div>
@@ -320,13 +347,43 @@
       ELEMENTS.EARTH, ELEMENTS.EARTH, ELEMENTS.WOOD, ELEMENTS.WOOD, ELEMENTS.FIRE, ELEMENTS.FIRE,
       ELEMENTS.METAL, ELEMENTS.METAL, ELEMENTS.WATER, ELEMENTS.WATER, ELEMENTS.EARTH, ELEMENTS.EARTH
     ];
-    // Solfeggio / Planetary Frequencies
+    // A=432Hz tuning note frequencies from C2 to C4
+    // Formula: freq = 432 * 2^((semitone - 49) / 12) where A4 = 49
+    const NOTE_FREQUENCIES_432 = [
+      { note: 'C2',  freq: 64.22,  semitone: 0 },
+      { note: 'C#2', freq: 68.04,  semitone: 1 },
+      { note: 'D2',  freq: 72.08,  semitone: 2 },
+      { note: 'D#2', freq: 76.37,  semitone: 3 },
+      { note: 'E2',  freq: 80.91,  semitone: 4 },
+      { note: 'F2',  freq: 85.72,  semitone: 5 },
+      { note: 'F#2', freq: 90.82,  semitone: 6 },
+      { note: 'G2',  freq: 96.22,  semitone: 7 },
+      { note: 'G#2', freq: 101.94, semitone: 8 },
+      { note: 'A2',  freq: 108.00, semitone: 9 },
+      { note: 'A#2', freq: 114.42, semitone: 10 },
+      { note: 'B2',  freq: 121.23, semitone: 11 },
+      { note: 'C3',  freq: 128.43, semitone: 12 },
+      { note: 'C#3', freq: 136.07, semitone: 13 },
+      { note: 'D3',  freq: 144.16, semitone: 14 },
+      { note: 'D#3', freq: 152.74, semitone: 15 },
+      { note: 'E3',  freq: 161.82, semitone: 16 },
+      { note: 'F3',  freq: 171.44, semitone: 17 },
+      { note: 'F#3', freq: 181.63, semitone: 18 },
+      { note: 'G3',  freq: 192.43, semitone: 19 },
+      { note: 'G#3', freq: 203.88, semitone: 20 },
+      { note: 'A3',  freq: 216.00, semitone: 21 },
+      { note: 'A#3', freq: 228.84, semitone: 22 },
+      { note: 'B3',  freq: 242.45, semitone: 23 },
+      { note: 'C4',  freq: 256.87, semitone: 24 }
+    ];
+
+    // Solfeggio / Planetary Frequencies (legacy, used for element mapping)
     const SOUND_ELEMENT_MAPPING = {
-      METAL: { freq: 432, note: "432 Hz", explanation: "Target for Cognitive Clarity." },
-      WATER: { freq: 194.18, note: "194 Hz", explanation: "Target for System Dynamics." },
-      WOOD: { freq: 285, note: "285 Hz", explanation: "Target for Vector Optimization." },
-      FIRE: { freq: 396, note: "396 Hz", explanation: "Target for State Transition." },
-      EARTH: { freq: 172.8, note: "172 Hz", explanation: "Target for Base Stability." }
+      METAL: { freq: 432, note: "A4 (432 Hz)", explanation: "Target for Cognitive Clarity." },
+      WATER: { freq: 192.43, note: "G3", explanation: "Target for System Dynamics." },
+      WOOD: { freq: 144.16, note: "D3", explanation: "Target for Vector Optimization." },
+      FIRE: { freq: 216.00, note: "A3", explanation: "Target for State Transition." },
+      EARTH: { freq: 128.43, note: "C3", explanation: "Target for Base Stability." }
     };
 
     // Waveform selection based on Element
@@ -336,6 +393,31 @@
       'WOOD': 'sawtooth',  // Growing, forward
       'FIRE': 'square',    // Intense, energetic
       'EARTH': 'sine'      // Stable, fundamental
+    };
+
+    // Color mode palettes
+    const COLOR_MODES = {
+      elemental: null, // Uses element-based colors (default behavior)
+      primary: {
+        colors: ['#FF0000', '#0000FF', '#FFFF00', '#FF0000', '#0000FF'], // Red, Blue, Yellow
+        accent: '#FFFFFF'
+      },
+      secondary: {
+        colors: ['#FF8000', '#00FF00', '#8000FF', '#FF8000', '#00FF00'], // Orange, Green, Purple
+        accent: '#FFFFFF'
+      },
+      rainbow: {
+        colors: ['#FF0000', '#FF8000', '#FFFF00', '#00FF00', '#0080FF', '#8000FF'],
+        accent: '#FFFFFF'
+      },
+      monochrome: {
+        colors: ['#FFFFFF', '#CCCCCC', '#999999', '#666666', '#333333'],
+        accent: '#FFFFFF'
+      },
+      neon: {
+        colors: ['#FF00FF', '#00FFFF', '#FF00AA', '#AAFF00', '#00AAFF'],
+        accent: '#FFFFFF'
+      }
     };
 
     // Symbol systems for each script with traditional meanings
@@ -458,10 +540,11 @@
     // ====================================================================
 
     class MandalaParams {
-      constructor(name, dateStr, scriptType = 'runic') {
+      constructor(name, dateStr, scriptType = 'runic', colorMode = 'elemental') {
         this.name = name;
         this.dateStr = dateStr;
         this.scriptType = scriptType;
+        this.colorMode = colorMode;
         this.scriptMapping = SCRIPT_MAPPINGS[scriptType];
         this.runic = this.convertToScript(name, scriptType);
         this.seed = this.getNumericSeed(this.runic);
@@ -535,21 +618,42 @@
         const randomnessFactor = (rand() - 0.5) * 0.05;
 
         // 1. Color Palette Synthesis
-        const p = [...this.elementData.year.colors];
-        const m = [...this.elementData.month.colors];
-        const d = [...this.elementData.day.colors];
-        let colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
+        let colorStrings;
+        let accentColor;
 
-        // We use the Polished Brass accent for the bright glow/detail
-        const ACCENT_BRASS = "#C8AA6E";
+        const colorModeData = COLOR_MODES[this.colorMode];
 
-        const colorStrings = [ 
-          colorPool[0] || p[0], // Primary color (Ring Base)
-          colorPool[1] || m[0], // Secondary color (Inner Geometry)
-          ACCENT_BRASS,         // Tertiary color (Primary Accent/Detail)
-          colorPool[3] || p[1], // Accent 1 (Text/Center Fill)
-          colorPool[4] || m[1]  // Accent 2 (Center outline/core)
-        ];
+        if (colorModeData) {
+          // Use predefined color mode
+          const modeColors = [...colorModeData.colors];
+          // Shuffle based on seed for variety
+          modeColors.sort(() => rand() - 0.5);
+          accentColor = colorModeData.accent;
+          colorStrings = [
+            modeColors[0],
+            modeColors[1 % modeColors.length],
+            accentColor,
+            modeColors[2 % modeColors.length],
+            modeColors[3 % modeColors.length]
+          ];
+        } else {
+          // Default elemental mode
+          const p = [...this.elementData.year.colors];
+          const m = [...this.elementData.month.colors];
+          const d = [...this.elementData.day.colors];
+          let colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
+
+          // We use the Polished Brass accent for the bright glow/detail
+          accentColor = "#C8AA6E";
+
+          colorStrings = [
+            colorPool[0] || p[0], // Primary color (Ring Base)
+            colorPool[1] || m[0], // Secondary color (Inner Geometry)
+            accentColor,          // Tertiary color (Primary Accent/Detail)
+            colorPool[3] || p[1], // Accent 1 (Text/Center Fill)
+            colorPool[4] || m[1]  // Accent 2 (Center outline/core)
+          ];
+        }
 
         // 2. Geometry Parameters
         const archetypeIndex = seed % ARCHETYPES.length; // Max is now 3
@@ -592,7 +696,7 @@
             polyhedrons.push({
                 type: Math.floor(rand() * 10),
                 radiusFactor: 0.3 + rand() * 0.6,
-                color: ACCENT_BRASS, // Always use the brass accent for these wireframes
+                color: accentColor, // Use the accent color for wireframes
                 thickness: 0.8 + rand() * 3,
                 rotationSpeed: (rand() - 0.5) * 0.08,
             });
@@ -629,7 +733,7 @@
         this.canvas.height = this.height;
 
         this.speed = 1.0;
-        this.isBloom = true; 
+        this.isBloom = false;
         this.bloomIntensity = 0.6; 
 
         this.icosaVertices = this.generateIcosahedronVertices();
@@ -1310,6 +1414,26 @@
         this.reverbGain = null;
         this.dryGain = null;
 
+        // Isochronic tones
+        this.isochronicLFO = null;
+        this.isochronicGain = null;
+        this.isochronicDepth = 0;
+
+        // Amplitude modulation
+        this.amLFO = null;
+        this.amGain = null;
+        this.amDepth = 0;
+
+        // Bass kick drum
+        this.kickGain = null;
+        this.kickPlaying = false;
+        this.kickBPM = 60;
+        this.kickPitch = 50;
+        this.kickDecay = 0.15;
+        this.kickPunch = 0.5;
+        this.kickVolume = 0.5;
+        this.kickIntervalId = null;
+
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
@@ -1401,19 +1525,52 @@
         this.rightOsc.start();
         this.isAudioPlaying = false;
 
-        // Panning LFO (spatial drift)
+        // Panning LFO (spatial drift) - intensified
         this.panLFO = this.audioCtx.createOscillator();
         this.panLFO.type = 'sine';
-        this.panLFO.frequency.setValueAtTime(0.05, this.audioCtx.currentTime);
+        this.panLFO.frequency.setValueAtTime(0.1, this.audioCtx.currentTime);
 
         this.panLFOGain = this.audioCtx.createGain();
-        this.panLFOGain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+        this.panLFOGain.gain.setValueAtTime(0.8, this.audioCtx.currentTime);
 
         this.panLFO.connect(this.panLFOGain);
         this.panLFOGain.connect(this.leftPan.pan);
         this.panLFOGain.connect(this.rightPan.pan);
 
         this.panLFO.start(0);
+
+        // Isochronic tone generator (sharp on/off pulsing)
+        this.isochronicLFO = this.audioCtx.createOscillator();
+        this.isochronicLFO.type = 'square';
+        this.isochronicLFO.frequency.setValueAtTime(this.computedBeat || 6, this.audioCtx.currentTime);
+
+        this.isochronicGain = this.audioCtx.createGain();
+        this.isochronicGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+        // Isochronic modulates the master gain
+        this.isochronicLFO.connect(this.isochronicGain);
+        this.isochronicGain.connect(this.masterGain.gain);
+
+        this.isochronicLFO.start(0);
+
+        // Amplitude modulation (smooth tremolo)
+        this.amLFO = this.audioCtx.createOscillator();
+        this.amLFO.type = 'sine';
+        this.amLFO.frequency.setValueAtTime(this.computedBeat || 6, this.audioCtx.currentTime);
+
+        this.amGain = this.audioCtx.createGain();
+        this.amGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+        // AM modulates the master gain
+        this.amLFO.connect(this.amGain);
+        this.amGain.connect(this.masterGain.gain);
+
+        this.amLFO.start(0);
+
+        // Bass kick drum output gain
+        this.kickGain = this.audioCtx.createGain();
+        this.kickGain.gain.value = this.kickVolume;
+        this.kickGain.connect(this.audioCtx.destination);
       }
 
       createSimpleReverb() {
@@ -1456,13 +1613,130 @@
       }
 
       setLFORate(rate) {
-        if (!this.panLFO) return;
+        if (!this.panLFO || !this.panLFOGain) return;
+        // Intensified: rate controls frequency, and we scale the depth too
         this.panLFO.frequency.setTargetAtTime(rate, this.audioCtx.currentTime, 0.1);
+        // More drift = more pan sweep depth (0.5 to 1.0)
+        const depth = 0.5 + (rate / 2) * 0.5;
+        this.panLFOGain.gain.setTargetAtTime(depth, this.audioCtx.currentTime, 0.1);
       }
 
       setHarmonics(amount) {
         if (!this.harmonicGain) return;
-        this.harmonicGain.gain.setTargetAtTime(amount * 0.15, this.audioCtx.currentTime, 0.05);
+        // Intensified: was 0.15, now up to 0.6 for rich harmonic content
+        this.harmonicGain.gain.setTargetAtTime(amount * 0.6, this.audioCtx.currentTime, 0.05);
+      }
+
+      setIsochronic(depth) {
+        if (!this.isochronicGain) return;
+        this.isochronicDepth = depth;
+        // Isochronic creates sharp on/off pulsing at beat frequency
+        // Depth controls how much the volume pulses (0 = none, 1 = full on/off)
+        this.isochronicGain.gain.setTargetAtTime(depth * 0.5, this.audioCtx.currentTime, 0.05);
+      }
+
+      setAM(depth) {
+        if (!this.amGain) return;
+        this.amDepth = depth;
+        // AM creates smooth tremolo at beat frequency
+        this.amGain.gain.setTargetAtTime(depth * 0.4, this.audioCtx.currentTime, 0.05);
+      }
+
+      // Bass kick drum methods
+      triggerKick() {
+        if (!this.audioCtx || !this.kickGain) return;
+
+        const now = this.audioCtx.currentTime;
+
+        // Create oscillator for the kick body
+        const kickOsc = this.audioCtx.createOscillator();
+        kickOsc.type = 'sine';
+
+        // Create gain envelope
+        const kickEnv = this.audioCtx.createGain();
+
+        // Pitch envelope: starts high and drops quickly for "punch"
+        const startPitch = this.kickPitch + (this.kickPunch * 150);
+        kickOsc.frequency.setValueAtTime(startPitch, now);
+        kickOsc.frequency.exponentialRampToValueAtTime(this.kickPitch, now + 0.05);
+
+        // Amplitude envelope: quick attack, variable decay
+        kickEnv.gain.setValueAtTime(this.kickVolume, now);
+        kickEnv.gain.exponentialRampToValueAtTime(0.001, now + this.kickDecay);
+
+        // Connect and play
+        kickOsc.connect(kickEnv);
+        kickEnv.connect(this.kickGain);
+
+        kickOsc.start(now);
+        kickOsc.stop(now + this.kickDecay + 0.01);
+      }
+
+      startKick() {
+        this.initAudioIfNeeded(0.06);
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        if (this.kickIntervalId) {
+          clearInterval(this.kickIntervalId);
+        }
+
+        this.kickPlaying = true;
+        const intervalMs = (60 / this.kickBPM) * 1000;
+
+        // Trigger immediately, then on interval
+        this.triggerKick();
+        this.kickIntervalId = setInterval(() => {
+          if (this.kickPlaying) {
+            this.triggerKick();
+          }
+        }, intervalMs);
+
+        return true;
+      }
+
+      stopKick() {
+        this.kickPlaying = false;
+        if (this.kickIntervalId) {
+          clearInterval(this.kickIntervalId);
+          this.kickIntervalId = null;
+        }
+        return false;
+      }
+
+      toggleKick() {
+        if (this.kickPlaying) {
+          return this.stopKick();
+        } else {
+          return this.startKick();
+        }
+      }
+
+      setKickBPM(bpm) {
+        this.kickBPM = bpm;
+        // Restart interval if playing
+        if (this.kickPlaying) {
+          this.stopKick();
+          this.startKick();
+        }
+      }
+
+      setKickPitch(pitch) {
+        this.kickPitch = pitch;
+      }
+
+      setKickDecay(decay) {
+        this.kickDecay = decay;
+      }
+
+      setKickPunch(punch) {
+        this.kickPunch = punch;
+      }
+
+      setKickVolume(volume) {
+        this.kickVolume = volume;
+        if (this.kickGain) {
+          this.kickGain.gain.setTargetAtTime(volume, this.audioCtx.currentTime, 0.02);
+        }
       }
 
       setReverb(amount) {
@@ -1497,7 +1771,8 @@
           const ratio = Math.pow(2, semitones / 12);
           const intervalFreq = this.computedCarrier * ratio;
           this.intervalOsc.frequency.setTargetAtTime(intervalFreq, this.audioCtx.currentTime, 0.03);
-          this.intervalGain.gain.setTargetAtTime(0.15, this.audioCtx.currentTime, 0.02);
+          // Intensified: was 0.15, now 0.5 for clearly audible harmonic intervals
+          this.intervalGain.gain.setTargetAtTime(0.5, this.audioCtx.currentTime, 0.02);
         }
       }
 
@@ -1507,13 +1782,20 @@
         });
       }
 
-      togglePlay(volume, beat) {
+      togglePlay(volume, beat, volSlider) {
+        const wasFirstInit = !this.audioCtx;
         this.initAudioIfNeeded(volume);
         if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
         this.isAudioPlaying = !this.isAudioPlaying;
 
         if (this.isAudioPlaying) {
-          this.masterGain.gain.setTargetAtTime(volume, this.audioCtx.currentTime, 0.02);
+          // Start at 1/10th of slider value when first turning on
+          const startVolume = volume * 0.1;
+          this.masterGain.gain.setTargetAtTime(startVolume, this.audioCtx.currentTime, 0.02);
+          // Update the slider to reflect the actual volume
+          if (volSlider) {
+            volSlider.value = startVolume;
+          }
           this.updateFrequencies(beat);
         } else {
           this.masterGain.gain.setTargetAtTime(0.0001, this.audioCtx.currentTime, 0.02);
@@ -1529,15 +1811,33 @@
           return (currentFreq > prevFreq) ? current : prev;
         });
 
-        let carrierFreq = SOUND_ELEMENT_MAPPING[primaryElement.key].freq;
-        const elementalBaseFreq = carrierFreq;
+        // Create a seeded random function for consistent but varied results
+        const seededRandom = mulberry32(seed);
 
-        // Halve the carrier frequency to drop it an octave
-        carrierFreq = carrierFreq / 2;
-
+        // Select a random note from the full C2-C4 range (25 notes)
+        // Use multiple seed factors for more variety
         const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
         const dayOfMonth = date.getDate();
-        const beat = 2.0 + (dayOfMonth / 31) * 8.0;
+        const month = date.getMonth();
+        const year = date.getFullYear();
+
+        // Combine multiple factors for note selection randomness
+        const noteIndex = Math.floor(
+          (seed + dayOfMonth * 7 + month * 31 + (year % 100) * 13) % NOTE_FREQUENCIES_432.length
+        );
+        const selectedNote = NOTE_FREQUENCIES_432[noteIndex];
+        let carrierFreq = selectedNote.freq;
+
+        // Add slight random variation within a semitone for more organic sound
+        const microtuneVariation = (seededRandom() - 0.5) * 0.03; // ±1.5% variation
+        carrierFreq = carrierFreq * (1 + microtuneVariation);
+
+        const elementalBaseFreq = SOUND_ELEMENT_MAPPING[primaryElement.key].freq;
+
+        // Beat frequency also varies more based on seed
+        const baseBeat = 2.0 + (dayOfMonth / 31) * 6.0;
+        const beatVariation = seededRandom() * 4.0; // Add 0-4 Hz variation
+        const beat = baseBeat + beatVariation;
 
         const waveformType = WAVEFORM_MAP[primaryElement.key] || 'sine';
 
@@ -1547,6 +1847,7 @@
           element: primaryElement,
           elementalBaseFreq: elementalBaseFreq,
           waveform: waveformType,
+          selectedNote: selectedNote.note, // Include note name for display
         };
       }
 
@@ -1583,6 +1884,14 @@
           if (this.currentInterval > 0) {
             this.setInterval(this.currentInterval);
           }
+
+          // Update isochronic and AM LFO frequencies to match beat
+          if (this.isochronicLFO) {
+            this.isochronicLFO.frequency.setTargetAtTime(this.computedBeat, this.audioCtx.currentTime, 0.05);
+          }
+          if (this.amLFO) {
+            this.amLFO.frequency.setTargetAtTime(this.computedBeat, this.audioCtx.currentTime, 0.05);
+          }
         }
       }
 
@@ -1601,6 +1910,7 @@
       const seedInput = document.getElementById('seed-input');
       const dateInput = document.getElementById('date-input');
       const scriptSelector = document.getElementById('script-selector');
+      const colorModeSelector = document.getElementById('color-mode-selector');
       const audioToggle = document.getElementById('audio-toggle');
       const beatRange = document.getElementById('beat-range');
       const volRange = document.getElementById('vol-range');
@@ -1616,6 +1926,7 @@
 
       let currentMandalaParams = null;
       let currentScriptType = 'runic';
+      let currentColorMode = 'elemental';
 
       dateInput.valueAsDate = new Date();
 
@@ -1627,7 +1938,7 @@
         const name = seedInput.value || "Initial Config";
         const date = dateInput.value;
 
-        const paramsGenerator = new MandalaParams(name, date, currentScriptType);
+        const paramsGenerator = new MandalaParams(name, date, currentScriptType, currentColorMode);
         currentMandalaParams = paramsGenerator;
         renderer.setParams(currentMandalaParams.params);
         audioEngine.currentElementData = currentMandalaParams;
@@ -1720,10 +2031,10 @@
           <p><strong>${primarySymbol.desc}</strong> — ${primarySymbol.meaning}</p>
 
           <h4>Acoustic Configuration</h4>
-          <p>Binaural carrier derived from elemental correspondence:</p>
+          <p>Binaural carrier from A=432Hz tuning (C2-C4 range):</p>
           <ul>
             <li><strong>Waveform:</strong> ${audioEngine.manualWaveform === 'auto' ? audioData.waveform.toUpperCase() + ' (Auto)' : audioEngine.manualWaveform.toUpperCase()}</li>
-            <li><strong>Carrier:</strong> ${audioData.carrier.toFixed(2)} Hz</li>
+            <li><strong>Note:</strong> ${audioData.selectedNote || 'N/A'} (${audioData.carrier.toFixed(2)} Hz)</li>
             <li><strong>Beat:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz</li>
           </ul>
           <h4>Modulation Controls</h4>
@@ -1746,6 +2057,11 @@
 
       scriptSelector.addEventListener('change', () => {
         currentScriptType = scriptSelector.value;
+        updateUI();
+      });
+
+      colorModeSelector.addEventListener('change', () => {
+        currentColorMode = colorModeSelector.value;
         updateUI();
       });
 
@@ -1777,8 +2093,10 @@
 
       // Audio Controls
       audioToggle.addEventListener('click', () => {
-        const isPlaying = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value);
+        const isPlaying = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value, volRange);
         audioToggle.textContent = isPlaying ? 'Tone ON' : 'Tone OFF';
+        // Update volume display to reflect actual volume (1/10th on start)
+        volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
       });
 
       volRange.addEventListener('input', () => {
@@ -1825,8 +2143,52 @@
         audioEngine.setReverb(parseFloat(reverbRange.value));
       });
 
+      const isoRange = document.getElementById('iso-range');
+      const amRange = document.getElementById('am-range');
+
+      isoRange.addEventListener('input', () => {
+        audioEngine.setIsochronic(parseFloat(isoRange.value));
+      });
+
+      amRange.addEventListener('input', () => {
+        audioEngine.setAM(parseFloat(amRange.value));
+      });
+
       waveformSelect.addEventListener('change', () => {
         audioEngine.setWaveform(waveformSelect.value);
+      });
+
+      // Kick drum controls
+      const kickToggle = document.getElementById('kick-toggle');
+      const kickBpmRange = document.getElementById('kick-bpm');
+      const kickPitchRange = document.getElementById('kick-pitch');
+      const kickDecayRange = document.getElementById('kick-decay');
+      const kickPunchRange = document.getElementById('kick-punch');
+      const kickVolRange = document.getElementById('kick-vol');
+
+      kickToggle.addEventListener('click', () => {
+        const isPlaying = audioEngine.toggleKick();
+        kickToggle.textContent = isPlaying ? 'Kick ON' : 'Kick OFF';
+      });
+
+      kickBpmRange.addEventListener('input', () => {
+        audioEngine.setKickBPM(parseFloat(kickBpmRange.value));
+      });
+
+      kickPitchRange.addEventListener('input', () => {
+        audioEngine.setKickPitch(parseFloat(kickPitchRange.value));
+      });
+
+      kickDecayRange.addEventListener('input', () => {
+        audioEngine.setKickDecay(parseFloat(kickDecayRange.value));
+      });
+
+      kickPunchRange.addEventListener('input', () => {
+        audioEngine.setKickPunch(parseFloat(kickPunchRange.value));
+      });
+
+      kickVolRange.addEventListener('input', () => {
+        audioEngine.setKickVolume(parseFloat(kickVolRange.value));
       });
 
       // Fullscreen Logic
