@@ -184,6 +184,16 @@
 
           <div class="audio-controls" id="audio-controls">
             <button class="btn" id="audio-toggle">Tone OFF</button>
+
+            <label for="waveform-select">Wave</label>
+            <select id="waveform-select" style="padding: 4px; background: var(--color-neutral-dark); color: var(--color-text-light); border: 1px solid var(--color-border); border-radius: 3px; font-size: 0.7rem;">
+              <option value="auto">Auto</option>
+              <option value="sine">Sine</option>
+              <option value="triangle">Triangle</option>
+              <option value="sawtooth">Sawtooth</option>
+              <option value="square">Square</option>
+            </select>
+
             <label for="beat-range">Beat</label>
             <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6" data-touched="0">
             <label for="vol-range">Vol</label>
@@ -196,6 +206,10 @@
             <input id="lfo-range" type="range" min="0.01" max="0.5" step="0.01" value="0.05">
             <label for="harmonics-range">Harmonics</label>
             <input id="harmonics-range" type="range" min="0" max="1" step="0.05" value="0">
+            <label for="interval-range">Interval</label>
+            <input id="interval-range" type="range" min="0" max="12" step="1" value="0">
+            <label for="reverb-range">Reverb</label>
+            <input id="reverb-range" type="range" min="0" max="1" step="0.05" value="0">
           </div>
           
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
@@ -324,21 +338,90 @@
       'EARTH': 'sine'      // Stable, fundamental
     };
 
-    // Elder Futhark Runes with traditional meanings
-    const RUNIC_SYMBOLS = [
-      { char: 'ᚠ', desc: 'Fehu (Wealth)', meaning: 'Abundance, prosperity, and mobile power. The primal fire of creation.' },
-      { char: 'ᚢ', desc: 'Uruz (Aurochs)', meaning: 'Strength, vitality, and raw untamed potential. The life force.' },
-      { char: 'ᚦ', desc: 'Thurisaz (Thor)', meaning: 'Protection, defense, and directed force. The hammer of change.' },
-      { char: 'ᚨ', desc: 'Ansuz (Odin)', meaning: 'Wisdom, communication, and divine breath. The voice of insight.' },
-      { char: 'ᚱ', desc: 'Raido (Journey)', meaning: 'Movement, rhythm, and right action. The path forward.' },
-      { char: 'ᚲ', desc: 'Kenaz (Torch)', meaning: 'Knowledge, illumination, and creative fire. The inner light.' },
-      // Elemental correspondences (indices 6-10)
-      { char: 'ᛊ', desc: 'Sowilo (Sun)', meaning: 'Success, victory, and vital energy. Solar power and clarity.' },      // METAL
-      { char: 'ᚹ', desc: 'Wunjo (Joy)', meaning: 'Harmony, fellowship, and aligned will. The binding force.' },           // WOOD
-      { char: 'ᛞ', desc: 'Dagaz (Dawn)', meaning: 'Transformation, breakthrough, and awakening. The turning point.' },    // FIRE
-      { char: 'ᛟ', desc: 'Othala (Heritage)', meaning: 'Ancestral power, foundation, and sacred enclosure. The roots.' }, // EARTH
-      { char: 'ᛚ', desc: 'Laguz (Water)', meaning: 'Flow, intuition, and the unconscious depths. The primal waters.' }    // WATER
-    ];
+    // Symbol systems for each script with traditional meanings
+    const SCRIPT_SYMBOLS = {
+      runic: [
+        { char: 'ᚠ', desc: 'Fehu (Wealth)', meaning: 'Abundance, prosperity, and mobile power. The primal fire of creation.' },
+        { char: 'ᚢ', desc: 'Uruz (Aurochs)', meaning: 'Strength, vitality, and raw untamed potential. The life force.' },
+        { char: 'ᚦ', desc: 'Thurisaz (Thor)', meaning: 'Protection, defense, and directed force. The hammer of change.' },
+        { char: 'ᚨ', desc: 'Ansuz (Odin)', meaning: 'Wisdom, communication, and divine breath. The voice of insight.' },
+        { char: 'ᚱ', desc: 'Raido (Journey)', meaning: 'Movement, rhythm, and right action. The path forward.' },
+        { char: 'ᚲ', desc: 'Kenaz (Torch)', meaning: 'Knowledge, illumination, and creative fire. The inner light.' },
+        { char: 'ᛊ', desc: 'Sowilo (Sun)', meaning: 'Success, victory, and vital energy. Solar power and clarity.' },
+        { char: 'ᚹ', desc: 'Wunjo (Joy)', meaning: 'Harmony, fellowship, and aligned will. The binding force.' },
+        { char: 'ᛞ', desc: 'Dagaz (Dawn)', meaning: 'Transformation, breakthrough, and awakening. The turning point.' },
+        { char: 'ᛟ', desc: 'Othala (Heritage)', meaning: 'Ancestral power, foundation, and sacred enclosure. The roots.' },
+        { char: 'ᛚ', desc: 'Laguz (Water)', meaning: 'Flow, intuition, and the unconscious depths. The primal waters.' }
+      ],
+      tibetan: [
+        { char: 'ཨ', desc: 'A (Primordial)', meaning: 'The source of all sound. Beginning of manifestation and pure awareness.' },
+        { char: 'ཨོཾ', desc: 'Om (Sacred)', meaning: 'Universal consciousness. The sound of creation and divine presence.' },
+        { char: 'པདྨ', desc: 'Padma (Lotus)', meaning: 'Purity rising from mud. Spiritual awakening and enlightenment.' },
+        { char: 'མ', desc: 'Ma (Mother)', meaning: 'Compassion and nurturing. The feminine principle of wisdom.' },
+        { char: 'ཧཱུྃ', desc: 'Hum (Wisdom)', meaning: 'Indestructible reality. Diamond mind and transformative power.' },
+        { char: 'སྭཱ', desc: 'Soha (Offering)', meaning: 'Dedication and completion. Sealing of intention and practice.' },
+        { char: 'བཛྲ', desc: 'Vajra (Diamond)', meaning: 'Indestructible truth. Clarity cutting through illusion.' },
+        { char: 'དྷརྨ', desc: 'Dharma (Truth)', meaning: 'Universal law. The path of righteousness and cosmic order.' },
+        { char: 'སངྒ', desc: 'Sangha (Community)', meaning: 'Sacred fellowship. Unity in spiritual practice and purpose.' },
+        { char: 'བོདྷི', desc: 'Bodhi (Awakening)', meaning: 'Perfect enlightenment. Realization of ultimate truth.' },
+        { char: 'ཤཱནྟི', desc: 'Shanti (Peace)', meaning: 'Supreme tranquility. Cessation of suffering and inner calm.' }
+      ],
+      devanagari: [
+        { char: 'ॐ', desc: 'Om (Pranava)', meaning: 'The primordial sound. Creation, preservation, and dissolution unified.' },
+        { char: 'श्री', desc: 'Shri (Sacred)', meaning: 'Auspiciousness and prosperity. Divine grace and abundance.' },
+        { char: 'गं', desc: 'Gam (Ganesha)', meaning: 'Removing obstacles. Wisdom and new beginnings blessed.' },
+        { char: 'ह्रीं', desc: 'Hreem (Shakti)', meaning: 'Divine feminine energy. Creative power and transformation.' },
+        { char: 'क्लीं', desc: 'Kleem (Attraction)', meaning: 'Magnetic force. Drawing desires into manifestation.' },
+        { char: 'ऐं', desc: 'Aim (Saraswati)', meaning: 'Knowledge and arts. Flow of creative wisdom and speech.' },
+        { char: 'सत्', desc: 'Sat (Truth)', meaning: 'Pure existence. Eternal unchanging reality beyond form.' },
+        { char: 'चित्', desc: 'Chit (Consciousness)', meaning: 'Awareness itself. The light of pure knowing.' },
+        { char: 'आनन्द', desc: 'Ananda (Bliss)', meaning: 'Supreme joy. The nature of realized consciousness.' },
+        { char: 'ब्रह्म', desc: 'Brahman (Absolute)', meaning: 'Ultimate reality. The infinite source beyond conception.' },
+        { char: 'शान्ति', desc: 'Shanti (Peace)', meaning: 'Threefold peace. Body, mind, spirit in harmony.' }
+      ],
+      theban: [
+        { char: '𐌀', desc: 'A (Beginning)', meaning: 'First breath of magic. Initiation into hidden knowledge.' },
+        { char: '𐌁', desc: 'B (Protection)', meaning: 'Shield against harm. Warding and defensive mysteries.' },
+        { char: '𐌂', desc: 'C (Circle)', meaning: 'Sacred boundary. The witch\'s circle of power cast.' },
+        { char: '𐌃', desc: 'D (Door)', meaning: 'Threshold between worlds. Gateway to otherworldly realms.' },
+        { char: '𐌄', desc: 'E (Elements)', meaning: 'Command of natural forces. Mastery over earth and sky.' },
+        { char: '𐌅', desc: 'F (Fire)', meaning: 'Transformative flame. Purification and magical will ignited.' },
+        { char: '𐌆', desc: 'G (Growth)', meaning: 'Green witchcraft. Herbs, healing, and natural magic.' },
+        { char: '𐌇', desc: 'H (Hex)', meaning: 'Binding and cursing. Shadow work and karmic balance.' },
+        { char: '𐌉', desc: 'I (Intuition)', meaning: 'Psychic sight. Third eye opened to hidden truths.' },
+        { char: '𐌌', desc: 'M (Moon)', meaning: 'Lunar mysteries. Tides of magic waxing and waning.' },
+        { char: '𐌔', desc: 'S (Spell)', meaning: 'Woven enchantment. Words of power spoken into being.' }
+      ],
+      coptic: [
+        { char: 'Ⲁ', desc: 'Alpha (Source)', meaning: 'Divine beginning. The eternal word spoken into creation.' },
+        { char: 'Ⲱ', desc: 'Omega (End)', meaning: 'Divine completion. All returns to the source of being.' },
+        { char: 'Ⲭ', desc: 'Chi (Christ)', meaning: 'Anointed light. Spiritual awakening and divine presence.' },
+        { char: 'Ⲡ', desc: 'Pi (Spirit)', meaning: 'Holy pneuma. Breath of life and sacred inspiration.' },
+        { char: 'Ⲥ', desc: 'Sophia (Wisdom)', meaning: 'Divine knowledge. Feminine aspect of cosmic intelligence.' },
+        { char: 'Ⲙ', desc: 'Maria (Mother)', meaning: 'Sacred femininity. Compassion and divine nurturing.' },
+        { char: 'Ⲛ', desc: 'Nous (Mind)', meaning: 'Divine intellect. Pure consciousness transcending thought.' },
+        { char: 'Ⲗ', desc: 'Logos (Word)', meaning: 'Creative principle. Divine reason structuring reality.' },
+        { char: 'Ⲫ', desc: 'Phos (Light)', meaning: 'Uncreated radiance. Illumination of spiritual truth.' },
+        { char: 'Ⲁⲅⲁ', desc: 'Agape (Love)', meaning: 'Divine love. Unconditional embrace of all existence.' },
+        { char: 'Ⲍ', desc: 'Zoe (Life)', meaning: 'Eternal vitality. The animating force of creation.' }
+      ],
+      hebrew: [
+        { char: 'א', desc: 'Aleph (Ox)', meaning: 'Primal strength and divine unity. Silent breath of creation.' },
+        { char: 'ב', desc: 'Bet (House)', meaning: 'Container of blessing. Divine dwelling and cosmic structure.' },
+        { char: 'ג', desc: 'Gimel (Camel)', meaning: 'Loving-kindness flowing. Movement of divine generosity.' },
+        { char: 'ד', desc: 'Dalet (Door)', meaning: 'Humility and receptivity. Opening to divine wisdom.' },
+        { char: 'ה', desc: 'Heh (Window)', meaning: 'Revelation and breath. Divine presence revealed in world.' },
+        { char: 'ו', desc: 'Vav (Hook)', meaning: 'Connection unifying opposites. The pillar joining heaven and earth.' },
+        { char: 'י', desc: 'Yod (Hand)', meaning: 'Divine point of creation. The spark of infinite potential.' },
+        { char: 'ח', desc: 'Chet (Fence)', meaning: 'Transcendent life force. Boundary containing sacred energy.' },
+        { char: 'ט', desc: 'Tet (Serpent)', meaning: 'Hidden goodness. Coiled potential awaiting manifestation.' },
+        { char: 'כ', desc: 'Kaf (Palm)', meaning: 'Receiving and giving. Divine crown of manifestation.' },
+        { char: 'ש', desc: 'Shin (Tooth)', meaning: 'Divine fire consuming. Three flames of eternal truth.' }
+      ]
+    };
+
+    // Maintain backward compatibility
+    const RUNIC_SYMBOLS = SCRIPT_SYMBOLS.runic;
 
     const ARCHETYPES = [
       { name: 'Four-Gate Structure', index: 0, meaning: 'A traditional four-quadrant grid, representing a protected and symmetrical data processing environment.' },
@@ -490,13 +573,13 @@
         }
         
         // 3. Symbol Selection (Bias towards elemental syllable)
-        // Indices: 6=EH(Space), 7=YAM(Air), 8=RAM(Fire), 9=LAM(Earth), 10=BAM(Water)
-        let symbolIndex = seed % RUNIC_SYMBOLS.length;
+        const symbolSet = SCRIPT_SYMBOLS[this.scriptType] || SCRIPT_SYMBOLS.runic;
+        let symbolIndex = seed % symbolSet.length;
         const elementalSyllables = { METAL: 6, WATER: 10, WOOD: 7, FIRE: 8, EARTH: 9 };
         const yearKey = this.elementData.year.key;
 
-        if (elementalSyllables[yearKey] !== undefined && rand() < 0.35) {
-            symbolIndex = elementalSyllables[yearKey];
+        if (elementalSyllables[yearKey] !== undefined && rand() < 0.35 && symbolIndex < symbolSet.length) {
+            symbolIndex = elementalSyllables[yearKey] % symbolSet.length;
         }
 
         // 4. Random Polyhedrons (Complex 3D-like wireframes)
@@ -516,6 +599,7 @@
           seed, palette: colorStrings, archetype, complexity: complexity.toFixed(2),
           rings, symbolIndex, polyhedrons, solidRotation: rand() * Math.PI * 2,
           scriptFont: this.scriptMapping.font,
+          scriptType: this.scriptType,
         };
       }
     }
@@ -675,7 +759,8 @@
           ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2);
           ctx.stroke();
         } else if (ring.style === 3) {
-          const symbol = RUNIC_SYMBOLS[params.symbolIndex].char;
+          const symbolSet = SCRIPT_SYMBOLS[params.scriptType] || SCRIPT_SYMBOLS.runic;
+          const symbol = symbolSet[params.symbolIndex % symbolSet.length].char;
           const count = 15 + Math.floor(complexityFactor * 15);
           const scriptFont = params.scriptFont || "'Segoe UI Symbol', sans-serif";
           ctx.font = `${ring.width * 5}px ${scriptFont}`;
@@ -721,7 +806,8 @@
 
         if (isGlowPass) return;
 
-        const symbolData = RUNIC_SYMBOLS[params.symbolIndex];
+        const symbolSet = SCRIPT_SYMBOLS[params.scriptType] || SCRIPT_SYMBOLS.runic;
+        const symbolData = symbolSet[params.symbolIndex % symbolSet.length];
         ctx.fillStyle = params.palette[2]; // Use Brass Accent
         const scriptFont = params.scriptFont || "'Segoe UI Symbol', sans-serif";
         ctx.font = `${r*0.8}px ${scriptFont}`;
@@ -1001,11 +1087,22 @@
         this.harmonicOscs = [];
         this.harmonicGain = null;
 
+        // Interval oscillator
+        this.intervalOsc = null;
+        this.intervalGain = null;
+
+        // Reverb
+        this.reverbNode = null;
+        this.reverbGain = null;
+        this.dryGain = null;
+
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
         this.currentWaveform = 'sine';
         this.currentDetune = 0;
+        this.manualWaveform = 'auto';
+        this.currentInterval = 0;
       }
 
       initAudioIfNeeded(volume) {
@@ -1017,6 +1114,16 @@
         this.filter.type = 'lowpass';
         this.filter.frequency.value = 4000;
         this.filter.Q.value = 0.7;
+
+        // Dry/Wet mixing for reverb
+        this.dryGain = this.audioCtx.createGain();
+        this.dryGain.gain.value = 1.0;
+
+        this.reverbGain = this.audioCtx.createGain();
+        this.reverbGain.gain.value = 0.0;
+
+        // Create simple reverb using multiple delays
+        this.reverbNode = this.createSimpleReverb();
 
         // Master gain
         this.masterGain = this.audioCtx.createGain();
@@ -1043,20 +1150,37 @@
           osc.type = 'sine';
           osc.frequency.value = 100 * mult;
           const gain = this.audioCtx.createGain();
-          gain.gain.value = 1 / (mult * 1.5); // Decreasing amplitude for higher harmonics
+          gain.gain.value = 1 / (mult * 1.5);
           osc.connect(gain);
           gain.connect(this.harmonicGain);
           osc.start();
           this.harmonicOscs.push({ osc, gain, multiplier: mult });
         });
 
-        // Signal chain: Oscillators -> Panners -> Filter -> Master -> Destination
+        // Interval oscillator (musical intervals above base)
+        this.intervalOsc = this.audioCtx.createOscillator();
+        this.intervalOsc.type = this.currentWaveform;
+        this.intervalOsc.frequency.value = 100;
+        this.intervalGain = this.audioCtx.createGain();
+        this.intervalGain.gain.value = 0;
+        this.intervalOsc.connect(this.intervalGain);
+        this.intervalGain.connect(this.filter);
+        this.intervalOsc.start();
+
+        // Signal chain: Oscillators -> Panners -> Filter -> Dry/Reverb -> Master -> Destination
         this.leftOsc.connect(this.leftPan);
         this.leftPan.connect(this.filter);
         this.rightOsc.connect(this.rightPan);
         this.rightPan.connect(this.filter);
         this.harmonicGain.connect(this.filter);
-        this.filter.connect(this.masterGain);
+
+        // Split to dry and wet paths
+        this.filter.connect(this.dryGain);
+        this.filter.connect(this.reverbNode);
+        this.reverbNode.connect(this.reverbGain);
+
+        this.dryGain.connect(this.masterGain);
+        this.reverbGain.connect(this.masterGain);
         this.masterGain.connect(this.audioCtx.destination);
 
         this.leftOsc.start();
@@ -1076,6 +1200,28 @@
         this.panLFOGain.connect(this.rightPan.pan);
 
         this.panLFO.start(0);
+      }
+
+      createSimpleReverb() {
+        // Create a simple reverb using multiple feedback delays
+        const input = this.audioCtx.createGain();
+        const output = this.audioCtx.createGain();
+
+        const delayTimes = [0.037, 0.041, 0.043, 0.047, 0.053, 0.061];
+
+        delayTimes.forEach(time => {
+          const delay = this.audioCtx.createDelay();
+          delay.delayTime.value = time;
+          const feedback = this.audioCtx.createGain();
+          feedback.gain.value = 0.4;
+
+          input.connect(delay);
+          delay.connect(feedback);
+          feedback.connect(delay);
+          delay.connect(output);
+        });
+
+        return { input, output, connect: (dest) => output.connect(dest) };
       }
 
       setVolume(volume) {
@@ -1103,6 +1249,42 @@
       setHarmonics(amount) {
         if (!this.harmonicGain) return;
         this.harmonicGain.gain.setTargetAtTime(amount * 0.15, this.audioCtx.currentTime, 0.05);
+      }
+
+      setReverb(amount) {
+        if (!this.reverbGain || !this.dryGain) return;
+        // Crossfade between dry and wet
+        const wet = amount;
+        const dry = 1 - (amount * 0.5); // Don't completely kill dry signal
+        this.reverbGain.gain.setTargetAtTime(wet * 0.6, this.audioCtx.currentTime, 0.05);
+        this.dryGain.gain.setTargetAtTime(dry, this.audioCtx.currentTime, 0.05);
+      }
+
+      setWaveform(waveType) {
+        this.manualWaveform = waveType;
+        if (!this.leftOsc || !this.rightOsc) return;
+
+        // If auto, use the element-based waveform
+        const actualWaveform = (waveType === 'auto') ? this.currentWaveform : waveType;
+
+        this.leftOsc.type = actualWaveform;
+        this.rightOsc.type = actualWaveform;
+        if (this.intervalOsc) this.intervalOsc.type = actualWaveform;
+      }
+
+      setInterval(semitones) {
+        if (!this.intervalGain || !this.intervalOsc) return;
+        this.currentInterval = semitones;
+
+        if (semitones === 0) {
+          this.intervalGain.gain.setTargetAtTime(0, this.audioCtx.currentTime, 0.02);
+        } else {
+          // Calculate frequency ratio for equal temperament intervals
+          const ratio = Math.pow(2, semitones / 12);
+          const intervalFreq = this.computedCarrier * ratio;
+          this.intervalOsc.frequency.setTargetAtTime(intervalFreq, this.audioCtx.currentTime, 0.03);
+          this.intervalGain.gain.setTargetAtTime(0.15, this.audioCtx.currentTime, 0.02);
+        }
       }
 
       updateHarmonicFrequencies(baseFreq) {
@@ -1174,11 +1356,19 @@
           this.leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), this.audioCtx.currentTime, 0.03);
           this.rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), this.audioCtx.currentTime, 0.03);
 
-          this.leftOsc.type = this.currentWaveform;
-          this.rightOsc.type = this.currentWaveform;
+          // Use manual waveform if set, otherwise use element-based waveform
+          const actualWaveform = (this.manualWaveform === 'auto') ? this.currentWaveform : this.manualWaveform;
+          this.leftOsc.type = actualWaveform;
+          this.rightOsc.type = actualWaveform;
+          if (this.intervalOsc) this.intervalOsc.type = actualWaveform;
 
           // Update harmonic oscillators based on carrier frequency
           this.updateHarmonicFrequencies(this.computedCarrier);
+
+          // Update interval if active
+          if (this.currentInterval > 0) {
+            this.setInterval(this.currentInterval);
+          }
         }
       }
 
@@ -1295,29 +1485,42 @@
         leftPanel.innerHTML = leftHTML;
 
         // RIGHT PANEL: GEOMETRY AND ACOUSTIC CONFIGURATION
-        const primarySymbol = RUNIC_SYMBOLS[params.symbolIndex];
+        const symbolSet = SCRIPT_SYMBOLS[params.scriptType] || SCRIPT_SYMBOLS.runic;
+        const primarySymbol = symbolSet[params.symbolIndex % symbolSet.length];
+        const scriptName = {
+          runic: 'Elder Futhark',
+          tibetan: 'Tibetan Script',
+          devanagari: 'Sanskrit Devanagari',
+          theban: 'Theban Alphabet',
+          coptic: 'Coptic Script',
+          hebrew: 'Hebrew Alphabet'
+        }[params.scriptType] || 'Elder Futhark';
+
         let rightHTML = `
           <h3>GEOMETRY & ACOUSTIC CONFIGURATION</h3>
-          <p>The input string determines the structural matrix and central runic glyph from the Elder Futhark.</p>
+          <p>The input string determines the structural matrix and central glyph from the ${scriptName}.</p>
           <h4>Geometry Matrix: ${params.archetype.name}</h4>
           <p>${params.archetype.meaning}</p>
 
-          <h4>Central Rune: ${primarySymbol.char}</h4>
+          <h4>Central Symbol: ${primarySymbol.char}</h4>
           <p><strong>${primarySymbol.desc}</strong> — ${primarySymbol.meaning}</p>
 
           <h4>Acoustic Configuration</h4>
           <p>Binaural carrier derived from elemental correspondence:</p>
           <ul>
-            <li><strong>Waveform:</strong> ${audioData.waveform.toUpperCase()}</li>
+            <li><strong>Waveform:</strong> ${audioEngine.manualWaveform === 'auto' ? audioData.waveform.toUpperCase() + ' (Auto)' : audioEngine.manualWaveform.toUpperCase()}</li>
             <li><strong>Carrier:</strong> ${audioData.carrier.toFixed(2)} Hz</li>
             <li><strong>Beat:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz</li>
           </ul>
           <h4>Modulation Controls</h4>
           <ul>
+            <li><strong>Wave:</strong> Oscillator waveform selection</li>
             <li><strong>Filter:</strong> Lowpass cutoff frequency</li>
             <li><strong>Detune:</strong> Stereo width via pitch offset</li>
             <li><strong>Drift:</strong> Spatial panning LFO rate</li>
             <li><strong>Harmonics:</strong> Overtone blend (2nd, 3rd, 5th)</li>
+            <li><strong>Interval:</strong> Musical interval above base (semitones)</li>
+            <li><strong>Reverb:</strong> Spatial depth and echo</li>
           </ul>
         `;
         rightPanel.innerHTML = rightHTML;
@@ -1394,6 +1597,22 @@
 
       harmonicsRange.addEventListener('input', () => {
         audioEngine.setHarmonics(parseFloat(harmonicsRange.value));
+      });
+
+      const intervalRange = document.getElementById('interval-range');
+      const reverbRange = document.getElementById('reverb-range');
+      const waveformSelect = document.getElementById('waveform-select');
+
+      intervalRange.addEventListener('input', () => {
+        audioEngine.setInterval(parseFloat(intervalRange.value));
+      });
+
+      reverbRange.addEventListener('input', () => {
+        audioEngine.setReverb(parseFloat(reverbRange.value));
+      });
+
+      waveformSelect.addEventListener('change', () => {
+        audioEngine.setWaveform(waveformSelect.value);
       });
 
       // Fullscreen Logic
