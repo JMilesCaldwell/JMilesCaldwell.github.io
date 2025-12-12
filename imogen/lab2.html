@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lab 2 · Imogen</title>
+  <title>Squiggle Screenmate · Lab 2 · Imogen</title>
   <link rel="icon" href="resources/Imogen.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
@@ -16,14 +16,13 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+      background: #FAFAFA;
       color: #2F4F4F;
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      overflow: hidden;
     }
 
     /* Navigation Bar */
@@ -32,7 +31,7 @@
       justify-content: center;
       align-items: center;
       background: #FFFFFF;
-      padding: 1rem 2rem;
+      padding: 0.75rem 2rem;
       position: fixed;
       top: 0;
       width: 100%;
@@ -43,14 +42,13 @@
 
     .navbar a {
       color: #36454F;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 500;
       text-decoration: none;
       margin: 0 1.5rem;
       padding: 0.5rem 0;
       border-bottom: 2px solid transparent;
       transition: all 0.3s ease;
-      letter-spacing: 0.3px;
     }
 
     .navbar a:hover {
@@ -58,64 +56,526 @@
       border-bottom-color: #2F4F4F;
     }
 
-    /* Main Content */
-    .content {
+    /* Main Layout */
+    .app-container {
+      display: flex;
+      margin-top: 52px;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+
+    /* Three Panes */
+    .pane {
+      background: #FFFFFF;
+      border: 1px solid #E8E8E8;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pane-header {
+      padding: 0.75rem 1rem;
+      background: #F5F5F5;
+      border-bottom: 1px solid #E8E8E8;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #36454F;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pane-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    /* Left Pane - Editor */
+    .editor-pane {
+      width: 280px;
+      min-width: 280px;
+    }
+
+    #draw-canvas {
+      width: 100%;
+      height: 200px;
+      border: 2px dashed #D0D0D0;
+      border-radius: 8px;
+      cursor: crosshair;
+      background: #FEFEFE;
+      touch-action: none;
+    }
+
+    #draw-canvas.drawing {
+      border-color: #2F4F4F;
+    }
+
+    .editor-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .editor-section h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #708090;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .bone-list {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #E8E8E8;
+      border-radius: 6px;
+      background: #FAFAFA;
+    }
+
+    .bone-item {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-bottom: 1px solid #F0F0F0;
+      transition: background 0.2s;
+    }
+
+    .bone-item:last-child {
+      border-bottom: none;
+    }
+
+    .bone-item:hover {
+      background: #F0F0F0;
+    }
+
+    .bone-item.selected {
+      background: #2F4F4F;
+      color: white;
+    }
+
+    .bone-item.suggested {
+      background: #E8F5E9;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: #2F4F4F;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1a3333;
+    }
+
+    .btn-secondary {
+      background: #E8E8E8;
+      color: #36454F;
+    }
+
+    .btn-secondary:hover {
+      background: #D8D8D8;
+    }
+
+    .btn-danger {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .btn-danger:hover {
+      background: #ffcdd2;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-small {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    /* Center Pane - Playground */
+    .playground-pane {
+      flex: 1;
+      min-width: 400px;
+    }
+
+    #playground-svg {
+      width: 100%;
+      height: 100%;
+      background: #FFFFFF;
+      cursor: default;
+    }
+
+    .creature-group {
+      transition: transform 0.05s linear;
+    }
+
+    /* Skeleton visualization */
+    .bone-line {
+      stroke: #E0E0E0;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .joint-circle {
+      fill: #D0D0D0;
+      stroke: #B0B0B0;
+      stroke-width: 1;
+    }
+
+    .skeleton-visible .bone-line {
+      stroke: #90CAF9;
+      stroke-width: 3;
+    }
+
+    .skeleton-visible .joint-circle {
+      fill: #64B5F6;
+      stroke: #1976D2;
+      stroke-width: 2;
+    }
+
+    /* Squiggle parts */
+    .squiggle-part {
+      fill: none;
+      stroke: #1a1a1a;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Toy */
+    .toy {
+      cursor: grab;
+      transition: filter 0.2s;
+    }
+
+    .toy:hover {
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .toy.dragging {
+      cursor: grabbing;
+    }
+
+    /* Right Pane - Controls */
+    .controls-pane {
+      width: 260px;
+      min-width: 260px;
+    }
+
+    .status-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .status-bar {
+      margin-bottom: 0.75rem;
+    }
+
+    .status-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+      color: #708090;
+    }
+
+    .status-track {
+      height: 8px;
+      background: #E8E8E8;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .status-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .status-fill.satiety {
+      background: linear-gradient(90deg, #FF8A65, #4CAF50);
+    }
+
+    .status-fill.happiness {
+      background: linear-gradient(90deg, #90CAF9, #FFD54F);
+    }
+
+    .status-fill.health {
+      background: linear-gradient(90deg, #EF5350, #66BB6A);
+    }
+
+    .state-indicator {
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      background: #F5F5F5;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #36454F;
+      text-transform: capitalize;
+    }
+
+    /* Feed Zone */
+    .feed-zone {
+      border: 2px dashed #D0D0D0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s;
+      background: #FAFAFA;
+      margin-bottom: 1rem;
+    }
+
+    .feed-zone.dragover {
+      border-color: #4CAF50;
+      background: #E8F5E9;
+    }
+
+    .feed-zone-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feed-zone-text {
+      font-size: 0.85rem;
+      color: #708090;
+    }
+
+    .feed-history {
+      max-height: 100px;
+      overflow-y: auto;
+      border: 1px solid #E8E8E8;
+      border-radius: 6px;
+      background: #FAFAFA;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      border-bottom: 1px solid #F0F0F0;
+      font-size: 0.8rem;
+    }
+
+    .feed-item:last-child {
+      border-bottom: none;
+    }
+
+    .feed-thumb {
+      width: 24px;
+      height: 24px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+    }
+
+    .feed-nutrition {
+      margin-left: auto;
+      font-weight: 500;
+      color: #4CAF50;
+    }
+
+    .feed-nutrition.bad {
+      color: #EF5350;
+    }
+
+    /* Creature Parts List */
+    .parts-list {
+      max-height: 120px;
+      overflow-y: auto;
+      border: 1px solid #E8E8E8;
+      border-radius: 6px;
+      background: #FAFAFA;
+      margin-bottom: 1rem;
+    }
+
+    .part-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      border-bottom: 1px solid #F0F0F0;
+    }
+
+    .part-item:last-child {
+      border-bottom: none;
+    }
+
+    .part-delete {
+      color: #EF5350;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 0.25rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .toggle-label {
+      font-size: 0.85rem;
+      color: #36454F;
+    }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #D0D0D0;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background-color: #2F4F4F;
+    }
+
+    .toggle input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Particles */
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      animation: particleFade 0.8s ease-out forwards;
+    }
+
+    @keyframes particleFade {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0) translateY(-20px);
+      }
+    }
+
+    /* Gulp animation */
+    @keyframes gulp {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15, 0.85); }
+    }
+
+    .gulping {
+      animation: gulp 0.4s ease-in-out;
+    }
+
+    /* Nutrition tooltip */
+    .nutrition-tooltip {
+      position: absolute;
+      background: #333;
+      color: white;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      max-width: 200px;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .nutrition-tooltip.visible {
+      opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 1000px) {
+      .app-container {
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .pane {
+        width: 100% !important;
+        min-width: unset !important;
+        max-height: 50vh;
+      }
+
+      .playground-pane {
+        min-height: 400px;
+      }
+    }
+
+    /* Stroke preview in editor */
+    .stroke-preview {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: #FAFAFA;
+      border: 1px solid #E8E8E8;
+      border-radius: 6px;
+      min-height: 60px;
+    }
+
+    .stroke-preview svg {
+      width: 100%;
+      height: 50px;
+    }
+
+    /* Empty state */
+    .empty-state {
       text-align: center;
       padding: 2rem;
+      color: #A0A0A0;
+      font-size: 0.9rem;
     }
 
-    .lab-title {
-      font-size: 2rem;
-      font-weight: 300;
-      color: #708090;
-      margin-bottom: 3rem;
-      letter-spacing: 1px;
-    }
-
-    .construction-text {
-      font-size: 1.5rem;
-      font-weight: 300;
-      color: #A9A9A9;
-      animation: fadeInOut 3s ease-in-out infinite;
-    }
-
-    @keyframes fadeInOut {
-      0%, 100% {
-        opacity: 0.3;
-      }
-      50% {
-        opacity: 1;
-      }
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .navbar {
-        flex-wrap: wrap;
-        padding: 1rem;
-      }
-
-      .navbar a {
-        margin: 0.5rem 1rem;
-      }
-
-      .lab-title {
-        font-size: 1.5rem;
-      }
-
-      .construction-text {
-        font-size: 1.2rem;
-      }
+    /* Presets */
+    .preset-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      margin: 0.15rem;
     }
   </style>
 </head>
 
 <body>
-
-  <!-- Remove any inherited favicons -->
-  <script>
-    document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
-  </script>
 
   <!-- Navigation Bar -->
   <div class="navbar">
@@ -124,11 +584,1584 @@
     <a href="../imogen.html">Imogen</a>
   </div>
 
-  <!-- Main Content -->
-  <div class="content">
-    <h1 class="lab-title">Lab 2</h1>
-    <p class="construction-text">under construction</p>
+  <!-- Main App Container -->
+  <div class="app-container">
+
+    <!-- Left Pane - Editor -->
+    <div class="pane editor-pane">
+      <div class="pane-header">Editor</div>
+      <div class="pane-content">
+
+        <div class="editor-section">
+          <h4>Draw Squiggle</h4>
+          <canvas id="draw-canvas"></canvas>
+          <div class="stroke-preview" id="stroke-preview">
+            <svg viewBox="0 0 200 50"></svg>
+          </div>
+          <div class="btn-group" style="margin-top: 0.5rem;">
+            <button class="btn btn-secondary btn-small" id="clear-stroke">Clear</button>
+            <button class="btn btn-secondary btn-small" id="undo-stroke">Undo</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <h4>Bind to Bone</h4>
+          <div class="bone-list" id="bone-list"></div>
+          <div class="btn-group" style="margin-top: 0.5rem;">
+            <button class="btn btn-primary btn-small" id="bind-stroke" disabled>Bind Stroke</button>
+            <button class="btn btn-secondary btn-small" id="auto-bind">Auto-Bind</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <h4>Quick Parts</h4>
+          <div class="btn-group">
+            <button class="btn btn-secondary preset-btn" data-preset="head">Head</button>
+            <button class="btn btn-secondary preset-btn" data-preset="body">Body</button>
+            <button class="btn btn-secondary preset-btn" data-preset="arm">Arm</button>
+            <button class="btn btn-secondary preset-btn" data-preset="leg">Leg</button>
+            <button class="btn btn-secondary preset-btn" data-preset="eye">Eye</button>
+            <button class="btn btn-secondary preset-btn" data-preset="smile">Smile</button>
+          </div>
+        </div>
+
+        <div class="editor-section">
+          <h4>Creature Parts</h4>
+          <div class="parts-list" id="parts-list">
+            <div class="empty-state">No parts yet</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Center Pane - Playground -->
+    <div class="pane playground-pane">
+      <div class="pane-header">
+        Playground
+        <span id="creature-name" style="float: right; font-weight: 400; text-transform: none;">Unnamed Creature</span>
+      </div>
+      <div class="pane-content" style="padding: 0; position: relative;">
+        <svg id="playground-svg" viewBox="0 0 800 600">
+          <defs>
+            <filter id="squiggle-shadow">
+              <feDropShadow dx="1" dy="1" stdDeviation="0.5" flood-opacity="0.15"/>
+            </filter>
+          </defs>
+
+          <!-- Background -->
+          <rect width="800" height="600" fill="#FEFEFE"/>
+
+          <!-- Ground line -->
+          <line x1="0" y1="550" x2="800" y2="550" stroke="#E8E8E8" stroke-width="2"/>
+
+          <!-- Skeleton group -->
+          <g id="skeleton-group" class="skeleton-visible"></g>
+
+          <!-- Creature parts group -->
+          <g id="creature-group" class="creature-group"></g>
+
+          <!-- Toy -->
+          <g id="toy-group" class="toy" transform="translate(650, 480)">
+            <circle r="25" fill="#FFD54F" stroke="#FFA000" stroke-width="3"/>
+            <circle r="8" fill="#FFA000" cx="-8" cy="-5"/>
+            <circle r="5" fill="#FFA000" cx="10" cy="8"/>
+          </g>
+
+          <!-- Particles container -->
+          <g id="particles-group"></g>
+        </svg>
+
+        <!-- Nutrition tooltip -->
+        <div class="nutrition-tooltip" id="nutrition-tooltip"></div>
+      </div>
+    </div>
+
+    <!-- Right Pane - Controls -->
+    <div class="pane controls-pane">
+      <div class="pane-header">Controls</div>
+      <div class="pane-content">
+
+        <div class="status-section">
+          <h4 style="font-size: 0.8rem; font-weight: 600; color: #708090; margin-bottom: 0.75rem; text-transform: uppercase;">Status</h4>
+
+          <div class="status-bar">
+            <div class="status-label">
+              <span>Satiety</span>
+              <span id="satiety-value">50</span>
+            </div>
+            <div class="status-track">
+              <div class="status-fill satiety" id="satiety-bar" style="width: 50%"></div>
+            </div>
+          </div>
+
+          <div class="status-bar">
+            <div class="status-label">
+              <span>Happiness</span>
+              <span id="happiness-value">50</span>
+            </div>
+            <div class="status-track">
+              <div class="status-fill happiness" id="happiness-bar" style="width: 50%"></div>
+            </div>
+          </div>
+
+          <div class="status-bar">
+            <div class="status-label">
+              <span>Health</span>
+              <span id="health-value">100</span>
+            </div>
+            <div class="status-track">
+              <div class="status-fill health" id="health-bar" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <div style="margin-top: 0.75rem;">
+            <span class="state-indicator" id="state-indicator">idle</span>
+          </div>
+        </div>
+
+        <div class="status-section">
+          <h4 style="font-size: 0.8rem; font-weight: 600; color: #708090; margin-bottom: 0.75rem; text-transform: uppercase;">Feed Creature</h4>
+          <div class="feed-zone" id="feed-zone">
+            <div class="feed-zone-icon">🍽️</div>
+            <div class="feed-zone-text">Drop image here to feed</div>
+          </div>
+          <input type="file" id="feed-input" accept="image/*" style="display: none;">
+          <div class="feed-history" id="feed-history">
+            <div class="empty-state" style="padding: 0.75rem;">No food history</div>
+          </div>
+        </div>
+
+        <div class="status-section">
+          <h4 style="font-size: 0.8rem; font-weight: 600; color: #708090; margin-bottom: 0.75rem; text-transform: uppercase;">Options</h4>
+
+          <div class="toggle-row">
+            <span class="toggle-label">Show Skeleton</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-skeleton" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label">Animate</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-animate" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label">Chase Cursor</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-chase">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="status-section">
+          <h4 style="font-size: 0.8rem; font-weight: 600; color: #708090; margin-bottom: 0.75rem; text-transform: uppercase;">Save / Load</h4>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-small" id="save-creature">Save</button>
+            <button class="btn btn-secondary btn-small" id="load-creature">Load</button>
+            <button class="btn btn-secondary btn-small" id="export-creature">Export ZIP</button>
+          </div>
+          <div class="btn-group" style="margin-top: 0.5rem;">
+            <button class="btn btn-secondary btn-small" id="new-creature">New</button>
+            <button class="btn btn-danger btn-small" id="reset-creature">Reset All</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
+
+  <script>
+    // ============================================
+    // SQUIGGLE SCREENMATE - Main Application
+    // ============================================
+    // A desktop-style stick figure pet with needs,
+    // behaviors, and image-based feeding mechanics.
+    // All client-side, no external dependencies.
+    // ============================================
+
+    (function() {
+      'use strict';
+
+      // ============================================
+      // CONFIGURATION
+      // ============================================
+      const CONFIG = {
+        // Playground dimensions
+        playgroundWidth: 800,
+        playgroundHeight: 600,
+        groundY: 550,
+
+        // Animation
+        fps: 60,
+        walkSpeed: 50,
+        chaseSpeed: 100,
+
+        // Needs decay rates (per second)
+        satietyDecay: 0.5,
+        happinessDecay: 0.2,
+        healthRegen: 0.1,
+
+        // Thresholds
+        hungryThreshold: 30,
+        sadThreshold: 40,
+        sickChance: 0.1,
+
+        // Feeding
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        analysisSize: 256,
+
+        // Play
+        playDuration: 15000, // 15 seconds
+        toyProximity: 80
+      };
+
+      // ============================================
+      // DEFAULT SKELETON
+      // ============================================
+      const DEFAULT_SKELETON = {
+        joints: [
+          { id: 'root', x: 400, y: 480 },
+          { id: 'hip', x: 400, y: 420 },
+          { id: 'spine', x: 400, y: 350 },
+          { id: 'neck', x: 400, y: 300 },
+          { id: 'head', x: 400, y: 250 },
+          // Left arm
+          { id: 'l_shoulder', x: 370, y: 310 },
+          { id: 'l_elbow', x: 340, y: 360 },
+          { id: 'l_hand', x: 320, y: 400 },
+          // Right arm
+          { id: 'r_shoulder', x: 430, y: 310 },
+          { id: 'r_elbow', x: 460, y: 360 },
+          { id: 'r_hand', x: 480, y: 400 },
+          // Left leg
+          { id: 'l_hip', x: 385, y: 420 },
+          { id: 'l_knee', x: 375, y: 480 },
+          { id: 'l_foot', x: 370, y: 540 },
+          // Right leg
+          { id: 'r_hip', x: 415, y: 420 },
+          { id: 'r_knee', x: 425, y: 480 },
+          { id: 'r_foot', x: 430, y: 540 }
+        ],
+        bones: [
+          { id: 'spine_lower', a: 'root', b: 'hip' },
+          { id: 'spine_mid', a: 'hip', b: 'spine' },
+          { id: 'spine_upper', a: 'spine', b: 'neck' },
+          { id: 'neck_bone', a: 'neck', b: 'head' },
+          // Left arm
+          { id: 'l_upper_arm', a: 'l_shoulder', b: 'l_elbow' },
+          { id: 'l_forearm', a: 'l_elbow', b: 'l_hand' },
+          // Right arm
+          { id: 'r_upper_arm', a: 'r_shoulder', b: 'r_elbow' },
+          { id: 'r_forearm', a: 'r_elbow', b: 'r_hand' },
+          // Left leg
+          { id: 'l_thigh', a: 'l_hip', b: 'l_knee' },
+          { id: 'l_shin', a: 'l_knee', b: 'l_foot' },
+          // Right leg
+          { id: 'r_thigh', a: 'r_hip', b: 'r_knee' },
+          { id: 'r_shin', a: 'r_knee', b: 'r_foot' },
+          // Connectors
+          { id: 'shoulders', a: 'l_shoulder', b: 'r_shoulder' },
+          { id: 'hips', a: 'l_hip', b: 'r_hip' }
+        ]
+      };
+
+      // ============================================
+      // STATE
+      // ============================================
+      const state = {
+        // Creature
+        creature: {
+          name: 'Squiggle',
+          parts: [],
+          skeleton: JSON.parse(JSON.stringify(DEFAULT_SKELETON))
+        },
+
+        // Needs (0-100)
+        satiety: 50,
+        happiness: 50,
+        health: 100,
+
+        // Behavior state
+        currentState: 'idle', // idle, walking, chasing, playing, sleeping, hungry, sick
+        targetX: 400,
+        targetY: 480,
+        facingRight: true,
+
+        // Animation
+        animating: true,
+        time: 0,
+        lastTime: 0,
+
+        // Position
+        rootX: 400,
+        rootY: 480,
+
+        // Editor
+        currentStroke: [],
+        strokes: [],
+        selectedBone: null,
+
+        // Interaction
+        toyX: 650,
+        toyY: 480,
+        toyDragging: false,
+        playStartTime: null,
+
+        // Cursor
+        cursorX: 400,
+        cursorY: 300,
+
+        // Feed history
+        feedHistory: []
+      };
+
+      // ============================================
+      // DOM ELEMENTS
+      // ============================================
+      const elements = {};
+
+      function initElements() {
+        elements.drawCanvas = document.getElementById('draw-canvas');
+        elements.drawCtx = elements.drawCanvas.getContext('2d');
+        elements.strokePreview = document.getElementById('stroke-preview').querySelector('svg');
+        elements.boneList = document.getElementById('bone-list');
+        elements.partsList = document.getElementById('parts-list');
+        elements.playgroundSvg = document.getElementById('playground-svg');
+        elements.skeletonGroup = document.getElementById('skeleton-group');
+        elements.creatureGroup = document.getElementById('creature-group');
+        elements.toyGroup = document.getElementById('toy-group');
+        elements.particlesGroup = document.getElementById('particles-group');
+        elements.feedZone = document.getElementById('feed-zone');
+        elements.feedInput = document.getElementById('feed-input');
+        elements.feedHistory = document.getElementById('feed-history');
+        elements.nutritionTooltip = document.getElementById('nutrition-tooltip');
+
+        // Status elements
+        elements.satietyBar = document.getElementById('satiety-bar');
+        elements.satietyValue = document.getElementById('satiety-value');
+        elements.happinessBar = document.getElementById('happiness-bar');
+        elements.happinessValue = document.getElementById('happiness-value');
+        elements.healthBar = document.getElementById('health-bar');
+        elements.healthValue = document.getElementById('health-value');
+        elements.stateIndicator = document.getElementById('state-indicator');
+        elements.creatureName = document.getElementById('creature-name');
+
+        // Buttons
+        elements.clearStroke = document.getElementById('clear-stroke');
+        elements.undoStroke = document.getElementById('undo-stroke');
+        elements.bindStroke = document.getElementById('bind-stroke');
+        elements.autoBind = document.getElementById('auto-bind');
+        elements.saveCreature = document.getElementById('save-creature');
+        elements.loadCreature = document.getElementById('load-creature');
+        elements.exportCreature = document.getElementById('export-creature');
+        elements.newCreature = document.getElementById('new-creature');
+        elements.resetCreature = document.getElementById('reset-creature');
+
+        // Toggles
+        elements.toggleSkeleton = document.getElementById('toggle-skeleton');
+        elements.toggleAnimate = document.getElementById('toggle-animate');
+        elements.toggleChase = document.getElementById('toggle-chase');
+      }
+
+      // ============================================
+      // DRAWING CANVAS (Editor)
+      // ============================================
+      function initDrawCanvas() {
+        const canvas = elements.drawCanvas;
+        const ctx = elements.drawCtx;
+        const rect = canvas.getBoundingClientRect();
+
+        canvas.width = rect.width * 2;
+        canvas.height = 400;
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#1a1a1a';
+
+        let drawing = false;
+
+        function getPos(e) {
+          const rect = canvas.getBoundingClientRect();
+          const x = (e.clientX || e.touches[0].clientX) - rect.left;
+          const y = (e.clientY || e.touches[0].clientY) - rect.top;
+          return { x, y };
+        }
+
+        function startDrawing(e) {
+          e.preventDefault();
+          drawing = true;
+          canvas.classList.add('drawing');
+          const pos = getPos(e);
+          state.currentStroke = [pos];
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+          if (!drawing) return;
+          e.preventDefault();
+          const pos = getPos(e);
+          state.currentStroke.push(pos);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+        }
+
+        function stopDrawing(e) {
+          if (!drawing) return;
+          drawing = false;
+          canvas.classList.remove('drawing');
+
+          if (state.currentStroke.length > 2) {
+            state.strokes.push([...state.currentStroke]);
+            updateStrokePreview();
+            elements.bindStroke.disabled = false;
+          }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Clear button
+        elements.clearStroke.addEventListener('click', () => {
+          ctx.clearRect(0, 0, canvas.width / 2, canvas.height / 2);
+          state.strokes = [];
+          state.currentStroke = [];
+          updateStrokePreview();
+          elements.bindStroke.disabled = true;
+        });
+
+        // Undo button
+        elements.undoStroke.addEventListener('click', () => {
+          if (state.strokes.length > 0) {
+            state.strokes.pop();
+            redrawCanvas();
+            updateStrokePreview();
+            elements.bindStroke.disabled = state.strokes.length === 0;
+          }
+        });
+      }
+
+      function redrawCanvas() {
+        const ctx = elements.drawCtx;
+        const canvas = elements.drawCanvas;
+        ctx.clearRect(0, 0, canvas.width / 2, canvas.height / 2);
+
+        state.strokes.forEach(stroke => {
+          if (stroke.length < 2) return;
+          ctx.beginPath();
+          ctx.moveTo(stroke[0].x, stroke[0].y);
+          stroke.forEach(p => ctx.lineTo(p.x, p.y));
+          ctx.stroke();
+        });
+      }
+
+      function updateStrokePreview() {
+        const svg = elements.strokePreview;
+        svg.innerHTML = '';
+
+        if (state.strokes.length === 0) return;
+
+        state.strokes.forEach(stroke => {
+          if (stroke.length < 2) return;
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', strokeToPath(stroke, 200, 50));
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', '#1a1a1a');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('stroke-linecap', 'round');
+          svg.appendChild(path);
+        });
+      }
+
+      function strokeToPath(stroke, targetWidth, targetHeight) {
+        if (stroke.length < 2) return '';
+
+        // Find bounds
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        stroke.forEach(p => {
+          minX = Math.min(minX, p.x);
+          minY = Math.min(minY, p.y);
+          maxX = Math.max(maxX, p.x);
+          maxY = Math.max(maxY, p.y);
+        });
+
+        const width = maxX - minX || 1;
+        const height = maxY - minY || 1;
+        const scale = Math.min(targetWidth / width, targetHeight / height) * 0.8;
+        const offsetX = (targetWidth - width * scale) / 2;
+        const offsetY = (targetHeight - height * scale) / 2;
+
+        const points = stroke.map(p => ({
+          x: (p.x - minX) * scale + offsetX,
+          y: (p.y - minY) * scale + offsetY
+        }));
+
+        let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+        for (let i = 1; i < points.length; i++) {
+          d += ` L ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)}`;
+        }
+        return d;
+      }
+
+      // ============================================
+      // BONE LIST (Editor)
+      // ============================================
+      function initBoneList() {
+        const list = elements.boneList;
+        list.innerHTML = '';
+
+        state.creature.skeleton.bones.forEach(bone => {
+          const item = document.createElement('div');
+          item.className = 'bone-item';
+          item.textContent = bone.id.replace(/_/g, ' ');
+          item.dataset.boneId = bone.id;
+
+          item.addEventListener('click', () => {
+            document.querySelectorAll('.bone-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+            state.selectedBone = bone.id;
+            highlightBone(bone.id);
+          });
+
+          list.appendChild(item);
+        });
+
+        // Bind stroke button
+        elements.bindStroke.addEventListener('click', () => {
+          if (state.strokes.length === 0 || !state.selectedBone) return;
+          bindStrokeToBone(state.selectedBone);
+        });
+
+        // Auto-bind button
+        elements.autoBind.addEventListener('click', () => {
+          if (state.strokes.length === 0) return;
+          const suggestedBone = findNearestBone();
+          if (suggestedBone) {
+            document.querySelectorAll('.bone-item').forEach(el => {
+              el.classList.remove('selected', 'suggested');
+              if (el.dataset.boneId === suggestedBone) {
+                el.classList.add('suggested');
+              }
+            });
+            state.selectedBone = suggestedBone;
+            highlightBone(suggestedBone);
+          }
+        });
+      }
+
+      function findNearestBone() {
+        if (state.strokes.length === 0) return null;
+
+        // Get center of all strokes
+        let sumX = 0, sumY = 0, count = 0;
+        state.strokes.forEach(stroke => {
+          stroke.forEach(p => {
+            sumX += p.x;
+            sumY += p.y;
+            count++;
+          });
+        });
+        const centerX = sumX / count;
+        const centerY = sumY / count;
+
+        // Map to skeleton coordinates
+        const canvasRect = elements.drawCanvas.getBoundingClientRect();
+        const skeletonX = (centerX / canvasRect.width) * CONFIG.playgroundWidth;
+        const skeletonY = (centerY / 200) * (CONFIG.playgroundHeight * 0.5) + 200;
+
+        // Find nearest bone
+        let nearestBone = null;
+        let minDist = Infinity;
+
+        state.creature.skeleton.bones.forEach(bone => {
+          const jointA = state.creature.skeleton.joints.find(j => j.id === bone.a);
+          const jointB = state.creature.skeleton.joints.find(j => j.id === bone.b);
+          const midX = (jointA.x + jointB.x) / 2;
+          const midY = (jointA.y + jointB.y) / 2;
+          const dist = Math.hypot(skeletonX - midX, skeletonY - midY);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestBone = bone.id;
+          }
+        });
+
+        return nearestBone;
+      }
+
+      function highlightBone(boneId) {
+        const bone = state.creature.skeleton.bones.find(b => b.id === boneId);
+        if (!bone) return;
+
+        // Visual feedback on skeleton
+        document.querySelectorAll('.bone-line').forEach(el => {
+          el.style.stroke = el.dataset.boneId === boneId ? '#FF5722' : '';
+          el.style.strokeWidth = el.dataset.boneId === boneId ? '4' : '';
+        });
+      }
+
+      function bindStrokeToBone(boneId) {
+        const bone = state.creature.skeleton.bones.find(b => b.id === boneId);
+        if (!bone || state.strokes.length === 0) return;
+
+        // Create combined path from all strokes
+        const allStrokes = [...state.strokes];
+        const part = {
+          partId: 'part_' + Date.now(),
+          svgPaths: allStrokes.map(stroke => strokeToPath(stroke, 100, 100)),
+          bindBones: [{
+            boneId: boneId,
+            anchorRatio: 0.5,
+            offset: { x: 0, y: 0, rot: 0, scale: 1 }
+          }]
+        };
+
+        state.creature.parts.push(part);
+
+        // Clear editor
+        const ctx = elements.drawCtx;
+        ctx.clearRect(0, 0, elements.drawCanvas.width / 2, elements.drawCanvas.height / 2);
+        state.strokes = [];
+        state.currentStroke = [];
+        state.selectedBone = null;
+        updateStrokePreview();
+        elements.bindStroke.disabled = true;
+
+        // Reset bone highlight
+        document.querySelectorAll('.bone-item').forEach(el => el.classList.remove('selected', 'suggested'));
+        document.querySelectorAll('.bone-line').forEach(el => {
+          el.style.stroke = '';
+          el.style.strokeWidth = '';
+        });
+
+        updatePartsList();
+        renderCreature();
+      }
+
+      // ============================================
+      // PRESET PARTS
+      // ============================================
+      function initPresets() {
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const preset = btn.dataset.preset;
+            addPresetPart(preset);
+          });
+        });
+      }
+
+      function addPresetPart(type) {
+        const presets = {
+          head: {
+            paths: ['M 20 50 Q 50 10 80 50 Q 50 90 20 50'],
+            bone: 'neck_bone',
+            offset: { x: 0, y: -30, rot: 0, scale: 0.8 }
+          },
+          body: {
+            paths: ['M 30 10 Q 50 5 70 10 L 75 90 Q 50 95 25 90 Z'],
+            bone: 'spine_mid',
+            offset: { x: 0, y: 0, rot: 0, scale: 1 }
+          },
+          arm: {
+            paths: ['M 10 50 Q 30 45 50 50 Q 70 55 90 50'],
+            bone: 'l_upper_arm',
+            offset: { x: 0, y: 0, rot: 0, scale: 0.6 }
+          },
+          leg: {
+            paths: ['M 40 10 Q 50 50 45 90', 'M 35 10 Q 45 50 50 90'],
+            bone: 'l_thigh',
+            offset: { x: 0, y: 0, rot: 0, scale: 0.8 }
+          },
+          eye: {
+            paths: ['M 35 50 A 15 15 0 1 1 65 50 A 15 15 0 1 1 35 50', 'M 45 50 A 5 5 0 1 1 55 50 A 5 5 0 1 1 45 50'],
+            bone: 'neck_bone',
+            offset: { x: -15, y: -35, rot: 0, scale: 0.3 }
+          },
+          smile: {
+            paths: ['M 30 45 Q 50 70 70 45'],
+            bone: 'neck_bone',
+            offset: { x: 0, y: -20, rot: 0, scale: 0.4 }
+          }
+        };
+
+        const preset = presets[type];
+        if (!preset) return;
+
+        const part = {
+          partId: 'part_' + Date.now(),
+          svgPaths: preset.paths,
+          bindBones: [{
+            boneId: preset.bone,
+            anchorRatio: 0.5,
+            offset: preset.offset
+          }]
+        };
+
+        state.creature.parts.push(part);
+        updatePartsList();
+        renderCreature();
+      }
+
+      // ============================================
+      // PARTS LIST
+      // ============================================
+      function updatePartsList() {
+        const list = elements.partsList;
+
+        if (state.creature.parts.length === 0) {
+          list.innerHTML = '<div class="empty-state">No parts yet</div>';
+          return;
+        }
+
+        list.innerHTML = '';
+        state.creature.parts.forEach((part, index) => {
+          const item = document.createElement('div');
+          item.className = 'part-item';
+
+          const boneNames = part.bindBones.map(b => b.boneId.replace(/_/g, ' ')).join(', ');
+          item.innerHTML = `
+            <span>Part ${index + 1} (${boneNames})</span>
+            <span class="part-delete" data-index="${index}">×</span>
+          `;
+
+          list.appendChild(item);
+        });
+
+        // Delete handlers
+        list.querySelectorAll('.part-delete').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            state.creature.parts.splice(index, 1);
+            updatePartsList();
+            renderCreature();
+          });
+        });
+      }
+
+      // ============================================
+      // SKELETON RENDERING
+      // ============================================
+      function renderSkeleton() {
+        const group = elements.skeletonGroup;
+        group.innerHTML = '';
+
+        const joints = state.creature.skeleton.joints;
+        const bones = state.creature.skeleton.bones;
+        const jointsById = {};
+        joints.forEach(j => jointsById[j.id] = j);
+
+        // Draw bones
+        bones.forEach(bone => {
+          const a = jointsById[bone.a];
+          const b = jointsById[bone.b];
+          if (!a || !b) return;
+
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', a.x);
+          line.setAttribute('y1', a.y);
+          line.setAttribute('x2', b.x);
+          line.setAttribute('y2', b.y);
+          line.setAttribute('class', 'bone-line');
+          line.dataset.boneId = bone.id;
+          group.appendChild(line);
+        });
+
+        // Draw joints
+        joints.forEach(joint => {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', joint.x);
+          circle.setAttribute('cy', joint.y);
+          circle.setAttribute('r', 5);
+          circle.setAttribute('class', 'joint-circle');
+          circle.dataset.jointId = joint.id;
+          group.appendChild(circle);
+        });
+      }
+
+      // ============================================
+      // CREATURE RENDERING
+      // ============================================
+      function renderCreature() {
+        const group = elements.creatureGroup;
+        group.innerHTML = '';
+
+        const joints = state.creature.skeleton.joints;
+        const bones = state.creature.skeleton.bones;
+        const jointsById = {};
+        const bonesById = {};
+        joints.forEach(j => jointsById[j.id] = j);
+        bones.forEach(b => bonesById[b.id] = b);
+
+        state.creature.parts.forEach(part => {
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.id = `part-${part.partId}`;
+          g.setAttribute('filter', 'url(#squiggle-shadow)');
+
+          part.svgPaths.forEach(pathD => {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathD);
+            path.setAttribute('class', 'squiggle-part');
+            g.appendChild(path);
+          });
+
+          // Apply bone transforms
+          if (part.bindBones && part.bindBones.length > 0) {
+            const binding = part.bindBones[0];
+            const bone = bonesById[binding.boneId];
+            if (bone) {
+              const a = jointsById[bone.a];
+              const b = jointsById[bone.b];
+              const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+              const ax = a.x + (b.x - a.x) * binding.anchorRatio;
+              const ay = a.y + (b.y - a.y) * binding.anchorRatio;
+              const offset = binding.offset || {};
+
+              const transform = `translate(${ax} ${ay}) rotate(${angle + (offset.rot || 0)}) scale(${offset.scale || 1}) translate(${offset.x || 0} ${offset.y || 0}) translate(-50 -50)`;
+              g.setAttribute('transform', transform);
+            }
+          }
+
+          group.appendChild(g);
+        });
+      }
+
+      // ============================================
+      // ANIMATION SYSTEM
+      // ============================================
+      function animate(timestamp) {
+        if (!state.lastTime) state.lastTime = timestamp;
+        const dt = (timestamp - state.lastTime) / 1000;
+        state.lastTime = timestamp;
+        state.time += dt;
+
+        if (state.animating) {
+          updateNeeds(dt);
+          updateBehavior(dt);
+          updateAnimation(dt);
+          updateUI();
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      function updateNeeds(dt) {
+        // Decay satiety
+        state.satiety = Math.max(0, state.satiety - CONFIG.satietyDecay * dt);
+
+        // Decay happiness (faster when hungry)
+        const happinessDecay = state.satiety < CONFIG.hungryThreshold ?
+          CONFIG.happinessDecay * 2 : CONFIG.happinessDecay;
+        state.happiness = Math.max(0, state.happiness - happinessDecay * dt);
+
+        // Regen health (unless sick)
+        if (state.currentState !== 'sick') {
+          state.health = Math.min(100, state.health + CONFIG.healthRegen * dt);
+        }
+      }
+
+      function updateBehavior(dt) {
+        // State transitions based on needs
+        if (state.health < 20) {
+          state.currentState = 'sick';
+        } else if (state.satiety < CONFIG.hungryThreshold) {
+          if (elements.toggleChase.checked || state.satiety < 15) {
+            state.currentState = 'chasing';
+          } else {
+            state.currentState = 'hungry';
+          }
+        } else if (state.playStartTime && Date.now() - state.playStartTime < CONFIG.playDuration) {
+          state.currentState = 'playing';
+        } else if (state.happiness < CONFIG.sadThreshold) {
+          // Check for toy proximity
+          const toyDist = Math.hypot(state.toyX - state.rootX, state.toyY - state.rootY);
+          if (toyDist < CONFIG.toyProximity) {
+            state.currentState = 'playing';
+            state.playStartTime = Date.now();
+          } else {
+            state.currentState = 'walking';
+            state.targetX = state.toyX;
+            state.targetY = state.toyY;
+          }
+        } else {
+          state.currentState = 'idle';
+        }
+
+        // Apply behavior
+        switch (state.currentState) {
+          case 'chasing':
+            state.targetX = state.cursorX;
+            state.targetY = Math.min(state.cursorY, CONFIG.groundY - 60);
+            moveToTarget(dt, CONFIG.chaseSpeed);
+            break;
+          case 'walking':
+            moveToTarget(dt, CONFIG.walkSpeed);
+            break;
+          case 'playing':
+            state.happiness = Math.min(100, state.happiness + 2 * dt);
+            break;
+          case 'idle':
+            // Gentle wandering
+            if (Math.random() < 0.01) {
+              state.targetX = 200 + Math.random() * 400;
+            }
+            moveToTarget(dt, CONFIG.walkSpeed * 0.3);
+            break;
+        }
+      }
+
+      function moveToTarget(dt, speed) {
+        const dx = state.targetX - state.rootX;
+        const dy = state.targetY - state.rootY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 5) {
+          const move = Math.min(speed * dt, dist);
+          state.rootX += (dx / dist) * move;
+          state.rootY += (dy / dist) * move;
+          state.facingRight = dx > 0;
+        }
+
+        // Keep on ground
+        state.rootY = Math.min(state.rootY, CONFIG.groundY - 60);
+        state.rootX = Math.max(50, Math.min(CONFIG.playgroundWidth - 50, state.rootX));
+      }
+
+      function updateAnimation(dt) {
+        const skeleton = state.creature.skeleton;
+        const t = state.time;
+
+        // Reset joints to default positions offset by root
+        const defaultSkeleton = JSON.parse(JSON.stringify(DEFAULT_SKELETON));
+        const offsetX = state.rootX - 400;
+        const offsetY = state.rootY - 480;
+
+        skeleton.joints.forEach((joint, i) => {
+          joint.x = defaultSkeleton.joints[i].x + offsetX;
+          joint.y = defaultSkeleton.joints[i].y + offsetY;
+        });
+
+        // Apply animations based on state
+        const jointsById = {};
+        skeleton.joints.forEach(j => jointsById[j.id] = j);
+
+        const amplitude = state.currentState === 'chasing' ? 15 :
+                         state.currentState === 'walking' ? 10 :
+                         state.currentState === 'playing' ? 20 : 5;
+        const freq = state.currentState === 'chasing' ? 8 :
+                    state.currentState === 'playing' ? 10 : 4;
+
+        // Leg animation
+        const legPhase = t * freq;
+        if (jointsById['l_knee']) {
+          jointsById['l_knee'].x += Math.sin(legPhase) * amplitude;
+          jointsById['l_foot'].x += Math.sin(legPhase) * amplitude * 1.2;
+          jointsById['l_foot'].y += Math.abs(Math.sin(legPhase)) * -amplitude * 0.5;
+        }
+        if (jointsById['r_knee']) {
+          jointsById['r_knee'].x += Math.sin(legPhase + Math.PI) * amplitude;
+          jointsById['r_foot'].x += Math.sin(legPhase + Math.PI) * amplitude * 1.2;
+          jointsById['r_foot'].y += Math.abs(Math.sin(legPhase + Math.PI)) * -amplitude * 0.5;
+        }
+
+        // Arm animation
+        const armAmplitude = amplitude * 0.7;
+        if (jointsById['l_elbow']) {
+          jointsById['l_elbow'].x += Math.sin(legPhase + Math.PI) * armAmplitude;
+          jointsById['l_hand'].x += Math.sin(legPhase + Math.PI) * armAmplitude * 1.3;
+        }
+        if (jointsById['r_elbow']) {
+          jointsById['r_elbow'].x += Math.sin(legPhase) * armAmplitude;
+          jointsById['r_hand'].x += Math.sin(legPhase) * armAmplitude * 1.3;
+        }
+
+        // Body bob
+        const bobAmount = state.currentState === 'idle' ? 2 : 4;
+        skeleton.joints.forEach(j => {
+          if (j.id !== 'l_foot' && j.id !== 'r_foot') {
+            j.y += Math.sin(t * freq * 2) * bobAmount;
+          }
+        });
+
+        // Head tilt for chasing/playing
+        if (state.currentState === 'chasing' || state.currentState === 'playing') {
+          if (jointsById['head']) {
+            jointsById['head'].x += Math.sin(t * 12) * 5;
+          }
+        }
+
+        // Flip if facing left
+        if (!state.facingRight) {
+          const centerX = state.rootX;
+          skeleton.joints.forEach(j => {
+            j.x = centerX - (j.x - centerX);
+          });
+        }
+
+        // Update skeleton visual
+        updateSkeletonVisual();
+        renderCreature();
+      }
+
+      function updateSkeletonVisual() {
+        const joints = state.creature.skeleton.joints;
+        const bones = state.creature.skeleton.bones;
+        const jointsById = {};
+        joints.forEach(j => jointsById[j.id] = j);
+
+        // Update bone lines
+        elements.skeletonGroup.querySelectorAll('.bone-line').forEach(line => {
+          const boneId = line.dataset.boneId;
+          const bone = bones.find(b => b.id === boneId);
+          if (bone) {
+            const a = jointsById[bone.a];
+            const b = jointsById[bone.b];
+            line.setAttribute('x1', a.x);
+            line.setAttribute('y1', a.y);
+            line.setAttribute('x2', b.x);
+            line.setAttribute('y2', b.y);
+          }
+        });
+
+        // Update joint circles
+        elements.skeletonGroup.querySelectorAll('.joint-circle').forEach(circle => {
+          const jointId = circle.dataset.jointId;
+          const joint = jointsById[jointId];
+          if (joint) {
+            circle.setAttribute('cx', joint.x);
+            circle.setAttribute('cy', joint.y);
+          }
+        });
+      }
+
+      // ============================================
+      // UI UPDATE
+      // ============================================
+      function updateUI() {
+        elements.satietyBar.style.width = state.satiety + '%';
+        elements.satietyValue.textContent = Math.round(state.satiety);
+
+        elements.happinessBar.style.width = state.happiness + '%';
+        elements.happinessValue.textContent = Math.round(state.happiness);
+
+        elements.healthBar.style.width = state.health + '%';
+        elements.healthValue.textContent = Math.round(state.health);
+
+        elements.stateIndicator.textContent = state.currentState;
+      }
+
+      // ============================================
+      // FEEDING SYSTEM
+      // ============================================
+      function initFeeding() {
+        const feedZone = elements.feedZone;
+        const feedInput = elements.feedInput;
+
+        // Click to open file picker
+        feedZone.addEventListener('click', () => feedInput.click());
+
+        // Drag and drop
+        feedZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          feedZone.classList.add('dragover');
+        });
+
+        feedZone.addEventListener('dragleave', () => {
+          feedZone.classList.remove('dragover');
+        });
+
+        feedZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          feedZone.classList.remove('dragover');
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            processFood(files[0]);
+          }
+        });
+
+        // File input change
+        feedInput.addEventListener('change', (e) => {
+          if (e.target.files.length > 0) {
+            processFood(e.target.files[0]);
+          }
+        });
+      }
+
+      async function processFood(file) {
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+          alert('Please drop an image file (JPEG, PNG, or WebP)');
+          return;
+        }
+
+        if (file.size > CONFIG.maxFileSize) {
+          alert('File too large! Maximum size is 10MB');
+          return;
+        }
+
+        const fileSizeKB = file.size / 1024;
+
+        try {
+          // Load image
+          const img = await loadImage(file);
+
+          // Analyze image
+          const analysis = analyzeImage(img, fileSizeKB);
+
+          // Calculate nutrition
+          // Formula: nutrition = clamp(fileSizeKB/50 + paletteComplexity/5 + (1-avgBrightness)*20, 0, 100)
+          let nutrition = Math.min(100, Math.max(0,
+            fileSizeKB / 50 +
+            analysis.paletteComplexity / 5 +
+            (1 - analysis.avgBrightness) * 20
+          ));
+
+          // Check for bad food
+          let isBadFood = false;
+          if (fileSizeKB < 2 || analysis.paletteComplexity < 3) {
+            isBadFood = Math.random() < CONFIG.sickChance;
+            if (isBadFood) {
+              nutrition = -10;
+            }
+          }
+
+          // Check for medicine (small, greenish)
+          const isMedicine = fileSizeKB < 50 && analysis.isGreenish;
+          if (isMedicine && state.health < 100) {
+            state.health = Math.min(100, state.health + 30);
+          }
+
+          // Apply nutrition
+          state.satiety = Math.min(100, Math.max(0, state.satiety + nutrition));
+
+          // Affect happiness based on "flavor" (brightness variation)
+          const flavorBonus = analysis.brightnessVariation * 10;
+          state.happiness = Math.min(100, state.happiness + flavorBonus);
+
+          // If bad food, chance of sickness
+          if (isBadFood) {
+            state.health = Math.max(0, state.health - 20);
+            state.currentState = 'sick';
+          }
+
+          // Visual feedback
+          animateGulp();
+          spawnParticles(state.rootX, state.rootY - 50, isBadFood ? '#EF5350' : '#4CAF50');
+
+          // Add to history
+          addFeedHistory(file, analysis, nutrition, isBadFood);
+
+        } catch (err) {
+          console.error('Error processing food:', err);
+          alert('Could not process image');
+        }
+      }
+
+      function loadImage(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = e.target.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function analyzeImage(img, fileSizeKB) {
+        // Create offscreen canvas
+        const canvas = document.createElement('canvas');
+        const size = CONFIG.analysisSize;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Draw scaled image
+        ctx.drawImage(img, 0, 0, size, size);
+        const imageData = ctx.getImageData(0, 0, size, size);
+        const data = imageData.data;
+
+        // Calculate average brightness (luminance)
+        let totalLuma = 0;
+        let minBrightness = 1;
+        let maxBrightness = 0;
+        const colorSet = new Set();
+        let greenSum = 0;
+        let pixelCount = 0;
+
+        // Sample every 5th pixel for performance
+        for (let i = 0; i < data.length; i += 20) { // 4 channels * 5 = 20
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // Luminance formula
+          const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          totalLuma += luma;
+          minBrightness = Math.min(minBrightness, luma);
+          maxBrightness = Math.max(maxBrightness, luma);
+
+          // Quantize to 4 bits per channel for palette complexity
+          const quantR = r >> 4;
+          const quantG = g >> 4;
+          const quantB = b >> 4;
+          const colorKey = (quantR << 8) | (quantG << 4) | quantB;
+          colorSet.add(colorKey);
+
+          // Track greenness for medicine detection
+          if (g > r && g > b) {
+            greenSum++;
+          }
+          pixelCount++;
+        }
+
+        const avgBrightness = totalLuma / pixelCount;
+        const brightnessVariation = maxBrightness - minBrightness;
+        const paletteComplexity = Math.min(colorSet.size, 100); // Cap at 100
+        const isGreenish = greenSum / pixelCount > 0.3;
+
+        return {
+          avgBrightness,
+          brightnessVariation,
+          paletteComplexity,
+          isGreenish,
+          fileSizeKB
+        };
+      }
+
+      function animateGulp() {
+        elements.creatureGroup.classList.add('gulping');
+        setTimeout(() => {
+          elements.creatureGroup.classList.remove('gulping');
+        }, 400);
+      }
+
+      function spawnParticles(x, y, color) {
+        const group = elements.particlesGroup;
+
+        for (let i = 0; i < 8; i++) {
+          const particle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          const angle = (i / 8) * Math.PI * 2;
+          const radius = 20 + Math.random() * 20;
+
+          particle.setAttribute('cx', x + Math.cos(angle) * radius);
+          particle.setAttribute('cy', y + Math.sin(angle) * radius);
+          particle.setAttribute('r', 4 + Math.random() * 4);
+          particle.setAttribute('fill', color);
+          particle.setAttribute('opacity', '0.8');
+
+          group.appendChild(particle);
+
+          // Animate out
+          const startX = x + Math.cos(angle) * radius;
+          const startY = y + Math.sin(angle) * radius;
+          const endX = x + Math.cos(angle) * (radius + 40);
+          const endY = y + Math.sin(angle) * (radius + 40) - 30;
+
+          let progress = 0;
+          const animateParticle = () => {
+            progress += 0.05;
+            if (progress >= 1) {
+              particle.remove();
+              return;
+            }
+            particle.setAttribute('cx', startX + (endX - startX) * progress);
+            particle.setAttribute('cy', startY + (endY - startY) * progress);
+            particle.setAttribute('opacity', 0.8 * (1 - progress));
+            requestAnimationFrame(animateParticle);
+          };
+          requestAnimationFrame(animateParticle);
+        }
+      }
+
+      function addFeedHistory(file, analysis, nutrition, isBadFood) {
+        const historyItem = {
+          name: file.name,
+          nutrition: Math.round(nutrition),
+          isBadFood,
+          timestamp: Date.now(),
+          thumb: URL.createObjectURL(file)
+        };
+
+        state.feedHistory.unshift(historyItem);
+        if (state.feedHistory.length > 10) {
+          state.feedHistory.pop();
+        }
+
+        updateFeedHistory();
+      }
+
+      function updateFeedHistory() {
+        const history = elements.feedHistory;
+
+        if (state.feedHistory.length === 0) {
+          history.innerHTML = '<div class="empty-state" style="padding: 0.75rem;">No food history</div>';
+          return;
+        }
+
+        history.innerHTML = '';
+        state.feedHistory.forEach((item, index) => {
+          const div = document.createElement('div');
+          div.className = 'feed-item';
+          div.innerHTML = `
+            <img src="${item.thumb}" class="feed-thumb" alt="">
+            <span>${item.name.slice(0, 15)}${item.name.length > 15 ? '...' : ''}</span>
+            <span class="feed-nutrition ${item.isBadFood ? 'bad' : ''}">${item.isBadFood ? '☠️' : '+'} ${Math.abs(item.nutrition)}</span>
+          `;
+
+          // Tooltip on hover
+          div.addEventListener('mouseenter', (e) => {
+            showNutritionTooltip(e, item);
+          });
+          div.addEventListener('mouseleave', () => {
+            elements.nutritionTooltip.classList.remove('visible');
+          });
+
+          history.appendChild(div);
+        });
+      }
+
+      function showNutritionTooltip(e, item) {
+        const tooltip = elements.nutritionTooltip;
+        tooltip.innerHTML = `
+          <strong>Nutrition Calculation</strong><br>
+          File size: ${(item.nutrition * 50 / 100).toFixed(1)}KB contribution<br>
+          Palette complexity bonus<br>
+          Brightness factor applied<br>
+          <em>Total: ${item.nutrition} points</em>
+        `;
+        tooltip.style.left = (e.clientX + 10) + 'px';
+        tooltip.style.top = (e.clientY - 60) + 'px';
+        tooltip.classList.add('visible');
+      }
+
+      // ============================================
+      // TOY INTERACTION
+      // ============================================
+      function initToy() {
+        const toy = elements.toyGroup;
+        let dragging = false;
+        let offsetX = 0, offsetY = 0;
+
+        toy.addEventListener('mousedown', (e) => {
+          dragging = true;
+          toy.classList.add('dragging');
+          const rect = elements.playgroundSvg.getBoundingClientRect();
+          const svgX = (e.clientX - rect.left) / rect.width * CONFIG.playgroundWidth;
+          const svgY = (e.clientY - rect.top) / rect.height * CONFIG.playgroundHeight;
+          offsetX = state.toyX - svgX;
+          offsetY = state.toyY - svgY;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+          if (!dragging) return;
+          const rect = elements.playgroundSvg.getBoundingClientRect();
+          const svgX = (e.clientX - rect.left) / rect.width * CONFIG.playgroundWidth;
+          const svgY = (e.clientY - rect.top) / rect.height * CONFIG.playgroundHeight;
+          state.toyX = Math.max(30, Math.min(CONFIG.playgroundWidth - 30, svgX + offsetX));
+          state.toyY = Math.max(30, Math.min(CONFIG.groundY - 10, svgY + offsetY));
+          toy.setAttribute('transform', `translate(${state.toyX}, ${state.toyY})`);
+        });
+
+        document.addEventListener('mouseup', () => {
+          if (dragging) {
+            dragging = false;
+            toy.classList.remove('dragging');
+          }
+        });
+      }
+
+      // ============================================
+      // CURSOR TRACKING
+      // ============================================
+      function initCursorTracking() {
+        elements.playgroundSvg.addEventListener('mousemove', (e) => {
+          const rect = elements.playgroundSvg.getBoundingClientRect();
+          state.cursorX = (e.clientX - rect.left) / rect.width * CONFIG.playgroundWidth;
+          state.cursorY = (e.clientY - rect.top) / rect.height * CONFIG.playgroundHeight;
+        });
+      }
+
+      // ============================================
+      // TOGGLES
+      // ============================================
+      function initToggles() {
+        elements.toggleSkeleton.addEventListener('change', (e) => {
+          elements.skeletonGroup.classList.toggle('skeleton-visible', e.target.checked);
+          if (!e.target.checked) {
+            elements.skeletonGroup.style.display = 'none';
+          } else {
+            elements.skeletonGroup.style.display = '';
+          }
+        });
+
+        elements.toggleAnimate.addEventListener('change', (e) => {
+          state.animating = e.target.checked;
+        });
+      }
+
+      // ============================================
+      // PERSISTENCE
+      // ============================================
+      function initPersistence() {
+        // Save
+        elements.saveCreature.addEventListener('click', () => {
+          const data = {
+            creature: state.creature,
+            satiety: state.satiety,
+            happiness: state.happiness,
+            health: state.health,
+            feedHistory: state.feedHistory.map(h => ({ ...h, thumb: null }))
+          };
+          localStorage.setItem('squiggle-screenmate', JSON.stringify(data));
+          alert('Creature saved!');
+        });
+
+        // Load
+        elements.loadCreature.addEventListener('click', () => {
+          const saved = localStorage.getItem('squiggle-screenmate');
+          if (saved) {
+            try {
+              const data = JSON.parse(saved);
+              state.creature = data.creature;
+              state.satiety = data.satiety || 50;
+              state.happiness = data.happiness || 50;
+              state.health = data.health || 100;
+              state.feedHistory = data.feedHistory || [];
+
+              renderSkeleton();
+              renderCreature();
+              updatePartsList();
+              updateFeedHistory();
+              initBoneList();
+              alert('Creature loaded!');
+            } catch (e) {
+              alert('Could not load saved creature');
+            }
+          } else {
+            alert('No saved creature found');
+          }
+        });
+
+        // Export ZIP
+        elements.exportCreature.addEventListener('click', async () => {
+          const data = {
+            creature: state.creature,
+            satiety: state.satiety,
+            happiness: state.happiness,
+            health: state.health
+          };
+
+          // Create JSON blob
+          const jsonBlob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+          // For simplicity, just download JSON (ZIP would require a library)
+          const url = URL.createObjectURL(jsonBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${state.creature.name || 'creature'}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+
+        // New creature
+        elements.newCreature.addEventListener('click', () => {
+          if (confirm('Create a new creature? Current creature will be lost unless saved.')) {
+            state.creature = {
+              name: 'Squiggle',
+              parts: [],
+              skeleton: JSON.parse(JSON.stringify(DEFAULT_SKELETON))
+            };
+            state.satiety = 50;
+            state.happiness = 50;
+            state.health = 100;
+            state.feedHistory = [];
+            state.rootX = 400;
+            state.rootY = 480;
+
+            renderSkeleton();
+            renderCreature();
+            updatePartsList();
+            updateFeedHistory();
+            initBoneList();
+          }
+        });
+
+        // Reset all
+        elements.resetCreature.addEventListener('click', () => {
+          if (confirm('Reset everything? This will clear all saved data.')) {
+            localStorage.removeItem('squiggle-screenmate');
+            location.reload();
+          }
+        });
+
+        // Auto-load on start
+        const saved = localStorage.getItem('squiggle-screenmate');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            state.creature = data.creature;
+            state.satiety = data.satiety || 50;
+            state.happiness = data.happiness || 50;
+            state.health = data.health || 100;
+          } catch (e) {
+            console.error('Could not auto-load creature');
+          }
+        }
+      }
+
+      // ============================================
+      // INITIALIZATION
+      // ============================================
+      function init() {
+        initElements();
+        initDrawCanvas();
+        initBoneList();
+        initPresets();
+        initFeeding();
+        initToy();
+        initCursorTracking();
+        initToggles();
+        initPersistence();
+
+        renderSkeleton();
+        renderCreature();
+        updatePartsList();
+        updateFeedHistory();
+        updateUI();
+
+        // Start animation loop
+        requestAnimationFrame(animate);
+
+        console.log('Squiggle Screenmate initialized!');
+      }
+
+      // Start when DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
 
 </body>
 </html>
