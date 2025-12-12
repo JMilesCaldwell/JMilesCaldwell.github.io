@@ -104,6 +104,44 @@
     .fs-stat { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 4px; position: fixed; top: 20px; right: 20px; color: var(--color-primary-canvas); font-size: 0.8rem; transition: opacity 0.3s; opacity: 0; pointer-events: none; }
     .fs-stat.visible { opacity: 1; }
 
+    /* Ritual Mode - contemplative state */
+    body.ritual-mode .navbar,
+    body.ritual-mode .controls,
+    body.ritual-mode .audio-controls,
+    body.ritual-mode .input-group,
+    body.ritual-mode .explanation-panel {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.5s ease;
+    }
+    body.ritual-mode .guiding-phrase {
+      font-size: 1.2rem;
+      color: var(--color-primary-accent);
+      transition: all 1.5s ease;
+    }
+    body.ritual-mode .canvas-wrapper {
+      transform: scale(1.05);
+      transition: transform 2s ease;
+    }
+    body.ritual-mode {
+      cursor: none;
+    }
+    /* Show ritual exit hint on hover */
+    body.ritual-mode::after {
+      content: 'Press ESC or R to exit ritual mode';
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--color-neutral-medium);
+      font-size: 0.7rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    body.ritual-mode:hover::after {
+      opacity: 0.5;
+    }
+
     @media (max-width: 1200px) {
       .main-content-grid { flex-direction: column; align-items: center; }
       .explanation-panel { max-width: 650px; width: 100%; position: static; }
@@ -175,7 +213,7 @@
           <button class="btn" id="random-btn">Generate New Data</button>
           <button class="btn" id="animate-btn">Start Flow</button>
           <button class="btn" id="bloom-btn">Toggle Light Spill</button>
-          <button class="btn" id="save-btn">Export Image (PNG)</button>
+          <button class="btn" id="save-btn" title="Click: Standard | Ctrl+Click: 2K | Shift+Click: 4K">Export Image (PNG)</button>
 
           <select class="btn" id="framework-selector" style="cursor: pointer;">
             <option value="wuxing">Chinese Wuxing (五行)</option>
@@ -252,6 +290,7 @@
           </div>
 
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
+          <button class="btn" id="ritual-btn">Ritual Mode</button>
         </div>
       </div>
 
@@ -2004,6 +2043,9 @@
       let currentScriptType = 'runic';
       let currentColorMode = 'elemental';
       let currentFramework = 'wuxing';
+      let isRitualMode = false;
+      let preRitualSpeed = 1.0;
+      let preRitualBeat = 6;
 
       // Guiding phrases by framework
       const GUIDING_PHRASES = {
@@ -2223,11 +2265,49 @@
         if(!renderer.isAnimating) renderer.drawInitialFrame();
       });
 
-      document.getElementById('save-btn').addEventListener('click', () => {
-        const link = document.createElement('a');
-        link.download = `SIG01-${seedInput.value.replace(/ /g, '-')||'config'}.png`;
-        link.href = renderer.canvas.toDataURL();
-        link.click();
+      document.getElementById('save-btn').addEventListener('click', (e) => {
+        // Hold Shift for 4K export, Ctrl for 2K
+        const baseSize = renderer.canvas.width;
+        let exportSize = baseSize;
+        let qualityLabel = '';
+
+        if (e.shiftKey) {
+          exportSize = 4096; // 4K
+          qualityLabel = '-4K';
+        } else if (e.ctrlKey || e.metaKey) {
+          exportSize = 2048; // 2K
+          qualityLabel = '-2K';
+        }
+
+        if (exportSize !== baseSize) {
+          // Create high-res export canvas
+          const exportCanvas = document.createElement('canvas');
+          exportCanvas.width = exportSize;
+          exportCanvas.height = exportSize;
+          const exportCtx = exportCanvas.getContext('2d');
+
+          // Draw at high resolution
+          exportCtx.fillStyle = '#080706';
+          exportCtx.fillRect(0, 0, exportSize, exportSize);
+
+          // Temporarily store and modify renderer settings for export
+          const originalWidth = renderer.width;
+          const originalHeight = renderer.height;
+
+          // Draw the mandala at export resolution
+          renderer.drawFrame(exportCtx, exportSize, exportSize, renderer.phase);
+
+          const link = document.createElement('a');
+          link.download = `SIG01-${seedInput.value.replace(/ /g, '-')||'config'}${qualityLabel}.png`;
+          link.href = exportCanvas.toDataURL('image/png');
+          link.click();
+        } else {
+          // Standard resolution export
+          const link = document.createElement('a');
+          link.download = `SIG01-${seedInput.value.replace(/ /g, '-')||'config'}.png`;
+          link.href = renderer.canvas.toDataURL();
+          link.click();
+        }
       });
 
       // Audio Controls
@@ -2330,6 +2410,70 @@
         audioEngine.setKickVolume(parseFloat(kickVolRange.value));
       });
 
+      // Ritual Mode Logic
+      document.getElementById('ritual-btn').addEventListener('click', toggleRitualMode);
+
+      function toggleRitualMode() {
+        isRitualMode = !isRitualMode;
+
+        if (isRitualMode) {
+          // Store current settings
+          preRitualSpeed = renderer.speed;
+          preRitualBeat = parseFloat(beatRange.value);
+
+          // Enter ritual state
+          document.body.classList.add('ritual-mode');
+
+          // Slow down animation
+          renderer.speed = 0.3;
+          speedDisplay.textContent = renderer.speed.toFixed(2);
+
+          // Deepen the tone (lower beat frequency for theta state)
+          beatRange.value = 4.5;
+          beatRange.dataset.touched = "1";
+          syncAudioFrequencies(true);
+
+          // Enable bloom if not already
+          if (!renderer.isBloom) {
+            renderer.isBloom = true;
+            renderer.bloomIntensity = 0.8;
+            document.getElementById('bloom-btn').textContent = "Disable Light Spill";
+          }
+
+          // Start animation if not running
+          if (!renderer.isAnimating) {
+            renderer.toggleAnimation(true);
+            document.getElementById('animate-btn').textContent = "Stop Flow";
+          }
+
+          // Start audio if not playing
+          if (!audioEngine.isAudioPlaying) {
+            const playing = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value, volRange);
+            audioToggle.textContent = playing ? 'Tone ON' : 'Tone OFF';
+          }
+
+          document.getElementById('ritual-btn').textContent = 'Exit Ritual';
+        } else {
+          exitRitualMode();
+        }
+      }
+
+      function exitRitualMode() {
+        if (!isRitualMode) return;
+        isRitualMode = false;
+
+        document.body.classList.remove('ritual-mode');
+
+        // Restore previous settings
+        renderer.speed = preRitualSpeed;
+        speedDisplay.textContent = renderer.speed.toFixed(2);
+
+        beatRange.value = preRitualBeat;
+        syncAudioFrequencies(true);
+
+        document.getElementById('ritual-btn').textContent = 'Ritual Mode';
+      }
+
       // Fullscreen Logic
       document.getElementById('fullscreen-btn').addEventListener('click', enterFullscreen);
       document.getElementById('fs-exit').addEventListener('click', exitFullscreen);
@@ -2400,7 +2544,40 @@
 
         switch(e.code) {
           case 'Escape':
-            if (inFullscreen) exitFullscreen();
+            if (isRitualMode) exitRitualMode();
+            else if (inFullscreen) exitFullscreen();
+            break;
+          case 'KeyR':
+            // Toggle ritual mode with R key (when not typing)
+            if (document.activeElement.tagName !== 'INPUT') {
+              e.preventDefault();
+              toggleRitualMode();
+            }
+            break;
+          case 'Digit1':
+          case 'Digit2':
+          case 'Digit3':
+          case 'Digit4':
+          case 'Digit5':
+            // Framework switching with number keys 1-5
+            if (document.activeElement.tagName !== 'INPUT') {
+              const frameworks = ['wuxing', 'tibetan', 'hermetic', 'jungian', 'minimalist'];
+              const index = parseInt(e.code.slice(-1)) - 1;
+              if (index >= 0 && index < frameworks.length) {
+                currentFramework = frameworks[index];
+                frameworkSelector.value = currentFramework;
+                // Auto-select appropriate script
+                if (currentFramework === 'tibetan') {
+                  scriptSelector.value = 'tibetan';
+                  currentScriptType = 'tibetan';
+                } else if (currentFramework === 'hermetic') {
+                  scriptSelector.value = 'hebrew';
+                  currentScriptType = 'hebrew';
+                }
+                updateUI();
+                showStat(`Framework: ${frameworkSelector.options[frameworkSelector.selectedIndex].text}`);
+              }
+            }
             break;
           case 'ArrowLeft': 
             renderer.speed = Math.max(0.1, renderer.speed - 0.25);
