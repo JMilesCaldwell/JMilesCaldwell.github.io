@@ -582,12 +582,15 @@
             symbolIndex = elementalSyllables[yearKey] % symbolSet.length;
         }
 
-        // 4. Random Polyhedrons (Complex 3D-like wireframes)
-        const polyCount = rand() < 0.40 ? Math.floor(rand() * 4) + 1 : 0; 
+        // 4. Random Sacred Geometry Shapes
+        // Types: 0=Icosahedron, 1=Star, 2=Cube, 3=Tetrahedron, 4=Octahedron,
+        //        5=Dodecahedron, 6=Star Tetrahedron(Merkaba), 7=Metatron's Cube,
+        //        8=Seed of Life, 9=Flower of Life
+        const polyCount = rand() < 0.50 ? Math.floor(rand() * 4) + 1 : 0;
         const polyhedrons = [];
         for(let i=0; i<polyCount; i++) {
             polyhedrons.push({
-                type: Math.floor(rand() * 4), 
+                type: Math.floor(rand() * 10),
                 radiusFactor: 0.3 + rand() * 0.6,
                 color: ACCENT_BRASS, // Always use the brass accent for these wireframes
                 thickness: 0.8 + rand() * 3,
@@ -1015,41 +1018,58 @@
       }
 
       drawPolyhedron(ctx, cx, cy, r, poly, phase, isGlowPass) {
-        if (isGlowPass) return; 
+        if (isGlowPass) return;
 
         ctx.save();
         ctx.translate(cx, cy);
-        
-        const angle = phase * poly.rotationSpeed * 5; 
+
+        const angle = phase * poly.rotationSpeed * 5;
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
         const rotateX = ([x, y, z]) => [x, y * cos - z * sin, y * sin + z * cos];
         const rotateY = ([x, y, z]) => [x * cos - z * sin, y, x * sin + z * cos];
 
-        let vertices = this.icosaVertices; 
+        // 2D Sacred Geometry shapes (types 7-9)
+        if (poly.type >= 7) {
+          ctx.strokeStyle = poly.color;
+          ctx.lineWidth = poly.thickness;
+          ctx.rotate(angle * 0.2);
+
+          if (poly.type === 7) {
+            this.drawMetatronsCube(ctx, r);
+          } else if (poly.type === 8) {
+            this.drawSeedOfLife(ctx, r);
+          } else if (poly.type === 9) {
+            this.drawFlowerOfLife(ctx, r);
+          }
+          ctx.restore();
+          return;
+        }
+
+        let vertices = this.icosaVertices;
         let edges = this.icosaEdges;
         let scaleFactor = r * 0.2;
 
-        if (poly.type === 0) {} 
+        if (poly.type === 0) {}
         else if (poly.type === 1) {
-            this.drawStar(ctx, r, 5, 0.4); 
+            this.drawStar(ctx, r, 5, 0.4);
             ctx.strokeStyle = poly.color;
             ctx.lineWidth = poly.thickness;
             ctx.stroke();
             ctx.restore();
             return;
-        } else if (poly.type === 2) { 
+        } else if (poly.type === 2) {
             vertices = [
                 [-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1],
                 [-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1]
             ];
             edges = [
-                [0,1],[1,2],[2,3],[3,0], 
-                [4,5],[5,6],[6,7],[7,4], 
-                [0,4],[1,5],[2,6],[3,7]  
+                [0,1],[1,2],[2,3],[3,0],
+                [4,5],[5,6],[6,7],[7,4],
+                [0,4],[1,5],[2,6],[3,7]
             ];
             scaleFactor = r * 0.4;
-        } else if (poly.type === 3) { 
+        } else if (poly.type === 3) {
             const h = 1 / Math.sqrt(3);
             vertices = [
                 [0, 0, 1.5],
@@ -1059,11 +1079,57 @@
             ];
             edges = [[0,1],[0,2],[0,3],[1,2],[2,3],[3,1]];
             scaleFactor = r * 0.4;
+        } else if (poly.type === 4) {
+            // Octahedron
+            vertices = [
+                [1, 0, 0], [-1, 0, 0],
+                [0, 1, 0], [0, -1, 0],
+                [0, 0, 1], [0, 0, -1]
+            ];
+            edges = [
+                [0,2],[0,3],[0,4],[0,5],
+                [1,2],[1,3],[1,4],[1,5],
+                [2,4],[2,5],[3,4],[3,5]
+            ];
+            scaleFactor = r * 0.5;
+        } else if (poly.type === 5) {
+            // Dodecahedron
+            const phi = (1 + Math.sqrt(5)) / 2;
+            const invPhi = 1 / phi;
+            vertices = [
+                [1,1,1], [1,1,-1], [1,-1,1], [1,-1,-1],
+                [-1,1,1], [-1,1,-1], [-1,-1,1], [-1,-1,-1],
+                [0,phi,invPhi], [0,phi,-invPhi], [0,-phi,invPhi], [0,-phi,-invPhi],
+                [invPhi,0,phi], [invPhi,0,-phi], [-invPhi,0,phi], [-invPhi,0,-phi],
+                [phi,invPhi,0], [phi,-invPhi,0], [-phi,invPhi,0], [-phi,-invPhi,0]
+            ];
+            edges = [
+                [0,8],[0,12],[0,16],[1,9],[1,13],[1,16],[2,10],[2,12],[2,17],
+                [3,11],[3,13],[3,17],[4,8],[4,14],[4,18],[5,9],[5,15],[5,18],
+                [6,10],[6,14],[6,19],[7,11],[7,15],[7,19],[8,9],[10,11],[12,14],
+                [13,15],[16,17],[18,19]
+            ];
+            scaleFactor = r * 0.3;
+        } else if (poly.type === 6) {
+            // Star Tetrahedron (Merkaba) - two interlocking tetrahedra
+            const h = 1 / Math.sqrt(3);
+            const tetra1 = [
+                [0, 0, 1.2], [1, 0, -h], [-0.5, Math.sqrt(3)/2, -h], [-0.5, -Math.sqrt(3)/2, -h]
+            ];
+            const tetra2 = [
+                [0, 0, -1.2], [-1, 0, h], [0.5, -Math.sqrt(3)/2, h], [0.5, Math.sqrt(3)/2, h]
+            ];
+            vertices = [...tetra1, ...tetra2];
+            edges = [
+                [0,1],[0,2],[0,3],[1,2],[2,3],[3,1],
+                [4,5],[4,6],[4,7],[5,6],[6,7],[7,5]
+            ];
+            scaleFactor = r * 0.45;
         }
 
         const projected = vertices.map(v => {
             let v_rotated = rotateY(rotateX(v));
-            const z = v_rotated[2] * scaleFactor; 
+            const z = v_rotated[2] * scaleFactor;
             const x = v_rotated[0] * scaleFactor;
             const y = v_rotated[1] * scaleFactor;
             return { x, y, z };
@@ -1084,6 +1150,117 @@
         });
 
         ctx.restore();
+      }
+
+      drawMetatronsCube(ctx, r) {
+        // Draw 13 circles (1 center + 6 inner + 6 outer)
+        const innerRadius = r * 0.3;
+        const outerRadius = r * 0.6;
+        const circleSize = r * 0.18;
+
+        // Center circle
+        ctx.beginPath();
+        ctx.arc(0, 0, circleSize, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner 6 circles
+        const innerCircles = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const x = Math.cos(angle) * innerRadius;
+          const y = Math.sin(angle) * innerRadius;
+          innerCircles.push({x, y});
+          ctx.beginPath();
+          ctx.arc(x, y, circleSize, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Outer 6 circles
+        const outerCircles = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
+          const x = Math.cos(angle) * outerRadius;
+          const y = Math.sin(angle) * outerRadius;
+          outerCircles.push({x, y});
+          ctx.beginPath();
+          ctx.arc(x, y, circleSize, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Connect all 13 points with lines
+        const allPoints = [{x: 0, y: 0}, ...innerCircles, ...outerCircles];
+        for (let i = 0; i < allPoints.length; i++) {
+          for (let j = i + 1; j < allPoints.length; j++) {
+            ctx.beginPath();
+            ctx.moveTo(allPoints[i].x, allPoints[i].y);
+            ctx.lineTo(allPoints[j].x, allPoints[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      drawSeedOfLife(ctx, r) {
+        const circleRadius = r * 0.35;
+
+        // Center circle
+        ctx.beginPath();
+        ctx.arc(0, 0, circleRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 6 surrounding circles
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const x = Math.cos(angle) * circleRadius;
+          const y = Math.sin(angle) * circleRadius;
+          ctx.beginPath();
+          ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      drawFlowerOfLife(ctx, r) {
+        const circleRadius = r * 0.2;
+        const drawn = new Set();
+
+        const drawCircleAt = (x, y) => {
+          const key = `${Math.round(x*100)},${Math.round(y*100)}`;
+          if (drawn.has(key)) return;
+          if (Math.sqrt(x*x + y*y) > r * 0.95) return;
+          drawn.add(key);
+          ctx.beginPath();
+          ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        };
+
+        // Center
+        drawCircleAt(0, 0);
+
+        // First ring (6 circles)
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          drawCircleAt(Math.cos(angle) * circleRadius, Math.sin(angle) * circleRadius);
+        }
+
+        // Second ring (12 circles)
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          drawCircleAt(Math.cos(angle) * circleRadius * 2, Math.sin(angle) * circleRadius * 2);
+          const angle2 = angle + Math.PI / 6;
+          drawCircleAt(Math.cos(angle2) * circleRadius * Math.sqrt(3), Math.sin(angle2) * circleRadius * Math.sqrt(3));
+        }
+
+        // Third ring
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          drawCircleAt(Math.cos(angle) * circleRadius * 3, Math.sin(angle) * circleRadius * 3);
+          const angle2 = angle + Math.PI / 6;
+          drawCircleAt(Math.cos(angle2) * circleRadius * Math.sqrt(3) * 2, Math.sin(angle2) * circleRadius * Math.sqrt(3) * 2);
+          // Fill in gaps
+          const angle3 = angle + Math.PI / 12;
+          drawCircleAt(Math.cos(angle3) * circleRadius * 2.5, Math.sin(angle3) * circleRadius * 2.5);
+          const angle4 = angle - Math.PI / 12;
+          drawCircleAt(Math.cos(angle4) * circleRadius * 2.5, Math.sin(angle4) * circleRadius * 2.5);
+        }
       }
 
       drawStar(ctx, r, points, innerRatio) {
