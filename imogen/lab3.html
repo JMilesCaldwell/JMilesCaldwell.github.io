@@ -215,7 +215,21 @@
             <label for="am-range">AM Depth</label>
             <input id="am-range" type="range" min="0" max="1" step="0.05" value="0">
           </div>
-          
+
+          <div class="audio-controls" id="kick-controls">
+            <button class="btn" id="kick-toggle">Kick OFF</button>
+            <label for="kick-bpm">BPM</label>
+            <input id="kick-bpm" type="range" min="30" max="180" step="1" value="60">
+            <label for="kick-pitch">Pitch</label>
+            <input id="kick-pitch" type="range" min="30" max="100" step="1" value="50">
+            <label for="kick-decay">Decay</label>
+            <input id="kick-decay" type="range" min="0.05" max="0.5" step="0.01" value="0.15">
+            <label for="kick-punch">Punch</label>
+            <input id="kick-punch" type="range" min="0" max="1" step="0.05" value="0.5">
+            <label for="kick-vol">Vol</label>
+            <input id="kick-vol" type="range" min="0" max="1" step="0.05" value="0.5">
+          </div>
+
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
         </div>
       </div>
@@ -1324,6 +1338,16 @@
         this.amGain = null;
         this.amDepth = 0;
 
+        // Bass kick drum
+        this.kickGain = null;
+        this.kickPlaying = false;
+        this.kickBPM = 60;
+        this.kickPitch = 50;
+        this.kickDecay = 0.15;
+        this.kickPunch = 0.5;
+        this.kickVolume = 0.5;
+        this.kickIntervalId = null;
+
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
@@ -1456,6 +1480,11 @@
         this.amGain.connect(this.masterGain.gain);
 
         this.amLFO.start(0);
+
+        // Bass kick drum output gain
+        this.kickGain = this.audioCtx.createGain();
+        this.kickGain.gain.value = this.kickVolume;
+        this.kickGain.connect(this.audioCtx.destination);
       }
 
       createSimpleReverb() {
@@ -1525,6 +1554,103 @@
         this.amDepth = depth;
         // AM creates smooth tremolo at beat frequency
         this.amGain.gain.setTargetAtTime(depth * 0.4, this.audioCtx.currentTime, 0.05);
+      }
+
+      // Bass kick drum methods
+      triggerKick() {
+        if (!this.audioCtx || !this.kickGain) return;
+
+        const now = this.audioCtx.currentTime;
+
+        // Create oscillator for the kick body
+        const kickOsc = this.audioCtx.createOscillator();
+        kickOsc.type = 'sine';
+
+        // Create gain envelope
+        const kickEnv = this.audioCtx.createGain();
+
+        // Pitch envelope: starts high and drops quickly for "punch"
+        const startPitch = this.kickPitch + (this.kickPunch * 150);
+        kickOsc.frequency.setValueAtTime(startPitch, now);
+        kickOsc.frequency.exponentialRampToValueAtTime(this.kickPitch, now + 0.05);
+
+        // Amplitude envelope: quick attack, variable decay
+        kickEnv.gain.setValueAtTime(this.kickVolume, now);
+        kickEnv.gain.exponentialRampToValueAtTime(0.001, now + this.kickDecay);
+
+        // Connect and play
+        kickOsc.connect(kickEnv);
+        kickEnv.connect(this.kickGain);
+
+        kickOsc.start(now);
+        kickOsc.stop(now + this.kickDecay + 0.01);
+      }
+
+      startKick() {
+        this.initAudioIfNeeded(0.06);
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        if (this.kickIntervalId) {
+          clearInterval(this.kickIntervalId);
+        }
+
+        this.kickPlaying = true;
+        const intervalMs = (60 / this.kickBPM) * 1000;
+
+        // Trigger immediately, then on interval
+        this.triggerKick();
+        this.kickIntervalId = setInterval(() => {
+          if (this.kickPlaying) {
+            this.triggerKick();
+          }
+        }, intervalMs);
+
+        return true;
+      }
+
+      stopKick() {
+        this.kickPlaying = false;
+        if (this.kickIntervalId) {
+          clearInterval(this.kickIntervalId);
+          this.kickIntervalId = null;
+        }
+        return false;
+      }
+
+      toggleKick() {
+        if (this.kickPlaying) {
+          return this.stopKick();
+        } else {
+          return this.startKick();
+        }
+      }
+
+      setKickBPM(bpm) {
+        this.kickBPM = bpm;
+        // Restart interval if playing
+        if (this.kickPlaying) {
+          this.stopKick();
+          this.startKick();
+        }
+      }
+
+      setKickPitch(pitch) {
+        this.kickPitch = pitch;
+      }
+
+      setKickDecay(decay) {
+        this.kickDecay = decay;
+      }
+
+      setKickPunch(punch) {
+        this.kickPunch = punch;
+      }
+
+      setKickVolume(volume) {
+        this.kickVolume = volume;
+        if (this.kickGain) {
+          this.kickGain.gain.setTargetAtTime(volume, this.audioCtx.currentTime, 0.02);
+        }
       }
 
       setReverb(amount) {
@@ -1918,6 +2044,39 @@
 
       waveformSelect.addEventListener('change', () => {
         audioEngine.setWaveform(waveformSelect.value);
+      });
+
+      // Kick drum controls
+      const kickToggle = document.getElementById('kick-toggle');
+      const kickBpmRange = document.getElementById('kick-bpm');
+      const kickPitchRange = document.getElementById('kick-pitch');
+      const kickDecayRange = document.getElementById('kick-decay');
+      const kickPunchRange = document.getElementById('kick-punch');
+      const kickVolRange = document.getElementById('kick-vol');
+
+      kickToggle.addEventListener('click', () => {
+        const isPlaying = audioEngine.toggleKick();
+        kickToggle.textContent = isPlaying ? 'Kick ON' : 'Kick OFF';
+      });
+
+      kickBpmRange.addEventListener('input', () => {
+        audioEngine.setKickBPM(parseFloat(kickBpmRange.value));
+      });
+
+      kickPitchRange.addEventListener('input', () => {
+        audioEngine.setKickPitch(parseFloat(kickPitchRange.value));
+      });
+
+      kickDecayRange.addEventListener('input', () => {
+        audioEngine.setKickDecay(parseFloat(kickDecayRange.value));
+      });
+
+      kickPunchRange.addEventListener('input', () => {
+        audioEngine.setKickPunch(parseFloat(kickPunchRange.value));
+      });
+
+      kickVolRange.addEventListener('input', () => {
+        audioEngine.setKickVolume(parseFloat(kickVolRange.value));
       });
 
       // Fullscreen Logic
