@@ -203,13 +203,17 @@
             <label for="detune-range">Detune</label>
             <input id="detune-range" type="range" min="-50" max="50" step="1" value="0">
             <label for="lfo-range">Drift</label>
-            <input id="lfo-range" type="range" min="0.01" max="0.5" step="0.01" value="0.05">
+            <input id="lfo-range" type="range" min="0.01" max="2" step="0.01" value="0.1">
             <label for="harmonics-range">Harmonics</label>
             <input id="harmonics-range" type="range" min="0" max="1" step="0.05" value="0">
             <label for="interval-range">Interval</label>
             <input id="interval-range" type="range" min="0" max="12" step="1" value="0">
             <label for="reverb-range">Reverb</label>
             <input id="reverb-range" type="range" min="0" max="1" step="0.05" value="0">
+            <label for="iso-range">Isochronic</label>
+            <input id="iso-range" type="range" min="0" max="1" step="0.05" value="0">
+            <label for="am-range">AM Depth</label>
+            <input id="am-range" type="range" min="0" max="1" step="0.05" value="0">
           </div>
           
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
@@ -1310,6 +1314,16 @@
         this.reverbGain = null;
         this.dryGain = null;
 
+        // Isochronic tones
+        this.isochronicLFO = null;
+        this.isochronicGain = null;
+        this.isochronicDepth = 0;
+
+        // Amplitude modulation
+        this.amLFO = null;
+        this.amGain = null;
+        this.amDepth = 0;
+
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
@@ -1401,19 +1415,47 @@
         this.rightOsc.start();
         this.isAudioPlaying = false;
 
-        // Panning LFO (spatial drift)
+        // Panning LFO (spatial drift) - intensified
         this.panLFO = this.audioCtx.createOscillator();
         this.panLFO.type = 'sine';
-        this.panLFO.frequency.setValueAtTime(0.05, this.audioCtx.currentTime);
+        this.panLFO.frequency.setValueAtTime(0.1, this.audioCtx.currentTime);
 
         this.panLFOGain = this.audioCtx.createGain();
-        this.panLFOGain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+        this.panLFOGain.gain.setValueAtTime(0.8, this.audioCtx.currentTime);
 
         this.panLFO.connect(this.panLFOGain);
         this.panLFOGain.connect(this.leftPan.pan);
         this.panLFOGain.connect(this.rightPan.pan);
 
         this.panLFO.start(0);
+
+        // Isochronic tone generator (sharp on/off pulsing)
+        this.isochronicLFO = this.audioCtx.createOscillator();
+        this.isochronicLFO.type = 'square';
+        this.isochronicLFO.frequency.setValueAtTime(this.computedBeat || 6, this.audioCtx.currentTime);
+
+        this.isochronicGain = this.audioCtx.createGain();
+        this.isochronicGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+        // Isochronic modulates the master gain
+        this.isochronicLFO.connect(this.isochronicGain);
+        this.isochronicGain.connect(this.masterGain.gain);
+
+        this.isochronicLFO.start(0);
+
+        // Amplitude modulation (smooth tremolo)
+        this.amLFO = this.audioCtx.createOscillator();
+        this.amLFO.type = 'sine';
+        this.amLFO.frequency.setValueAtTime(this.computedBeat || 6, this.audioCtx.currentTime);
+
+        this.amGain = this.audioCtx.createGain();
+        this.amGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+        // AM modulates the master gain
+        this.amLFO.connect(this.amGain);
+        this.amGain.connect(this.masterGain.gain);
+
+        this.amLFO.start(0);
       }
 
       createSimpleReverb() {
@@ -1456,13 +1498,33 @@
       }
 
       setLFORate(rate) {
-        if (!this.panLFO) return;
+        if (!this.panLFO || !this.panLFOGain) return;
+        // Intensified: rate controls frequency, and we scale the depth too
         this.panLFO.frequency.setTargetAtTime(rate, this.audioCtx.currentTime, 0.1);
+        // More drift = more pan sweep depth (0.5 to 1.0)
+        const depth = 0.5 + (rate / 2) * 0.5;
+        this.panLFOGain.gain.setTargetAtTime(depth, this.audioCtx.currentTime, 0.1);
       }
 
       setHarmonics(amount) {
         if (!this.harmonicGain) return;
-        this.harmonicGain.gain.setTargetAtTime(amount * 0.15, this.audioCtx.currentTime, 0.05);
+        // Intensified: was 0.15, now up to 0.6 for rich harmonic content
+        this.harmonicGain.gain.setTargetAtTime(amount * 0.6, this.audioCtx.currentTime, 0.05);
+      }
+
+      setIsochronic(depth) {
+        if (!this.isochronicGain) return;
+        this.isochronicDepth = depth;
+        // Isochronic creates sharp on/off pulsing at beat frequency
+        // Depth controls how much the volume pulses (0 = none, 1 = full on/off)
+        this.isochronicGain.gain.setTargetAtTime(depth * 0.5, this.audioCtx.currentTime, 0.05);
+      }
+
+      setAM(depth) {
+        if (!this.amGain) return;
+        this.amDepth = depth;
+        // AM creates smooth tremolo at beat frequency
+        this.amGain.gain.setTargetAtTime(depth * 0.4, this.audioCtx.currentTime, 0.05);
       }
 
       setReverb(amount) {
@@ -1497,7 +1559,8 @@
           const ratio = Math.pow(2, semitones / 12);
           const intervalFreq = this.computedCarrier * ratio;
           this.intervalOsc.frequency.setTargetAtTime(intervalFreq, this.audioCtx.currentTime, 0.03);
-          this.intervalGain.gain.setTargetAtTime(0.15, this.audioCtx.currentTime, 0.02);
+          // Intensified: was 0.15, now 0.5 for clearly audible harmonic intervals
+          this.intervalGain.gain.setTargetAtTime(0.5, this.audioCtx.currentTime, 0.02);
         }
       }
 
@@ -1507,13 +1570,20 @@
         });
       }
 
-      togglePlay(volume, beat) {
+      togglePlay(volume, beat, volSlider) {
+        const wasFirstInit = !this.audioCtx;
         this.initAudioIfNeeded(volume);
         if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
         this.isAudioPlaying = !this.isAudioPlaying;
 
         if (this.isAudioPlaying) {
-          this.masterGain.gain.setTargetAtTime(volume, this.audioCtx.currentTime, 0.02);
+          // Start at 1/10th of slider value when first turning on
+          const startVolume = volume * 0.1;
+          this.masterGain.gain.setTargetAtTime(startVolume, this.audioCtx.currentTime, 0.02);
+          // Update the slider to reflect the actual volume
+          if (volSlider) {
+            volSlider.value = startVolume;
+          }
           this.updateFrequencies(beat);
         } else {
           this.masterGain.gain.setTargetAtTime(0.0001, this.audioCtx.currentTime, 0.02);
@@ -1582,6 +1652,14 @@
           // Update interval if active
           if (this.currentInterval > 0) {
             this.setInterval(this.currentInterval);
+          }
+
+          // Update isochronic and AM LFO frequencies to match beat
+          if (this.isochronicLFO) {
+            this.isochronicLFO.frequency.setTargetAtTime(this.computedBeat, this.audioCtx.currentTime, 0.05);
+          }
+          if (this.amLFO) {
+            this.amLFO.frequency.setTargetAtTime(this.computedBeat, this.audioCtx.currentTime, 0.05);
           }
         }
       }
@@ -1777,8 +1855,10 @@
 
       // Audio Controls
       audioToggle.addEventListener('click', () => {
-        const isPlaying = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value);
+        const isPlaying = audioEngine.togglePlay(parseFloat(volRange.value), beatRange.value, volRange);
         audioToggle.textContent = isPlaying ? 'Tone ON' : 'Tone OFF';
+        // Update volume display to reflect actual volume (1/10th on start)
+        volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
       });
 
       volRange.addEventListener('input', () => {
@@ -1823,6 +1903,17 @@
 
       reverbRange.addEventListener('input', () => {
         audioEngine.setReverb(parseFloat(reverbRange.value));
+      });
+
+      const isoRange = document.getElementById('iso-range');
+      const amRange = document.getElementById('am-range');
+
+      isoRange.addEventListener('input', () => {
+        audioEngine.setIsochronic(parseFloat(isoRange.value));
+      });
+
+      amRange.addEventListener('input', () => {
+        audioEngine.setAM(parseFloat(amRange.value));
       });
 
       waveformSelect.addEventListener('change', () => {
