@@ -182,6 +182,15 @@
             <option value="hebrew">Hebrew</option>
           </select>
 
+          <select class="btn" id="color-mode-selector" style="cursor: pointer;">
+            <option value="elemental">Elemental (Default)</option>
+            <option value="primary">Primary Colors</option>
+            <option value="secondary">Secondary Colors</option>
+            <option value="rainbow">Rainbow Spectrum</option>
+            <option value="monochrome">Monochrome</option>
+            <option value="neon">Neon Glow</option>
+          </select>
+
           <div class="audio-controls" id="audio-controls">
             <button class="btn" id="audio-toggle">Tone OFF</button>
 
@@ -356,6 +365,31 @@
       'EARTH': 'sine'      // Stable, fundamental
     };
 
+    // Color mode palettes
+    const COLOR_MODES = {
+      elemental: null, // Uses element-based colors (default behavior)
+      primary: {
+        colors: ['#FF0000', '#0000FF', '#FFFF00', '#FF0000', '#0000FF'], // Red, Blue, Yellow
+        accent: '#FFFFFF'
+      },
+      secondary: {
+        colors: ['#FF8000', '#00FF00', '#8000FF', '#FF8000', '#00FF00'], // Orange, Green, Purple
+        accent: '#FFFFFF'
+      },
+      rainbow: {
+        colors: ['#FF0000', '#FF8000', '#FFFF00', '#00FF00', '#0080FF', '#8000FF'],
+        accent: '#FFFFFF'
+      },
+      monochrome: {
+        colors: ['#FFFFFF', '#CCCCCC', '#999999', '#666666', '#333333'],
+        accent: '#FFFFFF'
+      },
+      neon: {
+        colors: ['#FF00FF', '#00FFFF', '#FF00AA', '#AAFF00', '#00AAFF'],
+        accent: '#FFFFFF'
+      }
+    };
+
     // Symbol systems for each script with traditional meanings
     const SCRIPT_SYMBOLS = {
       runic: [
@@ -476,10 +510,11 @@
     // ====================================================================
 
     class MandalaParams {
-      constructor(name, dateStr, scriptType = 'runic') {
+      constructor(name, dateStr, scriptType = 'runic', colorMode = 'elemental') {
         this.name = name;
         this.dateStr = dateStr;
         this.scriptType = scriptType;
+        this.colorMode = colorMode;
         this.scriptMapping = SCRIPT_MAPPINGS[scriptType];
         this.runic = this.convertToScript(name, scriptType);
         this.seed = this.getNumericSeed(this.runic);
@@ -553,21 +588,42 @@
         const randomnessFactor = (rand() - 0.5) * 0.05;
 
         // 1. Color Palette Synthesis
-        const p = [...this.elementData.year.colors];
-        const m = [...this.elementData.month.colors];
-        const d = [...this.elementData.day.colors];
-        let colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
+        let colorStrings;
+        let accentColor;
 
-        // We use the Polished Brass accent for the bright glow/detail
-        const ACCENT_BRASS = "#C8AA6E";
+        const colorModeData = COLOR_MODES[this.colorMode];
 
-        const colorStrings = [ 
-          colorPool[0] || p[0], // Primary color (Ring Base)
-          colorPool[1] || m[0], // Secondary color (Inner Geometry)
-          ACCENT_BRASS,         // Tertiary color (Primary Accent/Detail)
-          colorPool[3] || p[1], // Accent 1 (Text/Center Fill)
-          colorPool[4] || m[1]  // Accent 2 (Center outline/core)
-        ];
+        if (colorModeData) {
+          // Use predefined color mode
+          const modeColors = [...colorModeData.colors];
+          // Shuffle based on seed for variety
+          modeColors.sort(() => rand() - 0.5);
+          accentColor = colorModeData.accent;
+          colorStrings = [
+            modeColors[0],
+            modeColors[1 % modeColors.length],
+            accentColor,
+            modeColors[2 % modeColors.length],
+            modeColors[3 % modeColors.length]
+          ];
+        } else {
+          // Default elemental mode
+          const p = [...this.elementData.year.colors];
+          const m = [...this.elementData.month.colors];
+          const d = [...this.elementData.day.colors];
+          let colorPool = [...p, ...m, ...d].sort(() => rand() - 0.5);
+
+          // We use the Polished Brass accent for the bright glow/detail
+          accentColor = "#C8AA6E";
+
+          colorStrings = [
+            colorPool[0] || p[0], // Primary color (Ring Base)
+            colorPool[1] || m[0], // Secondary color (Inner Geometry)
+            accentColor,          // Tertiary color (Primary Accent/Detail)
+            colorPool[3] || p[1], // Accent 1 (Text/Center Fill)
+            colorPool[4] || m[1]  // Accent 2 (Center outline/core)
+          ];
+        }
 
         // 2. Geometry Parameters
         const archetypeIndex = seed % ARCHETYPES.length; // Max is now 3
@@ -610,7 +666,7 @@
             polyhedrons.push({
                 type: Math.floor(rand() * 10),
                 radiusFactor: 0.3 + rand() * 0.6,
-                color: ACCENT_BRASS, // Always use the brass accent for these wireframes
+                color: accentColor, // Use the accent color for wireframes
                 thickness: 0.8 + rand() * 3,
                 rotationSpeed: (rand() - 0.5) * 0.08,
             });
@@ -1805,6 +1861,7 @@
       const seedInput = document.getElementById('seed-input');
       const dateInput = document.getElementById('date-input');
       const scriptSelector = document.getElementById('script-selector');
+      const colorModeSelector = document.getElementById('color-mode-selector');
       const audioToggle = document.getElementById('audio-toggle');
       const beatRange = document.getElementById('beat-range');
       const volRange = document.getElementById('vol-range');
@@ -1820,6 +1877,7 @@
 
       let currentMandalaParams = null;
       let currentScriptType = 'runic';
+      let currentColorMode = 'elemental';
 
       dateInput.valueAsDate = new Date();
 
@@ -1831,7 +1889,7 @@
         const name = seedInput.value || "Initial Config";
         const date = dateInput.value;
 
-        const paramsGenerator = new MandalaParams(name, date, currentScriptType);
+        const paramsGenerator = new MandalaParams(name, date, currentScriptType, currentColorMode);
         currentMandalaParams = paramsGenerator;
         renderer.setParams(currentMandalaParams.params);
         audioEngine.currentElementData = currentMandalaParams;
@@ -1950,6 +2008,11 @@
 
       scriptSelector.addEventListener('change', () => {
         currentScriptType = scriptSelector.value;
+        updateUI();
+      });
+
+      colorModeSelector.addEventListener('change', () => {
+        currentColorMode = colorModeSelector.value;
         updateUI();
       });
 
