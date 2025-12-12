@@ -347,13 +347,43 @@
       ELEMENTS.EARTH, ELEMENTS.EARTH, ELEMENTS.WOOD, ELEMENTS.WOOD, ELEMENTS.FIRE, ELEMENTS.FIRE,
       ELEMENTS.METAL, ELEMENTS.METAL, ELEMENTS.WATER, ELEMENTS.WATER, ELEMENTS.EARTH, ELEMENTS.EARTH
     ];
-    // Solfeggio / Planetary Frequencies
+    // A=432Hz tuning note frequencies from C2 to C4
+    // Formula: freq = 432 * 2^((semitone - 49) / 12) where A4 = 49
+    const NOTE_FREQUENCIES_432 = [
+      { note: 'C2',  freq: 64.22,  semitone: 0 },
+      { note: 'C#2', freq: 68.04,  semitone: 1 },
+      { note: 'D2',  freq: 72.08,  semitone: 2 },
+      { note: 'D#2', freq: 76.37,  semitone: 3 },
+      { note: 'E2',  freq: 80.91,  semitone: 4 },
+      { note: 'F2',  freq: 85.72,  semitone: 5 },
+      { note: 'F#2', freq: 90.82,  semitone: 6 },
+      { note: 'G2',  freq: 96.22,  semitone: 7 },
+      { note: 'G#2', freq: 101.94, semitone: 8 },
+      { note: 'A2',  freq: 108.00, semitone: 9 },
+      { note: 'A#2', freq: 114.42, semitone: 10 },
+      { note: 'B2',  freq: 121.23, semitone: 11 },
+      { note: 'C3',  freq: 128.43, semitone: 12 },
+      { note: 'C#3', freq: 136.07, semitone: 13 },
+      { note: 'D3',  freq: 144.16, semitone: 14 },
+      { note: 'D#3', freq: 152.74, semitone: 15 },
+      { note: 'E3',  freq: 161.82, semitone: 16 },
+      { note: 'F3',  freq: 171.44, semitone: 17 },
+      { note: 'F#3', freq: 181.63, semitone: 18 },
+      { note: 'G3',  freq: 192.43, semitone: 19 },
+      { note: 'G#3', freq: 203.88, semitone: 20 },
+      { note: 'A3',  freq: 216.00, semitone: 21 },
+      { note: 'A#3', freq: 228.84, semitone: 22 },
+      { note: 'B3',  freq: 242.45, semitone: 23 },
+      { note: 'C4',  freq: 256.87, semitone: 24 }
+    ];
+
+    // Solfeggio / Planetary Frequencies (legacy, used for element mapping)
     const SOUND_ELEMENT_MAPPING = {
-      METAL: { freq: 432, note: "432 Hz", explanation: "Target for Cognitive Clarity." },
-      WATER: { freq: 194.18, note: "194 Hz", explanation: "Target for System Dynamics." },
-      WOOD: { freq: 285, note: "285 Hz", explanation: "Target for Vector Optimization." },
-      FIRE: { freq: 396, note: "396 Hz", explanation: "Target for State Transition." },
-      EARTH: { freq: 172.8, note: "172 Hz", explanation: "Target for Base Stability." }
+      METAL: { freq: 432, note: "A4 (432 Hz)", explanation: "Target for Cognitive Clarity." },
+      WATER: { freq: 192.43, note: "G3", explanation: "Target for System Dynamics." },
+      WOOD: { freq: 144.16, note: "D3", explanation: "Target for Vector Optimization." },
+      FIRE: { freq: 216.00, note: "A3", explanation: "Target for State Transition." },
+      EARTH: { freq: 128.43, note: "C3", explanation: "Target for Base Stability." }
     };
 
     // Waveform selection based on Element
@@ -1781,15 +1811,33 @@
           return (currentFreq > prevFreq) ? current : prev;
         });
 
-        let carrierFreq = SOUND_ELEMENT_MAPPING[primaryElement.key].freq;
-        const elementalBaseFreq = carrierFreq;
+        // Create a seeded random function for consistent but varied results
+        const seededRandom = mulberry32(seed);
 
-        // Halve the carrier frequency to drop it an octave
-        carrierFreq = carrierFreq / 2;
-
+        // Select a random note from the full C2-C4 range (25 notes)
+        // Use multiple seed factors for more variety
         const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
         const dayOfMonth = date.getDate();
-        const beat = 2.0 + (dayOfMonth / 31) * 8.0;
+        const month = date.getMonth();
+        const year = date.getFullYear();
+
+        // Combine multiple factors for note selection randomness
+        const noteIndex = Math.floor(
+          (seed + dayOfMonth * 7 + month * 31 + (year % 100) * 13) % NOTE_FREQUENCIES_432.length
+        );
+        const selectedNote = NOTE_FREQUENCIES_432[noteIndex];
+        let carrierFreq = selectedNote.freq;
+
+        // Add slight random variation within a semitone for more organic sound
+        const microtuneVariation = (seededRandom() - 0.5) * 0.03; // ±1.5% variation
+        carrierFreq = carrierFreq * (1 + microtuneVariation);
+
+        const elementalBaseFreq = SOUND_ELEMENT_MAPPING[primaryElement.key].freq;
+
+        // Beat frequency also varies more based on seed
+        const baseBeat = 2.0 + (dayOfMonth / 31) * 6.0;
+        const beatVariation = seededRandom() * 4.0; // Add 0-4 Hz variation
+        const beat = baseBeat + beatVariation;
 
         const waveformType = WAVEFORM_MAP[primaryElement.key] || 'sine';
 
@@ -1799,6 +1847,7 @@
           element: primaryElement,
           elementalBaseFreq: elementalBaseFreq,
           waveform: waveformType,
+          selectedNote: selectedNote.note, // Include note name for display
         };
       }
 
@@ -1982,10 +2031,10 @@
           <p><strong>${primarySymbol.desc}</strong> — ${primarySymbol.meaning}</p>
 
           <h4>Acoustic Configuration</h4>
-          <p>Binaural carrier derived from elemental correspondence:</p>
+          <p>Binaural carrier from A=432Hz tuning (C2-C4 range):</p>
           <ul>
             <li><strong>Waveform:</strong> ${audioEngine.manualWaveform === 'auto' ? audioData.waveform.toUpperCase() + ' (Auto)' : audioEngine.manualWaveform.toUpperCase()}</li>
-            <li><strong>Carrier:</strong> ${audioData.carrier.toFixed(2)} Hz</li>
+            <li><strong>Note:</strong> ${audioData.selectedNote || 'N/A'} (${audioData.carrier.toFixed(2)} Hz)</li>
             <li><strong>Beat:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz</li>
           </ul>
           <h4>Modulation Controls</h4>
