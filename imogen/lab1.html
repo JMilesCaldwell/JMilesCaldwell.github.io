@@ -167,11 +167,23 @@
           <canvas id="mandala-canvas" width="650" height="650"></canvas>
         </div>
 
+        <div class="guiding-phrase" id="guiding-phrase" style="text-align: center; font-size: 0.95rem; color: var(--color-neutral-medium); font-style: italic; margin: 0.5rem 0 1.5rem; min-height: 1.5em; opacity: 0.9;">
+          <!-- Guiding phrase will be displayed here -->
+        </div>
+
         <div class="controls">
           <button class="btn" id="random-btn">Generate New Data</button>
           <button class="btn" id="animate-btn">Start Flow</button>
           <button class="btn" id="bloom-btn">Toggle Light Spill</button>
           <button class="btn" id="save-btn">Export Image (PNG)</button>
+
+          <select class="btn" id="framework-selector" style="cursor: pointer;">
+            <option value="wuxing">Chinese Wuxing (五行)</option>
+            <option value="tibetan">Tibetan Mandala</option>
+            <option value="hermetic">Hermetic Planetary</option>
+            <option value="jungian">Jungian Archetype</option>
+            <option value="minimalist">Secular Minimalist</option>
+          </select>
 
           <select class="btn" id="script-selector" style="cursor: pointer;">
             <option value="runic">Runic (Elder Futhark)</option>
@@ -286,13 +298,17 @@
         font: "'Segoe UI Symbol', 'Noto Sans Runic', sans-serif"
       },
 
-      // Tibetan (U+0F00-U+0FFF)
+      // Tibetan (U+0F00-U+0FFF) with proper digraph support
       tibetan: {
-        'a': 'ཨ', 'b': 'བ', 'c': 'ཙ', 'd': 'ད', 'e': 'ེ', 'f': 'ཕ', 'g': 'ག', 'h': 'ཧ',
+        'a': 'ཨ', 'b': 'བ', 'c': 'ཅ', 'd': 'ད', 'e': 'ེ', 'f': 'ཕ', 'g': 'ག', 'h': 'ཧ',
         'i': 'ི', 'j': 'ཇ', 'k': 'ཀ', 'l': 'ལ', 'm': 'མ', 'n': 'ན', 'o': 'ོ', 'p': 'པ',
-        'q': 'ཀ', 'r': 'ར', 's': 'ས', 't': 'ཏ', 'u': 'ུ', 'v': 'ཝ', 'w': 'ཝ', 'x': 'ཀས',
-        'y': 'ཡ', 'z': 'ཟ', ' ': '▵',
-        font: "'Noto Sans Tibetan', 'Microsoft Himalaya', sans-serif"
+        'q': 'ཀྭ', 'r': 'ར', 's': 'ས', 't': 'ཏ', 'u': 'ུ', 'v': 'ཝ', 'w': 'ཝ', 'x': 'ཀྵ',
+        'y': 'ཡ', 'z': 'ཟ', ' ': '་',
+        // Digraphs (aspirated consonants and compounds)
+        'kh': 'ཁ', 'gh': 'གྷ', 'ch': 'ཆ', 'jh': 'ཇྷ', 'th': 'ཐ', 'dh': 'དྷ',
+        'ph': 'ཕ', 'bh': 'བྷ', 'sh': 'ཤ', 'zh': 'ཞ', 'ng': 'ང', 'ny': 'ཉ',
+        'ts': 'ཙ', 'dz': 'ཛ', 'tsh': 'ཚ', 'dzh': 'ཛྷ',
+        font: "'Noto Sans Tibetan', 'Microsoft Himalaya', 'Tibetan Machine Uni', sans-serif"
       },
 
       // Devanagari/Sanskrit (U+0900-U+097F)
@@ -560,17 +576,37 @@
 
         let lower = text.toLowerCase();
         let result = "";
-        for (let i = 0; i < lower.length; i++) {
-          let char = lower[i];
-          // Check for digraphs (only for runic)
-          if (scriptType === 'runic' && i < lower.length - 1) {
-            const digraph = lower.slice(i, i+2);
-            if (mapping[digraph]) {
+
+        // Digraphs that should be checked (in priority order - longest first)
+        const DIGRAPHS_BY_SCRIPT = {
+          runic: ['th', 'ng', 'ei', 'ae'],
+          tibetan: ['tsh', 'dzh', 'kh', 'gh', 'ch', 'jh', 'th', 'dh', 'ph', 'bh', 'sh', 'zh', 'ng', 'ny', 'ts', 'dz'],
+          devanagari: ['kh', 'gh', 'ch', 'jh', 'th', 'dh', 'ph', 'bh', 'sh'],
+          hebrew: [],
+          coptic: [],
+          theban: []
+        };
+
+        const digraphs = (DIGRAPHS_BY_SCRIPT[scriptType] || []).sort((a, b) => b.length - a.length);
+
+        let i = 0;
+        while (i < lower.length) {
+          let matched = false;
+
+          // Check digraphs in order of length (longest first)
+          for (const digraph of digraphs) {
+            if (lower.slice(i, i + digraph.length) === digraph && mapping[digraph]) {
               result += mapping[digraph];
-              i++; continue;
+              i += digraph.length;
+              matched = true;
+              break;
             }
           }
-          result += mapping[char] || "";
+
+          if (!matched) {
+            result += mapping[lower[i]] || "";
+            i++;
+          }
         }
         return result;
       }
@@ -588,26 +624,24 @@
       getElementsFromDate(dateStr) {
         const date = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
         const year = date.getFullYear();
-        const month = date.getMonth(); 
-        const day = date.getDay();
+        const month = date.getMonth();
+        const dayOfMonth = date.getDate(); // FIXED: Use getDate() for day of month (1-31), not getDay() which is weekday (0-6)
 
+        // Year element based on Heavenly Stems (last digit)
         const yearDigit = year % 10;
         let yearElement;
-        if (yearDigit === 4 || yearDigit === 9) yearElement = ELEMENTS.WOOD;
-        else if (yearDigit === 5 || yearDigit === 0) yearElement = ELEMENTS.FIRE;
-        else if (yearDigit === 6 || yearDigit === 1) yearElement = ELEMENTS.EARTH;
-        else if (yearDigit === 7 || yearDigit === 2) yearElement = ELEMENTS.METAL;
-        else yearElement = ELEMENTS.WATER;
+        if (yearDigit === 0 || yearDigit === 1) yearElement = ELEMENTS.METAL;
+        else if (yearDigit === 2 || yearDigit === 3) yearElement = ELEMENTS.WATER;
+        else if (yearDigit === 4 || yearDigit === 5) yearElement = ELEMENTS.WOOD;
+        else if (yearDigit === 6 || yearDigit === 7) yearElement = ELEMENTS.FIRE;
+        else yearElement = ELEMENTS.EARTH; // 8, 9
 
         const monthElement = MONTH_ELEMENTS[month];
-        let dayElement;
-        if (day === 0) dayElement = ELEMENTS.EARTH; 
-        else if (day === 1) dayElement = ELEMENTS.WATER; 
-        else if (day === 2) dayElement = ELEMENTS.FIRE; 
-        else if (day === 3) dayElement = ELEMENTS.WOOD; 
-        else if (day === 4) dayElement = ELEMENTS.WATER; 
-        else if (day === 5) dayElement = ELEMENTS.METAL; 
-        else dayElement = ELEMENTS.FIRE;
+
+        // Day element based on 5-day cycle using day of month
+        const DAY_ELEMENT_ORDER = ['WOOD', 'FIRE', 'EARTH', 'METAL', 'WATER'];
+        const dayIndex = (dayOfMonth - 1) % 5;
+        const dayElement = ELEMENTS[DAY_ELEMENT_ORDER[dayIndex]];
 
         return { year: yearElement, month: monthElement, day: dayElement };
       }
@@ -763,15 +797,55 @@
         const size = Math.min(this.canvas.width, this.canvas.height);
         this.drawFrame(this.ctx, size, size, this.phase);
 
-        if (document.getElementById('fullscreen-overlay').classList.contains('active')) {
+        // Cache DOM reference (set once at class init would be better, but this is minimal impact)
+        if (this._fsOverlay === undefined) {
+          this._fsOverlay = document.getElementById('fullscreen-overlay');
+        }
+
+        if (this._fsOverlay && this._fsOverlay.classList.contains('active')) {
           const w = window.innerWidth;
           const h = window.innerHeight;
+          // Use square canvas sized to the smaller dimension for consistent aspect ratio
+          // This prevents squashing on ultra-wide or ultra-tall screens
+          const fsSize = Math.min(w, h);
           this.fsCanvas.width = w;
           this.fsCanvas.height = h;
-          this.drawFrame(this.fsCtx, w, h, this.phase);
+          // Draw centered on the fullscreen canvas
+          this.drawFrameCentered(this.fsCtx, w, h, fsSize, this.phase);
         }
 
         this.animationId = requestAnimationFrame(this.loop.bind(this));
+      }
+
+      // Draw frame centered on a canvas (for fullscreen mode with different aspect ratios)
+      drawFrameCentered(ctx, canvasW, canvasH, mandalaSize, phase) {
+        ctx.save();
+        ctx.fillStyle = '#080706';
+        ctx.fillRect(0, 0, canvasW, canvasH);
+
+        // Translate to center the mandala
+        const offsetX = (canvasW - mandalaSize) / 2;
+        const offsetY = (canvasH - mandalaSize) / 2;
+        ctx.translate(offsetX, offsetY);
+
+        // Draw using the square mandala size
+        if (this.isBloom) {
+          const blurSize1 = 15 * this.bloomIntensity;
+          ctx.filter = `blur(${blurSize1}px)`;
+          ctx.globalAlpha = 0.4;
+          this.drawMandalaElements(ctx, mandalaSize, mandalaSize, phase, true);
+
+          const blurSize2 = 5 * this.bloomIntensity;
+          ctx.filter = `blur(${blurSize2}px)`;
+          ctx.globalAlpha = 0.6;
+          this.drawMandalaElements(ctx, mandalaSize, mandalaSize, phase, true);
+        }
+
+        ctx.filter = 'none';
+        ctx.globalAlpha = 1.0;
+        this.drawMandalaElements(ctx, mandalaSize, mandalaSize, phase, false);
+
+        ctx.restore();
       }
 
       drawFrame(ctx, w, h, phase) {
@@ -1923,10 +1997,57 @@
 
       const renderer = new MandalaRenderer('mandala-canvas', 'fullscreen-canvas');
       const audioEngine = new AudioEngine();
+      const frameworkSelector = document.getElementById('framework-selector');
+      const guidingPhraseDisplay = document.getElementById('guiding-phrase');
 
       let currentMandalaParams = null;
       let currentScriptType = 'runic';
       let currentColorMode = 'elemental';
+      let currentFramework = 'wuxing';
+
+      // Guiding phrases by framework
+      const GUIDING_PHRASES = {
+        wuxing: [
+          'Let growth arise naturally, as branches reach for light.',
+          'Wood nourishes Fire; let movement create breath.',
+          'Transform through illumination.',
+          'Return to center. Stability grounds intention.',
+          'Refine through contraction. Let go of excess.',
+          'Flow around obstacles. Stillness contains depth.'
+        ],
+        tibetan: [
+          'Let form arise within clarity.',
+          'Rest in the nature of mind.',
+          'All phenomena are empty and luminous.',
+          'OM MANI PADME HUM — the jewel in the lotus.',
+          'Compassion without attachment.',
+          'Awareness is the path.'
+        ],
+        hermetic: [
+          'As above, so below; as within, so without.',
+          'Bind the wandering light to your centre.',
+          'The seven metals transmute in the athanor of the soul.',
+          'What is scattered, gather. What is gathered, scatter.',
+          'Solve et coagula — dissolve and coagulate.',
+          'The philosopher\'s stone is hidden in plain sight.'
+        ],
+        jungian: [
+          'Attend to what moves in the periphery.',
+          'The shadow contains gold.',
+          'What you resist, persists.',
+          'The Self is both center and circumference.',
+          'Integration requires confrontation.',
+          'Dreams are the royal road to the unconscious.'
+        ],
+        minimalist: [
+          'Notice the shape of attention.',
+          'Form follows function.',
+          'Less is more.',
+          'In stillness, clarity.',
+          'The space between defines the form.',
+          'Breathe. Observe. Return.'
+        ]
+      };
 
       dateInput.valueAsDate = new Date();
 
@@ -1954,8 +2075,13 @@
 
         // 4. Update Explanation Panels
         updateExplanationPanels(currentMandalaParams.params, currentMandalaParams.elementData, audioData);
-        
-        // 5. Redraw static frame if not animating
+
+        // 5. Update Guiding Phrase based on framework and seed
+        const phrases = GUIDING_PHRASES[currentFramework] || GUIDING_PHRASES.wuxing;
+        const phraseIndex = currentMandalaParams.seed % phrases.length;
+        guidingPhraseDisplay.textContent = phrases[phraseIndex];
+
+        // 6. Redraw static frame if not animating
         if (!renderer.isAnimating) {
             renderer.drawInitialFrame();
         }
@@ -2054,6 +2180,19 @@
       // --- UI Event Listeners ---
       seedInput.addEventListener('input', updateUI);
       dateInput.addEventListener('change', updateUI);
+
+      frameworkSelector.addEventListener('change', () => {
+        currentFramework = frameworkSelector.value;
+        // Auto-select appropriate script for framework
+        if (currentFramework === 'tibetan') {
+          scriptSelector.value = 'tibetan';
+          currentScriptType = 'tibetan';
+        } else if (currentFramework === 'hermetic') {
+          scriptSelector.value = 'hebrew';
+          currentScriptType = 'hebrew';
+        }
+        updateUI();
+      });
 
       scriptSelector.addEventListener('change', () => {
         currentScriptType = scriptSelector.value;
@@ -2196,14 +2335,39 @@
       document.getElementById('fs-exit').addEventListener('click', exitFullscreen);
 
       function enterFullscreen() {
+        // Store scroll position to restore later
+        const scrollY = window.scrollY;
+        fsOverlay.dataset.scrollY = scrollY;
+
         fsOverlay.classList.add('active');
+        // Fix scroll-jumping on mobile: set overflow hidden on both html and body
+        document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
+        document.documentElement.style.position = 'fixed';
+        document.body.style.position = 'fixed';
+        document.documentElement.style.width = '100%';
+        document.body.style.width = '100%';
+        document.documentElement.style.top = `-${scrollY}px`;
+        document.body.style.top = `-${scrollY}px`;
+
         if (!renderer.isAnimating) renderer.toggleAnimation(true);
       }
 
       function exitFullscreen() {
         fsOverlay.classList.remove('active');
+        // Restore scroll state
+        document.documentElement.style.overflow = '';
         document.body.style.overflow = '';
+        document.documentElement.style.position = '';
+        document.body.style.position = '';
+        document.documentElement.style.width = '';
+        document.body.style.width = '';
+        document.documentElement.style.top = '';
+        document.body.style.top = '';
+
+        // Restore scroll position
+        const scrollY = parseInt(fsOverlay.dataset.scrollY || '0', 10);
+        window.scrollTo(0, scrollY);
       }
 
       // Stat display (for user feedback)
