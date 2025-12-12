@@ -74,7 +74,7 @@
     .meta-box { display: flex; flex-direction: column; }
     .meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--color-neutral-medium); margin-bottom: 4px; font-weight: 500; }
     .meta-value { color: var(--color-primary-accent); font-size: 1rem; font-weight: 700; }
-    .rune-font { font-family: 'Segoe UI Symbol', 'Noto Sans Runic', sans-serif; font-size: 1.6rem; line-height: 1; color: var(--color-primary-accent); letter-spacing: 2px; }
+    .rune-font { font-size: 1.6rem; line-height: 1; color: var(--color-primary-accent); letter-spacing: 2px; }
 
     /* Canvas */
     .canvas-wrapper { position: relative; margin: 1rem 0; background: #080706; border-radius: 50%; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 10px rgba(255, 255, 255, 0.1); }
@@ -173,6 +173,15 @@
           <button class="btn" id="bloom-btn">Toggle Light Spill</button>
           <button class="btn" id="save-btn">Export Image (PNG)</button>
 
+          <select class="btn" id="script-selector" style="cursor: pointer;">
+            <option value="runic">Runic (Elder Futhark)</option>
+            <option value="tibetan">Tibetan</option>
+            <option value="devanagari">Sanskrit (Devanagari)</option>
+            <option value="theban">Theban (Witches' Alphabet)</option>
+            <option value="coptic">Coptic</option>
+            <option value="hebrew">Hebrew</option>
+          </select>
+
           <div class="audio-controls" id="audio-controls">
             <button class="btn" id="audio-toggle">Tone OFF</button>
             <label for="beat-range">Beat</label>
@@ -224,14 +233,66 @@
     // ====================================================================
     const W = 650, H = 650; 
 
-    // Elder Futhark Rune Mappings (ᚠ-ᛟ Unicode block U+16A0-U+16FF)
-    const LATIN_TO_RUNE = {
-      'a': 'ᚨ', 'b': 'ᛒ', 'c': 'ᚲ', 'd': 'ᛞ', 'e': 'ᛖ', 'f': 'ᚠ', 'g': 'ᚷ', 'h': 'ᚺ',
-      'i': 'ᛁ', 'j': 'ᛃ', 'k': 'ᚲ', 'l': 'ᛚ', 'm': 'ᛗ', 'n': 'ᚾ', 'o': 'ᛟ', 'p': 'ᛈ',
-      'q': 'ᚲ', 'r': 'ᚱ', 's': 'ᛊ', 't': 'ᛏ', 'u': 'ᚢ', 'v': 'ᚹ', 'w': 'ᚹ', 'x': 'ᚲᛊ',
-      'y': 'ᛃ', 'z': 'ᛉ', ' ': '᛫',
-      'th': 'ᚦ', 'ng': 'ᛜ', 'ei': 'ᛇ', 'ae': 'ᚨᛖ'
+    // Multi-Script Mapping Systems
+    const SCRIPT_MAPPINGS = {
+      // Elder Futhark Runes (U+16A0-U+16FF)
+      runic: {
+        'a': 'ᚨ', 'b': 'ᛒ', 'c': 'ᚲ', 'd': 'ᛞ', 'e': 'ᛖ', 'f': 'ᚠ', 'g': 'ᚷ', 'h': 'ᚺ',
+        'i': 'ᛁ', 'j': 'ᛃ', 'k': 'ᚲ', 'l': 'ᛚ', 'm': 'ᛗ', 'n': 'ᚾ', 'o': 'ᛟ', 'p': 'ᛈ',
+        'q': 'ᚲ', 'r': 'ᚱ', 's': 'ᛊ', 't': 'ᛏ', 'u': 'ᚢ', 'v': 'ᚹ', 'w': 'ᚹ', 'x': 'ᚲᛊ',
+        'y': 'ᛃ', 'z': 'ᛉ', ' ': '▵',
+        'th': 'ᚦ', 'ng': 'ᛜ', 'ei': 'ᛇ', 'ae': 'ᚨᛖ',
+        font: "'Segoe UI Symbol', 'Noto Sans Runic', sans-serif"
+      },
+
+      // Tibetan (U+0F00-U+0FFF)
+      tibetan: {
+        'a': 'ཨ', 'b': 'བ', 'c': 'ཙ', 'd': 'ད', 'e': 'ེ', 'f': 'ཕ', 'g': 'ག', 'h': 'ཧ',
+        'i': 'ི', 'j': 'ཇ', 'k': 'ཀ', 'l': 'ལ', 'm': 'མ', 'n': 'ན', 'o': 'ོ', 'p': 'པ',
+        'q': 'ཀ', 'r': 'ར', 's': 'ས', 't': 'ཏ', 'u': 'ུ', 'v': 'ཝ', 'w': 'ཝ', 'x': 'ཀས',
+        'y': 'ཡ', 'z': 'ཟ', ' ': '▵',
+        font: "'Noto Sans Tibetan', 'Microsoft Himalaya', sans-serif"
+      },
+
+      // Devanagari/Sanskrit (U+0900-U+097F)
+      devanagari: {
+        'a': 'अ', 'b': 'ब', 'c': 'च', 'd': 'द', 'e': 'ए', 'f': 'फ', 'g': 'ग', 'h': 'ह',
+        'i': 'इ', 'j': 'ज', 'k': 'क', 'l': 'ल', 'm': 'म', 'n': 'न', 'o': 'ओ', 'p': 'प',
+        'q': 'क', 'r': 'र', 's': 'स', 't': 'त', 'u': 'उ', 'v': 'व', 'w': 'व', 'x': 'क्ष',
+        'y': 'य', 'z': 'ज', ' ': '▵',
+        font: "'Noto Sans Devanagari', 'Mangal', sans-serif"
+      },
+
+      // Theban/Witches' Alphabet - using close Unicode approximations
+      theban: {
+        'a': '𐌀', 'b': '𐌁', 'c': '𐌂', 'd': '𐌃', 'e': '𐌄', 'f': '𐌅', 'g': '𐌆', 'h': '𐌇',
+        'i': '𐌉', 'j': '𐌉', 'k': '𐌊', 'l': '𐌋', 'm': '𐌌', 'n': '𐌍', 'o': '𐌏', 'p': '𐌐',
+        'q': '𐌒', 'r': '𐌓', 's': '𐌔', 't': '𐌕', 'u': '𐌖', 'v': '𐌖', 'w': '𐌅', 'x': '𐌗',
+        'y': '𐌙', 'z': '𐌆', ' ': '▵',
+        font: "'Noto Sans Old Italic', 'Segoe UI Historic', sans-serif"
+      },
+
+      // Coptic (U+2C80-U+2CFF)
+      coptic: {
+        'a': 'Ⲁ', 'b': 'Ⲃ', 'c': 'Ⲥ', 'd': 'Ⲇ', 'e': 'Ⲉ', 'f': 'Ⲫ', 'g': 'Ⲅ', 'h': 'Ϩ',
+        'i': 'Ⲓ', 'j': 'Ⳓ', 'k': 'Ⲕ', 'l': 'Ⲗ', 'm': 'Ⲙ', 'n': 'Ⲛ', 'o': 'Ⲟ', 'p': 'Ⲡ',
+        'q': 'Ⲕ', 'r': 'Ⲣ', 's': 'Ⲥ', 't': 'Ⲧ', 'u': 'Ⲩ', 'v': 'Ⲃ', 'w': 'Ⲱ', 'x': 'Ⲝ',
+        'y': 'Ⲩ', 'z': 'Ⲍ', ' ': '▵',
+        font: "'Noto Sans Coptic', 'Antinoou', sans-serif"
+      },
+
+      // Hebrew (U+0590-U+05FF)
+      hebrew: {
+        'a': 'א', 'b': 'ב', 'c': 'כ', 'd': 'ד', 'e': 'ה', 'f': 'פ', 'g': 'ג', 'h': 'ח',
+        'i': 'י', 'j': 'י', 'k': 'כ', 'l': 'ל', 'm': 'מ', 'n': 'נ', 'o': 'ע', 'p': 'פ',
+        'q': 'ק', 'r': 'ר', 's': 'ס', 't': 'ת', 'u': 'ו', 'v': 'ו', 'w': 'ו', 'x': 'כס',
+        'y': 'י', 'z': 'ז', ' ': '▵',
+        font: "'Noto Sans Hebrew', 'David', 'Arial Hebrew', sans-serif"
+      }
     };
+
+    // Maintain backward compatibility
+    const LATIN_TO_RUNE = SCRIPT_MAPPINGS.runic;
 
     // Element definitions with lookup keys
     const ELEMENTS = {
@@ -314,30 +375,36 @@
     // ====================================================================
 
     class MandalaParams {
-      constructor(name, dateStr) {
+      constructor(name, dateStr, scriptType = 'runic') {
         this.name = name;
         this.dateStr = dateStr;
-        this.runic = this.convertToRunic(name);
+        this.scriptType = scriptType;
+        this.scriptMapping = SCRIPT_MAPPINGS[scriptType];
+        this.runic = this.convertToScript(name, scriptType);
         this.seed = this.getNumericSeed(this.runic);
         this.rand = mulberry32(this.seed);
         this.elementData = this.getElementsFromDate(dateStr);
         this.params = this.generateParams();
       }
 
-      convertToRunic(text) {
+      convertToScript(text, scriptType = 'runic') {
         if (!text) return "";
+        const mapping = SCRIPT_MAPPINGS[scriptType];
+        if (!mapping) return text;
+
         let lower = text.toLowerCase();
         let result = "";
         for (let i = 0; i < lower.length; i++) {
           let char = lower[i];
-          if (i < lower.length - 1) {
+          // Check for digraphs (only for runic)
+          if (scriptType === 'runic' && i < lower.length - 1) {
             const digraph = lower.slice(i, i+2);
-            if (LATIN_TO_RUNE[digraph]) {
-              result += LATIN_TO_RUNE[digraph];
+            if (mapping[digraph]) {
+              result += mapping[digraph];
               i++; continue;
             }
           }
-          result += LATIN_TO_RUNE[char] || "";
+          result += mapping[char] || "";
         }
         return result;
       }
@@ -448,6 +515,7 @@
         return {
           seed, palette: colorStrings, archetype, complexity: complexity.toFixed(2),
           rings, symbolIndex, polyhedrons, solidRotation: rand() * Math.PI * 2,
+          scriptFont: this.scriptMapping.font,
         };
       }
     }
@@ -606,10 +674,11 @@
           ctx.beginPath();
           ctx.arc(cx, cy, r + ring.width/2, 0, Math.PI*2);
           ctx.stroke();
-        } else if (ring.style === 3) { 
+        } else if (ring.style === 3) {
           const symbol = RUNIC_SYMBOLS[params.symbolIndex].char;
           const count = 15 + Math.floor(complexityFactor * 15);
-          ctx.font = `${ring.width * 5}px 'Segoe UI Symbol', sans-serif`;
+          const scriptFont = params.scriptFont || "'Segoe UI Symbol', sans-serif";
+          ctx.font = `${ring.width * 5}px ${scriptFont}`;
           ctx.fillStyle = interpolatedColor;
           for(let i=0; i<count; i++) {
             const a = (i/count)*Math.PI*2 + phase*0.1;
@@ -654,7 +723,8 @@
 
         const symbolData = RUNIC_SYMBOLS[params.symbolIndex];
         ctx.fillStyle = params.palette[2]; // Use Brass Accent
-        ctx.font = `${r*0.8}px 'Segoe UI Symbol', sans-serif`;
+        const scriptFont = params.scriptFont || "'Segoe UI Symbol', sans-serif";
+        ctx.font = `${r*0.8}px ${scriptFont}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(symbolData.char, cx, cy);
@@ -1126,6 +1196,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const seedInput = document.getElementById('seed-input');
       const dateInput = document.getElementById('date-input');
+      const scriptSelector = document.getElementById('script-selector');
       const audioToggle = document.getElementById('audio-toggle');
       const beatRange = document.getElementById('beat-range');
       const volRange = document.getElementById('vol-range');
@@ -1134,29 +1205,32 @@
       const speedDisplay = document.getElementById('speed-display');
       const bloomDisplay = document.getElementById('bloom-display');
       const volumeDisplay = document.getElementById('volume-display');
+      const runeDisplay = document.getElementById('rune-display');
 
       const renderer = new MandalaRenderer('mandala-canvas', 'fullscreen-canvas');
       const audioEngine = new AudioEngine();
-      
+
       let currentMandalaParams = null;
+      let currentScriptType = 'runic';
 
       dateInput.valueAsDate = new Date();
-      
+
       // Initial call to set up the UI and initial render
       updateUI();
-      
+
       // --- Core Update Function ---
       function updateUI() {
         const name = seedInput.value || "Initial Config";
         const date = dateInput.value;
-        
-        const paramsGenerator = new MandalaParams(name, date);
+
+        const paramsGenerator = new MandalaParams(name, date, currentScriptType);
         currentMandalaParams = paramsGenerator;
         renderer.setParams(currentMandalaParams.params);
         audioEngine.currentElementData = currentMandalaParams;
 
         // 2. Update Meta Displays
-        document.getElementById('rune-display').textContent = currentMandalaParams.runic || '᛫';
+        runeDisplay.textContent = currentMandalaParams.runic || '▵';
+        runeDisplay.style.fontFamily = currentMandalaParams.scriptMapping.font;
         document.getElementById('element-display').textContent = `${currentMandalaParams.elementData.year.name.split(' ')[0]} / ${currentMandalaParams.elementData.month.name.split(' ')[0]} / ${currentMandalaParams.elementData.day.name.split(' ')[0]}`;
         document.getElementById('archetype-display').textContent = `${currentMandalaParams.params.archetype.name.split(' ')[0]} / ${currentMandalaParams.params.complexity}`;
 
@@ -1252,6 +1326,11 @@
       // --- UI Event Listeners ---
       seedInput.addEventListener('input', updateUI);
       dateInput.addEventListener('change', updateUI);
+
+      scriptSelector.addEventListener('change', () => {
+        currentScriptType = scriptSelector.value;
+        updateUI();
+      });
 
       document.getElementById('random-btn').addEventListener('click', () => {
         seedInput.value = '';
