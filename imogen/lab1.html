@@ -239,6 +239,7 @@
             <input id="kick-vol" type="range" min="0" max="1" step="0.05" value="0.5">
           </div>
 
+          <button class="btn" id="morph-btn">Morph: ON</button>
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
         </div>
       </div>
@@ -734,7 +735,14 @@
 
         this.speed = 1.0;
         this.isBloom = false;
-        this.bloomIntensity = 0.6; 
+        this.bloomIntensity = 0.6;
+
+        // Morphing system - 5 phases cycling through archetypes
+        this.morphEnabled = true;
+        this.morphPhase = 0;
+        this.morphDuration = 120; // frames per transition
+        this.morphCycleDuration = this.morphDuration * 5; // full cycle through all 5 phases
+        this.sriYantraMode = 0; // 0=traditional, 1=breathing, 2=concentric
 
         this.icosaVertices = this.generateIcosahedronVertices();
         this.icosaEdges = this.generateIcosahedronEdges();
@@ -760,6 +768,11 @@
         if (!this.isAnimating) return;
         this.phase += 0.01 * this.speed;
 
+        // Advance morph phase for fluid transitions
+        if (this.morphEnabled) {
+          this.morphPhase = (this.morphPhase + this.speed) % this.morphCycleDuration;
+        }
+
         const size = Math.min(this.canvas.width, this.canvas.height);
         this.drawFrame(this.ctx, size, size, this.phase);
 
@@ -772,6 +785,20 @@
         }
 
         this.animationId = requestAnimationFrame(this.loop.bind(this));
+      }
+
+      // Easing functions for smooth morphing
+      easeInOutSine(t) {
+        return -(Math.cos(Math.PI * t) - 1) / 2;
+      }
+
+      easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      // Organic breathing multiplier
+      breathe(phase, rate = 1, amplitude = 0.1) {
+        return 1 + Math.sin(phase * rate) * amplitude;
       }
 
       drawFrame(ctx, w, h, phase) {
@@ -816,14 +843,64 @@
           this.drawPolyhedron(ctx, cx, cy, radius * poly.radiusFactor, poly, phase, isGlowPass);
         });
 
-        switch(this.params.archetype.index) {
-          case 0: this.drawLotusPetals(ctx, cx, cy, radius * 0.6, this.params, phase, isGlowPass); break;
-          case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
-          case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
-          case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break;
+        // Fluid morphing between 5 phases (4 archetypes + return to start)
+        if (this.morphEnabled && this.isAnimating) {
+          this.drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass);
+        } else {
+          // Static mode - use seed-based archetype
+          switch(this.params.archetype.index) {
+            case 0: this.drawLotusPetals(ctx, cx, cy, radius * 0.6, this.params, phase, isGlowPass); break;
+            case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
+            case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
+            case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break;
+          }
         }
 
         this.drawCenterSyllable(ctx, cx, cy, radius * 0.1, this.params, phase, isGlowPass);
+      }
+
+      // Morphing system - blends between archetypes with organic transitions
+      drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass) {
+        // Determine current position in morph cycle
+        const cycleProgress = this.morphPhase / this.morphCycleDuration;
+        const phaseIndex = Math.floor(cycleProgress * 5); // 0-4
+        const phaseProgress = (cycleProgress * 5) % 1; // 0-1 within current phase
+
+        // Smooth easing for transitions
+        const easedProgress = this.easeInOutCubic(phaseProgress);
+
+        // Archetype order: Lotus → SriYantra → Icosahedron → Fibonacci → Lotus (cycle)
+        const archetypes = [
+          { draw: (alpha, scale) => this.drawLotusPetals(ctx, cx, cy, radius * 0.6 * scale, this.params, phase, isGlowPass, alpha) },
+          { draw: (alpha, scale) => this.drawSriYantra(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
+          { draw: (alpha, scale) => this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
+          { draw: (alpha, scale) => this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8 * scale, this.params, phase, isGlowPass, alpha) },
+        ];
+
+        const currentIndex = phaseIndex % 4;
+        const nextIndex = (phaseIndex + 1) % 4;
+
+        // Organic scale breathing during transitions
+        const breatheScale = this.breathe(phase, 2, 0.05);
+        const transitionScale = 1 - Math.sin(easedProgress * Math.PI) * 0.1; // Slight shrink at midpoint
+
+        // Calculate blend alphas - crossfade with overlap
+        const fadeOutAlpha = Math.cos(easedProgress * Math.PI / 2); // 1 → 0
+        const fadeInAlpha = Math.sin(easedProgress * Math.PI / 2);  // 0 → 1
+
+        // Draw outgoing archetype (fading out)
+        ctx.save();
+        ctx.globalAlpha = (isGlowPass ? 0.6 : 1) * fadeOutAlpha;
+        const outScale = breatheScale * (1 + (1 - easedProgress) * 0.05);
+        archetypes[currentIndex].draw(fadeOutAlpha, outScale);
+        ctx.restore();
+
+        // Draw incoming archetype (fading in)
+        ctx.save();
+        ctx.globalAlpha = (isGlowPass ? 0.6 : 1) * fadeInAlpha;
+        const inScale = breatheScale * transitionScale * (0.9 + easedProgress * 0.1);
+        archetypes[nextIndex].draw(fadeInAlpha, inScale);
+        ctx.restore();
       }
 
       drawRing(ctx, cx, cy, r, ring, params, phase, idx, isGlowPass) {
@@ -923,7 +1000,7 @@
         ctx.fillText(symbolData.char, cx, cy);
       }
       
-      drawLotusPetals(ctx, cx, cy, r, params, phase, isGlowPass) {
+      drawLotusPetals(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(phase * 0.008);
@@ -932,13 +1009,23 @@
         const layers = 2 + Math.floor(complexity * 2);
 
         for (let layer = layers - 1; layer >= 0; layer--) {
-          const layerRadius = r * (0.4 + layer * 0.3);
+          // Organic breathing per layer
+          const breathe = 1 + Math.sin(phase * 0.3 + layer * 0.7) * 0.05;
+          const layerRadius = r * (0.4 + layer * 0.3) * breathe;
           const petalCount = 6 + layer * 2 + Math.floor(complexity * 3);
-          const petalLength = layerRadius * (0.5 + complexity * 0.2);
+
+          // Petals stretch and contract organically
+          const petalBreathe = 1 + Math.sin(phase * 0.4 + layer) * 0.08;
+          const petalLength = layerRadius * (0.5 + complexity * 0.2) * petalBreathe;
           const petalWidth = petalLength * (0.3 + layer * 0.05);
-          const layerRotation = (layer * Math.PI / petalCount) + phase * 0.003 * (layer % 2 ? 1 : -1);
+
+          // Layer rotation with organic drift
+          const drift = Math.sin(phase * 0.15 + layer * 2) * 0.05;
+          const layerRotation = (layer * Math.PI / petalCount) + phase * 0.003 * (layer % 2 ? 1 : -1) + drift;
 
           for (let i = 0; i < petalCount; i++) {
+            // Individual petal breathing
+            const petalPulse = 1 + Math.sin(phase * 0.5 + i * 0.3 + layer) * 0.03;
             const angle = (i / petalCount) * Math.PI * 2 + layerRotation;
 
             ctx.save();
@@ -953,24 +1040,27 @@
             ctx.strokeStyle = params.palette[4];
             ctx.lineWidth = isGlowPass ? 4 : 1.5;
 
+            const pLen = petalLength * petalPulse;
+            const pWid = petalWidth * petalPulse;
+
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.bezierCurveTo(
-              petalLength * 0.3, -petalWidth * 0.6,
-              petalLength * 0.7, -petalWidth * 0.8,
-              petalLength, 0
+              pLen * 0.3, -pWid * 0.6,
+              pLen * 0.7, -pWid * 0.8,
+              pLen, 0
             );
             ctx.bezierCurveTo(
-              petalLength * 0.7, petalWidth * 0.8,
-              petalLength * 0.3, petalWidth * 0.6,
+              pLen * 0.7, pWid * 0.8,
+              pLen * 0.3, pWid * 0.6,
               0, 0
             );
             ctx.closePath();
 
             if (!isGlowPass) {
-              ctx.globalAlpha = 0.6 + layer * 0.1;
+              ctx.globalAlpha = (0.6 + layer * 0.1) * alpha;
               ctx.fill();
-              ctx.globalAlpha = 1;
+              ctx.globalAlpha = alpha;
             }
             ctx.stroke();
 
@@ -980,31 +1070,215 @@
         ctx.restore();
       }
 
-      drawSriYantra(ctx, cx, cy, r, params, phase, isGlowPass) {
-        const depth = 5 + Math.floor(parseFloat(params.complexity) * 4);
-        let currentSize = r * 0.9;
+      // Enhanced Sri Yantra with multiple modes
+      drawSriYantra(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
+        // Cycle through Sri Yantra modes based on phase
+        const modePhase = (phase * 0.1) % 3;
+        const mode = Math.floor(modePhase);
+        const modeBlend = modePhase % 1;
+
         ctx.save();
         ctx.translate(cx, cy);
+
+        // Draw current mode with blend to next
+        if (modeBlend < 0.8) {
+          this.drawSriYantraMode(ctx, r, params, phase, isGlowPass, mode, 1);
+        } else {
+          // Crossfade between modes
+          const fadeProgress = (modeBlend - 0.8) / 0.2;
+          this.drawSriYantraMode(ctx, r, params, phase, isGlowPass, mode, 1 - fadeProgress * 0.5);
+          this.drawSriYantraMode(ctx, r, params, phase, isGlowPass, (mode + 1) % 3, fadeProgress * 0.5);
+        }
+
+        ctx.restore();
+      }
+
+      drawSriYantraMode(ctx, r, params, phase, isGlowPass, mode, alpha) {
+        ctx.globalAlpha *= alpha;
+
+        switch(mode) {
+          case 0: this.drawSriYantraTraditional(ctx, r, params, phase, isGlowPass); break;
+          case 1: this.drawSriYantraBreathing(ctx, r, params, phase, isGlowPass); break;
+          case 2: this.drawSriYantraConcentric(ctx, r, params, phase, isGlowPass); break;
+        }
+      }
+
+      // Mode 0: Traditional Sri Yantra - 9 interlocking triangles (4 up, 5 down)
+      drawSriYantraTraditional(ctx, r, params, phase, isGlowPass) {
+        const rotation = params.solidRotation + phase * 0.003;
+
+        // Traditional Sri Yantra has specific triangle positions
+        // 4 upward-pointing triangles (Shiva/masculine)
+        // 5 downward-pointing triangles (Shakti/feminine)
+
+        const upTriangles = [
+          { scale: 0.95, offset: 0 },
+          { scale: 0.75, offset: 0.02 },
+          { scale: 0.55, offset: 0.04 },
+          { scale: 0.35, offset: 0.06 },
+        ];
+
+        const downTriangles = [
+          { scale: 0.90, offset: 0 },
+          { scale: 0.70, offset: 0.015 },
+          { scale: 0.50, offset: 0.03 },
+          { scale: 0.32, offset: 0.045 },
+          { scale: 0.18, offset: 0.06 },
+        ];
+
+        // Draw outer boundary circle
+        ctx.strokeStyle = params.palette[4];
+        ctx.lineWidth = isGlowPass ? 4 : 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Draw downward triangles (Shakti) - drawn first
+        downTriangles.forEach((tri, i) => {
+          const breathe = 1 + Math.sin(phase * 0.5 + i * 0.5) * 0.02;
+          const size = r * tri.scale * breathe;
+          ctx.strokeStyle = interpolateColor(params.palette[1], params.palette[3], i / downTriangles.length);
+          ctx.lineWidth = isGlowPass ? 5 : (2.5 - i * 0.3);
+
+          ctx.beginPath();
+          // Downward triangle (apex at bottom)
+          const angle = Math.PI / 2 + rotation + tri.offset; // Point down
+          ctx.moveTo(Math.cos(angle) * size, Math.sin(angle) * size);
+          ctx.lineTo(Math.cos(angle + 2 * Math.PI / 3) * size, Math.sin(angle + 2 * Math.PI / 3) * size);
+          ctx.lineTo(Math.cos(angle + 4 * Math.PI / 3) * size, Math.sin(angle + 4 * Math.PI / 3) * size);
+          ctx.closePath();
+          ctx.stroke();
+        });
+
+        // Draw upward triangles (Shiva) - drawn on top
+        upTriangles.forEach((tri, i) => {
+          const breathe = 1 + Math.sin(phase * 0.5 + i * 0.5 + Math.PI) * 0.02;
+          const size = r * tri.scale * breathe;
+          ctx.strokeStyle = interpolateColor(params.palette[2], params.palette[4], i / upTriangles.length);
+          ctx.lineWidth = isGlowPass ? 5 : (2.5 - i * 0.3);
+
+          ctx.beginPath();
+          // Upward triangle (apex at top)
+          const angle = -Math.PI / 2 + rotation - tri.offset; // Point up
+          ctx.moveTo(Math.cos(angle) * size, Math.sin(angle) * size);
+          ctx.lineTo(Math.cos(angle + 2 * Math.PI / 3) * size, Math.sin(angle + 2 * Math.PI / 3) * size);
+          ctx.lineTo(Math.cos(angle + 4 * Math.PI / 3) * size, Math.sin(angle + 4 * Math.PI / 3) * size);
+          ctx.closePath();
+          ctx.stroke();
+        });
+
+        // Central bindu (point of creation)
+        if (!isGlowPass) {
+          ctx.fillStyle = params.palette[2];
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.04, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Mode 1: Breathing Sri Yantra - pulsating with organic movement
+      drawSriYantraBreathing(ctx, r, params, phase, isGlowPass) {
+        const layers = 7;
+
+        for (let i = 0; i < layers; i++) {
+          // Each layer breathes at different rates
+          const breatheRate = 0.3 + i * 0.1;
+          const breatheAmount = 0.08 - i * 0.008;
+          const breathe = 1 + Math.sin(phase * breatheRate + i * Math.PI / 4) * breatheAmount;
+
+          const layerScale = 0.15 + (i / layers) * 0.8;
+          const size = r * layerScale * breathe;
+
+          // Rotation varies per layer with organic drift
+          const drift = Math.sin(phase * 0.2 + i) * 0.1;
+          const rotation = params.solidRotation + phase * 0.005 * (i % 2 ? 1 : -1) + drift;
+
+          // Color morphing
+          const colorPhase = (phase * 0.1 + i * 0.2) % 1;
+          const color1 = params.palette[i % 3];
+          const color2 = params.palette[(i + 1) % 3];
+          ctx.strokeStyle = interpolateColor(color1, color2, colorPhase);
+          ctx.lineWidth = isGlowPass ? 6 : (3 - i * 0.3);
+
+          // Alternate up/down triangles with warping
+          const isUp = i % 2 === 0;
+          const baseAngle = isUp ? -Math.PI / 2 : Math.PI / 2;
+
+          ctx.beginPath();
+          for (let v = 0; v <= 3; v++) {
+            const angle = baseAngle + rotation + (v * 2 * Math.PI / 3);
+            // Add organic warping to vertices
+            const warp = 1 + Math.sin(phase * 0.8 + v * 2 + i) * 0.03;
+            const x = Math.cos(angle) * size * warp;
+            const y = Math.sin(angle) * size * warp;
+            if (v === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        // Pulsating central bindu
+        if (!isGlowPass) {
+          const binduPulse = 1 + Math.sin(phase * 0.8) * 0.3;
+          ctx.fillStyle = params.palette[2];
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.05 * binduPulse, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Mode 2: Concentric Sri Yantra - nested with continuous rotation
+      drawSriYantraConcentric(ctx, r, params, phase, isGlowPass) {
+        const depth = 5 + Math.floor(parseFloat(params.complexity) * 4);
+        let currentSize = r * 0.9;
         let currentRotation = params.solidRotation + phase * 0.005;
 
-        for(let i=0; i<depth; i++) {
+        // Outer lotus petal hints
+        ctx.strokeStyle = params.palette[4];
+        ctx.lineWidth = isGlowPass ? 3 : 1;
+        for (let p = 0; p < 16; p++) {
+          const angle = (p / 16) * Math.PI * 2 + phase * 0.01;
+          const innerR = r * 0.92;
+          const outerR = r * 0.98;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(angle) * innerR, Math.sin(angle) * innerR);
+          ctx.lineTo(Math.cos(angle) * outerR, Math.sin(angle) * outerR);
+          ctx.stroke();
+        }
+
+        for(let i = 0; i < depth; i++) {
+          // Organic breathing per layer
+          const breathe = 1 + Math.sin(phase * 0.4 + i * 0.8) * 0.03;
+          const size = currentSize * breathe;
+
           const color = i % 2 === 0 ? params.palette[1] : params.palette[2];
           ctx.strokeStyle = color;
           ctx.lineWidth = isGlowPass ? 5 : (2 + (depth - i) * 0.5);
 
-          this.drawTriangle(ctx, currentRotation, currentSize);
-          
+          this.drawTriangle(ctx, currentRotation, size);
+
           currentRotation += Math.PI / 3;
           ctx.strokeStyle = i % 2 === 0 ? params.palette[4] : params.palette[3];
-          this.drawTriangle(ctx, currentRotation, currentSize);
+          this.drawTriangle(ctx, currentRotation, size);
 
           currentRotation -= Math.PI / 3;
-          currentSize *= 0.7;
-          currentRotation += phase * 0.01;
+          currentSize *= 0.72;
+          currentRotation += phase * 0.008;
         }
-        ctx.restore();
+
+        // Central bindu with glow
+        if (!isGlowPass) {
+          const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.08);
+          gradient.addColorStop(0, params.palette[2]);
+          gradient.addColorStop(1, 'transparent');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.08, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
-      
+
       drawTriangle(ctx, angle, size) {
         ctx.beginPath();
         ctx.moveTo(Math.cos(angle) * size, Math.sin(angle) * size);
@@ -1014,83 +1288,136 @@
         ctx.stroke();
       }
 
-      drawIcosahedronGrid(ctx, cx, cy, r, params, phase, isGlowPass) {
+      drawIcosahedronGrid(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
         if (isGlowPass) return;
-        
-        const radius = r * 0.9;
+
+        // Organic breathing
+        const breathe = 1 + Math.sin(phase * 0.25) * 0.06;
+        const radius = r * 0.9 * breathe;
+
         ctx.save();
         ctx.translate(cx, cy);
+        ctx.globalAlpha *= alpha;
         ctx.rotate(params.solidRotation + phase * 0.005);
-        
+
         const goldenRatio = (1 + Math.sqrt(5)) / 2;
         const vertexPositions = [];
         const offsetAngle = phase * 0.05;
 
         for (let i = 0; i < 6; i++) {
           const angle = (i / 6) * Math.PI * 2;
-          vertexPositions.push({ x: radius * Math.cos(angle + offsetAngle) / goldenRatio, y: radius * Math.sin(angle + offsetAngle) / goldenRatio });
-          vertexPositions.push({ x: radius * Math.cos(angle - offsetAngle + Math.PI/6) / goldenRatio, y: radius * Math.sin(angle - offsetAngle + Math.PI/6) / goldenRatio });
+          // Add organic wobble to each vertex
+          const wobble1 = 1 + Math.sin(phase * 0.3 + i) * 0.04;
+          const wobble2 = 1 + Math.sin(phase * 0.3 + i + Math.PI) * 0.04;
+          vertexPositions.push({
+            x: radius * Math.cos(angle + offsetAngle) / goldenRatio * wobble1,
+            y: radius * Math.sin(angle + offsetAngle) / goldenRatio * wobble1
+          });
+          vertexPositions.push({
+            x: radius * Math.cos(angle - offsetAngle + Math.PI/6) / goldenRatio * wobble2,
+            y: radius * Math.sin(angle - offsetAngle + Math.PI/6) / goldenRatio * wobble2
+          });
         }
-        
-        ctx.strokeStyle = params.palette[2];
-        ctx.lineWidth = 1;
+
+        // Draw edges with pulsing opacity
         for (let i = 0; i < 12; i++) {
           for (let j = i + 1; j < 12; j++) {
             const p1 = vertexPositions[i];
             const p2 = vertexPositions[j];
             const distSq = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2;
             if (distSq < (radius * 0.7) ** 2) {
-              ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+              // Edge opacity pulses based on position
+              const edgePulse = 0.5 + Math.sin(phase * 0.4 + i + j) * 0.5;
+              ctx.strokeStyle = interpolateColor(params.palette[2], params.palette[1], edgePulse);
+              ctx.lineWidth = 1 + edgePulse;
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
             }
           }
         }
-        
-        ctx.fillStyle = params.palette[4];
-        vertexPositions.forEach(p => {
-          ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+
+        // Draw vertices with pulsing size
+        vertexPositions.forEach((p, i) => {
+          const vertexPulse = 1 + Math.sin(phase * 0.6 + i * 0.5) * 0.4;
+          ctx.fillStyle = params.palette[4];
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4 * vertexPulse, 0, Math.PI * 2);
+          ctx.fill();
         });
 
         ctx.restore();
       }
       
-      drawFibonacciSpiral(ctx, cx, cy, r, params, phase, isGlowPass) {
+      drawFibonacciSpiral(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
           ctx.save();
           ctx.translate(cx, cy);
+          ctx.globalAlpha *= alpha;
+
+          // Organic breathing affects the whole spiral
+          const breathe = 1 + Math.sin(phase * 0.2) * 0.08;
+          const breatheR = r * breathe;
+
           ctx.rotate(params.solidRotation + phase * 0.05);
 
           const segments = 20 + Math.floor(parseFloat(params.complexity) * 20);
           const goldenRatio = (1 + Math.sqrt(5)) / 2;
-          const color = params.palette[1];
-          const accent = params.palette[2];
-          
-          ctx.strokeStyle = color;
-          ctx.lineWidth = isGlowPass ? 4 : 2;
-          
-          let a = 0.5; // Controls tightness
-          let angle = 0;
-          
-          ctx.beginPath();
-          for(let i=0; i<segments; i++) {
-              let currentR = a * Math.exp(0.12 * angle); // Logarithmic spiral, tightness controlled by 0.12
-              if (currentR > r) break;
-              
-              const x = Math.cos(angle) * currentR;
-              const y = Math.sin(angle) * currentR;
-              
-              if (i === 0) ctx.moveTo(x, y);
-              else ctx.lineTo(x, y);
-              
-              angle += Math.PI * 2 / goldenRatio; // Golden Angle step
-              
-              if (!isGlowPass && i % 4 === 0) {
-                  // Draw small markers
-                  ctx.fillStyle = accent;
-                  ctx.beginPath();
-                  ctx.arc(x, y, 2 + params.complexity * 2, 0, Math.PI * 2);
-                  ctx.fill();
-              }
+
+          // Draw multiple interleaved spirals for organic effect
+          const spiralCount = 3;
+          for (let s = 0; s < spiralCount; s++) {
+            const spiralOffset = (s / spiralCount) * Math.PI * 2;
+            const spiralBreathe = 1 + Math.sin(phase * 0.3 + s * 2) * 0.05;
+
+            // Color varies per spiral arm
+            const colorFactor = (Math.sin(phase * 0.2 + s) + 1) / 2;
+            ctx.strokeStyle = interpolateColor(params.palette[1], params.palette[2], colorFactor);
+            ctx.lineWidth = isGlowPass ? 4 : (2 - s * 0.3);
+
+            let a = 0.5 * spiralBreathe;
+            let angle = spiralOffset;
+
+            ctx.beginPath();
+            for(let i = 0; i < segments; i++) {
+                // Organic wobble in the spiral
+                const wobble = 1 + Math.sin(phase * 0.5 + i * 0.2 + s) * 0.03;
+                let currentR = a * Math.exp(0.12 * angle) * wobble;
+                if (currentR > breatheR) break;
+
+                const x = Math.cos(angle) * currentR;
+                const y = Math.sin(angle) * currentR;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+
+                angle += Math.PI * 2 / goldenRatio;
+
+                // Draw pulsing markers
+                if (!isGlowPass && i % 4 === 0 && s === 0) {
+                    const markerPulse = 1 + Math.sin(phase * 0.8 + i) * 0.5;
+                    ctx.fillStyle = params.palette[2];
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(x, y, (2 + parseFloat(params.complexity) * 2) * markerPulse, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                }
+            }
+            ctx.stroke();
           }
-          ctx.stroke();
+
+          // Central pulsing core
+          if (!isGlowPass) {
+            const corePulse = 1 + Math.sin(phase * 0.6) * 0.3;
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, breatheR * 0.1 * corePulse);
+            gradient.addColorStop(0, params.palette[2]);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, breatheR * 0.1 * corePulse, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
           ctx.restore();
       }
@@ -2081,6 +2408,12 @@
         renderer.isBloom = !renderer.isBloom;
         document.getElementById('bloom-btn').textContent = renderer.isBloom ? "Disable Light Spill" : "Toggle Light Spill";
         updateBloomDisplay();
+        if(!renderer.isAnimating) renderer.drawInitialFrame();
+      });
+
+      document.getElementById('morph-btn').addEventListener('click', () => {
+        renderer.morphEnabled = !renderer.morphEnabled;
+        document.getElementById('morph-btn').textContent = renderer.morphEnabled ? "Morph: ON" : "Morph: OFF";
         if(!renderer.isAnimating) renderer.drawInitialFrame();
       });
 
