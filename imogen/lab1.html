@@ -1439,6 +1439,46 @@
 
           const crescentCount = 4 + Math.floor(parseFloat(params.complexity) * 4);
 
+          // Helper function to draw a crescent as a proper path (no composite operations)
+          const drawCrescent = (outerR, innerR, offset) => {
+            // Calculate intersection points of two circles
+            // Circle 1: center (0,0), radius outerR
+            // Circle 2: center (offset,0), radius innerR
+            // Using circle-circle intersection formula
+            const d = offset; // distance between centers
+
+            if (d >= outerR + innerR || d <= Math.abs(outerR - innerR)) {
+              // Circles don't intersect properly, draw full moon
+              ctx.beginPath();
+              ctx.arc(0, 0, outerR, 0, Math.PI * 2);
+              return;
+            }
+
+            // Calculate intersection points
+            const a = (outerR * outerR - innerR * innerR + d * d) / (2 * d);
+            const h = Math.sqrt(outerR * outerR - a * a);
+
+            // Intersection points
+            const ix = a;
+            const iy1 = h;
+            const iy2 = -h;
+
+            // Angles for outer circle arc
+            const outerAngle1 = Math.atan2(iy1, ix);
+            const outerAngle2 = Math.atan2(iy2, ix);
+
+            // Angles for inner circle arc (relative to offset center)
+            const innerAngle1 = Math.atan2(iy1, ix - offset);
+            const innerAngle2 = Math.atan2(iy2, ix - offset);
+
+            ctx.beginPath();
+            // Draw outer arc (the visible part of the moon)
+            ctx.arc(0, 0, outerR, outerAngle2, outerAngle1);
+            // Draw inner arc in reverse (the cut-out part)
+            ctx.arc(offset, 0, innerR, innerAngle1, innerAngle2, true);
+            ctx.closePath();
+          };
+
           // Draw crescents in a circular arrangement
           for (let i = 0; i < crescentCount; i++) {
             const angle = (i / crescentCount) * Math.PI * 2;
@@ -1459,34 +1499,12 @@
             ctx.lineWidth = isGlowPass ? 3 : 1.5;
 
             const crescentR = breatheR * 0.25;
-            const offset = crescentR * (0.3 + waxWane * 0.5); // How much the inner circle is offset
+            const innerR = crescentR * 0.9;
+            const offset = crescentR * (0.3 + waxWane * 0.5);
 
-            // Draw crescent using two overlapping circles
-            ctx.beginPath();
-            ctx.arc(0, 0, crescentR, 0, Math.PI * 2);
+            drawCrescent(crescentR, innerR, offset);
             if (!isGlowPass) ctx.fill();
             ctx.stroke();
-
-            // Cut out inner circle to create crescent shape
-            if (!isGlowPass) {
-              ctx.globalCompositeOperation = 'destination-out';
-              ctx.beginPath();
-              ctx.arc(offset, 0, crescentR * 0.9, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.globalCompositeOperation = 'source-over';
-
-              // Redraw the outline
-              ctx.strokeStyle = interpolateColor(params.palette[1], params.palette[2], colorFactor);
-              ctx.beginPath();
-              // Draw crescent arc properly
-              const innerR = crescentR * 0.9;
-              // Outer arc
-              ctx.arc(0, 0, crescentR, -Math.PI/2, Math.PI/2);
-              // Inner arc (reverse direction)
-              ctx.arc(offset, 0, innerR, Math.PI/2, -Math.PI/2, true);
-              ctx.closePath();
-              ctx.stroke();
-            }
 
             ctx.restore();
           }
@@ -1495,24 +1513,16 @@
           const centralPhase = (phase * 0.1) % (Math.PI * 2);
           const centralWax = (Math.sin(centralPhase) + 1) / 2;
           const centralR = breatheR * 0.15;
+          const centralInnerR = centralR * 0.85;
           const centralOffset = centralR * (0.2 + centralWax * 0.6);
 
           ctx.fillStyle = params.palette[2];
           ctx.strokeStyle = params.palette[2];
           ctx.lineWidth = isGlowPass ? 4 : 2;
 
-          ctx.beginPath();
-          ctx.arc(0, 0, centralR, 0, Math.PI * 2);
+          drawCrescent(centralR, centralInnerR, centralOffset);
           if (!isGlowPass) ctx.fill();
           ctx.stroke();
-
-          if (!isGlowPass) {
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.arc(centralOffset, 0, centralR * 0.85, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalCompositeOperation = 'source-over';
-          }
 
           // Radiating moon rays
           if (!isGlowPass) {
