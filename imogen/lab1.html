@@ -507,9 +507,7 @@
       { name: 'Lotus Petals', index: 0, meaning: 'Layered petal forms radiating from center, inspired by lotus flower geometry.' },
       { name: 'Sri Yantra', index: 1, meaning: 'Interlocking upward and downward triangles from Hindu sacred geometry.' },
       { name: 'Icosahedron Grid', index: 2, meaning: 'Connected vertices of a projected icosahedron, one of the Platonic solids.' },
-      { name: 'Fibonacci Spiral', index: 3, meaning: 'Logarithmic spiral based on the golden ratio, found throughout nature.' },
-      { name: 'Crescent Moon', index: 4, meaning: 'Waxing and waning lunar crescents, symbols of cyclical transformation and intuition.' },
-      { name: 'Eternal Knot', index: 5, meaning: 'Tibetan endless knot representing interconnectedness and the infinite cycle of existence.' }
+      { name: 'Fibonacci Spiral', index: 3, meaning: 'Logarithmic spiral based on the golden ratio, found throughout nature.' }
     ];
 
     function hexToRgb(hex) {
@@ -656,7 +654,7 @@
         }
 
         // 2. Geometry Parameters
-        const archetypeIndex = seed % ARCHETYPES.length; // Max is now 5
+        const archetypeIndex = seed % ARCHETYPES.length; // Max is now 3
         const archetype = ARCHETYPES[archetypeIndex];
 
         let complexity = ((seed % 900) / 900) + 0.1;
@@ -842,7 +840,7 @@
           this.drawPolyhedron(ctx, cx, cy, radius * poly.radiusFactor, poly, phase, isGlowPass);
         });
 
-        // Fluid morphing between 7 phases (6 archetypes + return to start)
+        // Fluid morphing between 5 phases (4 archetypes + return to start)
         if (this.morphEnabled && this.isAnimating) {
           this.drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass);
         } else {
@@ -852,8 +850,6 @@
             case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
             case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
             case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break;
-            case 4: this.drawCrescentMoon(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
-            case 5: this.drawEternalKnot(ctx, cx, cy, radius * 0.65, this.params, phase, isGlowPass); break;
           }
         }
 
@@ -864,24 +860,22 @@
       drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass) {
         // Determine current position in morph cycle
         const cycleProgress = this.morphPhase / this.morphCycleDuration;
-        const phaseIndex = Math.floor(cycleProgress * 7); // 0-6
-        const phaseProgress = (cycleProgress * 7) % 1; // 0-1 within current phase
+        const phaseIndex = Math.floor(cycleProgress * 5); // 0-4
+        const phaseProgress = (cycleProgress * 5) % 1; // 0-1 within current phase
 
         // Smooth easing for transitions
         const easedProgress = this.easeInOutCubic(phaseProgress);
 
-        // Archetype order: Lotus → SriYantra → Icosahedron → Fibonacci → Crescent → EternalKnot → Lotus (cycle)
+        // Archetype order: Lotus → SriYantra → Icosahedron → Fibonacci → Lotus (cycle)
         const archetypes = [
           { draw: (alpha, scale) => this.drawLotusPetals(ctx, cx, cy, radius * 0.6 * scale, this.params, phase, isGlowPass, alpha) },
           { draw: (alpha, scale) => this.drawSriYantra(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
           { draw: (alpha, scale) => this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
           { draw: (alpha, scale) => this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8 * scale, this.params, phase, isGlowPass, alpha) },
-          { draw: (alpha, scale) => this.drawCrescentMoon(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
-          { draw: (alpha, scale) => this.drawEternalKnot(ctx, cx, cy, radius * 0.65 * scale, this.params, phase, isGlowPass, alpha) },
         ];
 
-        const currentIndex = phaseIndex % 6;
-        const nextIndex = (phaseIndex + 1) % 6;
+        const currentIndex = phaseIndex % 4;
+        const nextIndex = (phaseIndex + 1) % 4;
 
         // Organic scale breathing during transitions
         const breatheScale = this.breathe(phase, 2, 0.05);
@@ -1419,308 +1413,6 @@
             ctx.fillStyle = gradient;
             ctx.beginPath();
             ctx.arc(0, 0, breatheR * 0.1 * corePulse, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          ctx.restore();
-      }
-
-      drawCrescentMoon(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
-          ctx.save();
-          ctx.translate(cx, cy);
-          ctx.globalAlpha *= alpha;
-
-          // Breathing effect
-          const breathe = 1 + Math.sin(phase * 0.25) * 0.06;
-          const breatheR = r * breathe;
-
-          // Slow rotation
-          ctx.rotate(params.solidRotation + phase * 0.03);
-
-          const crescentCount = 4 + Math.floor(parseFloat(params.complexity) * 4);
-
-          // Helper function to draw a crescent as a proper path (no composite operations)
-          const drawCrescent = (outerR, innerR, offset) => {
-            // Calculate intersection points of two circles
-            // Circle 1: center (0,0), radius outerR
-            // Circle 2: center (offset,0), radius innerR
-            // Using circle-circle intersection formula
-            const d = offset; // distance between centers
-
-            if (d >= outerR + innerR || d <= Math.abs(outerR - innerR)) {
-              // Circles don't intersect properly, draw full moon
-              ctx.beginPath();
-              ctx.arc(0, 0, outerR, 0, Math.PI * 2);
-              return;
-            }
-
-            // Calculate intersection points
-            const a = (outerR * outerR - innerR * innerR + d * d) / (2 * d);
-            const h = Math.sqrt(outerR * outerR - a * a);
-
-            // Intersection points
-            const ix = a;
-            const iy1 = h;
-            const iy2 = -h;
-
-            // Angles for outer circle arc
-            const outerAngle1 = Math.atan2(iy1, ix);
-            const outerAngle2 = Math.atan2(iy2, ix);
-
-            // Angles for inner circle arc (relative to offset center)
-            const innerAngle1 = Math.atan2(iy1, ix - offset);
-            const innerAngle2 = Math.atan2(iy2, ix - offset);
-
-            ctx.beginPath();
-            // Draw outer arc (the visible part of the moon)
-            ctx.arc(0, 0, outerR, outerAngle2, outerAngle1);
-            // Draw inner arc in reverse (the cut-out part)
-            ctx.arc(offset, 0, innerR, innerAngle1, innerAngle2, true);
-            ctx.closePath();
-          };
-
-          // Draw crescents in a circular arrangement
-          for (let i = 0; i < crescentCount; i++) {
-            const angle = (i / crescentCount) * Math.PI * 2;
-            const crescentPhase = phase * 0.2 + i * 0.5;
-
-            // Waxing/waning cycle animation
-            const waxWane = (Math.sin(crescentPhase) + 1) / 2; // 0 to 1
-
-            ctx.save();
-            ctx.rotate(angle);
-            ctx.translate(breatheR * 0.5, 0);
-            ctx.rotate(-angle + Math.PI / 2); // Face outward
-
-            // Color oscillates with phase
-            const colorFactor = (Math.sin(phase * 0.15 + i) + 1) / 2;
-            ctx.strokeStyle = interpolateColor(params.palette[1], params.palette[2], colorFactor);
-            ctx.fillStyle = interpolateColor(params.palette[0], params.palette[2], colorFactor * 0.5);
-            ctx.lineWidth = isGlowPass ? 3 : 1.5;
-
-            const crescentR = breatheR * 0.25;
-            const innerR = crescentR * 0.9;
-            const offset = crescentR * (0.3 + waxWane * 0.5);
-
-            drawCrescent(crescentR, innerR, offset);
-            if (!isGlowPass) ctx.fill();
-            ctx.stroke();
-
-            ctx.restore();
-          }
-
-          // Central moon with phases
-          const centralPhase = (phase * 0.1) % (Math.PI * 2);
-          const centralWax = (Math.sin(centralPhase) + 1) / 2;
-          const centralR = breatheR * 0.15;
-          const centralInnerR = centralR * 0.85;
-          const centralOffset = centralR * (0.2 + centralWax * 0.6);
-
-          ctx.fillStyle = params.palette[2];
-          ctx.strokeStyle = params.palette[2];
-          ctx.lineWidth = isGlowPass ? 4 : 2;
-
-          drawCrescent(centralR, centralInnerR, centralOffset);
-          if (!isGlowPass) ctx.fill();
-          ctx.stroke();
-
-          // Radiating moon rays
-          if (!isGlowPass) {
-            const rayCount = 8;
-            ctx.strokeStyle = params.palette[2];
-            ctx.lineWidth = 1;
-            ctx.globalAlpha *= 0.5;
-
-            for (let i = 0; i < rayCount; i++) {
-              const rayAngle = (i / rayCount) * Math.PI * 2 + phase * 0.05;
-              const rayPulse = 1 + Math.sin(phase * 0.4 + i) * 0.2;
-              const innerRay = breatheR * 0.2;
-              const outerRay = breatheR * 0.35 * rayPulse;
-
-              ctx.beginPath();
-              ctx.moveTo(Math.cos(rayAngle) * innerRay, Math.sin(rayAngle) * innerRay);
-              ctx.lineTo(Math.cos(rayAngle) * outerRay, Math.sin(rayAngle) * outerRay);
-              ctx.stroke();
-            }
-          }
-
-          ctx.restore();
-      }
-
-      drawEternalKnot(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
-          ctx.save();
-          ctx.translate(cx, cy);
-          ctx.globalAlpha *= alpha;
-
-          // Breathing effect
-          const breathe = 1 + Math.sin(phase * 0.2) * 0.05;
-          const breatheR = r * breathe;
-
-          // Slow rotation
-          ctx.rotate(params.solidRotation + phase * 0.02);
-
-          const complexity = parseFloat(params.complexity);
-
-          // Color setup
-          const colorPhase = (Math.sin(phase * 0.15) + 1) / 2;
-          ctx.strokeStyle = interpolateColor(params.palette[1], params.palette[2], colorPhase);
-          ctx.lineWidth = isGlowPass ? 4 : (2 + complexity * 2);
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-
-          // The Tibetan Eternal Knot (Shrivatsa) - drawn as interlocking loops
-          // Scale factor for the knot
-          const s = breatheR * 0.8;
-
-          // Animation: the knot "pulses" along its path
-          const flowOffset = phase * 0.3;
-
-          // Draw the eternal knot pattern - simplified geometric representation
-          // The knot consists of interlocking horizontal and vertical loops
-
-          const drawKnotSegment = (points, colorOffset = 0) => {
-            const segmentColor = interpolateColor(params.palette[1], params.palette[2],
-              (colorPhase + colorOffset) % 1);
-            ctx.strokeStyle = segmentColor;
-
-            ctx.beginPath();
-            ctx.moveTo(points[0][0] * s, points[0][1] * s);
-
-            for (let i = 1; i < points.length; i++) {
-              // Add subtle wave animation to the path
-              const wave = Math.sin(flowOffset + i * 0.5) * 0.02;
-              const x = points[i][0] * s + wave * s;
-              const y = points[i][1] * s + wave * s;
-
-              if (i < points.length - 1) {
-                // Use quadratic curves for smoother appearance
-                const nextX = points[i + 1][0] * s;
-                const nextY = points[i + 1][1] * s;
-                const cpX = x;
-                const cpY = y;
-                const endX = (x + nextX) / 2;
-                const endY = (y + nextY) / 2;
-                ctx.quadraticCurveTo(cpX, cpY, endX, endY);
-              } else {
-                ctx.lineTo(x, y);
-              }
-            }
-            ctx.stroke();
-          };
-
-          // Define the eternal knot as a series of connected curves
-          // This creates a simplified but recognizable endless knot pattern
-
-          // Outer horizontal loops (top and bottom)
-          const loopW = 0.7;
-          const loopH = 0.35;
-          const centerGap = 0.15;
-
-          // Top-left to top-right curve
-          drawKnotSegment([
-            [-loopW, -centerGap],
-            [-loopW, -loopH - centerGap],
-            [-loopW * 0.5, -loopH - centerGap],
-            [0, -loopH - centerGap],
-            [loopW * 0.5, -loopH - centerGap],
-            [loopW, -loopH - centerGap],
-            [loopW, -centerGap]
-          ], 0);
-
-          // Bottom-left to bottom-right curve
-          drawKnotSegment([
-            [-loopW, centerGap],
-            [-loopW, loopH + centerGap],
-            [-loopW * 0.5, loopH + centerGap],
-            [0, loopH + centerGap],
-            [loopW * 0.5, loopH + centerGap],
-            [loopW, loopH + centerGap],
-            [loopW, centerGap]
-          ], 0.25);
-
-          // Vertical connections (left and right)
-          drawKnotSegment([
-            [-loopW, -centerGap],
-            [-loopW - 0.15, 0],
-            [-loopW, centerGap]
-          ], 0.5);
-
-          drawKnotSegment([
-            [loopW, -centerGap],
-            [loopW + 0.15, 0],
-            [loopW, centerGap]
-          ], 0.5);
-
-          // Inner crossing patterns - the heart of the endless knot
-          // These create the characteristic "over-under" weaving
-
-          // Diagonal crossings
-          const crossSize = 0.3;
-
-          // Top-left to bottom-right diagonal
-          drawKnotSegment([
-            [-crossSize, -crossSize - centerGap * 0.5],
-            [0, 0],
-            [crossSize, crossSize + centerGap * 0.5]
-          ], 0.3);
-
-          // Top-right to bottom-left diagonal
-          drawKnotSegment([
-            [crossSize, -crossSize - centerGap * 0.5],
-            [0, 0],
-            [-crossSize, crossSize + centerGap * 0.5]
-          ], 0.6);
-
-          // Inner horizontal connectors
-          drawKnotSegment([
-            [-loopW * 0.6, -centerGap * 2],
-            [-crossSize, -centerGap * 2]
-          ], 0.15);
-
-          drawKnotSegment([
-            [crossSize, -centerGap * 2],
-            [loopW * 0.6, -centerGap * 2]
-          ], 0.15);
-
-          drawKnotSegment([
-            [-loopW * 0.6, centerGap * 2],
-            [-crossSize, centerGap * 2]
-          ], 0.4);
-
-          drawKnotSegment([
-            [crossSize, centerGap * 2],
-            [loopW * 0.6, centerGap * 2]
-          ], 0.4);
-
-          // Draw decorative corner loops
-          const cornerR = breatheR * 0.08;
-          const corners = [
-            [-loopW, -loopH - centerGap],
-            [loopW, -loopH - centerGap],
-            [-loopW, loopH + centerGap],
-            [loopW, loopH + centerGap]
-          ];
-
-          if (!isGlowPass) {
-            corners.forEach((corner, i) => {
-              const pulse = 1 + Math.sin(phase * 0.5 + i) * 0.3;
-              ctx.fillStyle = params.palette[2];
-              ctx.beginPath();
-              ctx.arc(corner[0] * s, corner[1] * s, cornerR * pulse, 0, Math.PI * 2);
-              ctx.fill();
-            });
-          }
-
-          // Central jewel/bindu
-          if (!isGlowPass) {
-            const centralPulse = 1 + Math.sin(phase * 0.4) * 0.2;
-            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, breatheR * 0.12 * centralPulse);
-            gradient.addColorStop(0, params.palette[2]);
-            gradient.addColorStop(0.5, interpolateColor(params.palette[2], params.palette[1], 0.5));
-            gradient.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(0, 0, breatheR * 0.12 * centralPulse, 0, Math.PI * 2);
             ctx.fill();
           }
 
