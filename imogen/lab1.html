@@ -336,13 +336,13 @@
     // Maintain backward compatibility
     const LATIN_TO_RUNE = SCRIPT_MAPPINGS.runic;
 
-    // Element definitions with lookup keys
+    // Element definitions based on Wu Xing (Chinese five elements)
     const ELEMENTS = {
-      METAL: { key: 'METAL', name: 'Alloy (Metal)', colors: ['#D0D0D0', '#A0A0A0', '#707070', '#555555', '#FFFFFF'], meaning: 'Represents Structural Integrity and Data Clarity.' },
-      WATER: { key: 'WATER', name: 'Fluidic (Water)', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#B0B0B0'], meaning: 'Represents System Flow and Dynamic Input.' },
-      WOOD: { key: 'WOOD', name: 'Composite (Wood)', colors: ['#2D5743', '#4E8A6E', '#7DB49A', '#BCC8BF', '#A0A0A0'], meaning: 'Represents Growth Vectors and Expansion.' },
-      FIRE: { key: 'FIRE', name: 'Thermal (Fire)', colors: ['#D24B4F', '#A04A4E', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Represents Energy State and Transformation Rate.' },
-      EARTH: { key: 'EARTH', name: 'Foundation (Earth)', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#909090'], meaning: 'Represents Core Stability and Base Coordinates.' }
+      METAL: { key: 'METAL', name: 'Metal', colors: ['#D0D0D0', '#A0A0A0', '#707070', '#555555', '#FFFFFF'], meaning: 'Precision, clarity, and structure.' },
+      WATER: { key: 'WATER', name: 'Water', colors: ['#30404C', '#576775', '#7A8C98', '#9DB0C0', '#B0B0B0'], meaning: 'Flow, adaptability, and depth.' },
+      WOOD: { key: 'WOOD', name: 'Wood', colors: ['#2D5743', '#4E8A6E', '#7DB49A', '#BCC8BF', '#A0A0A0'], meaning: 'Growth, vitality, and expansion.' },
+      FIRE: { key: 'FIRE', name: 'Fire', colors: ['#D24B4F', '#A04A4E', '#E98E92', '#F9C2C4', '#FEE6E7'], meaning: 'Energy, transformation, and passion.' },
+      EARTH: { key: 'EARTH', name: 'Earth', colors: ['#8A735E', '#A6927C', '#C2B19F', '#DDD0C3', '#909090'], meaning: 'Stability, grounding, and balance.' }
     };
     const MONTH_ELEMENTS = [
       ELEMENTS.EARTH, ELEMENTS.EARTH, ELEMENTS.WOOD, ELEMENTS.WOOD, ELEMENTS.FIRE, ELEMENTS.FIRE,
@@ -378,13 +378,13 @@
       { note: 'C4',  freq: 256.87, semitone: 24 }
     ];
 
-    // Solfeggio / Planetary Frequencies (legacy, used for element mapping)
+    // Base frequencies for each element (432 Hz tuning)
     const SOUND_ELEMENT_MAPPING = {
-      METAL: { freq: 432, note: "A4 (432 Hz)", explanation: "Target for Cognitive Clarity." },
-      WATER: { freq: 192.43, note: "G3", explanation: "Target for System Dynamics." },
-      WOOD: { freq: 144.16, note: "D3", explanation: "Target for Vector Optimization." },
-      FIRE: { freq: 216.00, note: "A3", explanation: "Target for State Transition." },
-      EARTH: { freq: 128.43, note: "C3", explanation: "Target for Base Stability." }
+      METAL: { freq: 432, note: "A4 (432 Hz)", explanation: "Concert pitch in 432 Hz tuning." },
+      WATER: { freq: 192.43, note: "G3", explanation: "Fifth below A3." },
+      WOOD: { freq: 144.16, note: "D3", explanation: "Lower register, grounded tone." },
+      FIRE: { freq: 216.00, note: "A3", explanation: "Octave below A4." },
+      EARTH: { freq: 128.43, note: "C3", explanation: "Low C, foundational tone." }
     };
 
     // Waveform selection based on Element
@@ -2314,29 +2314,29 @@
 
         const primaryAudioElement = SOUND_ELEMENT_MAPPING[audioData.element.key];
 
-        // LEFT PANEL: DATA AND COLOR SPECIFICATION
+        // LEFT PANEL: ELEMENTS AND COLORS
         let leftHTML = `
-          <h3>INPUT SIGNATURE SPECIFICATION</h3>
-          <p>The temporal and semantic inputs define three dominant elemental data types that drive the generative rendering process.</p>
-          <h4>Input Source Mapping:</h4>
+          <h3>ELEMENTS</h3>
+          <p>Three elements derived from your date input (based on Wu Xing cycle):</p>
+          <h4>Date Elements:</h4>
           <ul>
-            <li><strong>Year Base:</strong> ${elementData.year.name}. ${elementData.year.meaning.split('. ')[0]}.</li>
-            <li><strong>Month Vector:</strong> ${elementData.month.name}. ${elementData.month.meaning.split('. ')[0]}.</li>
-            <li><strong>Day Modifier:</strong> ${elementData.day.name}. ${elementData.day.meaning.split('. ')[0]}.</li>
+            <li><strong>Year:</strong> ${elementData.year.name} — ${elementData.year.meaning}</li>
+            <li><strong>Month:</strong> ${elementData.month.name} — ${elementData.month.meaning}</li>
+            <li><strong>Day:</strong> ${elementData.day.name} — ${elementData.day.meaning}</li>
           </ul>
-          <h4>Palette Specification: ${params.palette[0].replace('#', 'M-')}</h4>
-          <p>Five blended color points are derived from your inputs, optimized for contrast and light spill:</p>
+          <h4>Color Palette</h4>
+          <p>Five colors blended from your element combination:</p>
           <ul>
-            <li><span class="color-block" style="background-color: ${params.palette[0]}"></span>Tone 1: Primary Structure (${params.palette[0]})</li>
-            <li><span class="color-block" style="background-color: ${params.palette[1]}"></span>Tone 2: Secondary Flow (${params.palette[1]})</li>
-            <li><span class="color-block" style="background-color: ${params.palette[2]}"></span>Tone 3: Accent / Glow (${params.palette[2]})</li>
-            <li><span class="color-block" style="background-color: ${params.palette[3]}"></span>Tone 4: Central Fill (${params.palette[3]})</li>
-            <li><span class="color-block" style="background-color: ${params.palette[4]}"></span>Tone 5: Frame Detail (${params.palette[4]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[0]}"></span>Primary (${params.palette[0]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[1]}"></span>Secondary (${params.palette[1]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[2]}"></span>Accent (${params.palette[2]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[3]}"></span>Center (${params.palette[3]})</li>
+            <li><span class="color-block" style="background-color: ${params.palette[4]}"></span>Detail (${params.palette[4]})</li>
           </ul>
         `;
         leftPanel.innerHTML = leftHTML;
 
-        // RIGHT PANEL: GEOMETRY AND ACOUSTIC CONFIGURATION
+        // RIGHT PANEL: GEOMETRY AND AUDIO
         const symbolSet = SCRIPT_SYMBOLS[params.scriptType] || SCRIPT_SYMBOLS.runic;
         const primarySymbol = symbolSet[params.symbolIndex % symbolSet.length];
         const scriptName = {
@@ -2349,16 +2349,16 @@
         }[params.scriptType] || 'Elder Futhark';
 
         let rightHTML = `
-          <h3>GEOMETRY & ACOUSTIC CONFIGURATION</h3>
-          <p>The input string determines the structural matrix and central glyph from the ${scriptName}.</p>
-          <h4>Geometry Matrix: ${params.archetype.name}</h4>
+          <h3>GEOMETRY & AUDIO</h3>
+          <p>Pattern and symbol derived from your text input, using ${scriptName}.</p>
+          <h4>Pattern: ${params.archetype.name}</h4>
           <p>${params.archetype.meaning}</p>
 
-          <h4>Central Symbol: ${primarySymbol.char}</h4>
+          <h4>Center Symbol: ${primarySymbol.char}</h4>
           <p><strong>${primarySymbol.desc}</strong> — ${primarySymbol.meaning}</p>
 
-          <h4>Acoustic Configuration</h4>
-          <p>Binaural carrier from A=432Hz tuning (C2-C4 range):</p>
+          <h4>Audio</h4>
+          <p>Binaural tones using 432 Hz tuning (C2–C4 range):</p>
           <ul>
             <li><strong>Waveform:</strong> ${audioEngine.manualWaveform === 'auto' ? audioData.waveform.toUpperCase() + ' (Auto)' : audioEngine.manualWaveform.toUpperCase()}</li>
             <li><strong>Note:</strong> ${audioData.selectedNote || 'N/A'} (${audioData.carrier.toFixed(2)} Hz)</li>
