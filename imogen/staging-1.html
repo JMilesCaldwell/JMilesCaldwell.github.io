@@ -268,6 +268,7 @@
           <select class="btn" id="color-mode-selector" style="cursor: pointer;">
             <option value="elemental">Chinese Elemental</option>
             <option value="tibetan">Tibetan Elemental</option>
+            <option value="chakra">Seven Chakras</option>
             <option value="rainbow">Rainbow Spectrum</option>
             <option value="monochrome">Greyscale Monochrome</option>
             <option value="neon">Cyberpunk Neon</option>
@@ -322,6 +323,11 @@
           </div>
 
           <button class="btn" id="morph-btn">Morph: ON</button>
+          <select class="btn" id="shape-count-selector" style="cursor: pointer;">
+            <option value="2">2 Shapes</option>
+            <option value="3">3 Shapes</option>
+            <option value="4">4 Shapes</option>
+          </select>
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
         </div>
       </div>
@@ -486,6 +492,13 @@
         // Blue (Space), White (Water), Red (Fire), Green (Wind), Yellow (Earth)
         colors: ['#298ED7', '#FFFFFF', '#D8323A', '#27A845', '#EBA934'],
         accent: '#FFFFFF'
+      },
+      chakra: {
+        // Seven chakra colors from root to crown:
+        // Root (Red), Sacral (Orange), Solar Plexus (Yellow), Heart (Green),
+        // Throat (Blue), Third Eye (Indigo), Crown (Violet)
+        colors: ['#E63946', '#F4A261', '#E9C46A', '#2A9D8F', '#457B9D', '#6A4C93', '#9D4EDD'],
+        accent: '#E9C46A'
       },
       rainbow: {
         colors: ['#FF0000', '#FF8000', '#FFFF00', '#00FF00', '#0080FF', '#8000FF'],
@@ -830,6 +843,7 @@
         this.sriYantraMode = 0; // 0=traditional, 1=breathing, 2=concentric
         this.selectedArchetypes = null; // Will be populated when params are set
         this.lastSeed = null; // Track seed changes
+        this.shapeCount = 2; // Number of shapes to cycle through (2-4)
 
         this.icosaVertices = this.generateIcosahedronVertices();
         this.icosaEdges = this.generateIcosahedronEdges();
@@ -967,14 +981,19 @@
           [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
         }
 
-        // Select 3-4 archetypes for this session
-        const count = 3 + Math.floor(rand() * 2); // 3 or 4
-        return allIndices.slice(0, count);
+        // Select archetypes based on configured shape count
+        return allIndices.slice(0, this.shapeCount);
+      }
+
+      // Set number of shapes to cycle through
+      setShapeCount(count) {
+        this.shapeCount = Math.max(2, Math.min(4, count));
+        this.selectedArchetypes = null; // Force re-selection
       }
 
       // Morphing system - blends between randomly selected archetypes with organic transitions
       drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass) {
-        // Select archetypes if not already selected (based on params seed)
+        // Select archetypes if not already selected or if seed/count changed
         if (!this.selectedArchetypes || this.lastSeed !== this.params.seed) {
           this.selectedArchetypes = this.selectMorphingArchetypes(this.params.seed);
           this.lastSeed = this.params.seed;
@@ -2896,6 +2915,11 @@
       document.getElementById('morph-btn').addEventListener('click', () => {
         renderer.morphEnabled = !renderer.morphEnabled;
         document.getElementById('morph-btn').textContent = renderer.morphEnabled ? "Morph: ON" : "Morph: OFF";
+        if(!renderer.isAnimating) renderer.drawInitialFrame();
+      });
+
+      document.getElementById('shape-count-selector').addEventListener('change', (e) => {
+        renderer.setShapeCount(parseInt(e.target.value));
         if(!renderer.isAnimating) renderer.drawInitialFrame();
       });
 
