@@ -143,9 +143,11 @@
     .btn:hover { border-color: var(--color-primary-accent); color: var(--color-primary-accent); background: #222; }
 
     .audio-controls { display: flex; gap: 0.5rem; align-items: center; padding: 0.6rem 1rem; border-radius: 4px; background: var(--color-bg-panel); border: 1px solid var(--color-border); flex-wrap: wrap; max-width: 650px; }
-    .audio-controls label { font-size: 0.65rem; color: var(--color-neutral-medium); text-transform: uppercase; letter-spacing: 0.5px; }
+    .audio-controls label { font-size: 0.65rem; color: var(--color-neutral-medium); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
     .audio-controls input[type="range"] { width: 50px; appearance: none; height: 3px; background: var(--color-border); border-radius: 2px; }
     .audio-controls input[type="range"]::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--color-primary-accent); cursor: pointer; }
+    .audio-controls .ctrl-group { display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+    .audio-controls .ctrl-divider { width: 1px; height: 16px; background: var(--color-border); margin: 0 0.3rem; }
 
     /* Fullscreen */
     .fullscreen-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; justify-content: center; align-items: center; }
@@ -277,56 +279,52 @@
           <div class="audio-controls" id="audio-controls">
             <button class="btn" id="audio-toggle">Tone OFF</button>
 
-            <label for="waveform-select">Wave</label>
-            <select id="waveform-select" style="padding: 4px; background: var(--color-neutral-dark); color: var(--color-text-light); border: 1px solid var(--color-border); border-radius: 3px; font-size: 0.7rem;">
-              <option value="auto">Auto</option>
-              <option value="sine">Sine</option>
-              <option value="triangle">Triangle</option>
-              <option value="sawtooth">Sawtooth</option>
-              <option value="square">Square</option>
-            </select>
+            <!-- Core -->
+            <span class="ctrl-group">
+              <label for="waveform-select">Wave</label>
+              <select id="waveform-select" style="padding: 4px; background: var(--color-neutral-dark); color: var(--color-text-light); border: 1px solid var(--color-border); border-radius: 3px; font-size: 0.7rem;">
+                <option value="sine" selected>Sine</option>
+                <option value="triangle">Triangle</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="square">Square</option>
+              </select>
+            </span>
+            <span class="ctrl-group"><label for="vol-range">Vol</label><input id="vol-range" type="range" min="0" max="0.15" step="0.005" value="0.06"></span>
+            <span class="ctrl-group"><label for="beat-range">Beat</label><input id="beat-range" type="range" min="1" max="12" step="0.1" value="6" data-touched="0"></span>
 
-            <label for="beat-range">Beat</label>
-            <input id="beat-range" type="range" min="1" max="12" step="0.1" value="6" data-touched="0">
-            <label for="vol-range">Vol</label>
-            <input id="vol-range" type="range" min="0" max="0.15" step="0.005" value="0.06">
-            <label for="filter-range">Filter</label>
-            <input id="filter-range" type="range" min="200" max="8000" step="50" value="4000">
-            <label for="detune-range">Detune</label>
-            <input id="detune-range" type="range" min="-50" max="50" step="1" value="0">
-            <label for="lfo-range">Drift</label>
-            <input id="lfo-range" type="range" min="0.01" max="2" step="0.01" value="0.1">
-            <label for="harmonics-range">Harmonics</label>
-            <input id="harmonics-range" type="range" min="0" max="1" step="0.05" value="0">
-            <label for="interval-range">Interval</label>
-            <input id="interval-range" type="range" min="0" max="12" step="1" value="0">
-            <label for="reverb-range">Reverb</label>
-            <input id="reverb-range" type="range" min="0" max="1" step="0.05" value="0">
-            <label for="iso-range">Isochronic</label>
-            <input id="iso-range" type="range" min="0" max="1" step="0.05" value="0">
-            <label for="am-range">AM Depth</label>
-            <input id="am-range" type="range" min="0" max="1" step="0.05" value="0">
-          </div>
+            <span class="ctrl-divider"></span>
 
-          <div class="audio-controls" id="kick-controls">
-            <button class="btn" id="kick-toggle">Kick OFF</button>
-            <label for="kick-bpm">BPM</label>
-            <input id="kick-bpm" type="range" min="30" max="180" step="1" value="60">
-            <label for="kick-pitch">Pitch</label>
-            <input id="kick-pitch" type="range" min="30" max="100" step="1" value="50">
-            <label for="kick-decay">Decay</label>
-            <input id="kick-decay" type="range" min="0.05" max="0.5" step="0.01" value="0.15">
-            <label for="kick-punch">Punch</label>
-            <input id="kick-punch" type="range" min="0" max="1" step="0.05" value="0.5">
-            <label for="kick-vol">Vol</label>
-            <input id="kick-vol" type="range" min="0" max="1" step="0.05" value="0.5">
+            <!-- Tone Shaping -->
+            <span class="ctrl-group"><label for="filter-range">Filter</label><input id="filter-range" type="range" min="200" max="8000" step="50" value="4000"></span>
+            <span class="ctrl-group"><label for="detune-range">Detune</label><input id="detune-range" type="range" min="-50" max="50" step="1" value="0"></span>
+            <span class="ctrl-group"><label for="harmonics-range">Harmonics</label><input id="harmonics-range" type="range" min="0" max="1" step="0.05" value="0"></span>
+            <span class="ctrl-group"><label for="interval-range">Interval</label><input id="interval-range" type="range" min="0" max="12" step="1" value="0"></span>
+
+            <span class="ctrl-divider"></span>
+
+            <!-- Space/Effects -->
+            <span class="ctrl-group"><label for="reverb-range">Reverb</label><input id="reverb-range" type="range" min="0" max="1" step="0.05" value="0"></span>
+            <span class="ctrl-group"><label for="delay-range">Delay</label><input id="delay-range" type="range" min="0" max="1" step="0.05" value="0"></span>
+            <span class="ctrl-group"><label for="lfo-range">Drift</label><input id="lfo-range" type="range" min="0.01" max="2" step="0.01" value="0.1"></span>
+
+            <span class="ctrl-divider"></span>
+
+            <!-- Modulation -->
+            <span class="ctrl-group"><label for="iso-range">Isochronic</label><input id="iso-range" type="range" min="0" max="1" step="0.05" value="0"></span>
+            <span class="ctrl-group"><label for="am-range">AM Depth</label><input id="am-range" type="range" min="0" max="1" step="0.05" value="0"></span>
           </div>
 
           <button class="btn" id="morph-btn">Morph: ON</button>
           <select class="btn" id="shape-count-selector" style="cursor: pointer;">
+            <option value="0" selected>Auto (1-3)</option>
+            <option value="1">1 Shape</option>
             <option value="2">2 Shapes</option>
             <option value="3">3 Shapes</option>
             <option value="4">4 Shapes</option>
+            <option value="5">5 Shapes</option>
+            <option value="6">6 Shapes</option>
+            <option value="7">7 Shapes</option>
+            <option value="8">8 Shapes</option>
           </select>
           <button class="btn" id="fullscreen-btn">Full Screen Mode (F11)</button>
         </div>
@@ -843,7 +841,7 @@
         this.sriYantraMode = 0; // 0=traditional, 1=breathing, 2=concentric
         this.selectedArchetypes = null; // Will be populated when params are set
         this.lastSeed = null; // Track seed changes
-        this.shapeCount = 2; // Number of shapes to cycle through (2-4)
+        this.shapeCount = 0; // 0 = auto (1-3 based on seed), or manual 1-8
 
         this.icosaVertices = this.generateIcosahedronVertices();
         this.icosaEdges = this.generateIcosahedronEdges();
@@ -981,13 +979,14 @@
           [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
         }
 
-        // Select archetypes based on configured shape count
-        return allIndices.slice(0, this.shapeCount);
+        // Select archetypes: auto (1-3 based on seed) or manual count
+        const count = this.shapeCount === 0 ? (1 + Math.floor(rand() * 3)) : this.shapeCount;
+        return allIndices.slice(0, count);
       }
 
       // Set number of shapes to cycle through
       setShapeCount(count) {
-        this.shapeCount = Math.max(2, Math.min(4, count));
+        this.shapeCount = Math.max(1, Math.min(8, count));
         this.selectedArchetypes = null; // Force re-selection
       }
 
@@ -2252,22 +2251,16 @@
         this.amGain = null;
         this.amDepth = 0;
 
-        // Bass kick drum
-        this.kickGain = null;
-        this.kickPlaying = false;
-        this.kickBPM = 60;
-        this.kickPitch = 50;
-        this.kickDecay = 0.15;
-        this.kickPunch = 0.5;
-        this.kickVolume = 0.5;
-        this.kickIntervalId = null;
+        // Delay effect
+        this.delayNode = null;
+        this.delayGain = null;
+        this.delayFeedback = null;
 
         this.computedCarrier = 0;
         this.computedBeat = 0;
         this.currentElementData = null;
         this.currentWaveform = 'sine';
         this.currentDetune = 0;
-        this.manualWaveform = 'auto';
         this.currentInterval = 0;
       }
 
@@ -2395,10 +2388,20 @@
 
         this.amLFO.start(0);
 
-        // Bass kick drum output gain
-        this.kickGain = this.audioCtx.createGain();
-        this.kickGain.gain.value = this.kickVolume;
-        this.kickGain.connect(this.audioCtx.destination);
+        // Delay effect
+        this.delayNode = this.audioCtx.createDelay(2.0); // Max 2 seconds
+        this.delayNode.delayTime.value = 0.3; // Default 300ms
+        this.delayFeedback = this.audioCtx.createGain();
+        this.delayFeedback.gain.value = 0.3;
+        this.delayGain = this.audioCtx.createGain();
+        this.delayGain.gain.value = 0; // Start with delay off
+
+        // Delay signal chain: filter -> delay -> feedback loop -> delayGain -> master
+        this.filter.connect(this.delayNode);
+        this.delayNode.connect(this.delayFeedback);
+        this.delayFeedback.connect(this.delayNode); // Feedback loop
+        this.delayNode.connect(this.delayGain);
+        this.delayGain.connect(this.masterGain);
       }
 
       createSimpleReverb() {
@@ -2470,103 +2473,6 @@
         this.amGain.gain.setTargetAtTime(depth * 0.4, this.audioCtx.currentTime, 0.05);
       }
 
-      // Bass kick drum methods
-      triggerKick() {
-        if (!this.audioCtx || !this.kickGain) return;
-
-        const now = this.audioCtx.currentTime;
-
-        // Create oscillator for the kick body
-        const kickOsc = this.audioCtx.createOscillator();
-        kickOsc.type = 'sine';
-
-        // Create gain envelope
-        const kickEnv = this.audioCtx.createGain();
-
-        // Pitch envelope: starts high and drops quickly for "punch"
-        const startPitch = this.kickPitch + (this.kickPunch * 150);
-        kickOsc.frequency.setValueAtTime(startPitch, now);
-        kickOsc.frequency.exponentialRampToValueAtTime(this.kickPitch, now + 0.05);
-
-        // Amplitude envelope: quick attack, variable decay
-        kickEnv.gain.setValueAtTime(this.kickVolume, now);
-        kickEnv.gain.exponentialRampToValueAtTime(0.001, now + this.kickDecay);
-
-        // Connect and play
-        kickOsc.connect(kickEnv);
-        kickEnv.connect(this.kickGain);
-
-        kickOsc.start(now);
-        kickOsc.stop(now + this.kickDecay + 0.01);
-      }
-
-      startKick() {
-        this.initAudioIfNeeded(0.06);
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
-        if (this.kickIntervalId) {
-          clearInterval(this.kickIntervalId);
-        }
-
-        this.kickPlaying = true;
-        const intervalMs = (60 / this.kickBPM) * 1000;
-
-        // Trigger immediately, then on interval
-        this.triggerKick();
-        this.kickIntervalId = setInterval(() => {
-          if (this.kickPlaying) {
-            this.triggerKick();
-          }
-        }, intervalMs);
-
-        return true;
-      }
-
-      stopKick() {
-        this.kickPlaying = false;
-        if (this.kickIntervalId) {
-          clearInterval(this.kickIntervalId);
-          this.kickIntervalId = null;
-        }
-        return false;
-      }
-
-      toggleKick() {
-        if (this.kickPlaying) {
-          return this.stopKick();
-        } else {
-          return this.startKick();
-        }
-      }
-
-      setKickBPM(bpm) {
-        this.kickBPM = bpm;
-        // Restart interval if playing
-        if (this.kickPlaying) {
-          this.stopKick();
-          this.startKick();
-        }
-      }
-
-      setKickPitch(pitch) {
-        this.kickPitch = pitch;
-      }
-
-      setKickDecay(decay) {
-        this.kickDecay = decay;
-      }
-
-      setKickPunch(punch) {
-        this.kickPunch = punch;
-      }
-
-      setKickVolume(volume) {
-        this.kickVolume = volume;
-        if (this.kickGain) {
-          this.kickGain.gain.setTargetAtTime(volume, this.audioCtx.currentTime, 0.02);
-        }
-      }
-
       setReverb(amount) {
         if (!this.reverbGain || !this.dryGain) return;
         // Crossfade between dry and wet
@@ -2576,16 +2482,26 @@
         this.dryGain.gain.setTargetAtTime(dry, this.audioCtx.currentTime, 0.05);
       }
 
+      setDelay(amount) {
+        if (!this.delayGain || !this.delayNode) return;
+        // Amount 0-1 controls wet level and delay time scaling
+        this.delayGain.gain.setTargetAtTime(amount * 0.5, this.audioCtx.currentTime, 0.05);
+        // Scale delay time from 100ms to 500ms based on amount
+        const delayTime = 0.1 + amount * 0.4;
+        this.delayNode.delayTime.setTargetAtTime(delayTime, this.audioCtx.currentTime, 0.05);
+        // Feedback increases with amount (0.2 to 0.5)
+        if (this.delayFeedback) {
+          this.delayFeedback.gain.setTargetAtTime(0.2 + amount * 0.3, this.audioCtx.currentTime, 0.05);
+        }
+      }
+
       setWaveform(waveType) {
-        this.manualWaveform = waveType;
+        this.currentWaveform = waveType;
         if (!this.leftOsc || !this.rightOsc) return;
 
-        // If auto, use the element-based waveform
-        const actualWaveform = (waveType === 'auto') ? this.currentWaveform : waveType;
-
-        this.leftOsc.type = actualWaveform;
-        this.rightOsc.type = actualWaveform;
-        if (this.intervalOsc) this.intervalOsc.type = actualWaveform;
+        this.leftOsc.type = waveType;
+        this.rightOsc.type = waveType;
+        if (this.intervalOsc) this.intervalOsc.type = waveType;
       }
 
       setInterval(semitones) {
@@ -2626,7 +2542,8 @@
           }
           this.updateFrequencies(beat);
         } else {
-          this.masterGain.gain.setTargetAtTime(0.0001, this.audioCtx.currentTime, 0.02);
+          // Smooth fade out over ~0.5 seconds
+          this.masterGain.gain.setTargetAtTime(0.0001, this.audioCtx.currentTime, 0.15);
         }
         return this.isAudioPlaying;
       }
@@ -2690,7 +2607,6 @@
 
         this.computedCarrier = audioData.carrier;
         this.computedBeat = parseFloat(beatOverride) || audioData.beat;
-        this.currentWaveform = audioData.waveform;
 
         const leftFreq = this.computedCarrier - (this.computedBeat / 2);
         const rightFreq = this.computedCarrier + (this.computedBeat / 2);
@@ -2698,12 +2614,6 @@
         if (this.leftOsc && this.rightOsc) {
           this.leftOsc.frequency.setTargetAtTime(Math.max(80, leftFreq), this.audioCtx.currentTime, 0.03);
           this.rightOsc.frequency.setTargetAtTime(Math.max(80, rightFreq), this.audioCtx.currentTime, 0.03);
-
-          // Use manual waveform if set, otherwise use element-based waveform
-          const actualWaveform = (this.manualWaveform === 'auto') ? this.currentWaveform : this.manualWaveform;
-          this.leftOsc.type = actualWaveform;
-          this.rightOsc.type = actualWaveform;
-          if (this.intervalOsc) this.intervalOsc.type = actualWaveform;
 
           // Update harmonic oscillators based on carrier frequency
           this.updateHarmonicFrequencies(this.computedCarrier);
@@ -2861,19 +2771,22 @@
           <h4>Audio</h4>
           <p>Binaural tones using 432 Hz tuning (C2–C4 range):</p>
           <ul>
-            <li><strong>Waveform:</strong> ${audioEngine.manualWaveform === 'auto' ? audioData.waveform.toUpperCase() + ' (Auto)' : audioEngine.manualWaveform.toUpperCase()}</li>
+            <li><strong>Waveform:</strong> ${audioEngine.currentWaveform.toUpperCase()}</li>
             <li><strong>Note:</strong> ${audioData.selectedNote || 'N/A'} (${audioData.carrier.toFixed(2)} Hz)</li>
             <li><strong>Beat:</strong> ${audioEngine.computedBeat.toFixed(2)} Hz</li>
           </ul>
-          <h4>Modulation Controls</h4>
+          <h4>Audio Controls</h4>
           <ul>
-            <li><strong>Wave:</strong> Oscillator waveform selection</li>
+            <li><strong>Wave:</strong> Oscillator waveform (sine, triangle, saw, square)</li>
             <li><strong>Filter:</strong> Lowpass cutoff frequency</li>
             <li><strong>Detune:</strong> Stereo width via pitch offset</li>
-            <li><strong>Drift:</strong> Spatial panning LFO rate</li>
-            <li><strong>Harmonics:</strong> Overtone blend (2nd, 3rd, 5th)</li>
+            <li><strong>Harmonics:</strong> Overtone blend (2nd, 3rd, 5th partials)</li>
             <li><strong>Interval:</strong> Musical interval above base (semitones)</li>
-            <li><strong>Reverb:</strong> Spatial depth and echo</li>
+            <li><strong>Reverb:</strong> Spatial depth via feedback delays</li>
+            <li><strong>Delay:</strong> Echo effect with feedback</li>
+            <li><strong>Drift:</strong> Spatial panning modulation rate</li>
+            <li><strong>Isochronic:</strong> Sharp on/off pulsing at beat frequency</li>
+            <li><strong>AM Depth:</strong> Smooth amplitude modulation</li>
           </ul>
         `;
         rightPanel.innerHTML = rightHTML;
@@ -2997,37 +2910,9 @@
         audioEngine.setWaveform(waveformSelect.value);
       });
 
-      // Kick drum controls
-      const kickToggle = document.getElementById('kick-toggle');
-      const kickBpmRange = document.getElementById('kick-bpm');
-      const kickPitchRange = document.getElementById('kick-pitch');
-      const kickDecayRange = document.getElementById('kick-decay');
-      const kickPunchRange = document.getElementById('kick-punch');
-      const kickVolRange = document.getElementById('kick-vol');
-
-      kickToggle.addEventListener('click', () => {
-        const isPlaying = audioEngine.toggleKick();
-        kickToggle.textContent = isPlaying ? 'Kick ON' : 'Kick OFF';
-      });
-
-      kickBpmRange.addEventListener('input', () => {
-        audioEngine.setKickBPM(parseFloat(kickBpmRange.value));
-      });
-
-      kickPitchRange.addEventListener('input', () => {
-        audioEngine.setKickPitch(parseFloat(kickPitchRange.value));
-      });
-
-      kickDecayRange.addEventListener('input', () => {
-        audioEngine.setKickDecay(parseFloat(kickDecayRange.value));
-      });
-
-      kickPunchRange.addEventListener('input', () => {
-        audioEngine.setKickPunch(parseFloat(kickPunchRange.value));
-      });
-
-      kickVolRange.addEventListener('input', () => {
-        audioEngine.setKickVolume(parseFloat(kickVolRange.value));
+      const delayRange = document.getElementById('delay-range');
+      delayRange.addEventListener('input', () => {
+        audioEngine.setDelay(parseFloat(delayRange.value));
       });
 
       // Fullscreen Logic
