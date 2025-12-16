@@ -57,6 +57,63 @@
     .title { font-size: 3rem; font-weight: 300; color: var(--color-text-light); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 0.5rem; }
     .subtitle { font-size: 1rem; color: var(--color-neutral-medium); font-weight: 400; letter-spacing: 0.5px; }
 
+    /* Collapsible read-more section */
+    .read-more-toggle {
+      color: var(--color-primary-accent);
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-block;
+      margin-top: 0.5rem;
+      transition: color 0.3s ease;
+      border: none;
+      background: none;
+      font-family: inherit;
+    }
+    .read-more-toggle:hover { color: var(--color-text-light); }
+    .read-more-toggle::after { content: ' ▾'; font-size: 0.7rem; }
+    .read-more-toggle.expanded::after { content: ' ▴'; }
+    .read-more-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+      opacity: 0;
+      text-align: left;
+      background: var(--color-bg-panel);
+      border-radius: 4px;
+      margin-top: 0;
+      padding: 0 1.5rem;
+      border: 1px solid transparent;
+    }
+    .read-more-content.expanded {
+      max-height: 600px;
+      opacity: 1;
+      padding: 1.2rem 1.5rem;
+      margin-top: 1rem;
+      border-color: var(--color-border);
+    }
+    .read-more-content h4 {
+      color: var(--color-primary-accent);
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .read-more-content p {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      margin-bottom: 0.8rem;
+      color: var(--color-neutral-medium);
+    }
+    .read-more-content ul {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      margin-bottom: 0.8rem;
+      padding-left: 1.2rem;
+      color: var(--color-neutral-medium);
+    }
+    .read-more-content li { margin-bottom: 0.3rem; }
+    .read-more-content strong { color: var(--color-text-light); }
+
     /* Input Card - Dark and clean */
     .input-group { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; background: var(--color-bg-panel); padding: 1.5rem 2rem; border-radius: 4px; border: 1px solid var(--color-border); box-shadow: var(--shadow-soft); }
     .input-row { display: flex; gap: 1rem; }
@@ -132,6 +189,32 @@
         An abstracted visualization of semantic and temporal input.<br>
         Rendering a unique mandala based on user-defined parameters.
       </p>
+      <button class="read-more-toggle" id="read-more-toggle">Technical Details</button>
+      <div class="read-more-content" id="read-more-content">
+        <h4>Generation Method</h4>
+        <p>Each mandala is deterministically generated from two inputs: a text string (semantic) and a date (temporal). These inputs are hashed into a numeric seed that controls all visual parameters through a seeded pseudo-random number generator, ensuring the same inputs always produce identical results.</p>
+
+        <h4>Shape Selection</h4>
+        <p>The system includes nine sacred geometry archetypes:</p>
+        <ul>
+          <li><strong>Lotus Petals</strong> — Layered petal forms radiating from center</li>
+          <li><strong>Sri Yantra</strong> — Interlocking triangles from Hindu sacred geometry</li>
+          <li><strong>Icosahedral Grid</strong> — Projected vertices of a Platonic solid</li>
+          <li><strong>Fibonacci Spiral</strong> — Golden ratio logarithmic spiral</li>
+          <li><strong>Nine Planets</strong> — Orbital mechanics with variable speeds</li>
+          <li><strong>Lunar Phases</strong> — Waxing and waning moon cycle</li>
+          <li><strong>Septagram</strong> — Seven-pointed star of mystical significance</li>
+          <li><strong>Pentagram</strong> — Five-pointed elemental star</li>
+          <li><strong>Tibetan Mandala</strong> — Sacred square with four gates</li>
+        </ul>
+        <p>When morphing is enabled, 3-4 shapes are randomly selected based on the seed and smoothly transition between each other using cubic easing functions.</p>
+
+        <h4>Color Derivation</h4>
+        <p>Colors are derived from the Wu Xing (Chinese five elements) system. The year's last digit, month, and day of week each map to an element (Wood, Fire, Earth, Metal, Water), whose associated colors blend to form the palette.</p>
+
+        <h4>Audio Synthesis</h4>
+        <p>Binaural tones use 432 Hz tuning across a C2–C4 range. The carrier frequency and beat rate are computed from the seed, with optional harmonics, reverb, and amplitude modulation available for sonic exploration.</p>
+      </div>
     </div>
 
     <div class="main-content-grid">
@@ -507,7 +590,12 @@
       { name: 'Lotus Petals', index: 0, meaning: 'Layered petal forms radiating from center, inspired by lotus flower geometry.' },
       { name: 'Sri Yantra', index: 1, meaning: 'Interlocking upward and downward triangles from Hindu sacred geometry.' },
       { name: 'Icosahedron Grid', index: 2, meaning: 'Connected vertices of a projected icosahedron, one of the Platonic solids.' },
-      { name: 'Fibonacci Spiral', index: 3, meaning: 'Logarithmic spiral based on the golden ratio, found throughout nature.' }
+      { name: 'Fibonacci Spiral', index: 3, meaning: 'Logarithmic spiral based on the golden ratio, found throughout nature.' },
+      { name: 'Nine Planets', index: 4, meaning: 'Abstracted planetary orbits circling at variable speeds, representing cosmic motion.' },
+      { name: 'Lunar Phases', index: 5, meaning: 'The moon cycling through its phases, waxing and waning in eternal rhythm.' },
+      { name: 'Septagram', index: 6, meaning: 'Seven-pointed star of mystical significance, representing the seven classical planets.' },
+      { name: 'Pentagram', index: 7, meaning: 'Five-pointed star symbolizing the five elements and human microcosm.' },
+      { name: 'Tibetan Mandala', index: 8, meaning: 'Sacred square with four gates, a cosmic palace of enlightened mind.' }
     ];
 
     function hexToRgb(hex) {
@@ -734,12 +822,14 @@
         this.isBloom = false;
         this.bloomIntensity = 0.6;
 
-        // Morphing system - 5 phases cycling through archetypes
+        // Morphing system - cycles through randomly selected archetypes
         this.morphEnabled = true;
         this.morphPhase = 0;
         this.morphDuration = 120; // frames per transition
-        this.morphCycleDuration = this.morphDuration * 5; // full cycle through all 5 phases
+        this.morphCycleDuration = this.morphDuration * 4; // will be updated based on selected archetypes
         this.sriYantraMode = 0; // 0=traditional, 1=breathing, 2=concentric
+        this.selectedArchetypes = null; // Will be populated when params are set
+        this.lastSeed = null; // Track seed changes
 
         this.icosaVertices = this.generateIcosahedronVertices();
         this.icosaEdges = this.generateIcosahedronEdges();
@@ -840,42 +930,70 @@
           this.drawPolyhedron(ctx, cx, cy, radius * poly.radiusFactor, poly, phase, isGlowPass);
         });
 
-        // Fluid morphing between 5 phases (4 archetypes + return to start)
+        // Fluid morphing between selected archetypes
         if (this.morphEnabled && this.isAnimating) {
           this.drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass);
         } else {
           // Static mode - use seed-based archetype
-          switch(this.params.archetype.index) {
-            case 0: this.drawLotusPetals(ctx, cx, cy, radius * 0.6, this.params, phase, isGlowPass); break;
-            case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
-            case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, this.params, phase, isGlowPass); break;
-            case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, this.params, phase, isGlowPass); break;
-          }
+          this.drawArchetypeByIndex(ctx, cx, cy, radius, this.params.archetype.index, this.params, phase, isGlowPass, 1);
         }
 
         this.drawCenterSyllable(ctx, cx, cy, radius * 0.1, this.params, phase, isGlowPass);
       }
 
-      // Morphing system - blends between archetypes with organic transitions
+      // Helper function to draw any archetype by index
+      drawArchetypeByIndex(ctx, cx, cy, radius, index, params, phase, isGlowPass, alpha) {
+        switch(index) {
+          case 0: this.drawLotusPetals(ctx, cx, cy, radius * 0.6, params, phase, isGlowPass, alpha); break;
+          case 1: this.drawSriYantra(ctx, cx, cy, radius * 0.7, params, phase, isGlowPass, alpha); break;
+          case 2: this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7, params, phase, isGlowPass, alpha); break;
+          case 3: this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8, params, phase, isGlowPass, alpha); break;
+          case 4: this.drawNinePlanets(ctx, cx, cy, radius * 0.85, params, phase, isGlowPass, alpha); break;
+          case 5: this.drawLunarPhases(ctx, cx, cy, radius * 0.7, params, phase, isGlowPass, alpha); break;
+          case 6: this.drawNGram(ctx, cx, cy, radius * 0.7, params, phase, isGlowPass, alpha, 7); break; // Septagram
+          case 7: this.drawNGram(ctx, cx, cy, radius * 0.7, params, phase, isGlowPass, alpha, 5); break; // Pentagram
+          case 8: this.drawTibetanMandala(ctx, cx, cy, radius * 0.75, params, phase, isGlowPass, alpha); break;
+        }
+      }
+
+      // Select random subset of archetypes based on seed
+      selectMorphingArchetypes(seed) {
+        const rand = mulberry32(seed);
+        const allIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+        // Shuffle using Fisher-Yates
+        for (let i = allIndices.length - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
+        }
+
+        // Select 3-4 archetypes for this session
+        const count = 3 + Math.floor(rand() * 2); // 3 or 4
+        return allIndices.slice(0, count);
+      }
+
+      // Morphing system - blends between randomly selected archetypes with organic transitions
       drawMorphingArchetypes(ctx, cx, cy, radius, phase, isGlowPass) {
+        // Select archetypes if not already selected (based on params seed)
+        if (!this.selectedArchetypes || this.lastSeed !== this.params.seed) {
+          this.selectedArchetypes = this.selectMorphingArchetypes(this.params.seed);
+          this.lastSeed = this.params.seed;
+          // Update morph cycle duration based on number of selected archetypes
+          this.morphCycleDuration = this.morphDuration * this.selectedArchetypes.length;
+        }
+
+        const numArchetypes = this.selectedArchetypes.length;
+
         // Determine current position in morph cycle
         const cycleProgress = this.morphPhase / this.morphCycleDuration;
-        const phaseIndex = Math.floor(cycleProgress * 5); // 0-4
-        const phaseProgress = (cycleProgress * 5) % 1; // 0-1 within current phase
+        const phaseIndex = Math.floor(cycleProgress * numArchetypes);
+        const phaseProgress = (cycleProgress * numArchetypes) % 1; // 0-1 within current phase
 
         // Smooth easing for transitions
         const easedProgress = this.easeInOutCubic(phaseProgress);
 
-        // Archetype order: Lotus → SriYantra → Icosahedron → Fibonacci → Lotus (cycle)
-        const archetypes = [
-          { draw: (alpha, scale) => this.drawLotusPetals(ctx, cx, cy, radius * 0.6 * scale, this.params, phase, isGlowPass, alpha) },
-          { draw: (alpha, scale) => this.drawSriYantra(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
-          { draw: (alpha, scale) => this.drawIcosahedronGrid(ctx, cx, cy, radius * 0.7 * scale, this.params, phase, isGlowPass, alpha) },
-          { draw: (alpha, scale) => this.drawFibonacciSpiral(ctx, cx, cy, radius * 0.8 * scale, this.params, phase, isGlowPass, alpha) },
-        ];
-
-        const currentIndex = phaseIndex % 4;
-        const nextIndex = (phaseIndex + 1) % 4;
+        const currentArchetype = this.selectedArchetypes[phaseIndex % numArchetypes];
+        const nextArchetype = this.selectedArchetypes[(phaseIndex + 1) % numArchetypes];
 
         // Organic scale breathing during transitions
         const breatheScale = this.breathe(phase, 2, 0.05);
@@ -889,14 +1007,14 @@
         ctx.save();
         ctx.globalAlpha = (isGlowPass ? 0.6 : 1) * fadeOutAlpha;
         const outScale = breatheScale * (1 + (1 - easedProgress) * 0.05);
-        archetypes[currentIndex].draw(fadeOutAlpha, outScale);
+        this.drawArchetypeByIndex(ctx, cx, cy, radius * outScale, currentArchetype, this.params, phase, isGlowPass, fadeOutAlpha);
         ctx.restore();
 
         // Draw incoming archetype (fading in)
         ctx.save();
         ctx.globalAlpha = (isGlowPass ? 0.6 : 1) * fadeInAlpha;
         const inScale = breatheScale * transitionScale * (0.9 + easedProgress * 0.1);
-        archetypes[nextIndex].draw(fadeInAlpha, inScale);
+        this.drawArchetypeByIndex(ctx, cx, cy, radius * inScale, nextArchetype, this.params, phase, isGlowPass, fadeInAlpha);
         ctx.restore();
       }
 
@@ -1417,6 +1535,373 @@
           }
 
           ctx.restore();
+      }
+
+      // Nine Planets - orbiting bodies at variable speeds
+      drawNinePlanets(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.globalAlpha *= alpha;
+
+        const complexity = parseFloat(params.complexity);
+
+        // Draw sun at center with pulsing glow
+        const sunPulse = 1 + Math.sin(phase * 0.3) * 0.15;
+        const sunRadius = r * 0.08 * sunPulse;
+
+        if (!isGlowPass) {
+          const sunGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, sunRadius * 2);
+          sunGradient.addColorStop(0, params.palette[2]);
+          sunGradient.addColorStop(0.5, params.palette[0]);
+          sunGradient.addColorStop(1, 'transparent');
+          ctx.fillStyle = sunGradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, sunRadius * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = params.palette[2];
+        ctx.beginPath();
+        ctx.arc(0, 0, sunRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Planet data: orbital radius factor, speed multiplier, size, color index
+        const planets = [
+          { orbit: 0.15, speed: 4.15, size: 0.012, color: 0 },   // Mercury
+          { orbit: 0.22, speed: 1.62, size: 0.018, color: 1 },   // Venus
+          { orbit: 0.30, speed: 1.0,  size: 0.02,  color: 2 },   // Earth
+          { orbit: 0.38, speed: 0.53, size: 0.016, color: 3 },   // Mars
+          { orbit: 0.52, speed: 0.084, size: 0.045, color: 0 },  // Jupiter
+          { orbit: 0.65, speed: 0.034, size: 0.038, color: 1 },  // Saturn
+          { orbit: 0.76, speed: 0.012, size: 0.025, color: 2 },  // Uranus
+          { orbit: 0.86, speed: 0.006, size: 0.024, color: 3 },  // Neptune
+          { orbit: 0.95, speed: 0.004, size: 0.008, color: 4 }   // Pluto
+        ];
+
+        planets.forEach((planet, i) => {
+          const orbitRadius = r * planet.orbit;
+
+          // Draw orbit path
+          ctx.strokeStyle = params.palette[4];
+          ctx.lineWidth = isGlowPass ? 2 : 0.5;
+          ctx.globalAlpha = alpha * 0.3;
+          ctx.beginPath();
+          ctx.arc(0, 0, orbitRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = alpha;
+
+          // Calculate planet position with organic wobble
+          const baseAngle = phase * planet.speed + (i * Math.PI * 2 / 9);
+          const wobble = Math.sin(phase * 0.5 + i) * 0.02;
+          const angle = baseAngle + wobble;
+
+          const px = Math.cos(angle) * orbitRadius;
+          const py = Math.sin(angle) * orbitRadius;
+          const planetSize = r * planet.size * (1 + Math.sin(phase * 0.4 + i) * 0.1);
+
+          // Draw planet
+          if (!isGlowPass) {
+            ctx.fillStyle = params.palette[planet.color % params.palette.length];
+            ctx.beginPath();
+            ctx.arc(px, py, planetSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Add subtle ring for Saturn-like planet
+            if (i === 5) {
+              ctx.strokeStyle = params.palette[2];
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.ellipse(px, py, planetSize * 2, planetSize * 0.5, angle, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          } else {
+            ctx.fillStyle = params.palette[planet.color % params.palette.length];
+            ctx.beginPath();
+            ctx.arc(px, py, planetSize * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        ctx.restore();
+      }
+
+      // Lunar Phases - moon cycling through phases
+      drawLunarPhases(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.globalAlpha *= alpha;
+
+        const moonRadius = r * 0.35;
+        const phaseAngle = (phase * 0.15) % (Math.PI * 2); // Complete cycle
+
+        // Breathing effect
+        const breathe = 1 + Math.sin(phase * 0.2) * 0.05;
+        const actualRadius = moonRadius * breathe;
+
+        // Draw outer glow
+        if (!isGlowPass) {
+          const glowGradient = ctx.createRadialGradient(0, 0, actualRadius * 0.8, 0, 0, actualRadius * 1.5);
+          glowGradient.addColorStop(0, 'transparent');
+          glowGradient.addColorStop(0.5, params.palette[4] + '40');
+          glowGradient.addColorStop(1, 'transparent');
+          ctx.fillStyle = glowGradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, actualRadius * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Draw the full moon base (dark side)
+        ctx.fillStyle = isGlowPass ? params.palette[4] : '#1a1a2e';
+        ctx.beginPath();
+        ctx.arc(0, 0, actualRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Calculate illumination based on phase
+        // phaseAngle 0 = new moon, PI = full moon, 2PI = new moon again
+        const illumination = (1 - Math.cos(phaseAngle)) / 2; // 0 to 1 to 0
+
+        // Draw the illuminated portion
+        ctx.fillStyle = params.palette[isGlowPass ? 2 : 4];
+        ctx.beginPath();
+
+        // Create moon phase shape using arcs
+        const isWaxing = phaseAngle < Math.PI;
+
+        // Left or right half illuminated
+        ctx.arc(0, 0, actualRadius, -Math.PI/2, Math.PI/2, false);
+
+        // Terminator curve (the shadow edge)
+        const curveX = actualRadius * Math.cos(phaseAngle);
+        ctx.ellipse(0, 0, Math.abs(curveX), actualRadius, 0, Math.PI/2, -Math.PI/2, phaseAngle > Math.PI);
+
+        ctx.fill();
+
+        // Draw crater-like details
+        if (!isGlowPass) {
+          const craterCount = 5 + Math.floor(parseFloat(params.complexity) * 5);
+          ctx.fillStyle = params.palette[4] + '30';
+
+          for (let i = 0; i < craterCount; i++) {
+            const craterAngle = (i / craterCount) * Math.PI * 2 + phase * 0.01;
+            const craterDist = actualRadius * (0.3 + (i % 3) * 0.2);
+            const craterSize = actualRadius * (0.03 + (i % 4) * 0.02);
+
+            const cx = Math.cos(craterAngle) * craterDist;
+            const cy = Math.sin(craterAngle) * craterDist;
+
+            // Only draw craters on illuminated portion
+            const craterIlluminated = (cx > -actualRadius * Math.cos(phaseAngle));
+            if (craterIlluminated || phaseAngle > Math.PI) {
+              ctx.beginPath();
+              ctx.arc(cx, cy, craterSize, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+
+        // Draw orbital path hint
+        ctx.strokeStyle = params.palette[4];
+        ctx.lineWidth = isGlowPass ? 3 : 1;
+        ctx.globalAlpha = alpha * 0.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // N-gram (Pentagram, Septagram, etc.)
+      drawNGram(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1, points = 7) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.globalAlpha *= alpha;
+
+        const breathe = 1 + Math.sin(phase * 0.25) * 0.06;
+        const radius = r * 0.85 * breathe;
+
+        // Slow rotation
+        ctx.rotate(params.solidRotation + phase * 0.008);
+
+        // Calculate skip for star creation (e.g., 2 for pentagram, 3 for septagram)
+        const skip = Math.floor(points / 2);
+
+        // Draw multiple layers with different sizes
+        const layers = 2 + Math.floor(parseFloat(params.complexity) * 2);
+
+        for (let layer = 0; layer < layers; layer++) {
+          const layerRadius = radius * (0.4 + layer * 0.25);
+          const layerBreath = 1 + Math.sin(phase * 0.3 + layer) * 0.04;
+          const actualR = layerRadius * layerBreath;
+
+          // Counter-rotate alternate layers
+          ctx.save();
+          ctx.rotate(layer % 2 === 0 ? 0 : phase * 0.005);
+
+          const colorIndex = layer % 3;
+          const colorFactor = (Math.sin(phase * 0.2 + layer) + 1) / 2;
+          ctx.strokeStyle = interpolateColor(params.palette[colorIndex], params.palette[(colorIndex + 1) % 3], colorFactor);
+          ctx.lineWidth = isGlowPass ? 5 : (2.5 - layer * 0.3);
+
+          // Draw the n-gram star
+          ctx.beginPath();
+          for (let i = 0; i <= points; i++) {
+            const angle = (i * skip * Math.PI * 2 / points) - Math.PI / 2;
+            const x = Math.cos(angle) * actualR;
+            const y = Math.sin(angle) * actualR;
+
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+
+          // Draw outer circle for this layer
+          if (layer === layers - 1) {
+            ctx.strokeStyle = params.palette[4];
+            ctx.lineWidth = isGlowPass ? 3 : 1;
+            ctx.beginPath();
+            ctx.arc(0, 0, actualR * 1.1, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
+
+        // Central point
+        if (!isGlowPass) {
+          const corePulse = 1 + Math.sin(phase * 0.5) * 0.3;
+          ctx.fillStyle = params.palette[2];
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.04 * corePulse, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      // Tibetan Mandala - Square with four gates
+      drawTibetanMandala(ctx, cx, cy, r, params, phase, isGlowPass, alpha = 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.globalAlpha *= alpha;
+
+        const breathe = 1 + Math.sin(phase * 0.2) * 0.04;
+        const size = r * 0.8 * breathe;
+
+        // Very slow rotation
+        ctx.rotate(phase * 0.003);
+
+        // Draw concentric squares with gates
+        const layers = 3 + Math.floor(parseFloat(params.complexity) * 2);
+
+        for (let layer = layers - 1; layer >= 0; layer--) {
+          const layerSize = size * (0.3 + layer * 0.25);
+          const layerBreath = 1 + Math.sin(phase * 0.25 + layer * 0.5) * 0.03;
+          const actualSize = layerSize * layerBreath;
+
+          const colorIndex = layer % 3;
+          const colorFactor = (Math.sin(phase * 0.15 + layer) + 1) / 2;
+          ctx.strokeStyle = interpolateColor(params.palette[colorIndex], params.palette[(colorIndex + 1) % 3], colorFactor);
+          ctx.lineWidth = isGlowPass ? 4 : (2 - layer * 0.2);
+          ctx.fillStyle = 'transparent';
+
+          // Draw square
+          const half = actualSize / 2;
+          ctx.beginPath();
+          ctx.rect(-half, -half, actualSize, actualSize);
+          ctx.stroke();
+
+          // Draw gates (T-shaped openings) on each side
+          const gateWidth = actualSize * 0.15;
+          const gateDepth = actualSize * 0.12;
+          const gatePulse = 1 + Math.sin(phase * 0.4 + layer) * 0.1;
+
+          ctx.fillStyle = '#080706'; // Match background to create "gate" effect
+          ctx.strokeStyle = params.palette[2];
+          ctx.lineWidth = isGlowPass ? 3 : 1.5;
+
+          // Four gates: top, right, bottom, left
+          const gatePositions = [
+            { x: 0, y: -half, rotation: 0 },           // Top
+            { x: half, y: 0, rotation: Math.PI / 2 },  // Right
+            { x: 0, y: half, rotation: Math.PI },      // Bottom
+            { x: -half, y: 0, rotation: -Math.PI / 2 } // Left
+          ];
+
+          gatePositions.forEach((gate, gi) => {
+            ctx.save();
+            ctx.translate(gate.x, gate.y);
+            ctx.rotate(gate.rotation);
+
+            const gw = gateWidth * gatePulse;
+            const gd = gateDepth * gatePulse;
+
+            // Draw gate shape (trapezoid)
+            ctx.beginPath();
+            ctx.moveTo(-gw, 0);
+            ctx.lineTo(-gw * 1.3, -gd);
+            ctx.lineTo(gw * 1.3, -gd);
+            ctx.lineTo(gw, 0);
+            ctx.closePath();
+            if (!isGlowPass) ctx.fill();
+            ctx.stroke();
+
+            // Gate ornament
+            ctx.beginPath();
+            ctx.moveTo(-gw * 0.5, -gd * 0.5);
+            ctx.lineTo(0, -gd * 0.8);
+            ctx.lineTo(gw * 0.5, -gd * 0.5);
+            ctx.stroke();
+
+            ctx.restore();
+          });
+
+          // Draw corner ornaments
+          if (!isGlowPass && layer === layers - 1) {
+            ctx.strokeStyle = params.palette[4];
+            ctx.lineWidth = 1;
+
+            const corners = [[-half, -half], [half, -half], [half, half], [-half, half]];
+            corners.forEach(([cx, cy], ci) => {
+              ctx.save();
+              ctx.translate(cx, cy);
+              ctx.rotate(ci * Math.PI / 2);
+
+              // Small decorative element
+              ctx.beginPath();
+              ctx.arc(0, 0, actualSize * 0.05, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+            });
+          }
+        }
+
+        // Central lotus/bindu
+        if (!isGlowPass) {
+          const centerPulse = 1 + Math.sin(phase * 0.4) * 0.2;
+          const centerSize = size * 0.1 * centerPulse;
+
+          // Lotus petals in center
+          ctx.fillStyle = params.palette[2];
+          const petalCount = 8;
+          for (let i = 0; i < petalCount; i++) {
+            const angle = (i / petalCount) * Math.PI * 2 + phase * 0.02;
+            ctx.save();
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.ellipse(centerSize * 0.6, 0, centerSize * 0.4, centerSize * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Central bindu
+          ctx.fillStyle = params.palette[4];
+          ctx.beginPath();
+          ctx.arc(0, 0, centerSize * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
       }
 
       generateIcosahedronVertices() {
@@ -2627,6 +3112,15 @@
       speedDisplay.textContent = renderer.speed.toFixed(2);
       volumeDisplay.textContent = parseFloat(volRange.value).toFixed(2);
       document.getElementById('bloom-btn').textContent = renderer.isBloom ? "Disable Light Spill" : "Toggle Light Spill";
+
+      // Read-more toggle functionality
+      const readMoreToggle = document.getElementById('read-more-toggle');
+      const readMoreContent = document.getElementById('read-more-content');
+
+      readMoreToggle.addEventListener('click', () => {
+        readMoreToggle.classList.toggle('expanded');
+        readMoreContent.classList.toggle('expanded');
+      });
     });
   </script>
 </body>
