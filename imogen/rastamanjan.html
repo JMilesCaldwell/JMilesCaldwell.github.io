@@ -160,19 +160,42 @@
 
     <script>
         // ========================================
-        // PASSWORD PROTECTION: [N]  (Change to [Y] to enable)
+        // PASSWORD PROTECTION
+        // Config file: imogen/resources/passwords.md
         // ========================================
-        const passwordProtectionEnabled = false; // [N] = false, [Y] = true
-        const correctPassword = "Horseman35";
-
         const passwordInput = document.getElementById('password-input');
         const passwordOverlay = document.getElementById('password-overlay');
         const passwordError = document.getElementById('password-error');
 
-        // Hide overlay immediately if password protection is disabled
-        if (!passwordProtectionEnabled) {
-            passwordOverlay.style.display = 'none';
-        }
+        let passwordProtectionEnabled = false;
+        let correctPassword = '';
+
+        // Fetch password configuration from external file
+        fetch('resources/passwords.md')
+            .then(response => response.text())
+            .then(data => {
+                // Parse the markdown file
+                const passwordMatch = data.match(/\*\*Password\*\*:\s*(.+)/);
+                const enabledMatch = data.match(/\*\*Enabled\*\*:\s*([YN])/);
+
+                if (passwordMatch) {
+                    correctPassword = passwordMatch[1].trim();
+                }
+
+                if (enabledMatch) {
+                    passwordProtectionEnabled = enabledMatch[1] === 'Y';
+                }
+
+                // Hide overlay if password protection is disabled
+                if (!passwordProtectionEnabled) {
+                    passwordOverlay.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading password config:', error);
+                // Default to disabled if file can't be loaded
+                passwordOverlay.style.display = 'none';
+            });
 
         passwordInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
