@@ -83,14 +83,82 @@
         .download-album-btn:hover {
             background: #1ed760;
         }
+        .password-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .password-container {
+            text-align: center;
+        }
+        .password-container h2 {
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin-bottom: 20px;
+        }
+        .password-container input {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #1db954;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .password-container input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .password-error {
+            color: #ff4444;
+            margin-top: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div id="password-overlay" class="password-overlay">
+        <div class="password-container">
+            <h2>Enter Password</h2>
+            <input type="password" id="password-input" placeholder="Password" autocomplete="off">
+            <div class="password-error" id="password-error">Incorrect password</div>
+        </div>
+    </div>
     <img src="resources/RastamanJan.png" alt="Rastaman Jan">
     <div id="audio-players"></div>
     <button class="download-album-btn" onclick="downloadAlbum()">Download Album</button>
 
     <script>
+        // Password protection
+        const correctPassword = "Horseman35";
+        const passwordInput = document.getElementById('password-input');
+        const passwordOverlay = document.getElementById('password-overlay');
+        const passwordError = document.getElementById('password-error');
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (passwordInput.value === correctPassword) {
+                    passwordOverlay.style.display = 'none';
+                } else {
+                    passwordError.style.display = 'block';
+                    passwordInput.value = '';
+                    setTimeout(() => {
+                        passwordError.style.display = 'none';
+                    }, 2000);
+                }
+            }
+        });
+
         // Track list - update this when adding new songs
         const tracks = [
             { title: 'Dharmaman Jan (dub version)', file: 'Rastaman Jan - Dharmaman Jan (dub version).mp3' },
