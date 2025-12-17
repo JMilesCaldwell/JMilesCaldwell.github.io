@@ -25,67 +25,89 @@
             gap: 15px;
             margin-top: 20px;
             width: 90%;
-            max-width: 650px;
+            max-width: 800px;
+        }
+        .song-title {
+            min-width: 200px;
+            max-width: 200px;
+            overflow: hidden;
+            position: relative;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .song-title-text {
+            display: inline-block;
+            white-space: nowrap;
+            animation: scroll 10s linear infinite;
+            padding-left: 100%;
+        }
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
         }
         audio {
             flex: 1;
             min-width: 0;
         }
-        .download-btn {
+        .download-album-btn {
             background: #1db954;
             color: #fff;
-            padding: 10px 20px;
+            padding: 12px 30px;
             text-decoration: none;
             border-radius: 25px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 16px;
+            font-weight: 600;
             white-space: nowrap;
             transition: background 0.3s ease;
+            margin-top: 30px;
+            cursor: pointer;
+            border: none;
         }
-        .download-btn:hover {
+        .download-album-btn:hover {
             background: #1ed760;
         }
     </style>
 </head>
 <body>
     <img src="resources/RastamanJan.png" alt="Rastaman Jan">
-    <div class="audio-container">
-        <audio controls controlsList="nodownload">
-            <source src="resources/Rastaman Jan - Dharmaman Jan (dub version).mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-        <a href="resources/Rastaman Jan - Dharmaman Jan (dub version).mp3" download class="download-btn">Download</a>
-    </div>
-    <div class="audio-container">
-        <audio controls controlsList="nodownload">
-            <source src="resources/Rastaman Jan - CEO of Everything.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-        <a href="resources/Rastaman Jan - CEO of Everything.mp3" download class="download-btn">Download</a>
-    </div>
-    <div class="audio-container">
-        <audio controls controlsList="nodownload">
-            <source src="resources/Rastaman Jan - One Love Regulation.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-        <a href="resources/Rastaman Jan - One Love Regulation.mp3" download class="download-btn">Download</a>
-    </div>
-    <div class="audio-container">
-        <audio controls controlsList="nodownload">
-            <source src="resources/Rastaman Jan ft. Budaboi - When di Buddhaman Come.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-        <a href="resources/Rastaman Jan ft. Budaboi - When di Buddhaman Come.mp3" download class="download-btn">Download</a>
-    </div>
-    <div class="audio-container">
-        <audio controls controlsList="nodownload">
-            <source src="resources/Rastaman Jan - Jan Love.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-        <a href="resources/Rastaman Jan - Jan Love.mp3" download class="download-btn">Download</a>
-    </div>
+    <div id="audio-players"></div>
+    <button class="download-album-btn" onclick="downloadAlbum()">Download Album</button>
+
     <script>
+        // Track list - update this when adding new songs
+        const tracks = [
+            { title: 'Dharmaman Jan (dub version)', file: 'Rastaman Jan - Dharmaman Jan (dub version).mp3' },
+            { title: 'CEO of Everything', file: 'Rastaman Jan - CEO of Everything.mp3' },
+            { title: 'One Love Regulation', file: 'Rastaman Jan - One Love Regulation.mp3' },
+            { title: 'When di Buddhaman Come (ft. Budaboi)', file: 'Rastaman Jan ft. Budaboi - When di Buddhaman Come.mp3' },
+            { title: 'Jan Love', file: 'Rastaman Jan - Jan Love.mp3' }
+        ];
+
+        // Generate audio players from track list
+        const container = document.getElementById('audio-players');
+        tracks.forEach(track => {
+            const div = document.createElement('div');
+            div.className = 'audio-container';
+            div.innerHTML = `
+                <div class="song-title">
+                    <div class="song-title-text">${track.title}</div>
+                </div>
+                <audio controls controlsList="nodownload">
+                    <source src="resources/${track.file}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            `;
+            container.appendChild(div);
+        });
+
+        // Ensure only one track plays at a time
         const audioElements = document.querySelectorAll('audio');
         audioElements.forEach(audio => {
             audio.addEventListener('play', () => {
@@ -96,6 +118,20 @@
                 });
             });
         });
+
+        // Download all tracks
+        function downloadAlbum() {
+            tracks.forEach((track, index) => {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = `resources/${track.file}`;
+                    link.download = track.file;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, index * 300); // Stagger downloads to avoid browser blocking
+            });
+        }
     </script>
 </body>
 </html>
