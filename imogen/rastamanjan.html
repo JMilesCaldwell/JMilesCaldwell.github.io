@@ -28,6 +28,10 @@
             border-radius: 12px;
             padding: 15px;
             backdrop-filter: blur(10px);
+            transition: background 0.3s ease;
+        }
+        .audio-container.playing {
+            background: rgba(29, 185, 84, 0.1);
         }
         .song-title {
             color: #fff;
@@ -36,6 +40,27 @@
             font-weight: 500;
             margin-bottom: 10px;
             text-align: left;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .song-title.scrolling {
+            position: relative;
+        }
+        .song-title.scrolling::after {
+            content: attr(data-title);
+            position: absolute;
+            left: 0;
+            top: 0;
+            animation: scroll-title 10s linear infinite;
+            padding-left: 100%;
+        }
+        @keyframes scroll-title {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
         }
         audio {
             width: 100%;
@@ -72,17 +97,18 @@
             { title: 'CEO of Everything', file: 'Rastaman Jan - CEO of Everything.mp3' },
             { title: 'One Love Regulation', file: 'Rastaman Jan - One Love Regulation.mp3' },
             { title: 'When di Buddhaman Come (ft. Budaboi)', file: 'Rastaman Jan ft. Budaboi - When di Buddhaman Come.mp3' },
-            { title: 'Jan Love', file: 'Rastaman Jan - Jan Love.mp3' }
+            { title: 'Jan Love', file: 'Rastaman Jan - Jan Love.mp3' },
+            { title: '35 Years', file: 'Rastaman Jan - 35 Years.mp3' }
         ];
 
         // Generate audio players from track list
         const container = document.getElementById('audio-players');
-        tracks.forEach(track => {
+        tracks.forEach((track, index) => {
             const div = document.createElement('div');
             div.className = 'audio-container';
             div.innerHTML = `
-                <div class="song-title">${track.title}</div>
-                <audio controls controlsList="nodownload">
+                <div class="song-title" data-title="${track.title}">${track.title}</div>
+                <audio controls controlsList="nodownload" data-index="${index}">
                     <source src="resources/${track.file}" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
@@ -90,15 +116,49 @@
             container.appendChild(div);
         });
 
-        // Ensure only one track plays at a time
+        // Get all audio elements
         const audioElements = document.querySelectorAll('audio');
-        audioElements.forEach(audio => {
+        let userPaused = false;
+
+        // Ensure only one track plays at a time and handle cycling
+        audioElements.forEach((audio, index) => {
+            // When a track starts playing
             audio.addEventListener('play', () => {
+                userPaused = false;
+
+                // Pause other tracks
                 audioElements.forEach(otherAudio => {
                     if (otherAudio !== audio) {
                         otherAudio.pause();
                     }
                 });
+
+                // Update UI - add scrolling to current, remove from others
+                document.querySelectorAll('.audio-container').forEach(container => {
+                    container.classList.remove('playing');
+                    container.querySelector('.song-title').classList.remove('scrolling');
+                });
+
+                audio.parentElement.classList.add('playing');
+                audio.parentElement.querySelector('.song-title').classList.add('scrolling');
+            });
+
+            // When a track is paused by user
+            audio.addEventListener('pause', () => {
+                // Only set userPaused if the audio wasn't ended (to allow auto-cycling)
+                if (!audio.ended) {
+                    userPaused = true;
+                }
+                audio.parentElement.classList.remove('playing');
+                audio.parentElement.querySelector('.song-title').classList.remove('scrolling');
+            });
+
+            // When a track ends, play the next one
+            audio.addEventListener('ended', () => {
+                if (!userPaused) {
+                    const nextIndex = (index + 1) % audioElements.length;
+                    audioElements[nextIndex].play();
+                }
             });
         });
 
