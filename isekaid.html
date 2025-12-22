@@ -96,17 +96,72 @@
       display: none;
     }
     @media print {
-      body * { visibility: hidden !important; }
-      #output, #output * { visibility: visible !important; }
-      #output { position: absolute; left: 0; top: 0; width: 100%; }
+      @page {
+        margin: 0.75in;
+        size: letter;
+      }
+      body {
+        background: none !important;
+        background-color: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      body * {
+        visibility: hidden !important;
+      }
+      #output, #output * {
+        visibility: visible !important;
+      }
+      #output {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 100%;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        border: none !important;
+        box-sizing: border-box;
+        font-size: 11pt;
+        line-height: 1.4;
+        color: #000 !important;
+      }
+      #output h2, #output h3 {
+        color: #000 !important;
+        page-break-after: avoid;
+      }
+      #output .fancy-divider::after {
+        color: #333 !important;
+      }
+      #output hr {
+        border-color: #333 !important;
+        page-break-after: avoid;
+      }
+      #output ul {
+        page-break-inside: avoid;
+      }
+      #printButton {
+        display: none !important;
+      }
     }
     /* Checkbox container styles */
+    .feats-wrapper {
+      text-align: left;
+      display: inline-block;
+      max-width: 600px;
+    }
     #human-features-container, #isekai-traits-container {
       background: rgba(75, 0, 130, 0.2);
       padding: 0.75rem;
       border-radius: 5px;
       margin-top: 0.5rem;
-      max-width: 600px;
+      text-align: left;
+    }
+    #isekai-traits-container {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 10px;
     }
     #human-features-container label, #isekai-traits-container label {
       cursor: pointer;
@@ -116,6 +171,21 @@
     #human-features-container input[type="checkbox"], #isekai-traits-container input[type="checkbox"] {
       margin-right: 0.5rem;
       cursor: pointer;
+    }
+    /* Custom scrollbar for traits container */
+    #isekai-traits-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    #isekai-traits-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    #isekai-traits-container::-webkit-scrollbar-thumb {
+      background: #4B0082;
+      border-radius: 4px;
+    }
+    #isekai-traits-container::-webkit-scrollbar-thumb:hover {
+      background: #2E0854;
     }
     #manual-entry {
       background: rgba(75, 0, 130, 0.2);
@@ -226,10 +296,10 @@
     </div>
 
     <!-- Human Features (Optional) -->
-    <div style="margin-top:1rem; text-align:left; display:inline-block;">
+    <div class="feats-wrapper" style="margin-top:1rem;">
       <strong>Feats (Optional):</strong><br/>
       <div id="human-features-container"></div>
-      <div id="isekai-traits-container" style="max-height: 300px; overflow-y: auto; padding-right: 10px;"></div>
+      <div id="isekai-traits-container"></div>
     </div>
 
     <!-- Generate Character & Full Random -->
