@@ -156,10 +156,31 @@
     <!-- Level Selection -->
     <div>
       <label for="level-select">Level:</label>
-      <select id="level-select">
+      <select id="level-select" onchange="updateClassOptions()">
         <option value="0">0 (Just Arrived)</option>
         <option value="0.5">0.5 (Adapting)</option>
+        <option value="1">1 (Choose a Path)</option>
+        <option value="2">2 (Specialization)</option>
       </select>
+    </div>
+    <!-- Class Path Selection (Level 1+) -->
+    <div id="path-selection" style="display: none;">
+      <label for="path-select">Path:</label>
+      <select id="path-select" onchange="updateSpecOptions()">
+        <option value="">-- Choose Path --</option>
+        <option value="Path of the Warrior">Path of the Warrior</option>
+        <option value="Path of the Mage">Path of the Mage</option>
+        <option value="Path of the Rogue">Path of the Rogue</option>
+      </select>
+      <button class="button" onclick="randomPath()">Random</button>
+    </div>
+    <!-- Specialization Selection (Level 2) -->
+    <div id="spec-selection" style="display: none;">
+      <label for="spec-select">Specialization:</label>
+      <select id="spec-select">
+        <option value="">-- Choose Specialization --</option>
+      </select>
+      <button class="button" onclick="randomSpec()">Random</button>
     </div>
     <!-- Ability Scores -->
     <div>
@@ -185,6 +206,7 @@
     <div id="charProficiencies"></div>
     <div id="charLanguages"></div>
     <div id="charEquipment"></div>
+    <div id="charClass" style="margin-top:1rem;"></div>
     <hr/>
     <div id="charTraits" style="margin-top:1rem;"></div>
   </div>
@@ -294,6 +316,145 @@
     }
   ];
 
+  // ---------- Class Progression System ----------
+  // Level 1 Paths
+  const CLASS_PATHS = {
+    "Path of the Warrior": {
+      description: "You've begun training in martial combat, learning to wield weapons with deadly precision.",
+      hitDie: "d10",
+      proficiencies: {
+        armor: ["Light armor", "Medium armor", "Shields"],
+        weapons: "martial",
+        savingThrows: ["STR", "CON"],
+        skills: ["Athletics", "Intimidation"]
+      },
+      features: [
+        "Fighting Style: Choose one - Defense (+1 AC), Dueling (+2 damage with one-handed), or Great Weapon Fighting (reroll 1s and 2s on damage)",
+        "Second Wind: Once per short rest, bonus action to regain 1d10 + 1 HP"
+      ],
+      extraHP: 4,
+      nextLevel: ["Knight", "Berserker"]
+    },
+    "Path of the Mage": {
+      description: "You've awakened to the arcane arts, channeling magical energy through sheer force of will.",
+      hitDie: "d6",
+      proficiencies: {
+        armor: [],
+        weapons: "simple",
+        savingThrows: ["INT", "WIS"],
+        skills: ["Arcana", "Investigation"]
+      },
+      features: [
+        "Spellcasting: You know 3 cantrips (Fire Bolt, Mage Hand, Prestidigitation)",
+        "Arcane Recovery: Once per day, recover one spell slot on a short rest",
+        "Spell Slots: 2 first-level slots"
+      ],
+      spells: {
+        cantrips: ["Fire Bolt (1d10 fire, 120ft)", "Mage Hand", "Prestidigitation"],
+        level1: ["Magic Missile", "Shield", "Detect Magic"]
+      },
+      extraHP: 2,
+      nextLevel: ["Wizard", "Necromancer"]
+    },
+    "Path of the Rogue": {
+      description: "You've learned to strike from the shadows, using cunning and precision over brute force.",
+      hitDie: "d8",
+      proficiencies: {
+        armor: ["Light armor"],
+        weapons: "simple",
+        savingThrows: ["DEX", "INT"],
+        skills: ["Stealth", "Sleight of Hand", "Perception"]
+      },
+      features: [
+        "Sneak Attack: +1d6 damage when you have advantage or an ally is adjacent to target",
+        "Expertise: Double proficiency bonus on two skills (Stealth, Sleight of Hand)",
+        "Thieves' Cant: Secret language of rogues"
+      ],
+      extraHP: 3,
+      nextLevel: ["Assassin", "Thief"]
+    }
+  };
+
+  // Level 2 Specializations
+  const CLASS_SPECIALIZATIONS = {
+    // Warrior Specializations
+    "Knight": {
+      parentPath: "Path of the Warrior",
+      description: "A noble warrior who protects allies and upholds honor on the battlefield.",
+      features: [
+        "Action Surge: Once per short rest, take an additional action",
+        "Protection Fighting Style: Use reaction to impose disadvantage on attacks against adjacent allies",
+        "Rallying Cry: Bonus action to grant ally temporary HP equal to your level"
+      ],
+      extraHP: 6,
+      bonusAC: 1
+    },
+    "Berserker": {
+      parentPath: "Path of the Warrior",
+      description: "A fury-driven fighter who channels rage into devastating attacks.",
+      features: [
+        "Rage: Bonus action to enter rage - advantage on STR checks, +2 melee damage, resistance to bludgeoning/piercing/slashing (2/long rest)",
+        "Reckless Attack: Gain advantage on attacks but attacks against you have advantage",
+        "Danger Sense: Advantage on DEX saves against effects you can see"
+      ],
+      extraHP: 8,
+      bonusDamage: 2
+    },
+    // Mage Specializations
+    "Wizard": {
+      parentPath: "Path of the Mage",
+      description: "A scholarly mage who masters the arcane through study and intellect.",
+      features: [
+        "Arcane Tradition: Evocation - Sculpt Spells around allies",
+        "Spell Slots: 3 first-level slots",
+        "New Spells Known: Burning Hands, Thunderwave, Chromatic Orb"
+      ],
+      spells: {
+        cantrips: ["Fire Bolt (1d10 fire)", "Mage Hand", "Prestidigitation", "Ray of Frost (1d8 cold)"],
+        level1: ["Magic Missile", "Shield", "Detect Magic", "Burning Hands", "Thunderwave", "Chromatic Orb"]
+      },
+      extraHP: 4
+    },
+    "Necromancer": {
+      parentPath: "Path of the Mage",
+      description: "A mage who dabbles in the forbidden arts of death and undeath.",
+      features: [
+        "Grim Harvest: When you kill a creature with a spell, regain HP equal to twice the spell's level",
+        "Undead Thralls: Animate Dead creates undead with extra HP and damage",
+        "New Spells Known: False Life, Ray of Sickness, Cause Fear"
+      ],
+      spells: {
+        cantrips: ["Chill Touch (1d8 necrotic)", "Mage Hand", "Prestidigitation", "Spare the Dying"],
+        level1: ["Magic Missile", "Shield", "False Life", "Ray of Sickness", "Cause Fear"]
+      },
+      extraHP: 4
+    },
+    // Rogue Specializations
+    "Assassin": {
+      parentPath: "Path of the Rogue",
+      description: "A deadly killer who strikes before enemies know they're in danger.",
+      features: [
+        "Assassinate: Advantage on attacks against creatures that haven't acted. Hits against surprised creatures are critical hits",
+        "Sneak Attack: +2d6 damage (increased from 1d6)",
+        "Infiltration Expertise: Create false identities with a week of preparation"
+      ],
+      extraHP: 5,
+      sneakAttackDice: "2d6"
+    },
+    "Thief": {
+      parentPath: "Path of the Rogue",
+      description: "A nimble scoundrel who excels at infiltration and acquiring 'lost' items.",
+      features: [
+        "Fast Hands: Use Sleight of Hand, disarm traps, or pick locks as a bonus action",
+        "Second-Story Work: Climbing costs no extra movement. Running jumps increase by DEX modifier feet",
+        "Supreme Sneak: Advantage on Stealth checks if you move no more than half speed"
+      ],
+      extraHP: 5,
+      bonusSkills: ["Acrobatics"]
+    }
+  };
+
+  // ---------- Personality Traits ----------
   const PERSONALITY_TRAITS = [
     "I constantly compare everything to how it was 'back home' and find this world lacking.",
     "I'm convinced I'm the protagonist of some grand story and act accordingly.",
@@ -377,6 +538,65 @@
   function randomBackground() {
     const randomPick = pickRandom(BACKGROUNDS).name;
     document.getElementById("background-select").value = randomPick;
+  }
+
+  // ---------- Class Path Functions ----------
+  function updateClassOptions() {
+    const level = document.getElementById("level-select").value;
+    const pathDiv = document.getElementById("path-selection");
+    const specDiv = document.getElementById("spec-selection");
+
+    if (level === "1" || level === "2") {
+      pathDiv.style.display = "block";
+    } else {
+      pathDiv.style.display = "none";
+      specDiv.style.display = "none";
+    }
+
+    if (level === "2") {
+      updateSpecOptions();
+    } else {
+      specDiv.style.display = "none";
+    }
+  }
+
+  function updateSpecOptions() {
+    const level = document.getElementById("level-select").value;
+    const specDiv = document.getElementById("spec-selection");
+    const specSelect = document.getElementById("spec-select");
+    const selectedPath = document.getElementById("path-select").value;
+
+    if (level === "2" && selectedPath) {
+      specDiv.style.display = "block";
+      // Clear and repopulate
+      specSelect.innerHTML = '<option value="">-- Choose Specialization --</option>';
+      const pathData = CLASS_PATHS[selectedPath];
+      if (pathData && pathData.nextLevel) {
+        pathData.nextLevel.forEach(spec => {
+          const opt = document.createElement("option");
+          opt.value = spec;
+          opt.innerText = spec;
+          specSelect.appendChild(opt);
+        });
+      }
+    } else {
+      specDiv.style.display = "none";
+    }
+  }
+
+  function randomPath() {
+    const paths = Object.keys(CLASS_PATHS);
+    const randomPick = pickRandom(paths);
+    document.getElementById("path-select").value = randomPick;
+    updateSpecOptions();
+  }
+
+  function randomSpec() {
+    const specSelect = document.getElementById("spec-select");
+    const options = Array.from(specSelect.options).filter(o => o.value);
+    if (options.length > 0) {
+      specSelect.value = pickRandom(options).value;
+    }
   }
 
   // ---------- Ability Score Handlers ----------
@@ -662,9 +882,28 @@
     // 5. Select Personality Traits
     const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
 
-    // 6. Determine Level (Proficiency Bonus)
+    // 6. Determine Level (Proficiency Bonus) and Class
     const levelChoice = document.getElementById("level-select").value;
-    const profBonus = levelChoice === "0.5" ? 1 : 0;
+    let profBonus = 0;
+    if (levelChoice === "0.5") profBonus = 1;
+    else if (levelChoice === "1" || levelChoice === "2") profBonus = 2;
+
+    // Get class path and specialization
+    let selectedPath = null;
+    let selectedSpec = null;
+    let pathData = null;
+    let specData = null;
+
+    if (levelChoice === "1" || levelChoice === "2") {
+      selectedPath = document.getElementById("path-select").value;
+      if (!selectedPath) { alert("Please select a Path."); return; }
+      pathData = CLASS_PATHS[selectedPath];
+    }
+    if (levelChoice === "2") {
+      selectedSpec = document.getElementById("spec-select").value;
+      if (!selectedSpec) { alert("Please select a Specialization."); return; }
+      specData = CLASS_SPECIALIZATIONS[selectedSpec];
+    }
 
     // 7. Pick Random Weapon & Armour
     const chosenWeapon = getRandomWeaponForBackground(bgData.name);
@@ -698,8 +937,14 @@
     const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
     const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
 
-    // Collect all proficient skills (background + race features)
+    // Collect all proficient skills (background + race features + class)
     let allProficientSkills = bgData.skillProficiencies ? [...bgData.skillProficiencies] : [];
+    if (pathData && pathData.proficiencies && pathData.proficiencies.skills) {
+      allProficientSkills.push(...pathData.proficiencies.skills);
+    }
+    if (specData && specData.bonusSkills) {
+      allProficientSkills.push(...specData.bonusSkills);
+    }
 
     // Output the generated character
     const outputDiv = document.getElementById("output");
@@ -758,6 +1003,54 @@
     eqHTML += `<br/><br/><strong>Pocket Dump:</strong><br/>${pocketDumpList}`;
     document.getElementById("charEquipment").innerHTML = eqHTML;
 
+    // Build class features HTML
+    let classHTML = "";
+    if (pathData) {
+      classHTML += `<hr/><h3>${selectedPath}</h3>`;
+      classHTML += `<em>${pathData.description}</em><br/><br/>`;
+      classHTML += `<strong>Hit Die:</strong> ${pathData.hitDie}<br/>`;
+      classHTML += `<strong>Extra HP:</strong> +${pathData.extraHP}<br/>`;
+      if (pathData.proficiencies.armor && pathData.proficiencies.armor.length > 0) {
+        classHTML += `<strong>Armor Proficiencies:</strong> ${pathData.proficiencies.armor.join(", ")}<br/>`;
+      }
+      classHTML += `<strong>Weapon Proficiencies:</strong> ${pathData.proficiencies.weapons}<br/>`;
+      classHTML += `<strong>Saving Throws:</strong> ${pathData.proficiencies.savingThrows.join(", ")}<br/>`;
+      classHTML += `<strong>Class Skills:</strong> ${pathData.proficiencies.skills.join(", ")}<br/><br/>`;
+      classHTML += `<strong>Features:</strong><ul>`;
+      pathData.features.forEach(f => {
+        classHTML += `<li>${f}</li>`;
+      });
+      classHTML += `</ul>`;
+      if (pathData.spells) {
+        classHTML += `<strong>Cantrips:</strong> ${pathData.spells.cantrips.join(", ")}<br/>`;
+        classHTML += `<strong>1st Level Spells:</strong> ${pathData.spells.level1.join(", ")}<br/>`;
+      }
+    }
+    if (specData) {
+      classHTML += `<hr/><h3>${selectedSpec}</h3>`;
+      classHTML += `<em>${specData.description}</em><br/><br/>`;
+      classHTML += `<strong>Additional HP:</strong> +${specData.extraHP}<br/>`;
+      if (specData.bonusAC) {
+        classHTML += `<strong>Bonus AC:</strong> +${specData.bonusAC}<br/>`;
+      }
+      if (specData.bonusDamage) {
+        classHTML += `<strong>Bonus Melee Damage:</strong> +${specData.bonusDamage}<br/>`;
+      }
+      if (specData.sneakAttackDice) {
+        classHTML += `<strong>Sneak Attack:</strong> ${specData.sneakAttackDice}<br/>`;
+      }
+      classHTML += `<br/><strong>Features:</strong><ul>`;
+      specData.features.forEach(f => {
+        classHTML += `<li>${f}</li>`;
+      });
+      classHTML += `</ul>`;
+      if (specData.spells) {
+        classHTML += `<strong>Cantrips:</strong> ${specData.spells.cantrips.join(", ")}<br/>`;
+        classHTML += `<strong>1st Level Spells:</strong> ${specData.spells.level1.join(", ")}<br/>`;
+      }
+    }
+    document.getElementById("charClass").innerHTML = classHTML;
+
     const traitsHTML = `
       <h3>Personality Traits</h3>
       <ul>
@@ -797,6 +1090,19 @@
   function fullRandom() {
     randomRace();
     randomBackground();
+    // Randomly pick a level
+    const levels = ["0", "0.5", "1", "2"];
+    const randomLevel = pickRandom(levels);
+    document.getElementById("level-select").value = randomLevel;
+    updateClassOptions();
+
+    if (randomLevel === "1" || randomLevel === "2") {
+      randomPath();
+    }
+    if (randomLevel === "2") {
+      randomSpec();
+    }
+
     rollAbilityScores();
     generateCharacter();
   }
