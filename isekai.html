@@ -483,6 +483,42 @@
     { name: "Quilted vest over long sleeves", acBonus: 1 }
   ];
 
+  const MODERN_UNDERWEAR = [
+    { name: "Boxers (cartoon print)", acBonus: 0 },
+    { name: "Plain boxer briefs", acBonus: 0 },
+    { name: "Tighty whities (classic)", acBonus: 0 },
+    { name: "Novelty boxers (pizza pattern)", acBonus: 0 },
+    { name: "Worn-out briefs", acBonus: 0 },
+    { name: "Athletic compression shorts", acBonus: 0 },
+    { name: "Boxers with holes (but clean!)", acBonus: 0 },
+    { name: "Christmas boxers (it's not Christmas)", acBonus: 0 },
+    { name: "Going commando", acBonus: 0 },
+    { name: "Commando (bold choice)", acBonus: 0 },
+    { name: "Long underwear (thermal)", acBonus: 0 },
+    { name: "Lucky underwear (questionable)", acBonus: 0 }
+  ];
+
+  const MODERN_SHOES = [
+    { name: "Steel-toe work boots", acBonus: 1 },
+    { name: "Worn-in army boots", acBonus: 1 },
+    { name: "Leather boots (scuffed)", acBonus: 1 },
+    { name: "Timberlands (classic wheat)", acBonus: 1 },
+    { name: "Red Wing work boots", acBonus: 1 },
+    { name: "Hiking boots (muddy)", acBonus: 1 },
+    { name: "Beat-up sneakers", acBonus: 1 },
+    { name: "White sneakers (not white anymore)", acBonus: 1 },
+    { name: "Black Converse All-Stars", acBonus: 1 },
+    { name: "High-top Vans", acBonus: 1 },
+    { name: "Running shoes (never ran)", acBonus: 1 },
+    { name: "Slip-on Vans", acBonus: 1 },
+    { name: "New Balance dad shoes", acBonus: 1 },
+    { name: "Sandals with socks", acBonus: 1 },
+    { name: "Birkenstock sandals", acBonus: 1 },
+    { name: "Crocs (unironically)", acBonus: 1 },
+    { name: "Chelsea boots", acBonus: 1 },
+    { name: "Doc Martens (broken in)", acBonus: 1 }
+  ];
+
   const BACKGROUND_WEAPONS = {
     "Contractor": ["Pipe Wrench", "Handaxe", IMPROVISED_WEAPON],
     "Customer Service Worker": ["Box Cutter", IMPROVISED_WEAPON]
@@ -493,19 +529,59 @@
     "Customer Service Worker": "simple"
   };
 
-  const RANDOM_EQUIPMENT_ITEMS = [
-    "Dead smartphone", "Empty energy drink can", "Lanyard with old ID badge", "Crumpled receipt",
-    "Mechanical pencil (no lead)", "Worn earbuds (don't work)", "Loyalty card (10th coffee free)",
-    "Stress ball", "Hand sanitizer (empty)", "Pocket lint", "Old gum wrapper",
-    "USB drive (useless here)", "Car keys (no car)", "Expired transit pass",
-    "Half a granola bar", "Broken sunglasses", "Faded business card", "Lucky penny",
-    "Rubber band ball", "Takeout menu from home", "Cracked phone case", "Old charger cable"
+  // Pocket dump items - random stuff found in pockets
+  const POCKET_DUMP_ITEMS = [
+    // Tech & electronics
+    "Dead smartphone (cracked screen)", "Smartphone (2% battery, no signal)", "Tangled earbuds (one side works)",
+    "USB drive with 'IMPORTANT' label", "Fitbit (stopped counting steps)", "Broken smartwatch",
+    "Old flip phone (somehow still works)", "Charging cable (wrong type)", "Wireless earbud (just one)",
+
+    // Wallet contents
+    "Leather wallet (mostly empty)", "Velcro wallet (don't judge)", "Money clip with foreign currency",
+    "Maxed-out credit card", "Expired driver's license", "Library card (3 years overdue)",
+    "Gym membership card (never used)", "Loyalty card (2 stamps from free coffee)", "Old concert ticket stub",
+    "Crumpled $20 bill", "Handful of foreign coins", "Gift card with $0.37 remaining",
+
+    // Keys & accessories
+    "Keychain with too many keys", "Car keys (no car in this world)", "House keys (no house either)",
+    "Bottle opener keychain", "Mini flashlight (dead batteries)", "Carabiner with random keys",
+    "Lanyard with work ID badge", "Keychain Swiss army knife", "Apartment fob (useless now)",
+
+    // Lighters & smoking
+    "Bic lighter (almost empty)", "Zippo lighter (out of fluid)", "Book of matches (damp)",
+    "Vape pen (dead battery)", "Pack of gum (last piece)", "Tin of mints (mostly empty)",
+
+    // Receipts & paper
+    "Crumpled receipt (illegible)", "Grocery list from last week", "Parking ticket (unpaid)",
+    "Post-it note with cryptic reminder", "Business card from someone you forgot", "Lottery ticket (not checked)",
+    "Folded napkin with phone number", "Movie ticket stub", "Faded photograph",
+
+    // Food & snacks
+    "Leftover sandwich (questionable)", "Half-eaten granola bar", "Pocket full of crumbs",
+    "Squished protein bar", "Emergency candy bar", "Bag of trail mix (just raisins left)",
+    "Stale crackers in wrapper", "Melted chocolate (in wrapper, hopefully)", "Cold coffee in travel mug",
+
+    // Personal items
+    "Condom (expired)", "Chapstick (almost empty)", "Hand sanitizer (sticky)",
+    "Crumpled tissues", "Hair tie (stretched out)", "Bobby pins (bent)",
+    "Nail clippers", "Eye drops (expired)", "Ibuprofen (loose in pocket)",
+    "Cough drops (lint-covered)", "Bandaids (old)", "Floss pick (used? unclear)",
+
+    // Random objects
+    "Pocket lint (impressive amount)", "Mystery key", "Rubber band ball",
+    "Pen that doesn't work", "Sharpie (dried out)", "Tape measure (retractable)",
+    "Random bolt (from what?)", "Button (origin unknown)", "Paper clip chain",
+    "Fidget spinner (broken bearing)", "Stress ball (punctured)", "Lucky rock",
+    "D20 die", "Guitar pick", "Bottle cap collection",
+
+    // Work-related
+    "Name tag ('TRAINEE')", "Punch card (halfway full)", "Break room schedule",
+    "Safety glasses (scratched)", "Work gloves (hole in thumb)", "Pen from the bank",
+    "Sticky notes (blank)", "Retractable badge holder", "Earplugs (foam, used)"
   ];
 
-  function addRandomEquipment(equipmentArray) {
-    const extraItem = pickRandom(RANDOM_EQUIPMENT_ITEMS);
-    equipmentArray.push(extraItem);
-    return equipmentArray;
+  function getRandomPocketDump(count = 3) {
+    return pickMultipleDistinct(POCKET_DUMP_ITEMS, count);
   }
 
   // ---------- Weapon & Armour Calculations ----------
@@ -596,23 +672,28 @@
     const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
 
     // Pick modern outfit layers
+    const chosenUnderwear = pickRandom(MODERN_UNDERWEAR);
     const chosenPants = pickRandom(MODERN_PANTS);
     const chosenShirt = pickRandom(MODERN_SHIRTS);
     const chosenSweater = pickRandom(MODERN_SWEATERS);
     const chosenJacket = pickRandom(MODERN_JACKETS);
+    const chosenShoes = pickRandom(MODERN_SHOES);
     const dexMod = abilityMod(finalScores[1]);
-    const totalACBonus = chosenPants.acBonus + chosenShirt.acBonus + chosenSweater.acBonus + chosenJacket.acBonus;
-    const computedAC = 10 + totalACBonus + dexMod; // 14 + DEX
+    const totalACBonus = chosenUnderwear.acBonus + chosenPants.acBonus + chosenShirt.acBonus + chosenSweater.acBonus + chosenJacket.acBonus + chosenShoes.acBonus;
+    const computedAC = 10 + totalACBonus + dexMod; // 15 + DEX
 
     // 8. Compile Final Details
     const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
     const featuresList = raceData.features.length ? raceData.features.map(f => `- ${f}`).join("<br/>") : "None";
     const raceLangs = raceData.languages.join(", ");
 
-    // Clone and augment background equipment
+    // Clone background equipment
     let finalEquipment = bgData.equipment.slice();
-    finalEquipment = addRandomEquipment(finalEquipment);
     const bgEquipmentList = finalEquipment.map(eq => `- ${eq}`).join("<br/>");
+
+    // Get random pocket dump items
+    const pocketDump = getRandomPocketDump(4);
+    const pocketDumpList = pocketDump.map(item => `- ${item}`).join("<br/>");
 
     const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
     const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
@@ -667,10 +748,14 @@
       `;
     }
     eqHTML += `<br/><br/><strong>Modern Outfit (AC ${computedAC} = 10 + ${totalACBonus} + ${dexMod} DEX):</strong><br/>`;
+    eqHTML += `- ${chosenUnderwear.name}<br/>`;
     eqHTML += `- ${chosenPants.name} (+${chosenPants.acBonus})<br/>`;
     eqHTML += `- ${chosenShirt.name} (+${chosenShirt.acBonus})<br/>`;
     eqHTML += `- ${chosenSweater.name} (+${chosenSweater.acBonus})<br/>`;
-    eqHTML += `- ${chosenJacket.name} (+${chosenJacket.acBonus})`;
+    eqHTML += `- ${chosenJacket.name} (+${chosenJacket.acBonus})<br/>`;
+    eqHTML += `- ${chosenShoes.name} (+${chosenShoes.acBonus})`;
+
+    eqHTML += `<br/><br/><strong>Pocket Dump:</strong><br/>${pocketDumpList}`;
     document.getElementById("charEquipment").innerHTML = eqHTML;
 
     const traitsHTML = `
