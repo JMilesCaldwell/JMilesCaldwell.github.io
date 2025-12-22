@@ -100,6 +100,34 @@
       #output, #output * { visibility: visible !important; }
       #output { position: absolute; left: 0; top: 0; width: 100%; }
     }
+    /* Checkbox container styles */
+    #human-features-container, #isekai-traits-container {
+      background: rgba(75, 0, 130, 0.2);
+      padding: 0.75rem;
+      border-radius: 5px;
+      margin-top: 0.5rem;
+      max-width: 600px;
+    }
+    #human-features-container label, #isekai-traits-container label {
+      cursor: pointer;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    #human-features-container input[type="checkbox"], #isekai-traits-container input[type="checkbox"] {
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+    #manual-entry {
+      background: rgba(75, 0, 130, 0.2);
+      padding: 1rem;
+      border-radius: 5px;
+      display: inline-block;
+    }
+    #manual-entry label {
+      width: 45px;
+      text-align: right;
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
@@ -137,14 +165,6 @@
       <label for="nickname-input">Nickname:</label>
       <input type="text" id="nickname-input" placeholder="Optional" />
     </div>
-    <!-- Race Selection -->
-    <div>
-      <label for="race-select">Race:</label>
-      <select id="race-select">
-        <option value="">-- Choose --</option>
-      </select>
-      <button class="button" onclick="randomRace()">Random</button>
-    </div>
     <!-- Background Selection -->
     <div>
       <label for="background-select">Former Job:</label>
@@ -166,10 +186,35 @@
       <label>Ability Scores:</label><br/>
       <button class="button" onclick="rollAbilityScores()">Roll (4d6 drop lowest)</button>
       <button class="button" onclick="standardArray()">Standard Array (15,14,13,12,10,8)</button>
+      <button class="button" onclick="showManualEntry()">Manual Entry</button>
       <div id="abilities-display" style="margin-top:0.5rem;"></div>
+      <div id="manual-entry" style="display:none; margin-top:0.5rem;">
+        <div style="display: inline-block; text-align: left;">
+          <label style="width:40px;">STR:</label><input type="number" id="manual-str" min="3" max="20" value="10" style="width:50px;"/><br/>
+          <label style="width:40px;">DEX:</label><input type="number" id="manual-dex" min="3" max="20" value="10" style="width:50px;"/><br/>
+          <label style="width:40px;">CON:</label><input type="number" id="manual-con" min="3" max="20" value="10" style="width:50px;"/><br/>
+          <label style="width:40px;">INT:</label><input type="number" id="manual-int" min="3" max="20" value="10" style="width:50px;"/><br/>
+          <label style="width:40px;">WIS:</label><input type="number" id="manual-wis" min="3" max="20" value="10" style="width:50px;"/><br/>
+          <label style="width:40px;">CHA:</label><input type="number" id="manual-cha" min="3" max="20" value="10" style="width:50px;"/><br/>
+        </div>
+        <button class="button" onclick="applyManualScores()">Apply Scores</button>
+      </div>
     </div>
+
+    <!-- Human Features (Optional) -->
+    <div style="margin-top:1rem; text-align:left; display:inline-block;">
+      <strong>Human Features (Optional):</strong><br/>
+      <div id="human-features-container"></div>
+    </div>
+
+    <!-- Isekai Traits (Optional) -->
+    <div style="margin-top:1rem; text-align:left; display:inline-block;">
+      <strong>Isekai Traits (Optional - for Level 0/0.5):</strong><br/>
+      <div id="isekai-traits-container" style="max-height: 300px; overflow-y: auto; padding-right: 10px;"></div>
+    </div>
+
     <!-- Generate Character & Full Random -->
-    <div>
+    <div style="margin-top:1rem;">
       <button class="button" onclick="generateCharacter()">Generate Character</button>
       <button class="button" onclick="fullRandom()">Full Random</button>
     </div>
@@ -179,13 +224,14 @@
   <div id="output" class="output" style="display: none;">
     <h2 id="charName" style="margin-top: 0;"></h2>
     <div class="fancy-divider"></div>
-    <div id="charRace"></div>
+    <div id="charRaceInfo"></div>
     <div id="charBackground"></div>
     <div id="charAbilityScores"></div>
     <div id="charProficiencies"></div>
     <div id="charLanguages"></div>
     <div id="charEquipment"></div>
     <hr/>
+    <div id="charSelectedFeatures" style="margin-top:1rem;"></div>
     <div id="charTraits" style="margin-top:1rem;"></div>
   </div>
 
@@ -214,41 +260,101 @@
 <script>
   // ---------- Global Arrays and Constants ----------
 
-  // ---------- Races ----------
-  const RACES = [
+  // ---------- Human (Default Race) ----------
+  const HUMAN_DATA = {
+    name: "Human",
+    abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
+    speed: 30,
+    languages: ["Common", "One Extra Language of your choice"]
+  };
+
+  // Optional human features (checkboxes)
+  const HUMAN_FEATURES = [
+    { id: "isekai-protagonist", name: "Isekai Protagonist", desc: "You have vague memories of another world and occasionally reference things no one understands." },
+    { id: "adaptable", name: "Adaptable", desc: "You learn new things quickly. Gain proficiency in one additional skill of your choice." }
+  ];
+
+  // ---------- Isekai Traits (Optional) ----------
+  const ISEKAI_TRAITS = [
     {
-      name: "Human",
-      abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
-      speed: 30,
-      features: [
-        "Isekai Protagonist (you have vague memories of another world)",
-        "Adaptable (you learn new things quickly)"
-      ],
-      languages: ["Common", "One Extra Language of your choice"]
+      id: "middle-managers-eye",
+      name: "Middle Manager's Eye",
+      desc: "You have Advantage on Insight checks when dealing with merchants or nobles. You can accurately estimate the gold value of any mundane item at a glance."
     },
     {
-      name: "Half-Elf",
-      abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 },
-      speed: 30,
-      features: [
-        "Darkvision (60 ft)",
-        "Fey Ancestry (adv. on charm saves)",
-        "Skill Versatility (proficiency in two skills)",
-        "Isekai Protagonist (you have vague memories of another world)"
-      ],
-      languages: ["Common", "Elvish", "One Extra Language"]
+      id: "culinary-nostalgia",
+      name: "Culinary Nostalgia",
+      desc: "During a long rest, you can prepare a meal using 'exotic' techniques (stir-fry, seasoning, actual hygiene). Those who eat it gain Temporary HP equal to your level + your Charisma modifier."
     },
     {
-      name: "Tiefling",
-      abilityScoreBonuses: { CHA: 2, INT: 1 },
-      speed: 30,
-      features: [
-        "Darkvision (60 ft)",
-        "Hellish Resistance (resist fire)",
-        "Infernal Legacy",
-        "Isekai Protagonist (you have vague memories of another world)"
-      ],
-      languages: ["Common", "Infernal"]
+      id: "sanitation-specialist",
+      name: "Sanitation Specialist",
+      desc: "You have Advantage on Saving Throws against Diseases and Poisons. You can spend 1 hour teaching a village basic hygiene to increase their 'Development Level.'"
+    },
+    {
+      id: "button-masher",
+      name: "Button Masher's Reflexes",
+      desc: "Years of gaming have given you supernatural finger dexterity. You have Advantage on Sleight of Hand checks and can perform simple object interactions as a bonus action."
+    },
+    {
+      id: "loot-goblin",
+      name: "Loot Goblin",
+      desc: "You instinctively check every container, body, and suspicious floor tile. You have Advantage on Investigation checks to find hidden items and can carry 50% more weight."
+    },
+    {
+      id: "immovable-object",
+      name: "Immovable Object",
+      desc: "You cannot be moved against your will by any effect that would push, pull, or drag you. Stubborn to a fault, you've simply decided you're not moving."
+    },
+    {
+      id: "quick-save-instincts",
+      name: "Quick-Save Instincts",
+      desc: "You have an uncanny sense for when things are about to go wrong. Once per long rest, when you fail a saving throw, you may reroll it (you must use the new result)."
+    },
+    {
+      id: "meta-gamer",
+      name: "Meta Gamer",
+      desc: "You recognize tropes and patterns. You have Advantage on checks to predict enemy behavior, spot obvious traps, and identify 'that one suspicious NPC.'"
+    },
+    {
+      id: "inventory-tetris",
+      name: "Inventory Tetris Master",
+      desc: "You can fit an improbable amount of items into containers. Your carrying capacity is doubled, and you can retrieve any stored item as a free action."
+    },
+    {
+      id: "respawn-mentality",
+      name: "Respawn Mentality",
+      desc: "You're weirdly calm about mortal danger because part of you still doesn't believe this is real. You are immune to the Frightened condition."
+    },
+    {
+      id: "min-maxer",
+      name: "Min-Maxer's Mind",
+      desc: "You instinctively optimize everything. Once per short rest, you may add your proficiency bonus to a roll you weren't proficient in."
+    },
+    {
+      id: "speedrunner",
+      name: "Speedrunner's Intuition",
+      desc: "You have an eye for shortcuts and exploits. Your movement speed increases by 10 feet, and you have Advantage on checks to find alternate routes."
+    },
+    {
+      id: "rage-quit-resilience",
+      name: "Rage-Quit Resilience",
+      desc: "You've experienced countless frustrating defeats. When you drop to 0 HP, you may use your reaction to stay at 1 HP instead. Once per long rest."
+    },
+    {
+      id: "tutorial-skipper",
+      name: "Tutorial Skipper",
+      desc: "You learn by doing, not listening. You have Advantage on checks to figure out how things work without instruction, but Disadvantage on checks to recall spoken instructions."
+    },
+    {
+      id: "patch-notes-reader",
+      name: "Patch Notes Reader",
+      desc: "You notice when things change. You automatically detect illusions, shapechangers, or anything 'not quite right' within 30 feet (passive Perception applies)."
+    },
+    {
+      id: "grind-mentality",
+      name: "Grind Mentality",
+      desc: "Repetitive tasks don't bore you - they're just farming. You don't suffer exhaustion from performing the same mundane task repeatedly and work 50% faster on repetitive crafting."
     }
   ];
 
@@ -368,12 +474,7 @@
   }
 
 
-  // ---------- Race & Background Randomisers ----------
-  function randomRace() {
-    const randomPick = pickRandom(RACES).name;
-    document.getElementById("race-select").value = randomPick;
-  }
-
+  // ---------- Background Randomiser ----------
   function randomBackground() {
     const randomPick = pickRandom(BACKGROUNDS).name;
     document.getElementById("background-select").value = randomPick;
@@ -400,6 +501,24 @@
       html += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
     });
     container.innerHTML = html;
+  }
+
+  function showManualEntry() {
+    document.getElementById("manual-entry").style.display = "block";
+    document.getElementById("abilities-display").innerHTML = "<em>Enter your scores below:</em>";
+  }
+
+  function applyManualScores() {
+    currentScores = [
+      parseInt(document.getElementById("manual-str").value) || 10,
+      parseInt(document.getElementById("manual-dex").value) || 10,
+      parseInt(document.getElementById("manual-con").value) || 10,
+      parseInt(document.getElementById("manual-int").value) || 10,
+      parseInt(document.getElementById("manual-wis").value) || 10,
+      parseInt(document.getElementById("manual-cha").value) || 10
+    ];
+    document.getElementById("manual-entry").style.display = "none";
+    displayScores();
   }
 
   // ---------- Weapons, Armours, and Proficiencies ----------
@@ -633,10 +752,8 @@
     let lastName = document.getElementById("lastname-input").value.trim() || "";
     const nickname = document.getElementById("nickname-input").value.trim();
 
-    // 2. Race & Background Selection
-    const raceSelected = document.getElementById("race-select").value;
-    const raceData = RACES.find(r => r.name === raceSelected);
-    if (!raceData) { alert("Please select a race."); return; }
+    // 2. Background Selection (Race is always Human)
+    const raceData = HUMAN_DATA;
     const bgSelected = document.getElementById("background-select").value;
     const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
     if (!bgData) { alert("Please select a former job."); return; }
@@ -646,18 +763,31 @@
       firstName += ` "${nickname}"`;
     }
 
-    // 4. Apply Race Ability Score Bonuses
+    // 4. Apply Human Ability Score Bonuses (+1 to all)
     const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
     let finalScores = [...currentScores];
     for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
-      if (ability === "PLUS_TWO_OTHERS") {
-        finalScores[1] += 1; // DEX
-        finalScores[2] += 1; // CON
-      } else {
-        const idx = ABIL_ORDER.indexOf(ability);
-        if (idx !== -1) finalScores[idx] += bonus;
-      }
+      const idx = ABIL_ORDER.indexOf(ability);
+      if (idx !== -1) finalScores[idx] += bonus;
     }
+
+    // 4b. Collect selected Human Features
+    const selectedHumanFeatures = [];
+    HUMAN_FEATURES.forEach(feat => {
+      const checkbox = document.getElementById(`feature-${feat.id}`);
+      if (checkbox && checkbox.checked) {
+        selectedHumanFeatures.push(feat);
+      }
+    });
+
+    // 4c. Collect selected Isekai Traits
+    const selectedIsekaiTraits = [];
+    ISEKAI_TRAITS.forEach(trait => {
+      const checkbox = document.getElementById(`trait-${trait.id}`);
+      if (checkbox && checkbox.checked) {
+        selectedIsekaiTraits.push(trait);
+      }
+    });
 
     // 5. Select Personality Traits
     const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
@@ -684,7 +814,6 @@
 
     // 8. Compile Final Details
     const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
-    const featuresList = raceData.features.length ? raceData.features.map(f => `- ${f}`).join("<br/>") : "None";
     const raceLangs = raceData.languages.join(", ");
 
     // Clone background equipment
@@ -706,11 +835,31 @@
     outputDiv.style.display = "block";
     outputDiv.classList.add("generated");
     document.getElementById("charName").innerHTML = fullNameFinal;
-    document.getElementById("charRace").innerHTML = `
+
+    // Build human features list
+    let humanFeaturesHTML = "";
+    if (selectedHumanFeatures.length > 0) {
+      humanFeaturesHTML = selectedHumanFeatures.map(f => `- <strong>${f.name}:</strong> ${f.desc}`).join("<br/>");
+    } else {
+      humanFeaturesHTML = "<em>None selected</em>";
+    }
+
+    document.getElementById("charRaceInfo").innerHTML = `
       <strong>Race:</strong> ${raceData.name}<br/>
       <em>Speed:</em> ${raceData.speed} ft<br/>
-      <em>Features:</em><br/> ${featuresList}
+      <em>Human Features:</em><br/> ${humanFeaturesHTML}
     `;
+
+    // Build isekai traits section
+    let isekaiTraitsHTML = "";
+    if (selectedIsekaiTraits.length > 0) {
+      isekaiTraitsHTML = `<h3>Isekai Traits</h3><ul>`;
+      selectedIsekaiTraits.forEach(t => {
+        isekaiTraitsHTML += `<li><strong>${t.name}:</strong> ${t.desc}</li>`;
+      });
+      isekaiTraitsHTML += `</ul>`;
+    }
+    document.getElementById("charSelectedFeatures").innerHTML = isekaiTraitsHTML;
 
     // Build background HTML with special bonuses
     let bgHTML = `
@@ -795,16 +944,58 @@
   }
 
   function fullRandom() {
-    randomRace();
     randomBackground();
     rollAbilityScores();
+    // Randomly select some isekai traits (1-3)
+    const traitCount = Math.floor(Math.random() * 3) + 1;
+    const traitIndices = [];
+    while (traitIndices.length < traitCount) {
+      const idx = Math.floor(Math.random() * ISEKAI_TRAITS.length);
+      if (!traitIndices.includes(idx)) traitIndices.push(idx);
+    }
+    // Clear all trait checkboxes first
+    ISEKAI_TRAITS.forEach(t => {
+      const cb = document.getElementById(`trait-${t.id}`);
+      if (cb) cb.checked = false;
+    });
+    // Check the random ones
+    traitIndices.forEach(idx => {
+      const cb = document.getElementById(`trait-${ISEKAI_TRAITS[idx].id}`);
+      if (cb) cb.checked = true;
+    });
     generateCharacter();
   }
 
   // ---------- Initialization ----------
   window.addEventListener("DOMContentLoaded", () => {
-    populateSelect("race-select", RACES.map(r => r.name));
     populateSelect("background-select", BACKGROUNDS.map(b => b.name));
+
+    // Populate Human Features checkboxes
+    const humanFeaturesContainer = document.getElementById("human-features-container");
+    HUMAN_FEATURES.forEach(feat => {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <label style="width:auto; display:inline;">
+          <input type="checkbox" id="feature-${feat.id}" />
+          <strong>${feat.name}:</strong> <small>${feat.desc}</small>
+        </label>
+      `;
+      humanFeaturesContainer.appendChild(div);
+    });
+
+    // Populate Isekai Traits checkboxes
+    const isekaiTraitsContainer = document.getElementById("isekai-traits-container");
+    ISEKAI_TRAITS.forEach(trait => {
+      const div = document.createElement("div");
+      div.style.marginBottom = "0.5rem";
+      div.innerHTML = `
+        <label style="width:auto; display:inline;">
+          <input type="checkbox" id="trait-${trait.id}" />
+          <strong>${trait.name}:</strong> <small>${trait.desc}</small>
+        </label>
+      `;
+      isekaiTraitsContainer.appendChild(div);
+    });
   });
 </script>
 </body>
