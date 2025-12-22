@@ -101,19 +101,21 @@
       #output { position: absolute; left: 0; top: 0; width: 100%; }
     }
     /* Checkbox container styles */
-    #human-features-container, #isekai-traits-container {
+    #features-container {
       background: rgba(75, 0, 130, 0.2);
       padding: 0.75rem;
       border-radius: 5px;
       margin-top: 0.5rem;
       max-width: 600px;
+      max-height: 300px;
+      overflow-y: auto;
     }
-    #human-features-container label, #isekai-traits-container label {
+    #features-container label {
       cursor: pointer;
       display: block;
       margin-bottom: 0.3rem;
     }
-    #human-features-container input[type="checkbox"], #isekai-traits-container input[type="checkbox"] {
+    #features-container input[type="checkbox"] {
       margin-right: 0.5rem;
       cursor: pointer;
     }
@@ -225,11 +227,10 @@
       </div>
     </div>
 
-    <!-- Human Features (Optional) -->
+    <!-- Features (Optional) -->
     <div style="margin-top:1rem; text-align:left; display:inline-block;">
-      <strong>Feats (Optional):</strong><br/>
-      <div id="human-features-container"></div>
-      <div id="isekai-traits-container" style="max-height: 300px; overflow-y: auto; padding-right: 10px;"></div>
+      <strong>Features:</strong><br/>
+      <div id="features-container"></div>
     </div>
 
     <!-- Generate Character & Full Random -->
@@ -1274,21 +1275,21 @@
   window.addEventListener("DOMContentLoaded", () => {
     populateSelect("background-select", BACKGROUNDS.map(b => b.name));
 
-    // Populate Human Features checkboxes
-    const humanFeaturesContainer = document.getElementById("human-features-container");
+    // Populate Features checkboxes (Human Features + Isekai Traits)
+    const featuresContainer = document.getElementById("features-container");
+
     HUMAN_FEATURES.forEach(feat => {
       const div = document.createElement("div");
+      div.style.marginBottom = "0.5rem";
       div.innerHTML = `
         <label style="width:auto; display:inline;">
           <input type="checkbox" id="feature-${feat.id}" />
           <strong>${feat.name}:</strong> <small>${feat.desc}</small>
         </label>
       `;
-      humanFeaturesContainer.appendChild(div);
+      featuresContainer.appendChild(div);
     });
 
-    // Populate Isekai Traits checkboxes
-    const isekaiTraitsContainer = document.getElementById("isekai-traits-container");
     ISEKAI_TRAITS.forEach(trait => {
       const div = document.createElement("div");
       div.style.marginBottom = "0.5rem";
@@ -1298,7 +1299,7 @@
           <strong>${trait.name}:</strong> <small>${trait.desc}</small>
         </label>
       `;
-      isekaiTraitsContainer.appendChild(div);
+      featuresContainer.appendChild(div);
     });
   });
 </script>
