@@ -125,9 +125,17 @@
   <div id="creation-form">
     <!-- Character Name -->
     <div>
-      <label for="name-input">Name:</label>
-      <input type="text" id="name-input" placeholder="Enter or randomise" />
-      <button class="button" onclick="randomName()">Random</button>
+      <label for="firstname-input">First Name:</label>
+      <input type="text" id="firstname-input" placeholder="e.g. Barry" />
+    </div>
+    <div>
+      <label for="lastname-input">Last Name:</label>
+      <input type="text" id="lastname-input" placeholder="e.g. van der Heiden" />
+    </div>
+    <!-- Optional Nickname -->
+    <div>
+      <label for="nickname-input">Nickname:</label>
+      <input type="text" id="nickname-input" placeholder="Optional" />
     </div>
     <!-- Race Selection -->
     <div>
@@ -205,42 +213,6 @@
 
 <script>
   // ---------- Global Arrays and Constants ----------
-  let FIRST_NAMES = [];
-  let LAST_NAMES = [];
-
-  const RAW_NAMES = [
-    // Modern-sounding names for isekai protagonists
-    "Alex Johnson", "Jordan Smith", "Taylor Williams", "Morgan Davis", "Casey Brown",
-    "Riley Wilson", "Jamie Garcia", "Avery Martinez", "Quinn Anderson", "Skyler Thomas",
-    "Drew Jackson", "Reese White", "Parker Harris", "Sage Martin", "Blair Thompson",
-    "Cameron Lee", "Dakota Robinson", "Emery Clark", "Finley Lewis", "Hayden Walker",
-    "Jesse Hall", "Kendall Allen", "Logan Young", "Mason King", "Noah Wright",
-    "Oliver Scott", "Peyton Green", "Reagan Adams", "Sam Baker", "Tyler Nelson",
-    "Chris Evans", "Mike Chen", "Sarah Kim", "Emma Watson", "Jake Miller",
-    "Ryan Cooper", "Ashley Reed", "Brandon Cruz", "Nicole Bell", "Kevin Park",
-    "Jennifer Ross", "David Lin", "Amanda Price", "Brian Wood", "Stephanie Barnes",
-    "Jason Torres", "Michelle Gray", "Eric Hughes", "Rachel Flores", "Justin Rivera"
-  ];
-
-  // Parse each RAW_NAMES entry into FIRST_NAMES and LAST_NAMES
-  function parseName(fullName) {
-    const trimmed = fullName.trim();
-    if (!trimmed) return null;
-    const parts = trimmed.split(/\s+/);
-    if (parts.length === 1) {
-      return { first: parts[0].replace(/"/g, ""), last: "" };
-    } else {
-      return { first: parts[0].replace(/"/g, ""), last: parts[parts.length - 1].replace(/"/g, "") };
-    }
-  }
-
-  RAW_NAMES.forEach(entry => {
-    const parsed = parseName(entry);
-    if (parsed) {
-      if (parsed.first) FIRST_NAMES.push(parsed.first);
-      if (parsed.last) LAST_NAMES.push(parsed.last);
-    }
-  });
 
   // ---------- Races ----------
   const RACES = [
@@ -296,7 +268,6 @@
       ],
       feature: "Master Builder",
       featureDesc: "Your knowledge of construction, plumbing, and HVAC systems from another world gives you an intuitive understanding of structures. You can assess building integrity at a glance, jury-rig heating/cooling solutions using available materials, and instinctively understand air flow and insulation. You have advantage on checks to repair or sabotage structures.",
-      nicknames: ["HVAC", "Pipes", "Foreman", "Blueprint", "Thermostat"],
       bonuses: {
         description: "Climate Control Expert: You can create basic heating or cooling solutions with 1 hour of work and appropriate materials, providing comfort in extreme temperatures.",
         survivalBonus: true
@@ -307,7 +278,7 @@
       skillProficiencies: ["Persuasion", "Insight", "Performance"],
       languages: [],
       equipment: [
-        "Serving apron with mysterious logo",
+        "Faded hoodie with mysterious logo",
         "Notebook of complaints and requests",
         "Stress ball (strange squeezable orb)",
         "Name tag that says 'TRAINEE'",
@@ -316,7 +287,6 @@
       ],
       feature: "Unshakeable Composure",
       featureDesc: "Years of dealing with impossible customers have forged your soul into unbreakable steel. You have advantage on Wisdom saving throws against being frightened, charmed, or intimidated. When someone attempts to provoke you, you may choose to respond with aggressive corporate politeness, imposing disadvantage on their next Charisma check.",
-      nicknames: ["Smile", "Sorry", "Manager", "Retail", "Karen-Slayer"],
       bonuses: {
         description: "Dead Inside (in a good way): You are immune to the frightened condition caused by creatures of CR 1 or lower. You've seen worse.",
         wisdomSaveBonus: 2
@@ -397,16 +367,6 @@
     return Math.floor((score - 10) / 2);
   }
 
-  // ---------- Name Handling ----------
-  function randomName() {
-    if (FIRST_NAMES.length === 0 || LAST_NAMES.length === 0) {
-      document.getElementById("name-input").value = "Nameless Soul";
-      return;
-    }
-    const first = pickRandom(FIRST_NAMES);
-    const last = pickRandom(LAST_NAMES);
-    document.getElementById("name-input").value = first + " " + last;
-  }
 
   // ---------- Race & Background Randomisers ----------
   function randomRace() {
@@ -540,23 +500,11 @@
   }
 
   // ---------- Character Generation ----------
-  function parseUserName(fullInput) {
-    const parts = fullInput.trim().split(/\s+/);
-    let firstName = "";
-    let lastName = "";
-    if (parts.length === 1) {
-      firstName = parts[0];
-    } else {
-      firstName = parts[0];
-      lastName = parts[parts.length - 1];
-    }
-    return { firstName, lastName };
-  }
-
   function generateCharacter() {
     // 1. Read Name
-    const rawName = document.getElementById("name-input").value.trim() || "Unnamed Hero";
-    let { firstName, lastName } = parseUserName(rawName);
+    let firstName = document.getElementById("firstname-input").value.trim() || "Unnamed";
+    let lastName = document.getElementById("lastname-input").value.trim() || "";
+    const nickname = document.getElementById("nickname-input").value.trim();
 
     // 2. Race & Background Selection
     const raceSelected = document.getElementById("race-select").value;
@@ -566,10 +514,9 @@
     const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
     if (!bgData) { alert("Please select a former job."); return; }
 
-    // 3. Possibly add a Nickname
-    if (bgData.nicknames && bgData.nicknames.length > 0 && Math.random() < 0.3) {
-      const nick = pickRandom(bgData.nicknames);
-      firstName += ` "${nick}"`;
+    // 3. Add nickname if provided
+    if (nickname) {
+      firstName += ` "${nickname}"`;
     }
 
     // 4. Apply Race Ability Score Bonuses
@@ -703,7 +650,6 @@
   }
 
   function fullRandom() {
-    randomName();
     randomRace();
     randomBackground();
     rollAbilityScores();
