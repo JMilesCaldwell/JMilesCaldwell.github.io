@@ -1122,6 +1122,16 @@
     }
   };
   
+  // Skills grouped by ability score
+  const SKILLS_BY_ABILITY = {
+    STR: ["Athletics"],
+    DEX: ["Acrobatics", "Sleight of Hand", "Stealth"],
+    CON: [],
+    INT: ["Arcana", "History", "Investigation", "Nature", "Religion"],
+    WIS: ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
+    CHA: ["Deception", "Intimidation", "Performance", "Persuasion"]
+  };
+
   const ARMORS = [
     { name: "No Armour",       baseAC: 10, dexCap: null },
     { name: "Padded Armour",   baseAC: 11, dexCap: null },
@@ -1311,7 +1321,14 @@
     
     const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
     const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
-    
+
+    // Collect all proficient skills (background + race features)
+    let allProficientSkills = bgData.skillProficiencies ? [...bgData.skillProficiencies] : [];
+    // Check for race-granted skill proficiencies
+    if (raceData.name === "Elf") {
+      allProficientSkills.push("Perception"); // Keen Senses
+    }
+
     // Output the generated character
     const outputDiv = document.getElementById("output");
     outputDiv.style.display = "block";
@@ -1328,7 +1345,7 @@
       <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
       <small>${bgData.featureDesc}</small>
     `;
-    document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores);
+    document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores, allProficientSkills, profBonus);
     document.getElementById("charProficiencies").innerHTML = `
       <strong>Proficiencies (From BG, at Level ${levelChoice}):</strong><br/>
       Weapon Category: ${BACKGROUND_PROFICIENCIES[bgData.name] || "None"}<br/>
@@ -1363,13 +1380,27 @@
     document.getElementById("printButton").style.display = "inline-block";
   }
   
-  function formatAbilityScores(scoresArr) {
+  function formatAbilityScores(scoresArr, proficientSkills = [], profBonus = 0) {
     const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
-    let out = "<strong>Ability Scores:</strong><br/>";
+    let out = "<strong>Ability Scores & Skills:</strong><br/><div style='text-align: left; display: inline-block;'>";
     scoresArr.forEach((sc, i) => {
+      const abil = labels[i];
       const mod = abilityMod(sc);
-      out += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
+      const modStr = (mod >= 0 ? "+" : "") + mod;
+      out += `<strong>${abil}: ${sc}</strong> (${modStr})<br/>`;
+
+      const skills = SKILLS_BY_ABILITY[abil];
+      if (skills && skills.length > 0) {
+        skills.forEach(skill => {
+          const isProficient = proficientSkills.includes(skill);
+          const skillMod = mod + (isProficient ? profBonus : 0);
+          const skillModStr = (skillMod >= 0 ? "+" : "") + skillMod;
+          const checkbox = isProficient ? "☑" : "☐";
+          out += `&nbsp;&nbsp;${checkbox} ${skill} (${skillModStr})<br/>`;
+        });
+      }
     });
+    out += "</div>";
     return out;
   }
   

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Isekai Generator</title>
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <!-- GOOGLE FONTS -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    /* BASIC STYLES */
+    body {
+      margin: 0;
+      background: url('resources/commoner.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #FAF4E0;
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    h1, h2, h3 {
+      font-family: 'Cinzel', serif;
+      margin-bottom: 0.5rem;
+    }
+    .fancy-divider {
+      margin: 0.25rem 0 1rem;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .fancy-divider::after {
+      content: "✦ ✧ ✦";
+      color: #4B0082;
+      letter-spacing: 0.5rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 10px;
+    }
+    label {
+      display: inline-block;
+      width: 150px;
+      margin-right: 8px;
+      font-weight: bold;
+    }
+    select, input[type="text"], input[type="number"] {
+      margin-bottom: 1rem;
+      padding: 0.2rem;
+      font-size: 1rem;
+      background-color: #fff9ed;
+      color: #333;
+      border: 1px solid #999;
+      font-family: 'Almendra', serif;
+    }
+    .button {
+      background-color: #4B0082;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      font-family: 'Cinzel', serif;
+    }
+    .button:hover {
+      background-color: #2E0854;
+    }
+    .output {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #aaa;
+      background-color: #fff5e6;
+      color: #333;
+    }
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #666;
+      font-family: 'Almendra', serif;
+    }
+    .isekai-note {
+      background: rgba(75, 0, 130, 0.3);
+      border: 1px dashed #9370DB;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 5px;
+    }
+    /* Hide print button until a character is generated */
+    #printButton {
+      display: none;
+    }
+    @media print {
+      body * { visibility: hidden !important; }
+      #output, #output * { visibility: visible !important; }
+      #output { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Isekai Generator</h1>
+  <div class="fancy-divider"></div>
+
+  <!-- HOME BUTTON -->
+  <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/index.html'">
+    Home
+  </button>
+
+  <div class="isekai-note">
+    <p>
+      <em>"You were just an ordinary person from the modern world... until a truck-kun sent you to a fantasy realm."</em>
+    </p>
+    <p>
+      Generate a character with real-world job skills transplanted into a medieval fantasy setting.
+    </p>
+  </div>
+
+  <!-- CHARACTER CREATION FORM -->
+  <div id="creation-form">
+    <!-- Character Name -->
+    <div>
+      <label for="firstname-input">First Name:</label>
+      <input type="text" id="firstname-input" placeholder="e.g. Barry" />
+    </div>
+    <div>
+      <label for="lastname-input">Last Name:</label>
+      <input type="text" id="lastname-input" placeholder="e.g. van der Heiden" />
+    </div>
+    <!-- Optional Nickname -->
+    <div>
+      <label for="nickname-input">Nickname:</label>
+      <input type="text" id="nickname-input" placeholder="Optional" />
+    </div>
+    <!-- Race Selection -->
+    <div>
+      <label for="race-select">Race:</label>
+      <select id="race-select">
+        <option value="">-- Choose --</option>
+      </select>
+      <button class="button" onclick="randomRace()">Random</button>
+    </div>
+    <!-- Background Selection -->
+    <div>
+      <label for="background-select">Former Job:</label>
+      <select id="background-select">
+        <option value="">-- Choose --</option>
+      </select>
+      <button class="button" onclick="randomBackground()">Random</button>
+    </div>
+    <!-- Level Selection -->
+    <div>
+      <label for="level-select">Level:</label>
+      <select id="level-select">
+        <option value="0">0 (Just Arrived)</option>
+        <option value="0.5">0.5 (Adapting)</option>
+      </select>
+    </div>
+    <!-- Ability Scores -->
+    <div>
+      <label>Ability Scores:</label><br/>
+      <button class="button" onclick="rollAbilityScores()">Roll (4d6 drop lowest)</button>
+      <button class="button" onclick="standardArray()">Standard Array (15,14,13,12,10,8)</button>
+      <div id="abilities-display" style="margin-top:0.5rem;"></div>
+    </div>
+    <!-- Generate Character & Full Random -->
+    <div>
+      <button class="button" onclick="generateCharacter()">Generate Character</button>
+      <button class="button" onclick="fullRandom()">Full Random</button>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div id="output" class="output" style="display: none;">
+    <h2 id="charName" style="margin-top: 0;"></h2>
+    <div class="fancy-divider"></div>
+    <div id="charRace"></div>
+    <div id="charBackground"></div>
+    <div id="charAbilityScores"></div>
+    <div id="charProficiencies"></div>
+    <div id="charLanguages"></div>
+    <div id="charEquipment"></div>
+    <hr/>
+    <div id="charTraits" style="margin-top:1rem;"></div>
+  </div>
+
+  <!-- PRINT BUTTON -->
+  <button class="button" id="printButton" onclick="window.print()">Print</button>
+
+  <!-- OGL NOTICE -->
+  <div class="footer">
+    <h3>Open Game License</h3>
+    <p>
+      This work includes material taken from the 5e System Reference Document (SRD),
+      © 2016, Wizards of the Coast, Inc. and is covered by the
+      <strong>Open Game License, Version 1.0a</strong>.
+      <br/><br/>
+      <em>
+      OPEN GAME LICENSE Version 1.0a<br>
+      The following text is the property of Wizards of the Coast, Inc. and is Copyright
+      2000 Wizards of the Coast, Inc ("Wizards"). All Rights Reserved.<br>
+      1. Definitions: (a)"Contributors" means the copyright...
+      <a href="https://media.wizards.com/2016/downloads/DND/SRD-OGL_V5.1.pdf" target="_blank">Read the full license</a>.
+      </em>
+    </p>
+  </div>
+</div>
+
+<script>
+  // ---------- Global Arrays and Constants ----------
+
+  // ---------- Races ----------
+  const RACES = [
+    {
+      name: "Human",
+      abilityScoreBonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
+      speed: 30,
+      features: [
+        "Isekai Protagonist (you have vague memories of another world)",
+        "Adaptable (you learn new things quickly)"
+      ],
+      languages: ["Common", "One Extra Language of your choice"]
+    },
+    {
+      name: "Half-Elf",
+      abilityScoreBonuses: { CHA: 2, PLUS_TWO_OTHERS: 1 },
+      speed: 30,
+      features: [
+        "Darkvision (60 ft)",
+        "Fey Ancestry (adv. on charm saves)",
+        "Skill Versatility (proficiency in two skills)",
+        "Isekai Protagonist (you have vague memories of another world)"
+      ],
+      languages: ["Common", "Elvish", "One Extra Language"]
+    },
+    {
+      name: "Tiefling",
+      abilityScoreBonuses: { CHA: 2, INT: 1 },
+      speed: 30,
+      features: [
+        "Darkvision (60 ft)",
+        "Hellish Resistance (resist fire)",
+        "Infernal Legacy",
+        "Isekai Protagonist (you have vague memories of another world)"
+      ],
+      languages: ["Common", "Infernal"]
+    }
+  ];
+
+  // ---------- Backgrounds (Isekai Jobs) ----------
+  const BACKGROUNDS = [
+    {
+      name: "Contractor",
+      skillProficiencies: ["Athletics", "Investigation", "Survival"],
+      languages: [],
+      equipment: [
+        "Carpenter's tools",
+        "Coil of measuring rope",
+        "Worn leather tool belt",
+        "Strange rectangular device that no longer works (smartphone)",
+        "Set of sturdy work clothes",
+        "Belt pouch containing 12 gp"
+      ],
+      feature: "Master Builder",
+      featureDesc: "Your knowledge of construction, plumbing, and HVAC systems from another world gives you an intuitive understanding of structures. You can assess building integrity at a glance, jury-rig heating/cooling solutions using available materials, and instinctively understand air flow and insulation. You have advantage on checks to repair or sabotage structures.",
+      bonuses: {
+        description: "Climate Control Expert: You can create basic heating or cooling solutions with 1 hour of work and appropriate materials, providing comfort in extreme temperatures.",
+        survivalBonus: true
+      }
+    },
+    {
+      name: "Customer Service Worker",
+      skillProficiencies: ["Persuasion", "Insight", "Performance"],
+      languages: [],
+      equipment: [
+        "Faded hoodie with mysterious logo",
+        "Notebook of complaints and requests",
+        "Stress ball (strange squeezable orb)",
+        "Name tag that says 'TRAINEE'",
+        "Set of common clothes",
+        "Belt pouch containing 6 gp"
+      ],
+      feature: "Unshakeable Composure",
+      featureDesc: "Years of dealing with impossible customers have forged your soul into unbreakable steel. You have advantage on Wisdom saving throws against being frightened, charmed, or intimidated. When someone attempts to provoke you, you may choose to respond with aggressive corporate politeness, imposing disadvantage on their next Charisma check.",
+      bonuses: {
+        description: "Dead Inside (in a good way): You are immune to the frightened condition caused by creatures of CR 1 or lower. You've seen worse.",
+        wisdomSaveBonus: 2
+      }
+    }
+  ];
+
+  const PERSONALITY_TRAITS = [
+    "I constantly compare everything to how it was 'back home' and find this world lacking.",
+    "I'm convinced I'm the protagonist of some grand story and act accordingly.",
+    "I miss modern conveniences terribly and complain about the lack of indoor plumbing.",
+    "I try to introduce concepts from my world, usually with disastrous results.",
+    "I'm surprisingly calm about being in another world - it's better than my old job anyway.",
+    "I keep expecting to find a 'system' or 'status screen' and am disappointed it hasn't appeared.",
+    "I've accepted my fate and am determined to make the best of this new life.",
+    "I'm convinced there must be a way back and obsessively search for it.",
+    "I treat dangerous situations like customer complaints - with forced cheerfulness.",
+    "I have an uncanny ability to stay calm that unnerves people around me.",
+    "I unconsciously use phrases and references no one in this world understands.",
+    "I'm weirdly overqualified for simple tasks but hilariously underqualified for combat.",
+    "I keep trying to explain 'health and safety regulations' to adventurers.",
+    "I miss coffee more than anything and will do almost anything for a similar stimulant.",
+    "I have oddly specific knowledge that occasionally proves incredibly useful.",
+    "I treat every problem like a work assignment and try to find the most efficient solution.",
+    "I'm used to being underappreciated and am shocked when people thank me sincerely.",
+    "I instinctively try to find the manager when things go wrong.",
+    "I have a thousand-yard stare that comes from years of customer service.",
+    "I'm far too comfortable with chaos and dysfunction - this world feels familiar.",
+    "I keep a mental tally of complaints I'd file if HR existed here.",
+    "I default to customer service voice when stressed, which confuses everyone.",
+    "I have unreasonably good conflict resolution skills from my previous career.",
+    "I treat nobility like difficult customers and am somehow still alive."
+  ];
+
+  // ---------- Utility Functions ----------
+  function populateSelect(selectId, optionsArray) {
+    const selectElem = document.getElementById(selectId);
+    optionsArray.forEach(opt => {
+      const optionEl = document.createElement("option");
+      optionEl.value = opt;
+      optionEl.innerText = opt;
+      selectElem.appendChild(optionEl);
+    });
+  }
+
+  function pickRandom(array) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  function pickMultipleDistinct(array, count) {
+    const copy = [...array];
+    const result = [];
+    if (count > copy.length) count = copy.length;
+    for (let i = 0; i < count; i++) {
+      const index = Math.floor(Math.random() * copy.length);
+      result.push(copy[index]);
+      copy.splice(index, 1);
+    }
+    return result;
+  }
+
+  function roll4d6DropLowest() {
+    let scores = [];
+    for (let i = 0; i < 6; i++) {
+      let rolls = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 6) + 1);
+      rolls.sort((a, b) => a - b);
+      rolls.shift(); // drop lowest
+      scores.push(rolls.reduce((acc, val) => acc + val, 0));
+    }
+    return scores;
+  }
+
+  function getStandardArray() {
+    return [15, 14, 13, 12, 10, 8];
+  }
+
+  function abilityMod(score) {
+    return Math.floor((score - 10) / 2);
+  }
+
+
+  // ---------- Race & Background Randomisers ----------
+  function randomRace() {
+    const randomPick = pickRandom(RACES).name;
+    document.getElementById("race-select").value = randomPick;
+  }
+
+  function randomBackground() {
+    const randomPick = pickRandom(BACKGROUNDS).name;
+    document.getElementById("background-select").value = randomPick;
+  }
+
+  // ---------- Ability Score Handlers ----------
+  let currentScores = [10, 10, 10, 10, 10, 10]; // default
+  function rollAbilityScores() {
+    currentScores = roll4d6DropLowest();
+    displayScores();
+  }
+
+  function standardArray() {
+    currentScores = getStandardArray();
+    displayScores();
+  }
+
+  function displayScores() {
+    const container = document.getElementById("abilities-display");
+    const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    let html = "";
+    currentScores.forEach((sc, i) => {
+      const mod = abilityMod(sc);
+      html += `${labels[i]}: <strong>${sc}</strong> (${mod >= 0 ? "+" : ""}${mod})<br/>`;
+    });
+    container.innerHTML = html;
+  }
+
+  // ---------- Weapons, Armours, and Proficiencies ----------
+  const SIMPLE_WEAPONS = ["Club", "Dagger", "Handaxe", "Spear"];
+  const IMPROVISED_WEAPON = "Improvised (like a club)";
+
+  const WEAPON_DATA = {
+    "Club":             { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
+    "Dagger":           { damageDie: "1d4", damageType: "piercing",    finesse: true,  ranged: false },
+    "Handaxe":          { damageDie: "1d6", damageType: "slashing",    finesse: false, ranged: false },
+    "Spear":            { damageDie: "1d6", damageType: "piercing",    finesse: false, ranged: false },
+    "Improvised (like a club)": { damageDie: "1d4", damageType: "bludgeoning", finesse: false, ranged: false },
+    "Pipe Wrench": { damageDie: "1d6", damageType: "bludgeoning", finesse: false, ranged: false },
+    "Box Cutter": { damageDie: "1d4", damageType: "slashing", finesse: true, ranged: false }
+  };
+
+  // Skills grouped by ability score
+  const SKILLS_BY_ABILITY = {
+    STR: ["Athletics"],
+    DEX: ["Acrobatics", "Sleight of Hand", "Stealth"],
+    CON: [],
+    INT: ["Arcana", "History", "Investigation", "Nature", "Religion"],
+    WIS: ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"],
+    CHA: ["Deception", "Intimidation", "Performance", "Persuasion"]
+  };
+
+  // Modern clothing layers - each piece adds to AC
+  const MODERN_PANTS = [
+    { name: "Cargo pants (lots of pockets)", acBonus: 1 },
+    { name: "Sturdy work jeans", acBonus: 1 },
+    { name: "Khakis with reinforced knees", acBonus: 1 },
+    { name: "Tactical pants", acBonus: 1 },
+    { name: "Worn-in Dickies", acBonus: 1 },
+    { name: "Faded black jeans", acBonus: 1 },
+    { name: "Carpenter pants with tool loops", acBonus: 1 },
+    { name: "Weathered chinos", acBonus: 1 }
+  ];
+
+  const MODERN_SHIRTS = [
+    { name: "Thick flannel shirt", acBonus: 1 },
+    { name: "Durable work polo", acBonus: 1 },
+    { name: "Long-sleeve henley", acBonus: 1 },
+    { name: "Button-down oxford shirt", acBonus: 1 },
+    { name: "Faded metal band t-shirt (illegible logo)", acBonus: 1 },
+    { name: "Vintage Metallica shirt", acBonus: 1 },
+    { name: "Black Sabbath tour shirt (1978)", acBonus: 1 },
+    { name: "Slayer shirt that's seen better days", acBonus: 1 },
+    { name: "Novelty shirt ('I'm not arguing, I'm explaining')", acBonus: 1 },
+    { name: "Shirt that says 'I survived [illegible] 5K'", acBonus: 1 },
+    { name: "Ironic graphic tee (wolves howling at moon)", acBonus: 1 },
+    { name: "Company softball team shirt", acBonus: 1 },
+    { name: "Plain black t-shirt", acBonus: 1 },
+    { name: "Thermal undershirt", acBonus: 1 }
+  ];
+
+  const MODERN_SWEATERS = [
+    { name: "Heavy knit sweater", acBonus: 1 },
+    { name: "Faded company hoodie", acBonus: 1 },
+    { name: "Thermal fleece pullover", acBonus: 1 },
+    { name: "Worn zip-up sweatshirt", acBonus: 1 },
+    { name: "Oversized college hoodie", acBonus: 1 },
+    { name: "Quarter-zip fleece", acBonus: 1 },
+    { name: "Ratty old cardigan", acBonus: 1 },
+    { name: "Hoodie with thumb holes in sleeves", acBonus: 1 },
+    { name: "Pullover with company logo", acBonus: 1 },
+    { name: "Waffle-knit thermal", acBonus: 1 }
+  ];
+
+  const MODERN_JACKETS = [
+    { name: "Carhartt work jacket", acBonus: 1 },
+    { name: "Bomber jacket", acBonus: 1 },
+    { name: "Leather jacket (well-worn)", acBonus: 1 },
+    { name: "Black leather biker jacket", acBonus: 1 },
+    { name: "Hardshell rain jacket", acBonus: 1 },
+    { name: "Insulated puffer jacket", acBonus: 1 },
+    { name: "High-vis safety vest over jacket", acBonus: 1 },
+    { name: "Lined denim jacket", acBonus: 1 },
+    { name: "Fleece-lined flannel jacket", acBonus: 1 },
+    { name: "Windbreaker with broken zipper", acBonus: 1 },
+    { name: "Canvas chore coat", acBonus: 1 },
+    { name: "Quilted vest over long sleeves", acBonus: 1 }
+  ];
+
+  const MODERN_UNDERWEAR = [
+    { name: "Boxers (cartoon print)", acBonus: 0 },
+    { name: "Plain boxer briefs", acBonus: 0 },
+    { name: "Tighty whities (classic)", acBonus: 0 },
+    { name: "Novelty boxers (pizza pattern)", acBonus: 0 },
+    { name: "Worn-out briefs", acBonus: 0 },
+    { name: "Athletic compression shorts", acBonus: 0 },
+    { name: "Boxers with holes (but clean!)", acBonus: 0 },
+    { name: "Christmas boxers (it's not Christmas)", acBonus: 0 },
+    { name: "Going commando", acBonus: 0 },
+    { name: "Commando (bold choice)", acBonus: 0 },
+    { name: "Long underwear (thermal)", acBonus: 0 },
+    { name: "Lucky underwear (questionable)", acBonus: 0 }
+  ];
+
+  const MODERN_SHOES = [
+    { name: "Steel-toe work boots", acBonus: 1 },
+    { name: "Worn-in army boots", acBonus: 1 },
+    { name: "Leather boots (scuffed)", acBonus: 1 },
+    { name: "Timberlands (classic wheat)", acBonus: 1 },
+    { name: "Red Wing work boots", acBonus: 1 },
+    { name: "Hiking boots (muddy)", acBonus: 1 },
+    { name: "Beat-up sneakers", acBonus: 1 },
+    { name: "White sneakers (not white anymore)", acBonus: 1 },
+    { name: "Black Converse All-Stars", acBonus: 1 },
+    { name: "High-top Vans", acBonus: 1 },
+    { name: "Running shoes (never ran)", acBonus: 1 },
+    { name: "Slip-on Vans", acBonus: 1 },
+    { name: "New Balance dad shoes", acBonus: 1 },
+    { name: "Sandals with socks", acBonus: 1 },
+    { name: "Birkenstock sandals", acBonus: 1 },
+    { name: "Crocs (unironically)", acBonus: 1 },
+    { name: "Chelsea boots", acBonus: 1 },
+    { name: "Doc Martens (broken in)", acBonus: 1 }
+  ];
+
+  const BACKGROUND_WEAPONS = {
+    "Contractor": ["Pipe Wrench", "Handaxe", IMPROVISED_WEAPON],
+    "Customer Service Worker": ["Box Cutter", IMPROVISED_WEAPON]
+  };
+
+  const BACKGROUND_PROFICIENCIES = {
+    "Contractor": "simple",
+    "Customer Service Worker": "simple"
+  };
+
+  // Pocket dump items - random stuff found in pockets
+  const POCKET_DUMP_ITEMS = [
+    // Tech & electronics
+    "Dead smartphone (cracked screen)", "Smartphone (2% battery, no signal)", "Tangled earbuds (one side works)",
+    "USB drive with 'IMPORTANT' label", "Fitbit (stopped counting steps)", "Broken smartwatch",
+    "Old flip phone (somehow still works)", "Charging cable (wrong type)", "Wireless earbud (just one)",
+
+    // Wallet contents
+    "Leather wallet (mostly empty)", "Velcro wallet (don't judge)", "Money clip with foreign currency",
+    "Maxed-out credit card", "Expired driver's license", "Library card (3 years overdue)",
+    "Gym membership card (never used)", "Loyalty card (2 stamps from free coffee)", "Old concert ticket stub",
+    "Crumpled $20 bill", "Handful of foreign coins", "Gift card with $0.37 remaining",
+
+    // Keys & accessories
+    "Keychain with too many keys", "Car keys (no car in this world)", "House keys (no house either)",
+    "Bottle opener keychain", "Mini flashlight (dead batteries)", "Carabiner with random keys",
+    "Lanyard with work ID badge", "Keychain Swiss army knife", "Apartment fob (useless now)",
+
+    // Lighters & smoking
+    "Bic lighter (almost empty)", "Zippo lighter (out of fluid)", "Book of matches (damp)",
+    "Vape pen (dead battery)", "Pack of gum (last piece)", "Tin of mints (mostly empty)",
+
+    // Receipts & paper
+    "Crumpled receipt (illegible)", "Grocery list from last week", "Parking ticket (unpaid)",
+    "Post-it note with cryptic reminder", "Business card from someone you forgot", "Lottery ticket (not checked)",
+    "Folded napkin with phone number", "Movie ticket stub", "Faded photograph",
+
+    // Food & snacks
+    "Leftover sandwich (questionable)", "Half-eaten granola bar", "Pocket full of crumbs",
+    "Squished protein bar", "Emergency candy bar", "Bag of trail mix (just raisins left)",
+    "Stale crackers in wrapper", "Melted chocolate (in wrapper, hopefully)", "Cold coffee in travel mug",
+
+    // Personal items
+    "Condom (expired)", "Chapstick (almost empty)", "Hand sanitizer (sticky)",
+    "Crumpled tissues", "Hair tie (stretched out)", "Bobby pins (bent)",
+    "Nail clippers", "Eye drops (expired)", "Ibuprofen (loose in pocket)",
+    "Cough drops (lint-covered)", "Bandaids (old)", "Floss pick (used? unclear)",
+
+    // Random objects
+    "Pocket lint (impressive amount)", "Mystery key", "Rubber band ball",
+    "Pen that doesn't work", "Sharpie (dried out)", "Tape measure (retractable)",
+    "Random bolt (from what?)", "Button (origin unknown)", "Paper clip chain",
+    "Fidget spinner (broken bearing)", "Stress ball (punctured)", "Lucky rock",
+    "D20 die", "Guitar pick", "Bottle cap collection",
+
+    // Work-related
+    "Name tag ('TRAINEE')", "Punch card (halfway full)", "Break room schedule",
+    "Safety glasses (scratched)", "Work gloves (hole in thumb)", "Pen from the bank",
+    "Sticky notes (blank)", "Retractable badge holder", "Earplugs (foam, used)"
+  ];
+
+  function getRandomPocketDump(count = 3) {
+    return pickMultipleDistinct(POCKET_DUMP_ITEMS, count);
+  }
+
+  // ---------- Weapon & Armour Calculations ----------
+  function isProficientInWeapon(weaponName, backgroundName) {
+    const cat = BACKGROUND_PROFICIENCIES[backgroundName];
+    if (!cat) return false;
+    if (SIMPLE_WEAPONS.includes(weaponName)) return (cat === "simple" || cat === "martial");
+    // Pipe wrench and box cutter count as simple for proficiency
+    if (weaponName === "Pipe Wrench" || weaponName === "Box Cutter") return true;
+    return false;
+  }
+
+  function getRandomWeaponForBackground(bgName) {
+    let weaponsArray = BACKGROUND_WEAPONS[bgName];
+    if (!weaponsArray) weaponsArray = ["Club", "Dagger", IMPROVISED_WEAPON];
+    return pickRandom(weaponsArray);
+  }
+
+  function computeArmourClass(armour, dexMod) {
+    const effectiveDex = (armour.dexCap !== null) ? Math.min(dexMod, armour.dexCap) : dexMod;
+    return armour.baseAC + (effectiveDex > 0 ? effectiveDex : 0);
+  }
+
+  function computeWeaponStats(weaponName, scores, isProficient, profBonus) {
+    const data = WEAPON_DATA[weaponName];
+    if (!data) return null;
+    const strMod = abilityMod(scores[0]);
+    const dexMod = abilityMod(scores[1]);
+    let usedMod = strMod;
+    if (data.ranged) {
+      usedMod = dexMod;
+    } else if (data.finesse) {
+      usedMod = Math.max(strMod, dexMod);
+    }
+    const attackBonus = usedMod + (isProficient ? profBonus : 0);
+    return {
+      name: weaponName,
+      damageDie: data.damageDie,
+      damageType: data.damageType,
+      attackBonus: attackBonus,
+      abilityMod: usedMod
+    };
+  }
+
+  // ---------- Character Generation ----------
+  function generateCharacter() {
+    // 1. Read Name
+    let firstName = document.getElementById("firstname-input").value.trim() || "Unnamed";
+    let lastName = document.getElementById("lastname-input").value.trim() || "";
+    const nickname = document.getElementById("nickname-input").value.trim();
+
+    // 2. Race & Background Selection
+    const raceSelected = document.getElementById("race-select").value;
+    const raceData = RACES.find(r => r.name === raceSelected);
+    if (!raceData) { alert("Please select a race."); return; }
+    const bgSelected = document.getElementById("background-select").value;
+    const bgData = BACKGROUNDS.find(b => b.name === bgSelected);
+    if (!bgData) { alert("Please select a former job."); return; }
+
+    // 3. Add nickname if provided
+    if (nickname) {
+      firstName += ` "${nickname}"`;
+    }
+
+    // 4. Apply Race Ability Score Bonuses
+    const ABIL_ORDER = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    let finalScores = [...currentScores];
+    for (const [ability, bonus] of Object.entries(raceData.abilityScoreBonuses)) {
+      if (ability === "PLUS_TWO_OTHERS") {
+        finalScores[1] += 1; // DEX
+        finalScores[2] += 1; // CON
+      } else {
+        const idx = ABIL_ORDER.indexOf(ability);
+        if (idx !== -1) finalScores[idx] += bonus;
+      }
+    }
+
+    // 5. Select Personality Traits
+    const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
+
+    // 6. Determine Level (Proficiency Bonus)
+    const levelChoice = document.getElementById("level-select").value;
+    const profBonus = levelChoice === "0.5" ? 1 : 0;
+
+    // 7. Pick Random Weapon & Armour
+    const chosenWeapon = getRandomWeaponForBackground(bgData.name);
+    const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
+    const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
+
+    // Pick modern outfit layers
+    const chosenUnderwear = pickRandom(MODERN_UNDERWEAR);
+    const chosenPants = pickRandom(MODERN_PANTS);
+    const chosenShirt = pickRandom(MODERN_SHIRTS);
+    const chosenSweater = pickRandom(MODERN_SWEATERS);
+    const chosenJacket = pickRandom(MODERN_JACKETS);
+    const chosenShoes = pickRandom(MODERN_SHOES);
+    const dexMod = abilityMod(finalScores[1]);
+    const totalACBonus = chosenUnderwear.acBonus + chosenPants.acBonus + chosenShirt.acBonus + chosenSweater.acBonus + chosenJacket.acBonus + chosenShoes.acBonus;
+    const computedAC = 10 + totalACBonus + dexMod; // 15 + DEX
+
+    // 8. Compile Final Details
+    const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
+    const featuresList = raceData.features.length ? raceData.features.map(f => `- ${f}`).join("<br/>") : "None";
+    const raceLangs = raceData.languages.join(", ");
+
+    // Clone background equipment
+    let finalEquipment = bgData.equipment.slice();
+    const bgEquipmentList = finalEquipment.map(eq => `- ${eq}`).join("<br/>");
+
+    // Get random pocket dump items
+    const pocketDump = getRandomPocketDump(4);
+    const pocketDumpList = pocketDump.map(item => `- ${item}`).join("<br/>");
+
+    const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
+    const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
+
+    // Collect all proficient skills (background + race features)
+    let allProficientSkills = bgData.skillProficiencies ? [...bgData.skillProficiencies] : [];
+
+    // Output the generated character
+    const outputDiv = document.getElementById("output");
+    outputDiv.style.display = "block";
+    outputDiv.classList.add("generated");
+    document.getElementById("charName").innerHTML = fullNameFinal;
+    document.getElementById("charRace").innerHTML = `
+      <strong>Race:</strong> ${raceData.name}<br/>
+      <em>Speed:</em> ${raceData.speed} ft<br/>
+      <em>Features:</em><br/> ${featuresList}
+    `;
+
+    // Build background HTML with special bonuses
+    let bgHTML = `
+      <strong>Former Job:</strong> ${bgData.name}<br/>
+      <em>Skill Proficiencies:</em> ${bgSkills}<br/>
+      <em>Feature:</em> <strong>${bgData.feature}</strong><br/>
+      <small>${bgData.featureDesc}</small>
+    `;
+    if (bgData.bonuses) {
+      bgHTML += `<br/><br/><em style="color: #4B0082;">Special Bonus:</em> ${bgData.bonuses.description}`;
+      if (bgData.bonuses.wisdomSaveBonus) {
+        bgHTML += `<br/><em style="color: #4B0082;">Wisdom Save Bonus:</em> +${bgData.bonuses.wisdomSaveBonus}`;
+      }
+    }
+    document.getElementById("charBackground").innerHTML = bgHTML;
+
+    document.getElementById("charAbilityScores").innerHTML = formatAbilityScores(finalScores, allProficientSkills, profBonus);
+    document.getElementById("charProficiencies").innerHTML = `
+      <strong>Proficiencies (From Former Job, at Level ${levelChoice}):</strong><br/>
+      Weapon Category: ${BACKGROUND_PROFICIENCIES[bgData.name] || "None"}<br/>
+      Job Skills: ${bgSkills}
+    `;
+    document.getElementById("charLanguages").innerHTML = `
+      <strong>Languages:</strong><br/>
+      From Race: ${raceLangs}<br/>
+      From Background: ${bgLangs}
+    `;
+
+    let eqHTML = `<strong>Starting Equipment:</strong><br/>${bgEquipmentList}`;
+    if (weaponStats) {
+      eqHTML += `
+        <br/><br/><strong>Weapon:</strong> ${weaponStats.name}<br/>
+        <em>Attack Bonus:</em> ${weaponStats.attackBonus >= 0 ? "+" : ""}${weaponStats.attackBonus} ${proficient ? "(proficient)" : "(not proficient)"}<br/>
+        <em>Damage:</em> ${weaponStats.damageDie} ${weaponStats.abilityMod >= 0 ? "+" : ""}${weaponStats.abilityMod} (${weaponStats.damageType})
+      `;
+    }
+    eqHTML += `<br/><br/><strong>Modern Outfit (AC ${computedAC} = 10 + ${totalACBonus} + ${dexMod} DEX):</strong><br/>`;
+    eqHTML += `- ${chosenUnderwear.name}<br/>`;
+    eqHTML += `- ${chosenPants.name} (+${chosenPants.acBonus})<br/>`;
+    eqHTML += `- ${chosenShirt.name} (+${chosenShirt.acBonus})<br/>`;
+    eqHTML += `- ${chosenSweater.name} (+${chosenSweater.acBonus})<br/>`;
+    eqHTML += `- ${chosenJacket.name} (+${chosenJacket.acBonus})<br/>`;
+    eqHTML += `- ${chosenShoes.name} (+${chosenShoes.acBonus})`;
+
+    eqHTML += `<br/><br/><strong>Pocket Dump:</strong><br/>${pocketDumpList}`;
+    document.getElementById("charEquipment").innerHTML = eqHTML;
+
+    const traitsHTML = `
+      <h3>Personality Traits</h3>
+      <ul>
+        <li>${chosenTraits[0]}</li>
+        <li>${chosenTraits[1]}</li>
+      </ul>
+    `;
+    document.getElementById("charTraits").innerHTML = traitsHTML;
+
+    document.getElementById("printButton").style.display = "inline-block";
+  }
+
+  function formatAbilityScores(scoresArr, proficientSkills = [], profBonus = 0) {
+    const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+    let out = "<strong>Ability Scores & Skills:</strong><br/><div style='text-align: left; display: inline-block;'>";
+    scoresArr.forEach((sc, i) => {
+      const abil = labels[i];
+      const mod = abilityMod(sc);
+      const modStr = (mod >= 0 ? "+" : "") + mod;
+      out += `<strong>${abil}: ${sc}</strong> (${modStr})<br/>`;
+
+      const skills = SKILLS_BY_ABILITY[abil];
+      if (skills && skills.length > 0) {
+        skills.forEach(skill => {
+          const isProficient = proficientSkills.includes(skill);
+          const skillMod = mod + (isProficient ? profBonus : 0);
+          const skillModStr = (skillMod >= 0 ? "+" : "") + skillMod;
+          const checkbox = isProficient ? "☑" : "☐";
+          out += `&nbsp;&nbsp;${checkbox} ${skill} (${skillModStr})<br/>`;
+        });
+      }
+    });
+    out += "</div>";
+    return out;
+  }
+
+  function fullRandom() {
+    randomRace();
+    randomBackground();
+    rollAbilityScores();
+    generateCharacter();
+  }
+
+  // ---------- Initialization ----------
+  window.addEventListener("DOMContentLoaded", () => {
+    populateSelect("race-select", RACES.map(r => r.name));
+    populateSelect("background-select", BACKGROUNDS.map(b => b.name));
+  });
+</script>
+</body>
+</html>
