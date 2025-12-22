@@ -426,10 +426,33 @@
     CHA: ["Deception", "Intimidation", "Performance", "Persuasion"]
   };
 
-  const ARMORS = [
-    { name: "No Armour (work clothes)",       baseAC: 10, dexCap: null },
-    { name: "Padded Armour (safety vest)",   baseAC: 11, dexCap: null },
-    { name: "Leather Armour",  baseAC: 11, dexCap: null }
+  // Modern clothing layers - each piece adds to AC
+  const MODERN_PANTS = [
+    { name: "Cargo pants (lots of pockets)", acBonus: 1 },
+    { name: "Sturdy work jeans", acBonus: 1 },
+    { name: "Khakis with reinforced knees", acBonus: 1 },
+    { name: "Tactical pants", acBonus: 1 }
+  ];
+
+  const MODERN_SHIRTS = [
+    { name: "Thick flannel shirt", acBonus: 1 },
+    { name: "Durable work polo", acBonus: 1 },
+    { name: "Long-sleeve henley", acBonus: 1 },
+    { name: "Button-down oxford shirt", acBonus: 1 }
+  ];
+
+  const MODERN_SWEATERS = [
+    { name: "Heavy knit sweater", acBonus: 1 },
+    { name: "Faded company hoodie", acBonus: 1 },
+    { name: "Thermal fleece pullover", acBonus: 1 },
+    { name: "Worn zip-up sweatshirt", acBonus: 1 }
+  ];
+
+  const MODERN_JACKETS = [
+    { name: "Carhartt-style work jacket", acBonus: 1 },
+    { name: "Insulated bomber jacket", acBonus: 1 },
+    { name: "High-vis safety vest over jacket", acBonus: 1 },
+    { name: "Lined denim jacket", acBonus: 1 }
   ];
 
   const BACKGROUND_WEAPONS = {
@@ -544,9 +567,14 @@
     const proficient = isProficientInWeapon(chosenWeapon, bgData.name);
     const weaponStats = computeWeaponStats(chosenWeapon, finalScores, proficient, profBonus);
 
-    const chosenArmour = pickRandom(ARMORS);
+    // Pick modern outfit layers
+    const chosenPants = pickRandom(MODERN_PANTS);
+    const chosenShirt = pickRandom(MODERN_SHIRTS);
+    const chosenSweater = pickRandom(MODERN_SWEATERS);
+    const chosenJacket = pickRandom(MODERN_JACKETS);
     const dexMod = abilityMod(finalScores[1]);
-    const computedAC = computeArmourClass(chosenArmour, dexMod);
+    const totalACBonus = chosenPants.acBonus + chosenShirt.acBonus + chosenSweater.acBonus + chosenJacket.acBonus;
+    const computedAC = 10 + totalACBonus + dexMod; // 14 + DEX
 
     // 8. Compile Final Details
     const fullNameFinal = lastName ? firstName + " " + lastName : firstName;
@@ -610,7 +638,11 @@
         <em>Damage:</em> ${weaponStats.damageDie} ${weaponStats.abilityMod >= 0 ? "+" : ""}${weaponStats.abilityMod} (${weaponStats.damageType})
       `;
     }
-    eqHTML += `<br/><br/><strong>Armour:</strong> ${chosenArmour.name} (AC = ${computedAC})`;
+    eqHTML += `<br/><br/><strong>Modern Outfit (AC ${computedAC} = 10 + ${totalACBonus} + ${dexMod} DEX):</strong><br/>`;
+    eqHTML += `- ${chosenPants.name} (+${chosenPants.acBonus})<br/>`;
+    eqHTML += `- ${chosenShirt.name} (+${chosenShirt.acBonus})<br/>`;
+    eqHTML += `- ${chosenSweater.name} (+${chosenSweater.acBonus})<br/>`;
+    eqHTML += `- ${chosenJacket.name} (+${chosenJacket.acBonus})`;
     document.getElementById("charEquipment").innerHTML = eqHTML;
 
     const traitsHTML = `
