@@ -176,7 +176,7 @@
     <!-- Level Selection -->
     <div>
       <label for="level-select">Level:</label>
-      <select id="level-select" onchange="updateLevelOptions()">
+      <select id="level-select" onchange="updateClassOptions()">
         <option value="0">0 (Just Arrived)</option>
         <option value="0.5">0.5 (Adapting)</option>
         <option value="1">1 (Choose a Path)</option>
@@ -384,7 +384,7 @@
   const BACKGROUNDS = [
     {
       name: "Contractor",
-      skillProficiencies: ["Athletics", "Investigation", "Survival"],
+      skillProficiencies: ["Athletics", "Investigation", "Survival", "Chunky Lover"],
       languages: [],
       equipment: [
         "Carpenter's tools",
@@ -397,7 +397,7 @@
       feature: "Master Builder",
       featureDesc: "Your knowledge of construction, plumbing, and HVAC systems from another world gives you an intuitive understanding of structures. You can assess building integrity at a glance, jury-rig heating/cooling solutions using available materials, and instinctively understand air flow and insulation. You have advantage on checks to repair or sabotage structures.",
       bonuses: {
-        description: "Climate Control Expert: You can create basic heating or cooling solutions with 1 hour of work and appropriate materials, providing comfort in extreme temperatures.",
+        description: "Climate Control Expert: You can create basic heating or cooling solutions with 1 hour of work and appropriate materials, providing comfort in extreme temperatures. Chunky Lover: You have proficiency in appreciating thicc individuals and gain advantage on Charisma checks when interacting with them.",
         survivalBonus: true
       },
       personalityTraits: [
@@ -415,7 +415,7 @@
     },
     {
       name: "Customer Service Worker",
-      skillProficiencies: ["Persuasion", "Insight", "Performance"],
+      skillProficiencies: ["Persuasion", "Insight", "Performance", "Weaponized Autism"],
       languages: [],
       equipment: [
         "Faded hoodie with mysterious logo",
@@ -428,7 +428,7 @@
       feature: "Unshakeable Composure",
       featureDesc: "Years of dealing with impossible customers have forged your soul into unbreakable steel. You have advantage on Wisdom saving throws against being frightened, charmed, or intimidated. When someone attempts to provoke you, you may choose to respond with aggressive corporate politeness, imposing disadvantage on their next Charisma check.",
       bonuses: {
-        description: "Dead Inside (in a good way): You are immune to the frightened condition caused by creatures of CR 1 or lower. You've seen worse.",
+        description: "Dead Inside (in a good way): You are immune to the frightened condition caused by creatures of CR 1 or lower. You've seen worse. Weaponized Autism: Your hyperfocus and pattern recognition are unmatched. You have advantage on Investigation checks to notice inconsistencies and can recall obscure details with perfect clarity.",
         wisdomSaveBonus: 2
       },
       personalityTraits: [
@@ -584,6 +584,34 @@
     }
   };
 
+  // ---------- Personality Traits ----------
+  const PERSONALITY_TRAITS = [
+    "I constantly compare everything to how it was 'back home' and find this world lacking.",
+    "I'm convinced I'm the protagonist of some grand story and act accordingly.",
+    "I miss modern conveniences terribly and complain about the lack of indoor plumbing.",
+    "I try to introduce concepts from my world, usually with disastrous results.",
+    "I'm surprisingly calm about being in another world - it's better than my old job anyway.",
+    "I keep expecting to find a 'system' or 'status screen' and am disappointed it hasn't appeared.",
+    "I've accepted my fate and am determined to make the best of this new life.",
+    "I'm convinced there must be a way back and obsessively search for it.",
+    "I treat dangerous situations like customer complaints - with forced cheerfulness.",
+    "I have an uncanny ability to stay calm that unnerves people around me.",
+    "I unconsciously use phrases and references no one in this world understands.",
+    "I'm weirdly overqualified for simple tasks but hilariously underqualified for combat.",
+    "I keep trying to explain 'health and safety regulations' to adventurers.",
+    "I miss coffee more than anything and will do almost anything for a similar stimulant.",
+    "I have oddly specific knowledge that occasionally proves incredibly useful.",
+    "I treat every problem like a work assignment and try to find the most efficient solution.",
+    "I'm used to being underappreciated and am shocked when people thank me sincerely.",
+    "I instinctively try to find the manager when things go wrong.",
+    "I have a thousand-yard stare that comes from years of customer service.",
+    "I'm far too comfortable with chaos and dysfunction - this world feels familiar.",
+    "I keep a mental tally of complaints I'd file if HR existed here.",
+    "I default to customer service voice when stressed, which confuses everyone.",
+    "I have unreasonably good conflict resolution skills from my previous career.",
+    "I treat nobility like difficult customers and am somehow still alive."
+  ];
+
   // ---------- Utility Functions ----------
   function populateSelect(selectId, optionsArray) {
     const selectElem = document.getElementById(selectId);
@@ -637,21 +665,12 @@
     document.getElementById("background-select").value = randomPick;
   }
 
-  // ---------- Level & Class Path Functions ----------
-  function updateLevelOptions() {
+  // ---------- Class Path Functions ----------
+  function updateClassOptions() {
     const level = document.getElementById("level-select").value;
     const pathDiv = document.getElementById("path-selection");
     const specDiv = document.getElementById("spec-selection");
-    const weaponProfDiv = document.getElementById("weapon-prof-selection");
 
-    // Show/hide weapon proficiency (only for level 0/0.5)
-    if (level === "0" || level === "0.5") {
-      weaponProfDiv.style.display = "block";
-    } else {
-      weaponProfDiv.style.display = "none";
-    }
-
-    // Show/hide path selection (level 1+)
     if (level === "1" || level === "2") {
       pathDiv.style.display = "block";
     } else {
@@ -659,7 +678,6 @@
       specDiv.style.display = "none";
     }
 
-    // Show/hide specialization (level 2 only)
     if (level === "2") {
       updateSpecOptions();
     } else {
@@ -1009,6 +1027,9 @@
     // 5. Select Personality Traits (job-specific)
     const chosenTraits = pickMultipleDistinct(bgData.personalityTraits || [], 2);
 
+    // 5. Select Personality Traits
+    const chosenTraits = pickMultipleDistinct(PERSONALITY_TRAITS, 2);
+
     // 6. Determine Level (Proficiency Bonus) and Class
     const levelChoice = document.getElementById("level-select").value;
     let profBonus = 0;
@@ -1070,7 +1091,7 @@
     const bgSkills = bgData.skillProficiencies ? bgData.skillProficiencies.join(", ") : "None";
     const bgLangs = (bgData.languages && bgData.languages.length > 0) ? bgData.languages.join(", ") : "None";
 
-    // Collect all proficient skills (background + class)
+    // Collect all proficient skills (background + race features + class)
     let allProficientSkills = bgData.skillProficiencies ? [...bgData.skillProficiencies] : [];
     if (pathData && pathData.proficiencies && pathData.proficiencies.skills) {
       allProficientSkills.push(...pathData.proficiencies.skills);
@@ -1226,6 +1247,19 @@
 
   function fullRandom() {
     randomBackground();
+    // Randomly pick a level
+    const levels = ["0", "0.5", "1", "2"];
+    const randomLevel = pickRandom(levels);
+    document.getElementById("level-select").value = randomLevel;
+    updateClassOptions();
+
+    if (randomLevel === "1" || randomLevel === "2") {
+      randomPath();
+    }
+    if (randomLevel === "2") {
+      randomSpec();
+    }
+
     rollAbilityScores();
 
     // Randomly pick a level
