@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ze Stick Figure Dance Animator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard', cursive;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #fff;
+            text-shadow: 3px 3px 0 #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #ffd700;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1200px;
+        }
+        .stage {
+            background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 50px rgba(255,255,255,0.05);
+            border: 4px solid #ffd700;
+        }
+        canvas {
+            background: radial-gradient(ellipse at bottom, #2d2d44 0%, #1a1a2e 100%);
+            border-radius: 10px;
+            display: block;
+        }
+        .disco-lights {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .controls {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            min-width: 350px;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .controls h2 {
+            margin-top: 0;
+            color: #764ba2;
+            border-bottom: 2px dashed #764ba2;
+            padding-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            resize: vertical;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .file-input {
+            display: none;
+        }
+        .preset-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        .speed-control {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .speed-control input {
+            flex: 1;
+        }
+        .status {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .status-label {
+            color: #764ba2;
+            font-weight: bold;
+        }
+        .floor {
+            height: 20px;
+            background: linear-gradient(to bottom, #4a4a6a, #3a3a5a);
+            border-radius: 0 0 10px 10px;
+            margin-top: -4px;
+        }
+        .instructions-link {
+            color: #ffd700;
+            margin-top: 20px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow: auto;
+        }
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 30px;
+            max-width: 800px;
+            border-radius: 20px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #764ba2;
+        }
+        .modal h2 {
+            color: #764ba2;
+        }
+        .modal pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+        .modal code {
+            color: #d63384;
+        }
+        .loop-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .loop-toggle input {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🕺 Ze Stick Figure Dance Animator 💃</h1>
+    <p class="subtitle">Make ze little stick person do ze silly dance!</p>
+
+    <div class="container">
+        <div class="stage">
+            <canvas id="danceFloor" width="400" height="400"></canvas>
+            <div class="floor"></div>
+        </div>
+
+        <div class="controls">
+            <h2>🎵 Dance Controls</h2>
+
+            <label><strong>Load Dance File:</strong></label>
+            <input type="file" id="fileInput" class="file-input" accept=".txt,.dance">
+            <button onclick="document.getElementById('fileInput').click()">📁 Load Dance File</button>
+
+            <div style="margin-top: 15px;">
+                <label><strong>Or paste dance moves here:</strong></label>
+                <textarea id="danceCode" placeholder="# My Dance
+# Each line is a pose!
+
+pose 500
+  head 0
+  leftArm -45
+  rightArm 45
+  leftLeg 0
+  rightLeg 0
+
+pose 500
+  head 10
+  leftArm -90
+  rightArm 90
+  leftLeg -20
+  rightLeg 20"></textarea>
+            </div>
+
+            <div class="speed-control">
+                <label>Speed:</label>
+                <input type="range" id="speedSlider" min="0.25" max="3" step="0.25" value="1">
+                <span id="speedLabel">1x</span>
+            </div>
+
+            <div class="loop-toggle">
+                <input type="checkbox" id="loopToggle" checked>
+                <label for="loopToggle">Loop ze dance forever!</label>
+            </div>
+
+            <div class="btn-group">
+                <button onclick="startDance()">▶️ Dance!</button>
+                <button onclick="stopDance()">⏹️ Stop</button>
+                <button onclick="resetPose()">🔄 Reset</button>
+            </div>
+
+            <h3>🎭 Preset Dances:</h3>
+            <div class="btn-group">
+                <button class="preset-btn" onclick="loadPreset('disco')">🪩 Disco</button>
+                <button class="preset-btn" onclick="loadPreset('robot')">🤖 Robot</button>
+                <button class="preset-btn" onclick="loadPreset('silly')">🤪 Silly</button>
+                <button class="preset-btn" onclick="loadPreset('wave')">👋 Wave</button>
+                <button class="preset-btn" onclick="loadPreset('jumpingjacks')">⭐ Jumping Jacks</button>
+            </div>
+
+            <div class="status">
+                <span class="status-label">Status:</span> <span id="statusText">Ready to dance!</span>
+            </div>
+        </div>
+    </div>
+
+    <p class="instructions-link" onclick="showInstructions()">📖 Click here for instructions on making your own dance files!</p>
+
+    <div id="instructionsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="hideInstructions()">&times;</span>
+            <h2>📖 How to Create Your Own Dance Files</h2>
+
+            <h3>Step 1: Open Notepad</h3>
+            <p>Open Notepad (or any text editor) on your computer.</p>
+
+            <h3>Step 2: Write Your Dance</h3>
+            <p>Each dance is made of <strong>poses</strong>. A pose defines where each body part should be, and how long to hold it.</p>
+
+            <pre><code># This is a comment (ignored by the program)
+# My Awesome Dance!
+
+pose 500
+  head 0
+  leftArm -45
+  rightArm 45
+  leftLeg 0
+  rightLeg 0
+
+pose 500
+  head 10
+  leftArm -90
+  rightArm 90
+  leftLeg -20
+  rightLeg 20</code></pre>
+
+            <h3>Step 3: Understanding the Format</h3>
+            <ul>
+                <li><code>pose [duration]</code> - Start a new pose. Duration is in milliseconds (1000 = 1 second)</li>
+                <li><code>head [angle]</code> - Tilt the head (-30 to 30 degrees)</li>
+                <li><code>leftArm [angle]</code> - Rotate left arm (-180 to 180)</li>
+                <li><code>rightArm [angle]</code> - Rotate right arm (-180 to 180)</li>
+                <li><code>leftLeg [angle]</code> - Rotate left leg (-60 to 60)</li>
+                <li><code>rightLeg [angle]</code> - Rotate right leg (-60 to 60)</li>
+                <li><code>body [offset]</code> - Move body up/down (-50 to 50)</li>
+                <li><code>lean [angle]</code> - Lean the whole body (-30 to 30)</li>
+            </ul>
+
+            <h3>Angle Reference:</h3>
+            <ul>
+                <li><strong>0</strong> = Pointing down (default)</li>
+                <li><strong>Negative</strong> = Rotates backward/left</li>
+                <li><strong>Positive</strong> = Rotates forward/right</li>
+                <li><strong>-90</strong> = Pointing left (for arms)</li>
+                <li><strong>90</strong> = Pointing right (for arms)</li>
+                <li><strong>-180 or 180</strong> = Pointing up (for arms)</li>
+            </ul>
+
+            <h3>Step 4: Save Your File</h3>
+            <ol>
+                <li>In Notepad, go to <strong>File → Save As</strong></li>
+                <li>Choose a name like <code>my-dance.txt</code></li>
+                <li>Save it somewhere you can find it!</li>
+            </ol>
+
+            <h3>Step 5: Load Your Dance</h3>
+            <p>Click the "📁 Load Dance File" button and select your file!</p>
+
+            <h3>🎉 Example: Silly Wave Dance</h3>
+            <pre><code># Silly Wave Dance
+# A friendly waving stick figure!
+
+pose 400
+  head 0
+  leftArm -30
+  rightArm -150
+  leftLeg 0
+  rightLeg 0
+
+pose 400
+  head 15
+  leftArm -30
+  rightArm -170
+  leftLeg 0
+  rightLeg 0
+
+pose 400
+  head -15
+  leftArm -30
+  rightArm -150
+  leftLeg 0
+  rightLeg 0
+
+pose 400
+  head 0
+  leftArm -30
+  rightArm -170
+  leftLeg 0
+  rightLeg 0</code></pre>
+
+            <h3>💡 Pro Tips:</h3>
+            <ul>
+                <li>Start with small angle changes to see how things move</li>
+                <li>Use shorter durations (200-300ms) for faster dances</li>
+                <li>Use longer durations (800-1000ms) for dramatic poses</li>
+                <li>Lines starting with <code>#</code> are comments - use them to document your dance!</li>
+                <li>You don't need to specify every body part - unspecified parts stay in their last position</li>
+            </ul>
+
+            <button onclick="hideInstructions()">Got it! Let's Dance! 🕺</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('danceFloor');
+        const ctx = canvas.getContext('2d');
+        const statusText = document.getElementById('statusText');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedLabel = document.getElementById('speedLabel');
+        const danceCodeArea = document.getElementById('danceCode');
+        const fileInput = document.getElementById('fileInput');
+        const loopToggle = document.getElementById('loopToggle');
+
+        // Stick figure state
+        let stickFigure = {
+            x: 200,
+            y: 280,
+            head: 0,
+            leftArm: 30,
+            rightArm: -30,
+            leftLeg: 10,
+            rightLeg: -10,
+            body: 0,
+            lean: 0
+        };
+
+        let targetPose = { ...stickFigure };
+        let currentPoseIndex = 0;
+        let poses = [];
+        let isAnimating = false;
+        let animationFrame = null;
+        let poseTimeout = null;
+        let transitionProgress = 1;
+        let previousPose = { ...stickFigure };
+
+        // Disco ball colors
+        let discoHue = 0;
+        let spotlights = [];
+
+        speedSlider.addEventListener('input', () => {
+            speedLabel.textContent = speedSlider.value + 'x';
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    danceCodeArea.value = event.target.result;
+                    statusText.textContent = `Loaded: ${file.name}`;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function parseDanceCode(code) {
+            const lines = code.split('\n');
+            const poses = [];
+            let currentPose = null;
+
+            for (let line of lines) {
+                line = line.trim();
+
+                // Skip comments and empty lines
+                if (line.startsWith('#') || line === '') continue;
+
+                // Check for pose declaration
+                if (line.toLowerCase().startsWith('pose')) {
+                    if (currentPose) {
+                        poses.push(currentPose);
+                    }
+                    const duration = parseInt(line.split(/\s+/)[1]) || 500;
+                    currentPose = { duration, changes: {} };
+                    continue;
+                }
+
+                // Parse body part commands
+                if (currentPose) {
+                    const parts = line.toLowerCase().split(/\s+/);
+                    if (parts.length >= 2) {
+                        const bodyPart = parts[0];
+                        const value = parseFloat(parts[1]);
+
+                        const mapping = {
+                            'head': 'head',
+                            'leftarm': 'leftArm',
+                            'left_arm': 'leftArm',
+                            'left-arm': 'leftArm',
+                            'rightarm': 'rightArm',
+                            'right_arm': 'rightArm',
+                            'right-arm': 'rightArm',
+                            'leftleg': 'leftLeg',
+                            'left_leg': 'leftLeg',
+                            'left-leg': 'leftLeg',
+                            'rightleg': 'rightLeg',
+                            'right_leg': 'rightLeg',
+                            'right-leg': 'rightLeg',
+                            'body': 'body',
+                            'lean': 'lean'
+                        };
+
+                        if (mapping[bodyPart]) {
+                            currentPose.changes[mapping[bodyPart]] = value;
+                        }
+                    }
+                }
+            }
+
+            if (currentPose) {
+                poses.push(currentPose);
+            }
+
+            return poses;
+        }
+
+        function startDance() {
+            stopDance();
+
+            const code = danceCodeArea.value;
+            poses = parseDanceCode(code);
+
+            if (poses.length === 0) {
+                statusText.textContent = 'No poses found! Check your dance code.';
+                return;
+            }
+
+            currentPoseIndex = 0;
+            isAnimating = true;
+            statusText.textContent = `Dancing! (${poses.length} poses)`;
+
+            // Initialize spotlights
+            spotlights = [
+                { x: 100, y: 50, hue: 0 },
+                { x: 300, y: 50, hue: 120 },
+                { x: 200, y: 30, hue: 240 }
+            ];
+
+            playNextPose();
+        }
+
+        function playNextPose() {
+            if (!isAnimating) return;
+
+            if (currentPoseIndex >= poses.length) {
+                if (loopToggle.checked) {
+                    currentPoseIndex = 0;
+                } else {
+                    stopDance();
+                    statusText.textContent = 'Dance complete! 🎉';
+                    return;
+                }
+            }
+
+            const pose = poses[currentPoseIndex];
+            previousPose = { ...stickFigure };
+
+            // Apply changes from the pose
+            for (let part in pose.changes) {
+                targetPose[part] = pose.changes[part];
+            }
+
+            transitionProgress = 0;
+
+            const speed = parseFloat(speedSlider.value);
+            const duration = pose.duration / speed;
+
+            statusText.textContent = `Pose ${currentPoseIndex + 1}/${poses.length}`;
+
+            const startTime = performance.now();
+
+            function animateTransition() {
+                const elapsed = performance.now() - startTime;
+                transitionProgress = Math.min(elapsed / (duration * 0.8), 1);
+
+                // Smooth easing
+                const eased = easeInOutQuad(transitionProgress);
+
+                // Interpolate all body parts
+                for (let part of ['head', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg', 'body', 'lean']) {
+                    stickFigure[part] = previousPose[part] + (targetPose[part] - previousPose[part]) * eased;
+                }
+
+                if (transitionProgress < 1 && isAnimating) {
+                    animationFrame = requestAnimationFrame(animateTransition);
+                }
+            }
+
+            animateTransition();
+
+            poseTimeout = setTimeout(() => {
+                currentPoseIndex++;
+                playNextPose();
+            }, duration);
+        }
+
+        function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        }
+
+        function stopDance() {
+            isAnimating = false;
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            if (poseTimeout) {
+                clearTimeout(poseTimeout);
+            }
+            statusText.textContent = 'Stopped';
+        }
+
+        function resetPose() {
+            stopDance();
+            stickFigure = {
+                x: 200,
+                y: 280,
+                head: 0,
+                leftArm: 30,
+                rightArm: -30,
+                leftLeg: 10,
+                rightLeg: -10,
+                body: 0,
+                lean: 0
+            };
+            targetPose = { ...stickFigure };
+            previousPose = { ...stickFigure };
+            statusText.textContent = 'Reset! Ready to dance!';
+        }
+
+        function drawStickFigure() {
+            const { x, y, head, leftArm, rightArm, leftLeg, rightLeg, body, lean } = stickFigure;
+
+            ctx.save();
+            ctx.translate(x, y + body);
+            ctx.rotate(lean * Math.PI / 180);
+
+            const headRadius = 25;
+            const bodyLength = 80;
+            const armLength = 50;
+            const legLength = 60;
+            const lineWidth = 8;
+
+            ctx.strokeStyle = '#fff';
+            ctx.fillStyle = '#fff';
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Glow effect
+            ctx.shadowColor = `hsl(${discoHue}, 100%, 60%)`;
+            ctx.shadowBlur = 20;
+
+            // Head
+            ctx.save();
+            ctx.rotate(head * Math.PI / 180);
+            ctx.beginPath();
+            ctx.arc(0, -bodyLength - headRadius, headRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Face
+            ctx.fillStyle = '#333';
+            ctx.shadowBlur = 0;
+            // Eyes
+            ctx.beginPath();
+            ctx.arc(-8, -bodyLength - headRadius - 3, 4, 0, Math.PI * 2);
+            ctx.arc(8, -bodyLength - headRadius - 3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Smile
+            ctx.beginPath();
+            ctx.arc(0, -bodyLength - headRadius + 5, 10, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = `hsl(${discoHue}, 100%, 60%)`;
+            ctx.shadowBlur = 20;
+
+            // Body
+            ctx.beginPath();
+            ctx.moveTo(0, -bodyLength);
+            ctx.lineTo(0, 0);
+            ctx.stroke();
+
+            // Left Arm
+            ctx.save();
+            ctx.translate(0, -bodyLength + 10);
+            ctx.rotate(leftArm * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, armLength);
+            ctx.stroke();
+            // Hand
+            ctx.beginPath();
+            ctx.arc(0, armLength, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Right Arm
+            ctx.save();
+            ctx.translate(0, -bodyLength + 10);
+            ctx.rotate(rightArm * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, armLength);
+            ctx.stroke();
+            // Hand
+            ctx.beginPath();
+            ctx.arc(0, armLength, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Left Leg
+            ctx.save();
+            ctx.rotate(leftLeg * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, legLength);
+            ctx.stroke();
+            // Foot
+            ctx.beginPath();
+            ctx.ellipse(0, legLength, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Right Leg
+            ctx.save();
+            ctx.rotate(rightLeg * Math.PI / 180);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, legLength);
+            ctx.stroke();
+            // Foot
+            ctx.beginPath();
+            ctx.ellipse(0, legLength, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function drawDiscoEffects() {
+            // Update disco hue
+            discoHue = (discoHue + 2) % 360;
+
+            // Draw spotlight effects
+            if (isAnimating) {
+                for (let i = 0; i < spotlights.length; i++) {
+                    const spot = spotlights[i];
+                    spot.hue = (spot.hue + 3) % 360;
+
+                    const gradient = ctx.createRadialGradient(
+                        spot.x, spot.y, 0,
+                        spot.x, spot.y + 200, 200
+                    );
+                    gradient.addColorStop(0, `hsla(${spot.hue}, 100%, 50%, 0.1)`);
+                    gradient.addColorStop(1, 'transparent');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(26, 26, 46, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw floor reflection gradient
+            const floorGradient = ctx.createLinearGradient(0, 350, 0, 400);
+            floorGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+            floorGradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = floorGradient;
+            ctx.fillRect(0, 350, 400, 50);
+
+            drawDiscoEffects();
+            drawStickFigure();
+
+            requestAnimationFrame(draw);
+        }
+
+        // Preset dances
+        const presets = {
+            disco: `# Disco Fever!
+pose 300
+  head -10
+  leftArm -135
+  rightArm 45
+  leftLeg -15
+  rightLeg 15
+  body -20
+
+pose 300
+  head 10
+  leftArm 45
+  rightArm -135
+  leftLeg 15
+  rightLeg -15
+  body -20
+
+pose 300
+  head -10
+  leftArm -135
+  rightArm 45
+  leftLeg -15
+  rightLeg 15
+  body -10
+
+pose 300
+  head 10
+  leftArm 45
+  rightArm -135
+  leftLeg 15
+  rightLeg -15
+  body -10`,
+
+            robot: `# Robot Dance
+pose 400
+  head 0
+  leftArm -90
+  rightArm 90
+  leftLeg 0
+  rightLeg 0
+  lean 0
+
+pose 400
+  head 15
+  leftArm -90
+  rightArm 0
+  leftLeg 0
+  rightLeg 0
+  lean 10
+
+pose 400
+  head -15
+  leftArm 0
+  rightArm 90
+  leftLeg 0
+  rightLeg 0
+  lean -10
+
+pose 400
+  head 0
+  leftArm -90
+  rightArm 90
+  leftLeg 0
+  rightLeg 0
+  lean 0
+
+pose 300
+  body -30
+  leftArm -45
+  rightArm -45
+
+pose 300
+  body 0
+  leftArm -90
+  rightArm 90`,
+
+            silly: `# Silly Wiggly Dance
+pose 200
+  head -20
+  leftArm -150
+  rightArm 30
+  leftLeg -30
+  rightLeg 10
+  lean -15
+
+pose 200
+  head 20
+  leftArm 30
+  rightArm -150
+  leftLeg 10
+  rightLeg -30
+  lean 15
+
+pose 200
+  head -15
+  leftArm -100
+  rightArm 100
+  leftLeg -20
+  rightLeg 20
+  body -30
+
+pose 200
+  head 15
+  leftArm 100
+  rightArm -100
+  leftLeg 20
+  rightLeg -20
+  body 0
+
+pose 150
+  head 0
+  leftArm -180
+  rightArm 180
+  leftLeg 0
+  rightLeg 0
+  lean 20
+
+pose 150
+  lean -20
+
+pose 150
+  lean 20
+
+pose 150
+  lean 0
+  leftArm 30
+  rightArm -30`,
+
+            wave: `# Friendly Wave
+pose 500
+  head 0
+  leftArm 30
+  rightArm -150
+  leftLeg 0
+  rightLeg 0
+
+pose 300
+  head 10
+  rightArm -170
+
+pose 300
+  head -5
+  rightArm -150
+
+pose 300
+  head 10
+  rightArm -170
+
+pose 300
+  head -5
+  rightArm -150
+
+pose 300
+  head 10
+  rightArm -170
+
+pose 500
+  head 0
+  rightArm -30`,
+
+            jumpingjacks: `# Jumping Jacks!
+pose 350
+  head 0
+  leftArm 30
+  rightArm -30
+  leftLeg 5
+  rightLeg -5
+  body 0
+
+pose 350
+  leftArm -150
+  rightArm 150
+  leftLeg -35
+  rightLeg 35
+  body -40
+
+pose 350
+  leftArm 30
+  rightArm -30
+  leftLeg 5
+  rightLeg -5
+  body 0
+
+pose 350
+  leftArm -150
+  rightArm 150
+  leftLeg -35
+  rightLeg 35
+  body -40
+
+pose 350
+  leftArm 30
+  rightArm -30
+  leftLeg 5
+  rightLeg -5
+  body 0
+
+pose 350
+  leftArm -150
+  rightArm 150
+  leftLeg -35
+  rightLeg 35
+  body -40`
+        };
+
+        function loadPreset(name) {
+            if (presets[name]) {
+                danceCodeArea.value = presets[name];
+                statusText.textContent = `Loaded preset: ${name}`;
+            }
+        }
+
+        function showInstructions() {
+            document.getElementById('instructionsModal').style.display = 'block';
+        }
+
+        function hideInstructions() {
+            document.getElementById('instructionsModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('instructionsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Start the render loop
+        draw();
+
+        // Load a default dance
+        loadPreset('disco');
+    </script>
+</body>
+</html>
