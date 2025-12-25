@@ -101,6 +101,62 @@
         #restartBtn:hover {
             background: #45a049;
         }
+
+        #touchControls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        .touch-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #2C5F2D;
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+        }
+
+        .touch-button:active {
+            background: rgba(56, 142, 60, 0.9);
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        #jumpBtn {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 152, 0, 0.8);
+            border-color: #E65100;
+        }
+
+        #jumpBtn:active {
+            background: rgba(230, 81, 0, 0.9);
+        }
+
+        @media (max-width: 850px) {
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+
+            #controls {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -111,6 +167,11 @@
             <div id="controls">Arrow Keys / WASD to Move & Jump</div>
         </div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="touchControls">
+            <button class="touch-button" id="leftBtn">◀</button>
+            <button class="touch-button" id="jumpBtn">▲</button>
+            <button class="touch-button" id="rightBtn">▶</button>
+        </div>
         <div id="gameOver">
             <h2>🎉 Congratulations! 🎉</h2>
             <p id="finalScore"></p>
@@ -193,6 +254,37 @@
         window.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
+
+        // Touch controls
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const jumpBtn = document.getElementById('jumpBtn');
+
+        // Helper function to handle button press
+        function handleButtonPress(button, key) {
+            const pressHandler = (e) => {
+                e.preventDefault();
+                keys[key] = true;
+            };
+            const releaseHandler = (e) => {
+                e.preventDefault();
+                keys[key] = false;
+            };
+
+            // Touch events
+            button.addEventListener('touchstart', pressHandler, { passive: false });
+            button.addEventListener('touchend', releaseHandler, { passive: false });
+            button.addEventListener('touchcancel', releaseHandler, { passive: false });
+
+            // Mouse events (for desktop testing)
+            button.addEventListener('mousedown', pressHandler);
+            button.addEventListener('mouseup', releaseHandler);
+            button.addEventListener('mouseleave', releaseHandler);
+        }
+
+        handleButtonPress(leftBtn, 'ArrowLeft');
+        handleButtonPress(rightBtn, 'ArrowRight');
+        handleButtonPress(jumpBtn, 'ArrowUp');
 
         // Draw parakeet
         function drawParakeet() {
