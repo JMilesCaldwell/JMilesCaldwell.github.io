@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -151,6 +151,17 @@
             transform: translateY(-2px);
         }
 
+        .btn-nav {
+            padding: 8px 20px;
+            background: #6c757d;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .btn-nav:hover {
+            background: #5a6268;
+        }
+
         .results {
             display: none;
         }
@@ -163,6 +174,113 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Calendar Styles */
+        .calendar-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.8em;
+            color: #495057;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 700;
+            color: #667eea;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            min-height: 70px;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .calendar-day.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .calendar-day.empty:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .calendar-day.today {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .calendar-day.selected {
+            border-color: #f5576c;
+            box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.3);
+        }
+
+        .calendar-day .day-number {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .calendar-day .phase-emoji {
+            font-size: 1.5em;
+        }
+
+        /* Phase colors */
+        .calendar-day.menstrual {
+            background: linear-gradient(135deg, #ffe0e0 0%, #ffc0c0 100%);
+        }
+
+        .calendar-day.follicular {
+            background: linear-gradient(135deg, #e0f0ff 0%, #c0d8ff 100%);
+        }
+
+        .calendar-day.ovulation {
+            background: linear-gradient(135deg, #ffffcc 0%, #ffeb99 100%);
+        }
+
+        .calendar-day.luteal {
+            background: linear-gradient(135deg, #f0e0ff 0%, #d8c0ff 100%);
         }
 
         .phase-info {
@@ -318,6 +436,45 @@
             line-height: 1.6;
         }
 
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .legend-color.menstrual {
+            background: linear-gradient(135deg, #ffe0e0 0%, #ffc0c0 100%);
+        }
+
+        .legend-color.follicular {
+            background: linear-gradient(135deg, #e0f0ff 0%, #c0d8ff 100%);
+        }
+
+        .legend-color.ovulation {
+            background: linear-gradient(135deg, #ffffcc 0%, #ffeb99 100%);
+        }
+
+        .legend-color.luteal {
+            background: linear-gradient(135deg, #f0e0ff 0%, #d8c0ff 100%);
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 2em;
@@ -338,6 +495,27 @@
 
             .activities-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .calendar {
+                gap: 5px;
+            }
+
+            .calendar-day {
+                min-height: 60px;
+            }
+
+            .calendar-day .day-number {
+                font-size: 1em;
+            }
+
+            .calendar-day .phase-emoji {
+                font-size: 1.2em;
+            }
+
+            .legend {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -376,7 +554,7 @@
 
                 <div class="button-group">
                     <button class="btn-add" onclick="addCycleInput()">+ Add Another Cycle</button>
-                    <button class="btn-primary" onclick="calculateInsights()">Get My Insights</button>
+                    <button class="btn-primary" onclick="generateCalendar()">Generate Calendar</button>
                     <button class="btn-secondary" onclick="resetForm()">Reset</button>
                 </div>
 
@@ -384,9 +562,40 @@
             </div>
 
             <div class="section results" id="results">
-                <h2>Your Cycle Insights</h2>
-                <div class="phase-info" id="phaseInfo"></div>
-                <div class="activities-grid" id="activitiesGrid"></div>
+                <h2>Your Cycle Calendar</h2>
+
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <h3 id="monthYear"></h3>
+                        <div class="calendar-nav">
+                            <button class="btn-nav" onclick="changeMonth(-1)">← Previous</button>
+                            <button class="btn-nav" onclick="changeMonth(1)">Next →</button>
+                        </div>
+                    </div>
+
+                    <div class="calendar" id="calendar"></div>
+
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color menstrual"></div>
+                            <span>🌑 Menstrual</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color follicular"></div>
+                            <span>🌓 Follicular</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color ovulation"></div>
+                            <span>🌕 Ovulation</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color luteal"></div>
+                            <span>🌗 Luteal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dayInsights"></div>
             </div>
         </div>
 
@@ -397,6 +606,9 @@
 
     <script>
         let cycleCount = 3;
+        let cycleData = null;
+        let currentMonth = new Date();
+        let selectedDate = null;
 
         function addCycleInput() {
             cycleCount++;
@@ -427,11 +639,14 @@
                 </div>
             `;
             cycleCount = 3;
+            cycleData = null;
+            currentMonth = new Date();
+            selectedDate = null;
             document.getElementById('results').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
         }
 
-        function calculateInsights() {
+        function generateCalendar() {
             const dateInputs = document.querySelectorAll('.cycle-date');
             const dates = [];
 
@@ -466,21 +681,131 @@
                 return;
             }
 
-            // Calculate current cycle day
-            const today = new Date();
-            const lastPeriod = dates[dates.length - 1];
-            const daysSinceLastPeriod = Math.round((today - lastPeriod) / (1000 * 60 * 60 * 24));
+            // Store cycle data
+            cycleData = {
+                lastPeriod: dates[dates.length - 1],
+                avgCycleLength: avgCycleLength
+            };
 
-            let currentCycleDay = daysSinceLastPeriod;
-            if (currentCycleDay > avgCycleLength) {
-                currentCycleDay = currentCycleDay % avgCycleLength;
+            // Show results and render calendar
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('results').classList.add('active');
+            currentMonth = new Date();
+            renderCalendar();
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+
+            // Set month/year header
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('monthYear').textContent = `${monthNames[month]} ${year}`;
+
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            // Build calendar
+            let calendarHTML = '';
+
+            // Day headers
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Empty cells before first day
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                calendarHTML += '<div class="calendar-day empty"></div>';
             }
 
-            // Determine current phase
-            const phase = determinePhase(currentCycleDay, avgCycleLength);
+            // Days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const cycleDay = getCycleDay(date);
+                const phase = determinePhase(cycleDay, cycleData.avgCycleLength);
+                const isToday = isSameDay(date, new Date());
+                const isSelected = selectedDate && isSameDay(date, selectedDate);
 
-            // Display results
-            displayResults(currentCycleDay, avgCycleLength, phase);
+                const phaseClass = phase.name.toLowerCase().split(' ')[0];
+                const todayClass = isToday ? 'today' : '';
+                const selectedClass = isSelected ? 'selected' : '';
+
+                calendarHTML += `
+                    <div class="calendar-day ${phaseClass} ${todayClass} ${selectedClass}"
+                         onclick="selectDate(new Date(${year}, ${month}, ${day}))">
+                        <div class="day-number">${day}</div>
+                        <div class="phase-emoji">${phase.emoji}</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('calendar').innerHTML = calendarHTML;
+        }
+
+        function getCycleDay(date) {
+            const daysSinceLastPeriod = Math.round((date - cycleData.lastPeriod) / (1000 * 60 * 60 * 24));
+            let cycleDay = daysSinceLastPeriod % cycleData.avgCycleLength;
+            if (cycleDay <= 0) {
+                cycleDay += cycleData.avgCycleLength;
+            }
+            return cycleDay;
+        }
+
+        function isSameDay(date1, date2) {
+            return date1.getDate() === date2.getDate() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getFullYear() === date2.getFullYear();
+        }
+
+        function selectDate(date) {
+            selectedDate = date;
+            renderCalendar();
+            displayDayInsights(date);
+        }
+
+        function displayDayInsights(date) {
+            const cycleDay = getCycleDay(date);
+            const phase = determinePhase(cycleDay, cycleData.avgCycleLength);
+            const activities = getActivityInsights(phase.name);
+
+            const dateStr = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const insightsHTML = `
+                <div class="phase-info">
+                    <h3>${phase.emoji} ${phase.name}</h3>
+                    <div class="day-info">${dateStr}</div>
+                    <div class="day-info">Day ${cycleDay} of ${cycleData.avgCycleLength}-day cycle</div>
+                    <div class="phase-description">${phase.description}</div>
+                </div>
+                <div class="activities-grid">
+                    ${activities.map(activity => `
+                        <div class="activity-card ${activity.level.toLowerCase()}">
+                            <h4><span class="activity-icon">${activity.icon}</span>${activity.name}</h4>
+                            <span class="activity-level level-${activity.level.toLowerCase()}">${activity.level}</span>
+                            <p class="activity-description">${activity.description}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('dayInsights').innerHTML = insightsHTML;
+            document.getElementById('dayInsights').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function determinePhase(day, cycleLength) {
@@ -511,30 +836,6 @@
                     emoji: '🌗'
                 };
             }
-        }
-
-        function displayResults(currentDay, cycleLength, phase) {
-            document.getElementById('errorMessage').classList.remove('active');
-
-            const phaseInfo = document.getElementById('phaseInfo');
-            phaseInfo.innerHTML = `
-                <h3>${phase.emoji} ${phase.name}</h3>
-                <div class="day-info">Day ${currentDay} of ${cycleLength}-day cycle</div>
-                <div class="phase-description">${phase.description}</div>
-            `;
-
-            const activities = getActivityInsights(phase.name);
-            const activitiesGrid = document.getElementById('activitiesGrid');
-            activitiesGrid.innerHTML = activities.map(activity => `
-                <div class="activity-card ${activity.level.toLowerCase()}">
-                    <h4><span class="activity-icon">${activity.icon}</span>${activity.name}</h4>
-                    <span class="activity-level level-${activity.level.toLowerCase()}">${activity.level}</span>
-                    <p class="activity-description">${activity.description}</p>
-                </div>
-            `).join('');
-
-            document.getElementById('results').classList.add('active');
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function getActivityInsights(phase) {
