@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viggelund Steiner — Spell Cards</title>
+    <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cantrip:  #2e3e4e;
+            --level1:   #1a4d3a;
+            --level2:   #3d1f6b;
+            --level3:   #0f2d5c;
+            --paladin:  #7a5a1a;
+            --gold:     #d4a82a;
+            --paper:    #f5f0e8;
+            --ink:      #1a1a1a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Almendra', serif;
+            background-color: #1a1a2e;
+            background-image: radial-gradient(ellipse at top, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 30px 20px 60px;
+            color: var(--ink);
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .page-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.4rem;
+            color: #e8d5a3;
+            text-shadow: 0 0 20px rgba(212,168,42,0.5);
+            letter-spacing: 2px;
+        }
+        .page-header .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            color: #a0b8d0;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        .stats-bar {
+            display: inline-flex;
+            gap: 30px;
+            margin-top: 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(212,168,42,0.3);
+            border-radius: 8px;
+            padding: 8px 24px;
+        }
+        .stats-bar span {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            color: #e8d5a3;
+        }
+        .stats-bar span strong { color: var(--gold); }
+
+        /* ── Section Headers ── */
+        .section-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #a0b8d0;
+            margin: 32px 0 14px;
+            border-bottom: 1px solid rgba(160,184,208,0.25);
+            padding-bottom: 6px;
+        }
+
+        /* ── Card Grid ── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        /* ── Spell Card ── */
+        .card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 12px 16px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .card.cantrip .card-header { background: var(--cantrip); }
+        .card.level1  .card-header { background: var(--level1);  }
+        .card.level2  .card-header { background: var(--level2);  }
+        .card.level3  .card-header { background: var(--level3);  }
+        .card.paladin .card-header { background: var(--paladin); }
+
+        .card-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+        }
+        .card-meta {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.75);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .badge.conc  { border-color: #f0c060; color: #f0c060; }
+        .badge.pal   { border-color: #d4a82a; color: #d4a82a; }
+        .badge.atk   { border-color: #f08080; color: #f08080; }
+        .badge.save  { border-color: #80d4f0; color: #80d4f0; }
+
+        .card-body {
+            padding: 12px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .prop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 12px;
+        }
+        .prop { display: flex; flex-direction: column; }
+        .prop-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            font-family: 'Cinzel', serif;
+        }
+        .prop-value { font-size: 0.8rem; color: #222; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #d0c8b8;
+            margin: 2px 0;
+        }
+
+        .desc { color: #1a1a1a; font-size: 0.8rem; line-height: 1.55; }
+        .upcast { margin-top: 6px; font-size: 0.75rem; color: #444; }
+        .upcast strong { color: #222; }
+        .damage-line {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #222;
+            text-align: center;
+            background: rgba(0,0,0,0.06);
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+
+        /* ── Print ── */
+        @media print {
+            body { background: #fff; padding: 10px; }
+            .page-header h1 { color: #000; text-shadow: none; }
+            .page-header .subtitle, .stats-bar span { color: #333; }
+            .stats-bar { border-color: #999; background: #f0f0f0; }
+            .section-label { color: #333; border-color: #999; }
+            .card { break-inside: avoid; box-shadow: 0 0 0 1px #ccc; }
+            .card-grid { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>Viggelund Steiner</h1>
+    <div class="subtitle">Paladin 1 / Storm Sorcerer 6 &nbsp;·&nbsp; Goliath &nbsp;·&nbsp; Level 7</div>
+    <div class="stats-bar">
+        <span>Spell Save DC <strong>14</strong></span>
+        <span>Spell Attack <strong>+6</strong></span>
+        <span>Sorcery Points <strong>6/rest</strong></span>
+        <span>Lay on Hands <strong>5 HP/rest</strong></span>
+    </div>
+</div>
+
+<!-- ══════════════ CANTRIPS ══════════════ -->
+<div class="section-label">Cantrips</div>
+<div class="card-grid">
+
+    <div class="card cantrip">
+        <div class="card-header">
+            <div class="card-name">Fire Bolt</div>
+            <div class="card-meta">Cantrip · Evocation <span class="badge atk">Ranged Attack</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">120 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">2d10 fire &nbsp;(+6 to hit)</div>
+            <div class="desc">Hurl a mote of fire at a target. On a hit, deals fire damage. Flammable objects ignite.</div>
+            <div class="upcast"><strong>Scaling:</strong> 2d10 (lv 1–4), 3d10 (lv 5–10), 4d10 (lv 11–16), 5d10 (lv 17+)</div>
+        </div>
+    </div>
+
+    <div class="card cantrip">
+        <div class="card-header">
+            <div class="card-name">Lightning Lure</div>
+            <div class="card-meta">Cantrip · Evocation <span class="badge save">STR Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self (15-ft radius)</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">2d8 lightning (if pulled to within 5 ft)</div>
+            <div class="desc">A lash of lightning strikes a creature within 15 ft. On a failed STR save, it's pulled up to 10 ft straight toward you and takes lightning damage if it ends within 5 ft.</div>
+            <div class="upcast"><strong>Scaling:</strong> 1d8 (lv 1–4), 2d8 (lv 5–10), 3d8 (lv 11–16), 4d8 (lv 17+)</div>
+        </div>
+    </div>
+
+    <div class="card cantrip">
+        <div class="card-header">
+            <div class="card-name">Thunderclap</div>
+            <div class="card-meta">Cantrip · Evocation <span class="badge save">CON Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self (5-ft radius)</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">2d6 thunder (CON save DC 14 for half)</div>
+            <div class="desc">You create a burst of thunderous sound. Each creature within 5 ft (other than you) must make a CON save or take thunder damage. Audible out to 100 ft.</div>
+            <div class="upcast"><strong>Scaling:</strong> 1d6 (lv 1–4), 2d6 (lv 5–10), 3d6 (lv 11–16), 4d6 (lv 17+)</div>
+        </div>
+    </div>
+
+    <div class="card cantrip">
+        <div class="card-header">
+            <div class="card-name">Mage Hand</div>
+            <div class="card-meta">Cantrip · Conjuration</div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">30 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">1 minute</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">Summon a spectral floating hand. Use an action to manipulate objects, open unlocked doors/containers, stow/retrieve items, or pour out a vial. Carries up to 10 lbs. Can't attack or activate magic items.</div>
+        </div>
+    </div>
+
+    <div class="card cantrip">
+        <div class="card-header">
+            <div class="card-name">Gust</div>
+            <div class="card-meta">Cantrip · Transmutation <span class="badge save">STR Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">30 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">Choose one effect: push a Large or smaller creature 5 ft (STR save DC 14 negates); push an unattended object ≤5 lbs up to 10 ft; or create a harmless gust of wind.</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ 1ST LEVEL ══════════════ -->
+<div class="section-label">1st Level &nbsp;<span style="font-size:0.75rem;letter-spacing:1px">(4 slots)</span></div>
+<div class="card-grid">
+
+    <div class="card level1">
+        <div class="card-header">
+            <div class="card-name">Thunderwave</div>
+            <div class="card-meta">1st-level · Evocation <span class="badge save">CON Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self (15-ft cube)</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">2d8 thunder · pushed 10 ft (CON save DC 14)</div>
+            <div class="desc">A wave of thunderous force sweeps out. Creatures that fail the save take damage and are pushed 10 ft away; success = half damage, not pushed. Unsecured objects are pushed automatically. Audible within 300 ft.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1d8 per slot level above 1st.</div>
+        </div>
+    </div>
+
+    <div class="card level1">
+        <div class="card-header">
+            <div class="card-name">Chromatic Orb</div>
+            <div class="card-meta">1st-level · Evocation <span class="badge atk">Ranged Attack</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">90 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (50 gp diamond)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">3d8 · choose type (+6 to hit)</div>
+            <div class="desc">Hurl a 4-inch sphere of energy. Choose the damage type: acid, cold, fire, lightning, poison, or thunder. Make a ranged spell attack.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1d8 per slot level above 1st.</div>
+        </div>
+    </div>
+
+    <!-- Paladin prepared spells -->
+    <div class="card paladin">
+        <div class="card-header">
+            <div class="card-name">Bless</div>
+            <div class="card-meta">1st-level · Enchantment <span class="badge conc">Concentration</span> <span class="badge pal">Paladin</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">30 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (holy water)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 1 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">Bless up to 3 creatures. Each target adds a d4 to every attack roll and saving throw for the duration.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1 creature per slot level above 1st.</div>
+        </div>
+    </div>
+
+    <div class="card paladin">
+        <div class="card-header">
+            <div class="card-name">Divine Favor</div>
+            <div class="card-meta">1st-level · Evocation <span class="badge conc">Concentration</span> <span class="badge pal">Paladin</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 bonus action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 1 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">+1d4 radiant on each weapon hit</div>
+            <div class="desc">Your prayer empowers your weapons with divine energy until the spell ends.</div>
+        </div>
+    </div>
+
+    <div class="card paladin">
+        <div class="card-header">
+            <div class="card-name">Shield of Faith</div>
+            <div class="card-meta">1st-level · Abjuration <span class="badge conc">Concentration</span> <span class="badge pal">Paladin</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 bonus action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">60 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (holy text)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 10 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">+2 bonus to AC</div>
+            <div class="desc">A shimmering field surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration.</div>
+        </div>
+    </div>
+
+    <div class="card paladin">
+        <div class="card-header">
+            <div class="card-name">Protection from Evil and Good</div>
+            <div class="card-meta">1st-level · Abjuration <span class="badge conc">Concentration</span> <span class="badge pal">Paladin</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Touch</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (holy water / silver &amp; iron, consumed)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 10 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">Protects a willing creature against aberrations, celestials, elementals, fey, fiends, and undead. Those creature types have disadvantage on attack rolls against the target and can't charm, frighten, or possess it.</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ 2ND LEVEL ══════════════ -->
+<div class="section-label">2nd Level &nbsp;<span style="font-size:0.75rem;letter-spacing:1px">(3 slots)</span></div>
+<div class="card-grid">
+
+    <div class="card level2">
+        <div class="card-header">
+            <div class="card-name">Misty Step</div>
+            <div class="card-meta">2nd-level · Conjuration</div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 bonus action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">Briefly surrounded by silvery mist, you teleport up to 30 ft to an unoccupied space you can see. Just a word — no hands, no materials.</div>
+        </div>
+    </div>
+
+    <div class="card level2">
+        <div class="card-header">
+            <div class="card-name">Shatter</div>
+            <div class="card-meta">2nd-level · Evocation <span class="badge save">CON Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">60 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (chip of mica)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">3d8 thunder (CON save DC 14 for half) · 10-ft radius</div>
+            <div class="desc">A sudden loud ringing noise painfully intense. Creatures made of inorganic material (stone, crystal, metal) have disadvantage on the save. Nonmagical objects in the area automatically take damage.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1d8 per slot level above 2nd.</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ 3RD LEVEL ══════════════ -->
+<div class="section-label">3rd Level &nbsp;<span style="font-size:0.75rem;letter-spacing:1px">(3 slots)</span></div>
+<div class="card-grid">
+
+    <div class="card level3">
+        <div class="card-header">
+            <div class="card-name">Call Lightning</div>
+            <div class="card-meta">3rd-level · Conjuration <span class="badge conc">Concentration</span> <span class="badge save">DEX Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">120 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 10 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">3d10 lightning (DEX save DC 14 for half) · or 4d10 outdoors in storm</div>
+            <div class="desc">Summon a storm cloud 100 ft up in a 60-ft radius. On each of your turns, use an action to call a bolt down on a point beneath the cloud. If already storming outdoors, the cloud forms instantly and deals 4d10.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1d10 per slot level above 3rd.</div>
+        </div>
+    </div>
+
+    <div class="card level3">
+        <div class="card-header">
+            <div class="card-name">Lightning Bolt</div>
+            <div class="card-meta">3rd-level · Evocation <span class="badge save">DEX Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self (100-ft line × 5 ft wide)</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (fur &amp; glass rod)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Instantaneous</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">8d6 lightning (DEX save DC 14 for half)</div>
+            <div class="desc">A bolt of lightning blasts out in a line from your fingertips. Ignites flammable objects that aren't being worn or carried. Bounces off walls if indoors.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1d6 per slot level above 3rd.</div>
+        </div>
+    </div>
+
+    <div class="card level3">
+        <div class="card-header">
+            <div class="card-name">Fly</div>
+            <div class="card-meta">3rd-level · Transmutation <span class="badge conc">Concentration</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Touch</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (wing feather)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 10 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">Flying speed: 60 ft</div>
+            <div class="desc">A willing creature you touch gains a flying speed of 60 ft for the duration. If concentration ends while the target is aloft, it falls.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1 additional target per slot level above 3rd.</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
