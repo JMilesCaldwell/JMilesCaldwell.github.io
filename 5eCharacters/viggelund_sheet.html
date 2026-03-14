@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viggelund Steiner — Character Sheet</title>
+    <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:    #d4a82a;
+            --paper:   #f5f0e8;
+            --ink:     #1a1a1a;
+            --muted:   #a0b8d0;
+            --heading: #e8d5a3;
+            --panel:   rgba(255,255,255,0.06);
+            --border:  rgba(212,168,42,0.3);
+            --str:     #8b2020;
+            --dex:     #1a6b2a;
+            --con:     #7a4a10;
+            --int:     #1a3a6b;
+            --wis:     #3d1f6b;
+            --cha:     #1a5a5a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Almendra', serif;
+            background-color: #1a1a2e;
+            background-image: radial-gradient(ellipse at top, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 30px 20px 60px;
+            color: var(--ink);
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .page-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.4rem;
+            color: var(--heading);
+            text-shadow: 0 0 20px rgba(212,168,42,0.5);
+            letter-spacing: 2px;
+        }
+        .page-header .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        .page-nav {
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        .page-nav a {
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            color: var(--gold);
+            text-decoration: none;
+            letter-spacing: 1px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 14px;
+            transition: background 0.2s;
+        }
+        .page-nav a:hover { background: rgba(212,168,42,0.15); }
+
+        /* ── Section Headers ── */
+        .section-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 32px 0 14px;
+            border-bottom: 1px solid rgba(160,184,208,0.25);
+            padding-bottom: 6px;
+        }
+
+        /* ── Ability Score Row ── */
+        .ability-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .ability-block {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .ability-block .ab-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.9);
+            padding: 6px 4px 4px;
+        }
+        .ability-block.str .ab-label { background: var(--str); }
+        .ability-block.dex .ab-label { background: var(--dex); }
+        .ability-block.con .ab-label { background: var(--con); }
+        .ability-block.int .ab-label { background: var(--int); }
+        .ability-block.wis .ab-label { background: var(--wis); }
+        .ability-block.cha .ab-label { background: var(--cha); }
+
+        .ability-block .ab-score {
+            background: var(--paper);
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+            padding: 10px 4px 4px;
+        }
+        .ability-block .ab-mod {
+            background: var(--paper);
+            font-size: 0.9rem;
+            color: #444;
+            padding: 2px 4px 10px;
+        }
+
+        /* ── Combat Stats Row ── */
+        .combat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        .stat-block {
+            background: var(--paper);
+            border-radius: 8px;
+            text-align: center;
+            padding: 10px 8px 8px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+        .stat-block .sb-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+        .stat-block .sb-value {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+        }
+        .stat-block .sb-sub {
+            font-size: 0.65rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* ── Two-column layout for saves & skills ── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 680px) {
+            .ability-row { grid-template-columns: repeat(3, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        /* ── Saves & Skills panels ── */
+        .panel {
+            background: var(--paper);
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+        }
+        .panel-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #d0c8b8;
+            padding-bottom: 6px;
+        }
+        .skill-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 0.8rem;
+            color: #1a1a1a;
+        }
+        .skill-row .prof-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid #888;
+            flex-shrink: 0;
+        }
+        .skill-row .prof-dot.filled { background: #2a4a2a; border-color: #2a4a2a; }
+        .skill-row .bonus {
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .skill-row .bonus.pos { color: #1a5a1a; }
+        .skill-row .bonus.neg { color: #8b2020; }
+        .skill-row .skill-name { flex: 1; }
+        .skill-row .ab-tag {
+            font-size: 0.6rem;
+            color: #888;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Weapons ── */
+        .weapons-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+        }
+        .weapons-table th {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #666;
+            padding: 10px 14px;
+            background: #ede8de;
+            text-align: left;
+            border-bottom: 1px solid #d0c8b8;
+        }
+        .weapons-table td {
+            font-size: 0.82rem;
+            padding: 9px 14px;
+            border-bottom: 1px solid #e8e0d0;
+            color: #1a1a1a;
+        }
+        .weapons-table tr:last-child td { border-bottom: none; }
+        .weapons-table td.atk {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: #1a5a1a;
+        }
+
+        /* ── Feature Cards ── */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px;
+        }
+        .feature-card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+        }
+        .feature-card .fc-header {
+            padding: 8px 14px;
+            background: #2e3e4e;
+        }
+        .feature-card .fc-header.sorcerer { background: #0f2d5c; }
+        .feature-card .fc-header.paladin  { background: #7a5a1a; }
+        .feature-card .fc-header.racial   { background: #3d2a0a; }
+        .feature-card .fc-header.bg       { background: #1a4d3a; }
+        .feature-card .fc-header.special  { background: #5a1a1a; }
+        .feature-card .fc-name {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .feature-card .fc-source {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.65);
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+        }
+        .feature-card .fc-body {
+            padding: 10px 14px;
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: #1a1a1a;
+        }
+        .fc-body .fc-tag {
+            display: inline-block;
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            padding: 1px 5px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        /* ── Equipment ── */
+        .equipment-panel {
+            background: var(--paper);
+            border-radius: 10px;
+            padding: 14px 18px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+            font-size: 0.82rem;
+            color: #1a1a1a;
+            line-height: 1.7;
+        }
+        .currency-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .coin {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .coin-dot {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .coin-dot.cp { background: #b87333; }
+        .coin-dot.sp { background: #c0c0c0; }
+        .coin-dot.ep { background: #a7c5bd; }
+        .coin-dot.gp { background: #d4a82a; }
+        .coin-dot.pp { background: #c8a8e0; }
+        .coin-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .coin-value {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .divider { border: none; border-top: 1px solid #d0c8b8; margin: 10px 0; }
+        .treasure-note {
+            font-size: 0.75rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* ── Personality Panel ── */
+        .personality-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .personality-card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+        .personality-card .pc-header {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.85);
+            background: #2e3e4e;
+            padding: 6px 12px;
+        }
+        .personality-card.ideals .pc-header { background: #1a4d3a; }
+        .personality-card.bonds  .pc-header { background: #0f2d5c; }
+        .personality-card.flaws  .pc-header { background: #5a1a1a; }
+        .personality-card .pc-body {
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            line-height: 1.55;
+            color: #1a1a1a;
+        }
+
+        /* ── Appearance ── */
+        .appearance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .appearance-card {
+            background: var(--paper);
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .appearance-card .app-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+        .appearance-card .app-value {
+            font-size: 0.82rem;
+            color: #1a1a1a;
+        }
+
+        /* ── Backstory ── */
+        .backstory-panel {
+            background: var(--paper);
+            border-radius: 10px;
+            padding: 16px 18px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+            font-size: 0.82rem;
+            line-height: 1.65;
+            color: #1a1a1a;
+        }
+
+        /* ── Print ── */
+        @media print {
+            body { background: #fff; padding: 10px; }
+            .page-header h1 { color: #000; text-shadow: none; }
+            .page-header .subtitle, .section-label { color: #333; }
+            .feature-card, .panel, .stat-block, .weapons-table,
+            .equipment-panel, .personality-card, .backstory-panel { box-shadow: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>Viggelund Steiner</h1>
+    <div class="subtitle">Paladin 1 / Storm Sorcerer 6 &nbsp;·&nbsp; Goliath &nbsp;·&nbsp; Level 7 &nbsp;·&nbsp; Folk Hero &nbsp;·&nbsp; CN</div>
+    <div class="page-nav">
+        <a href="viggelund_spellcards.html">&#9889; Spell Cards</a>
+    </div>
+</div>
+
+<!-- ══════════════ ABILITY SCORES ══════════════ -->
+<div class="section-label">Ability Scores</div>
+<div class="ability-row">
+    <div class="ability-block str">
+        <div class="ab-label">STR</div>
+        <div class="ab-score">14</div>
+        <div class="ab-mod">+2</div>
+    </div>
+    <div class="ability-block dex">
+        <div class="ab-label">DEX</div>
+        <div class="ab-score">10</div>
+        <div class="ab-mod">+0</div>
+    </div>
+    <div class="ability-block con">
+        <div class="ab-label">CON</div>
+        <div class="ab-score">14</div>
+        <div class="ab-mod">+2</div>
+    </div>
+    <div class="ability-block int">
+        <div class="ab-label">INT</div>
+        <div class="ab-score">8</div>
+        <div class="ab-mod">−1</div>
+    </div>
+    <div class="ability-block wis">
+        <div class="ab-label">WIS</div>
+        <div class="ab-score">14</div>
+        <div class="ab-mod">+2</div>
+    </div>
+    <div class="ability-block cha">
+        <div class="ab-label">CHA</div>
+        <div class="ab-score">17</div>
+        <div class="ab-mod">+3</div>
+    </div>
+</div>
+
+<!-- ══════════════ COMBAT STATS ══════════════ -->
+<div class="section-label">Combat</div>
+<div class="combat-row">
+    <div class="stat-block">
+        <div class="sb-label">Armour Class</div>
+        <div class="sb-value">17</div>
+        <div class="sb-sub">Splint</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Initiative</div>
+        <div class="sb-value">+0</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Speed</div>
+        <div class="sb-value">30 ft</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Max HP</div>
+        <div class="sb-value">42</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Hit Dice</div>
+        <div class="sb-value" style="font-size:0.95rem">1d10+6d6</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Prof Bonus</div>
+        <div class="sb-value">+3</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Passive Perc</div>
+        <div class="sb-value">12</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Inspiration</div>
+        <div class="sb-value">1</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Spell Save DC</div>
+        <div class="sb-value">14</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Spell Attack</div>
+        <div class="sb-value">+6</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Sorcery Points</div>
+        <div class="sb-value">6</div>
+        <div class="sb-sub">long rest</div>
+    </div>
+    <div class="stat-block">
+        <div class="sb-label">Lay on Hands</div>
+        <div class="sb-value">5 HP</div>
+        <div class="sb-sub">long rest</div>
+    </div>
+</div>
+
+<!-- ══════════════ SAVES & SKILLS ══════════════ -->
+<div class="section-label">Saves &amp; Skills</div>
+<div class="two-col">
+
+    <div class="panel">
+        <div class="panel-title">Saving Throws</div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+2</div>
+            <div class="skill-name">Strength</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus">+0</div>
+            <div class="skill-name">Dexterity</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+5</div>
+            <div class="skill-name">Constitution</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus neg">−1</div>
+            <div class="skill-name">Intelligence</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+2</div>
+            <div class="skill-name">Wisdom</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+6</div>
+            <div class="skill-name">Charisma</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">Skills</div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus">+0</div>
+            <div class="skill-name">Acrobatics</div>
+            <div class="ab-tag">DEX</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+5</div>
+            <div class="skill-name">Animal Handling</div>
+            <div class="ab-tag">WIS</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+2</div>
+            <div class="skill-name">Arcana</div>
+            <div class="ab-tag">INT</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+5</div>
+            <div class="skill-name">Athletics</div>
+            <div class="ab-tag">STR</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+3</div>
+            <div class="skill-name">Deception</div>
+            <div class="ab-tag">CHA</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus neg">−1</div>
+            <div class="skill-name">History</div>
+            <div class="ab-tag">INT</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+2</div>
+            <div class="skill-name">Insight</div>
+            <div class="ab-tag">WIS</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+6</div>
+            <div class="skill-name">Intimidation</div>
+            <div class="ab-tag">CHA</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus neg">−1</div>
+            <div class="skill-name">Investigation</div>
+            <div class="ab-tag">INT</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+2</div>
+            <div class="skill-name">Medicine</div>
+            <div class="ab-tag">WIS</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus neg">−1</div>
+            <div class="skill-name">Nature</div>
+            <div class="ab-tag">INT</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+2</div>
+            <div class="skill-name">Perception</div>
+            <div class="ab-tag">WIS</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus pos">+3</div>
+            <div class="skill-name">Performance</div>
+            <div class="ab-tag">CHA</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+6</div>
+            <div class="skill-name">Persuasion</div>
+            <div class="ab-tag">CHA</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus neg">−1</div>
+            <div class="skill-name">Religion</div>
+            <div class="ab-tag">INT</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus">+0</div>
+            <div class="skill-name">Sleight of Hand</div>
+            <div class="ab-tag">DEX</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot"></div>
+            <div class="bonus">+0</div>
+            <div class="skill-name">Stealth</div>
+            <div class="ab-tag">DEX</div>
+        </div>
+        <div class="skill-row">
+            <div class="prof-dot filled"></div>
+            <div class="bonus pos">+5</div>
+            <div class="skill-name">Survival</div>
+            <div class="ab-tag">WIS</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ WEAPONS ══════════════ -->
+<div class="section-label">Weapons</div>
+<table class="weapons-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Attack Bonus</th>
+            <th>Damage</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Warhammer</td>
+            <td class="atk">+5</td>
+            <td>1d8 / 1d10 bludgeoning</td>
+            <td>Versatile (1d10 two-handed)</td>
+        </tr>
+        <tr>
+            <td>Dagger</td>
+            <td class="atk">+5</td>
+            <td>1d4 piercing</td>
+            <td>Finesse, light, thrown (20/60 ft)</td>
+        </tr>
+        <tr>
+            <td>Spell Attack</td>
+            <td class="atk">+6</td>
+            <td>By spell</td>
+            <td>Save DC 14 (CHA)</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ══════════════ FEATURES ══════════════ -->
+<div class="section-label">Class Features</div>
+<div class="feature-grid">
+
+    <div class="feature-card">
+        <div class="fc-header sorcerer">
+            <div class="fc-name">Font of Magic</div>
+            <div class="fc-source">Storm Sorcerer</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">6 pts / long rest</span><br>
+            Convert spell slots to sorcery points or points to slots:<br>
+            <strong>1st</strong> = 2 pts &nbsp;|&nbsp; <strong>2nd</strong> = 3 pts &nbsp;|&nbsp; <strong>3rd</strong> = 5 pts
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header sorcerer">
+            <div class="fc-name">Metamagic</div>
+            <div class="fc-source">Storm Sorcerer</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">2 options known</span><br>
+            <strong>Quickened Spell (2 pts):</strong> Cast a 1-action spell as a bonus action.<br>
+            <strong>Twinned Spell (1 pt/spell level):</strong> Target a second creature with a single-target spell.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header sorcerer">
+            <div class="fc-name">Tides of Chaos</div>
+            <div class="fc-source">Storm Sorcerer</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">1× / long rest</span><br>
+            Gain advantage on one attack roll, ability check, or saving throw of your choice.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header sorcerer">
+            <div class="fc-name">Heart of the Storm</div>
+            <div class="fc-source">Storm Sorcerer lv. 6</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            Resistance to lightning and thunder damage. When you cast a 1st-level or higher lightning or thunder spell, creatures of your choice within 10 ft take <strong>3 lightning or thunder damage</strong>.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header sorcerer">
+            <div class="fc-name">Storm Guide</div>
+            <div class="fc-source">Storm Sorcerer lv. 6</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Action</span><br>
+            Stop precipitation in a 20 ft radius around you, or choose the direction of wind within 100 ft of you (no concentration required).
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header sorcerer">
+            <div class="fc-name">Tempestuous Magic</div>
+            <div class="fc-source">Storm Sorcerer lv. 1</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Bonus Action</span><br>
+            After you cast a spell of 1st level or higher, you can fly up to 10 ft without provoking opportunity attacks.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header paladin">
+            <div class="fc-name">Divine Sense</div>
+            <div class="fc-source">Paladin</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">4× / long rest</span><br>
+            As an action, detect the location of celestials, fiends, and undead within 60 ft (not behind total cover) until the end of your next turn.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header paladin">
+            <div class="fc-name">Lay on Hands</div>
+            <div class="fc-source">Paladin</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">5 HP pool / long rest</span><br>
+            As an action, restore HP to a creature you touch (up to the pool's remaining amount), or expend 5 HP to cure one disease or neutralise one poison.
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ RACIAL FEATURES ══════════════ -->
+<div class="section-label">Racial Features</div>
+<div class="feature-grid">
+
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Stone's Endurance</div>
+            <div class="fc-source">Goliath</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Reaction &nbsp;·&nbsp; 1× / short or long rest</span><br>
+            When you take damage, roll a d12 and add your CON modifier. Reduce the damage taken by that total.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Powerful Build</div>
+            <div class="fc-source">Goliath</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            You count as one size larger when determining your carrying capacity and the weight you can push, drag, or lift.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Mountain Born</div>
+            <div class="fc-source">Goliath</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            You have resistance to cold damage and are naturally acclimatised to high altitude, including elevations above 20,000 feet.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header bg">
+            <div class="fc-name">Rustic Hospitality</div>
+            <div class="fc-source">Folk Hero Background</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            You can find a place to hide, rest, or recuperate among common folk. Commoners will shelter you from the law or those searching for you, though they will not risk their lives for you.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header special">
+            <div class="fc-name">Missing a Kidney</div>
+            <div class="fc-source">Vigge's Quirk</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            ½ alcohol resistance. Someone took his goddamn kidney.
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ PROFICIENCIES ══════════════ -->
+<div class="section-label">Proficiencies &amp; Languages</div>
+<div class="panel">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;font-size:0.82rem;color:#1a1a1a;">
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Armour</div>
+            All armour, shields
+        </div>
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Weapons</div>
+            Simple weapons, martial weapons
+        </div>
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Tools</div>
+            Carpenter's tools, land vehicles
+        </div>
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Languages</div>
+            Common, Giant
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ EQUIPMENT ══════════════ -->
+<div class="section-label">Equipment &amp; Currency</div>
+<div class="equipment-panel">
+    <div class="currency-row">
+        <div class="coin">
+            <div class="coin-dot cp"></div>
+            <div>
+                <div class="coin-label">CP</div>
+                <div class="coin-value">—</div>
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot sp"></div>
+            <div>
+                <div class="coin-label">SP</div>
+                <div class="coin-value">—</div>
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot ep"></div>
+            <div>
+                <div class="coin-label">EP</div>
+                <div class="coin-value">5</div>
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot gp"></div>
+            <div>
+                <div class="coin-label">GP</div>
+                <div class="coin-value">161</div>
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot pp"></div>
+            <div>
+                <div class="coin-label">PP</div>
+                <div class="coin-value">—</div>
+            </div>
+        </div>
+    </div>
+    <hr class="divider">
+    Splint armour · Warhammer · Dagger · Shovel · Pot · Common clothes · Belt pouch · Small chest · 2× map/scroll case · Fine clothes · Bottle of ink · Ink pen · Lamp · 2× flask of oil · 5× sheet of paper · Vial of perfume · Sealing wax · Soap · 4× bottle of shitty bourbon · Potion of Hill Giant's Strength · Dryad arm ×2 · Health potion ×2 (2d4+2 HP) · Dwarven beard oil
+    <hr class="divider">
+    <span class="treasure-note">Treasure: 5 basilisk spikes · Basilisk eye · Wererat tooth · Dwarven beard oil</span>
+</div>
+
+<!-- ══════════════ PERSONALITY ══════════════ -->
+<div class="section-label">Personality</div>
+<div class="personality-grid">
+    <div class="personality-card">
+        <div class="pc-header">Traits</div>
+        <div class="pc-body">I'm confident in my own abilities and do what I can to instil confidence in others.</div>
+    </div>
+    <div class="personality-card ideals">
+        <div class="pc-header">Ideals</div>
+        <div class="pc-body"><strong>Respect.</strong> People deserve to be treated with dignity and respect.</div>
+    </div>
+    <div class="personality-card bonds">
+        <div class="pc-header">Bonds</div>
+        <div class="pc-body">I protect those who cannot protect themselves.<br><br><em>Also, someone took my goddamn kidney.</em></div>
+    </div>
+    <div class="personality-card flaws">
+        <div class="pc-header">Flaws</div>
+        <div class="pc-body">I have a weakness for the vices of the city, especially hard drink.</div>
+    </div>
+</div>
+
+<!-- ══════════════ APPEARANCE ══════════════ -->
+<div class="section-label">Appearance</div>
+<div class="appearance-grid">
+    <div class="appearance-card">
+        <div class="app-label">Age</div>
+        <div class="app-value">44</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Height</div>
+        <div class="app-value">8 ft</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Weight</div>
+        <div class="app-value">310 lbs</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Eyes</div>
+        <div class="app-value">Steel blue</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Hair</div>
+        <div class="app-value">Bald, blonde moustache</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Skin</div>
+        <div class="app-value">Tanned</div>
+    </div>
+</div>
+
+<!-- ══════════════ BACKSTORY ══════════════ -->
+<div class="section-label">Backstory</div>
+<div class="backstory-panel">
+    Vigge was an entertainer — a strongman making a living as part of a travelling circus. One particularly rainy day, he was helping to put up the circus tent when he was struck by lightning. When he woke up, he found that the storm had awakened something ancient and wild within him: a sorcerous connection to wind and thunder. He also felt a divine calling stir in his heart, as if the heavens themselves had chosen him.
+    <br><br>
+    <em style="color:#555;">Allies: ----==THE POWER OF FRIENDSHIP==----</em>
+</div>
+
+</body>
+</html>
