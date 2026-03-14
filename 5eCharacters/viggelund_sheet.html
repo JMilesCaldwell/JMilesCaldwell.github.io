@@ -428,6 +428,163 @@
             color: #1a1a1a;
         }
 
+        /* ── HP Tracker ── */
+        .hp-tracker {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .hp-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            line-height: 1;
+        }
+        #hp-current {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            transition: color 0.3s;
+        }
+        #hp-current.wounded   { color: #c0392b; }
+        #hp-current.bloodied  { color: #e74c3c; }
+        .hp-sep { font-family: 'Cinzel', serif; font-size: 1.1rem; color: #888; }
+        .hp-max { font-family: 'Cinzel', serif; font-size: 1rem; color: #555; }
+        .hp-buttons {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .hp-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            background: #ede8de;
+            color: #333;
+            padding: 3px 7px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .hp-btn:hover { background: #ddd8cc; }
+        .hp-btn.dmg  { border-color: #c0392b; color: #c0392b; }
+        .hp-btn.dmg:hover { background: #fde; }
+        .hp-btn.heal { border-color: #27ae60; color: #27ae60; }
+        .hp-btn.heal:hover { background: #dfd; }
+        .hp-btn.reset { border-color: #2980b9; color: #2980b9; }
+        .hp-btn.reset:hover { background: #d6eaf8; }
+
+        /* ── Editable currency inputs ── */
+        .coin-input {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            width: 60px;
+            border: none;
+            border-bottom: 1.5px solid #c8b88a;
+            background: transparent;
+            text-align: center;
+            outline: none;
+            padding: 2px 0;
+        }
+        .coin-input:focus { border-bottom-color: #d4a82a; background: #fdfaf2; border-radius: 3px 3px 0 0; }
+        /* hide browser spinners */
+        .coin-input::-webkit-outer-spin-button,
+        .coin-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .coin-input[type=number] { -moz-appearance: textfield; }
+
+        /* ── Editable inventory textarea ── */
+        .inventory-edit {
+            font-family: 'Almendra', serif;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: #1a1a1a;
+            background: transparent;
+            border: 1px dashed #c8b88a;
+            border-radius: 6px;
+            width: 100%;
+            min-height: 80px;
+            padding: 6px 8px;
+            resize: vertical;
+            outline: none;
+        }
+        .inventory-edit:focus { background: #fdfaf2; border-color: #d4a82a; }
+        .inventory-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        /* ── Companion Card ── */
+        .companion-card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            max-width: 480px;
+        }
+        .companion-card .cc-header {
+            background: #2a3a2a;
+            padding: 10px 16px;
+        }
+        .companion-card .cc-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .companion-card .cc-meta {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.7);
+            font-style: italic;
+        }
+        .companion-card .cc-body {
+            padding: 12px 16px;
+        }
+        .cc-stat-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .cc-stat {
+            background: #ede8de;
+            border-radius: 6px;
+            padding: 5px 10px;
+            text-align: center;
+            min-width: 52px;
+        }
+        .cc-stat .cs-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #777;
+        }
+        .cc-stat .cs-val {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .cc-divider { border: none; border-top: 1px solid #d0c8b8; margin: 8px 0; }
+        .cc-body .cc-row {
+            font-size: 0.78rem;
+            color: #1a1a1a;
+            line-height: 1.55;
+            margin-bottom: 4px;
+        }
+        .cc-row strong { color: #333; }
+
         /* ── Print ── */
         @media print {
             body { background: #fff; padding: 10px; }
@@ -499,9 +656,20 @@
         <div class="sb-label">Speed</div>
         <div class="sb-value">30 ft</div>
     </div>
-    <div class="stat-block">
-        <div class="sb-label">Max HP</div>
-        <div class="sb-value">42</div>
+    <div class="stat-block hp-tracker">
+        <div class="sb-label">Hit Points</div>
+        <div class="hp-display">
+            <span id="hp-current">42</span>
+            <span class="hp-sep">/</span>
+            <span class="hp-max">42</span>
+        </div>
+        <div class="hp-buttons">
+            <button class="hp-btn dmg"  onclick="adjustHP(-5)">−5</button>
+            <button class="hp-btn dmg"  onclick="adjustHP(-1)">−1</button>
+            <button class="hp-btn heal" onclick="adjustHP(+1)">+1</button>
+            <button class="hp-btn heal" onclick="adjustHP(+5)">+5</button>
+            <button class="hp-btn reset" onclick="resetHP()">↺ Max</button>
+        </div>
     </div>
     <div class="stat-block">
         <div class="sb-label">Hit Dice</div>
@@ -912,42 +1080,44 @@
             <div class="coin-dot cp"></div>
             <div>
                 <div class="coin-label">CP</div>
-                <div class="coin-value">—</div>
+                <input type="number" class="coin-input" id="coin-cp" value="0" min="0" oninput="saveCurrency()">
             </div>
         </div>
         <div class="coin">
             <div class="coin-dot sp"></div>
             <div>
                 <div class="coin-label">SP</div>
-                <div class="coin-value">—</div>
+                <input type="number" class="coin-input" id="coin-sp" value="0" min="0" oninput="saveCurrency()">
             </div>
         </div>
         <div class="coin">
             <div class="coin-dot ep"></div>
             <div>
                 <div class="coin-label">EP</div>
-                <div class="coin-value">5</div>
+                <input type="number" class="coin-input" id="coin-ep" value="5" min="0" oninput="saveCurrency()">
             </div>
         </div>
         <div class="coin">
             <div class="coin-dot gp"></div>
             <div>
                 <div class="coin-label">GP</div>
-                <div class="coin-value">161</div>
+                <input type="number" class="coin-input" id="coin-gp" value="143" min="0" oninput="saveCurrency()">
             </div>
         </div>
         <div class="coin">
             <div class="coin-dot pp"></div>
             <div>
                 <div class="coin-label">PP</div>
-                <div class="coin-value">—</div>
+                <input type="number" class="coin-input" id="coin-pp" value="0" min="0" oninput="saveCurrency()">
             </div>
         </div>
     </div>
     <hr class="divider">
-    Splint armour · Warhammer · Dagger · Shovel · Pot · Common clothes · Belt pouch · Small chest · 2× map/scroll case · Fine clothes · Bottle of ink · Ink pen · Lamp · 2× flask of oil · 5× sheet of paper · Vial of perfume · Sealing wax · Soap · 4× bottle of shitty bourbon · Potion of Hill Giant's Strength · Dryad arm ×2 · Health potion ×2 (2d4+2 HP) · Dwarven beard oil
+    <div class="inventory-label">Equipment</div>
+    <textarea class="inventory-edit" id="inventory" oninput="saveInventory()">Splint armour · Warhammer · Dagger · Shovel · Pot · Common clothes · Belt pouch · Small chest · 2× map/scroll case · Fine clothes · Bottle of ink · Ink pen · Lamp · 2× flask of oil · 5× sheet of paper · Vial of perfume · Sealing wax · Soap · 4× bottle of shitty bourbon · Potion of Hill Giant's Strength · Dryad arm ×2 · Health potion ×2 (2d4+2 HP) · Dwarven beard oil</textarea>
     <hr class="divider">
-    <span class="treasure-note">Treasure: 5 basilisk spikes · Basilisk eye · Wererat tooth · Dwarven beard oil</span>
+    <div class="inventory-label">Treasure</div>
+    <textarea class="inventory-edit" id="treasure" oninput="saveTreasure()" style="min-height:44px">5 basilisk spikes · Basilisk eye · Wererat tooth · Dwarven beard oil</textarea>
 </div>
 
 <!-- ══════════════ PERSONALITY ══════════════ -->
@@ -1000,13 +1170,107 @@
     </div>
 </div>
 
+<!-- ══════════════ COMPANIONS ══════════════ -->
+<div class="section-label">Companions</div>
+<div class="companion-card">
+    <div class="cc-header">
+        <div class="cc-name">Schneider</div>
+        <div class="cc-meta">Cat &nbsp;·&nbsp; Tiny beast, unaligned</div>
+    </div>
+    <div class="cc-body">
+        <div class="cc-stat-row">
+            <div class="cc-stat"><div class="cs-label">AC</div><div class="cs-val">12</div></div>
+            <div class="cc-stat"><div class="cs-label">HP</div><div class="cs-val">2 (1d4)</div></div>
+            <div class="cc-stat"><div class="cs-label">Speed</div><div class="cs-val">40 / 30 ft</div></div>
+            <div class="cc-stat"><div class="cs-label">CR</div><div class="cs-val">0</div></div>
+        </div>
+        <div class="cc-stat-row">
+            <div class="cc-stat"><div class="cs-label">STR</div><div class="cs-val">3 (−4)</div></div>
+            <div class="cc-stat"><div class="cs-label">DEX</div><div class="cs-val">15 (+2)</div></div>
+            <div class="cc-stat"><div class="cs-label">CON</div><div class="cs-val">10 (+0)</div></div>
+            <div class="cc-stat"><div class="cs-label">INT</div><div class="cs-val">3 (−4)</div></div>
+            <div class="cc-stat"><div class="cs-label">WIS</div><div class="cs-val">12 (+1)</div></div>
+            <div class="cc-stat"><div class="cs-label">CHA</div><div class="cs-val">7 (−2)</div></div>
+        </div>
+        <hr class="cc-divider">
+        <div class="cc-row"><strong>Skills:</strong> Perception +3, Stealth +4</div>
+        <div class="cc-row"><strong>Senses:</strong> Darkvision 30 ft, passive Perception 13</div>
+        <hr class="cc-divider">
+        <div class="cc-row"><strong>Keen Smell.</strong> Advantage on Wisdom (Perception) checks that rely on smell.</div>
+        <div class="cc-row" style="margin-top:6px"><strong>Actions — Claws:</strong> Melee Weapon Attack, +0 to hit, reach 5 ft, one target. <em>Hit:</em> 1 slashing damage.</div>
+    </div>
+</div>
+
 <!-- ══════════════ BACKSTORY ══════════════ -->
 <div class="section-label">Backstory</div>
 <div class="backstory-panel">
     Vigge was an entertainer — a strongman making a living as part of a travelling circus. One particularly rainy day, he was helping to put up the circus tent when he was struck by lightning. When he woke up, he found that the storm had awakened something ancient and wild within him: a sorcerous connection to wind and thunder. He also felt a divine calling stir in his heart, as if the heavens themselves had chosen him.
-    <br><br>
-    <em style="color:#555;">Allies: ----==THE POWER OF FRIENDSHIP==----</em>
 </div>
+
+<script>
+    const HP_MAX = 42;
+    const LS = {
+        hp:        'vigge_hp',
+        cp:        'vigge_cp',
+        sp:        'vigge_sp',
+        ep:        'vigge_ep',
+        gp:        'vigge_gp',
+        pp:        'vigge_pp',
+        inventory: 'vigge_inventory',
+        treasure:  'vigge_treasure',
+    };
+
+    function updateHPDisplay(val) {
+        const el = document.getElementById('hp-current');
+        el.textContent = val;
+        el.classList.remove('wounded', 'bloodied');
+        if (val <= 0)            el.classList.add('wounded');
+        else if (val <= HP_MAX / 2) el.classList.add('bloodied');
+    }
+
+    function adjustHP(delta) {
+        let cur = parseInt(document.getElementById('hp-current').textContent, 10);
+        cur = Math.max(0, Math.min(HP_MAX, cur + delta));
+        updateHPDisplay(cur);
+        localStorage.setItem(LS.hp, cur);
+    }
+
+    function resetHP() {
+        updateHPDisplay(HP_MAX);
+        localStorage.setItem(LS.hp, HP_MAX);
+    }
+
+    function saveCurrency() {
+        ['cp','sp','ep','gp','pp'].forEach(c => {
+            localStorage.setItem(LS[c], document.getElementById('coin-'+c).value);
+        });
+    }
+
+    function saveInventory() {
+        localStorage.setItem(LS.inventory, document.getElementById('inventory').value);
+    }
+
+    function saveTreasure() {
+        localStorage.setItem(LS.treasure, document.getElementById('treasure').value);
+    }
+
+    // Load saved state on startup
+    window.addEventListener('DOMContentLoaded', () => {
+        const hp = localStorage.getItem(LS.hp);
+        if (hp !== null) updateHPDisplay(parseInt(hp, 10));
+
+        ['cp','sp','ep','gp','pp'].forEach(c => {
+            const v = localStorage.getItem(LS[c]);
+            if (v !== null) document.getElementById('coin-'+c).value = v;
+        });
+
+        const inv = localStorage.getItem(LS.inventory);
+        if (inv !== null) document.getElementById('inventory').value = inv;
+
+        const tre = localStorage.getItem(LS.treasure);
+        if (tre !== null) document.getElementById('treasure').value = tre;
+    });
+</script>
 
 </body>
 </html>
