@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tobias Purrson — Character Sheet</title>
+    <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:    #d4a82a;
+            --paper:   #f5f0e8;
+            --ink:     #1a1a1a;
+            --muted:   #a0b8d0;
+            --heading: #e8d5a3;
+            --panel:   rgba(255,255,255,0.06);
+            --border:  rgba(212,168,42,0.3);
+            --str:     #8b2020;
+            --dex:     #1a6b2a;
+            --con:     #7a4a10;
+            --int:     #1a3a6b;
+            --wis:     #3d1f6b;
+            --cha:     #1a5a5a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Almendra', serif;
+            background-color: #1a1a2e;
+            background-image: radial-gradient(ellipse at top, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 30px 20px 60px;
+            color: var(--ink);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .page-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.4rem;
+            color: var(--heading);
+            text-shadow: 0 0 20px rgba(212,168,42,0.5);
+            letter-spacing: 2px;
+        }
+        .page-header .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        .page-nav {
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        .page-nav a {
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            color: var(--gold);
+            text-decoration: none;
+            letter-spacing: 1px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 14px;
+            transition: background 0.2s;
+        }
+        .page-nav a:hover { background: rgba(212,168,42,0.15); }
+
+        .section-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 32px 0 14px;
+            border-bottom: 1px solid rgba(160,184,208,0.25);
+            padding-bottom: 6px;
+        }
+
+        .ability-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .ability-block {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .ability-block .ab-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.9);
+            padding: 6px 4px 4px;
+        }
+        .ability-block.str .ab-label { background: var(--str); }
+        .ability-block.dex .ab-label { background: var(--dex); }
+        .ability-block.con .ab-label { background: var(--con); }
+        .ability-block.int .ab-label { background: var(--int); }
+        .ability-block.wis .ab-label { background: var(--wis); }
+        .ability-block.cha .ab-label { background: var(--cha); }
+
+        .ability-block .ab-score {
+            background: var(--paper);
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+            padding: 10px 4px 4px;
+        }
+        .ability-block .ab-mod {
+            background: var(--paper);
+            font-size: 0.9rem;
+            color: #444;
+            padding: 2px 4px 10px;
+        }
+
+        .combat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        .stat-block {
+            background: var(--paper);
+            border-radius: 8px;
+            text-align: center;
+            padding: 10px 8px 8px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+        .stat-block .sb-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+        .stat-block .sb-value {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+        }
+        .stat-block .sb-sub {
+            font-size: 0.65rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 680px) {
+            .ability-row { grid-template-columns: repeat(3, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--paper);
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+        }
+        .panel-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #d0c8b8;
+            padding-bottom: 6px;
+        }
+        .skill-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 0.8rem;
+            color: #1a1a1a;
+        }
+        .skill-row .prof-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid #888;
+            flex-shrink: 0;
+        }
+        .skill-row .prof-dot.filled { background: #2a4a2a; border-color: #2a4a2a; }
+        .skill-row .bonus {
+            font-family: 'Cinzel', serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .skill-row .bonus.pos { color: #1a5a1a; }
+        .skill-row .bonus.neg { color: #8b2020; }
+        .skill-row .skill-name { flex: 1; }
+        .skill-row .ab-tag {
+            font-size: 0.6rem;
+            color: #888;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .weapons-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+        }
+        .weapons-table th {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #666;
+            padding: 10px 14px;
+            background: #ede8de;
+            text-align: left;
+            border-bottom: 1px solid #d0c8b8;
+        }
+        .weapons-table td {
+            font-size: 0.82rem;
+            padding: 9px 14px;
+            border-bottom: 1px solid #e8e0d0;
+            color: #1a1a1a;
+        }
+        .weapons-table tr:last-child td { border-bottom: none; }
+        .weapons-table td.atk {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: #1a5a1a;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 14px;
+        }
+        .feature-card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+        }
+        .feature-card .fc-header {
+            padding: 8px 14px;
+            background: #2e3e4e;
+        }
+        .feature-card .fc-header.ranger  { background: #1a3d1a; }
+        .feature-card .fc-header.fighter { background: #2a2d3d; }
+        .feature-card .fc-header.racial  { background: #3d2a0a; }
+        .feature-card .fc-header.bg      { background: #1a4d3a; }
+        .feature-card .fc-header.special { background: #5a1a1a; }
+        .feature-card .fc-name {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .feature-card .fc-source {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.65);
+            margin-top: 1px;
+            letter-spacing: 0.5px;
+        }
+        .feature-card .fc-body {
+            padding: 10px 14px;
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: #1a1a1a;
+        }
+        .fc-body .fc-tag {
+            display: inline-block;
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid #aaa;
+            border-radius: 3px;
+            padding: 1px 5px;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .equipment-panel {
+            background: var(--paper);
+            border-radius: 10px;
+            padding: 14px 18px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+            font-size: 0.82rem;
+            color: #1a1a1a;
+            line-height: 1.7;
+        }
+        .currency-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .coin {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .coin-dot {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .coin-dot.cp { background: #b87333; }
+        .coin-dot.sp { background: #c0c0c0; }
+        .coin-dot.ep { background: #a7c5bd; }
+        .coin-dot.gp { background: #d4a82a; }
+        .coin-dot.pp { background: #c8a8e0; }
+        .coin-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .coin-value {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .divider { border: none; border-top: 1px solid #d0c8b8; margin: 10px 0; }
+
+        .personality-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .personality-card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+        .personality-card .pc-header {
+            font-family: 'Cinzel', serif;
+            font-size: 0.65rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.85);
+            background: #2e3e4e;
+            padding: 6px 12px;
+        }
+        .personality-card.ideals .pc-header { background: #1a4d3a; }
+        .personality-card.bonds  .pc-header { background: #0f2d5c; }
+        .personality-card.flaws  .pc-header { background: #5a1a1a; }
+        .personality-card .pc-body {
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            line-height: 1.55;
+            color: #1a1a1a;
+        }
+
+        .appearance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .appearance-card {
+            background: var(--paper);
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .appearance-card .app-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+        .appearance-card .app-value {
+            font-size: 0.82rem;
+            color: #1a1a1a;
+        }
+
+        .backstory-panel {
+            background: var(--paper);
+            border-radius: 10px;
+            padding: 16px 18px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+            font-size: 0.82rem;
+            line-height: 1.65;
+            color: #1a1a1a;
+        }
+
+        .hp-tracker {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .hp-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            line-height: 1;
+        }
+        #hp-current {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            transition: color 0.3s;
+        }
+        #hp-current.wounded   { color: #c0392b; }
+        #hp-current.bloodied  { color: #e74c3c; }
+        .hp-sep { font-family: 'Cinzel', serif; font-size: 1.1rem; color: #888; }
+        .hp-max { font-family: 'Cinzel', serif; font-size: 1rem; color: #555; }
+        .hp-buttons {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .hp-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            background: #ede8de;
+            color: #333;
+            padding: 3px 7px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .hp-btn:hover { background: #ddd8cc; }
+        .hp-btn.dmg  { border-color: #c0392b; color: #c0392b; }
+        .hp-btn.dmg:hover { background: #fde; }
+        .hp-btn.heal { border-color: #27ae60; color: #27ae60; }
+        .hp-btn.heal:hover { background: #dfd; }
+        .hp-btn.reset { border-color: #2980b9; color: #2980b9; }
+        .hp-btn.reset:hover { background: #d6eaf8; }
+
+        .coin-input {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            width: 60px;
+            border: none;
+            border-bottom: 1.5px solid #c8b88a;
+            background: transparent;
+            text-align: center;
+            outline: none;
+            padding: 2px 0;
+        }
+        .coin-input:focus { border-bottom-color: #d4a82a; background: #fdfaf2; border-radius: 3px 3px 0 0; }
+        .coin-input::-webkit-outer-spin-button,
+        .coin-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .coin-input[type=number] { -moz-appearance: textfield; }
+
+        .inventory-edit {
+            font-family: 'Almendra', serif;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            color: #1a1a1a;
+            background: transparent;
+            border: 1px dashed #c8b88a;
+            border-radius: 6px;
+            width: 100%;
+            min-height: 80px;
+            padding: 6px 8px;
+            resize: vertical;
+            outline: none;
+        }
+        .inventory-edit:focus { background: #fdfaf2; border-color: #d4a82a; }
+        .inventory-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        @media print {
+            body { background: #fff; padding: 10px; }
+            .page-header h1 { color: #000; text-shadow: none; }
+            .page-header .subtitle, .section-label { color: #333; }
+            .feature-card, .panel, .stat-block, .weapons-table,
+            .equipment-panel, .personality-card, .backstory-panel { box-shadow: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>Tobias Purrson</h1>
+    <div class="subtitle">Ranger 5 (Monster Slayer) / Fighter 2 &nbsp;·&nbsp; Tabaxi &nbsp;·&nbsp; Level 7 &nbsp;·&nbsp; Outlander &nbsp;·&nbsp; LE</div>
+    <div class="page-nav">
+        <a href="purrson_spellcards.html">🏹 Spell Cards</a>
+    </div>
+</div>
+
+<div class="section-label">Ability Scores</div>
+<div class="ability-row">
+    <div class="ability-block str"><div class="ab-label">STR</div><div class="ab-score">8</div><div class="ab-mod">−1</div></div>
+    <div class="ability-block dex"><div class="ab-label">DEX</div><div class="ab-score">18</div><div class="ab-mod">+4</div></div>
+    <div class="ability-block con"><div class="ab-label">CON</div><div class="ab-score">14</div><div class="ab-mod">+2</div></div>
+    <div class="ability-block int"><div class="ab-label">INT</div><div class="ab-score">10</div><div class="ab-mod">+0</div></div>
+    <div class="ability-block wis"><div class="ab-label">WIS</div><div class="ab-score">15</div><div class="ab-mod">+2</div></div>
+    <div class="ability-block cha"><div class="ab-label">CHA</div><div class="ab-score">10</div><div class="ab-mod">+0</div></div>
+</div>
+
+<div class="section-label">Combat</div>
+<div class="combat-row">
+    <div class="stat-block"><div class="sb-label">Armour Class</div><div class="sb-value">16</div><div class="sb-sub">Leather + Defence</div></div>
+    <div class="stat-block"><div class="sb-label">Initiative</div><div class="sb-value">+4</div></div>
+    <div class="stat-block"><div class="sb-label">Speed</div><div class="sb-value">30 ft</div><div class="sb-sub">80 ft (Feline)</div></div>
+    <div class="stat-block hp-tracker">
+        <div class="sb-label">Hit Points</div>
+        <div class="hp-display">
+            <span id="hp-current">59</span>
+            <span class="hp-sep">/</span>
+            <span class="hp-max">59</span>
+        </div>
+        <div class="hp-buttons">
+            <button class="hp-btn dmg"  onclick="adjustHP(-5)">−5</button>
+            <button class="hp-btn dmg"  onclick="adjustHP(-1)">−1</button>
+            <button class="hp-btn heal" onclick="adjustHP(+1)">+1</button>
+            <button class="hp-btn heal" onclick="adjustHP(+5)">+5</button>
+            <button class="hp-btn reset" onclick="resetHP()">↺ Max</button>
+        </div>
+    </div>
+    <div class="stat-block"><div class="sb-label">Hit Dice</div><div class="sb-value" style="font-size:0.95rem">7d10</div></div>
+    <div class="stat-block"><div class="sb-label">Prof Bonus</div><div class="sb-value">+3</div></div>
+    <div class="stat-block"><div class="sb-label">Passive Perc</div><div class="sb-value">15</div></div>
+    <div class="stat-block"><div class="sb-label">Spell Save DC</div><div class="sb-value">13</div></div>
+    <div class="stat-block"><div class="sb-label">Spell Attack</div><div class="sb-value">+5</div></div>
+    <div class="stat-block"><div class="sb-label">Hunter's Sense</div><div class="sb-value">2</div><div class="sb-sub">long rest</div></div>
+    <div class="stat-block"><div class="sb-label">Second Wind</div><div class="sb-value">1d10+2</div><div class="sb-sub">short rest</div></div>
+</div>
+
+<div class="section-label">Saves &amp; Skills</div>
+<div class="two-col">
+    <div class="panel">
+        <div class="panel-title">Saving Throws</div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+2</div><div class="skill-name">Strength</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+7</div><div class="skill-name">Dexterity</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus pos">+2</div><div class="skill-name">Constitution</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Intelligence</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus pos">+2</div><div class="skill-name">Wisdom</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Charisma</div></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">Skills</div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus pos">+4</div><div class="skill-name">Acrobatics</div><div class="ab-tag">DEX</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+5</div><div class="skill-name">Animal Handling</div><div class="ab-tag">WIS</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Arcana</div><div class="ab-tag">INT</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+2</div><div class="skill-name">Athletics</div><div class="ab-tag">STR</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Deception</div><div class="ab-tag">CHA</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">History</div><div class="ab-tag">INT</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+5</div><div class="skill-name">Insight</div><div class="ab-tag">WIS</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Intimidation</div><div class="ab-tag">CHA</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+3</div><div class="skill-name">Investigation</div><div class="ab-tag">INT</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus pos">+2</div><div class="skill-name">Medicine</div><div class="ab-tag">WIS</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Nature</div><div class="ab-tag">INT</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+5</div><div class="skill-name">Perception</div><div class="ab-tag">WIS</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Performance</div><div class="ab-tag">CHA</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Persuasion</div><div class="ab-tag">CHA</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus">+0</div><div class="skill-name">Religion</div><div class="ab-tag">INT</div></div>
+        <div class="skill-row"><div class="prof-dot"></div><div class="bonus pos">+4</div><div class="skill-name">Sleight of Hand</div><div class="ab-tag">DEX</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+7</div><div class="skill-name">Stealth</div><div class="ab-tag">DEX</div></div>
+        <div class="skill-row"><div class="prof-dot filled"></div><div class="bonus pos">+5</div><div class="skill-name">Survival</div><div class="ab-tag">WIS</div></div>
+    </div>
+</div>
+
+<div class="section-label">Weapons</div>
+<table class="weapons-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Attack Bonus</th>
+            <th>Damage</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Cat's Claws</td>
+            <td class="atk">+2</td>
+            <td>1d6−1 slashing</td>
+            <td>Natural weapon, climbing speed 20 ft</td>
+        </tr>
+        <tr>
+            <td>Shortsword ×2</td>
+            <td class="atk">+7 / +4</td>
+            <td>1d6+4 / 1d6 piercing</td>
+            <td>Finesse, light, TWF</td>
+        </tr>
+        <tr>
+            <td>Longbow</td>
+            <td class="atk">+9</td>
+            <td>1d8+4 piercing</td>
+            <td>Range 150/600 ft, primary weapon</td>
+        </tr>
+        <tr>
+            <td>Longbow (Sharpshooter)</td>
+            <td class="atk">+4</td>
+            <td>1d8+14 piercing</td>
+            <td>−5/+10 trade, ignores cover</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="section-label">Class Features</div>
+<div class="feature-grid">
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Extra Attack</div>
+            <div class="fc-source">Ranger 5</div>
+        </div>
+        <div class="fc-body">
+            Attack twice whenever you take the Attack action on your turn. With Action Surge, allows 4 attacks per turn, or 5 on first turn of combat.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Slayer's Prey</div>
+            <div class="fc-source">Monster Slayer 3</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Bonus Action</span><br>
+            Choose a creature within 60 ft as your quarry. Once per turn when you hit it with a weapon attack, it takes an extra 1d6 damage. Lasts until you target a different creature.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Hunter's Sense</div>
+            <div class="fc-source">Monster Slayer 3</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Bonus Action · 2× / long rest</span><br>
+            Choose one creature within 60 ft. Learn its damage immunities, resistances, and vulnerabilities.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header fighter">
+            <div class="fc-name">Action Surge</div>
+            <div class="fc-source">Fighter 2</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">1× / short or long rest</span><br>
+            Take one additional action on your turn. Allows 4−5 attacks per turn when combined with Extra Attack.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header fighter">
+            <div class="fc-name">Second Wind</div>
+            <div class="fc-source">Fighter 1</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Bonus Action · 1× / short or long rest</span><br>
+            Regain 1d10 + 2 hit points.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Archery</div>
+            <div class="fc-source">Ranger</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            +2 bonus to attack rolls you make with ranged weapons.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header fighter">
+            <div class="fc-name">Defence</div>
+            <div class="fc-source">Fighter</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            +1 AC while wearing armor.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Favored Enemy</div>
+            <div class="fc-source">Ranger</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            Advantage on Survival checks to track and Int checks to recall information about: Humans, Elves, Dwarves.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Natural Explorer</div>
+            <div class="fc-source">Ranger</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            Forest & Underdark. Proficiency doubled for Int/Wis checks in favored terrain. Travel benefits: difficult terrain doesn't slow the group, can't get lost except by magic, remain alert while doing other activities, move stealthily at normal pace (alone), find twice as much food, learn exact number/size/time of tracked creatures.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header ranger">
+            <div class="fc-name">Primal Awareness</div>
+            <div class="fc-source">Ranger 3</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Always Known</span><br>
+            Free spells that don't count against spells known: Protection from Evil and Good (lv 3), Zone of Truth (lv 5).
+        </div>
+    </div>
+</div>
+
+<div class="section-label">Racial Features</div>
+<div class="feature-grid">
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Feline Agility</div>
+            <div class="fc-source">Tabaxi</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Free (per movement)</span><br>
+            When you move on your turn in combat, you can double your speed until end of turn. Can't use again until you move 0 feet on one of your turns.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Cat's Claws</div>
+            <div class="fc-source">Tabaxi</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            Climbing speed of 20 ft. Your claws are natural weapons dealing 1d6 slashing damage.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Darkvision</div>
+            <div class="fc-source">Tabaxi</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            See in dim light within 60 ft as if it were bright light, and in darkness as if it were dim light. Can't discern color in darkness, only shades of grey.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header racial">
+            <div class="fc-name">Cat's Talent</div>
+            <div class="fc-source">Tabaxi</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            Proficiency in Perception and Stealth.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header bg">
+            <div class="fc-name">Wanderer</div>
+            <div class="fc-source">Outlander Background</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Passive</span><br>
+            Excellent memory for maps and geography. Find food and fresh water for yourself and up to five other people each day, provided the land offers berries, small game, water, and so forth.
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="fc-header special">
+            <div class="fc-name">Sharpshooter</div>
+            <div class="fc-source">Feat (Ranger 4 ASI)</div>
+        </div>
+        <div class="fc-body">
+            <span class="fc-tag">Optional</span><br>
+            Attacking at long range doesn't impose disadvantage. Ranged attacks ignore half and three-quarters cover. Before a ranged attack, take −5 to hit to add +10 to damage.
+        </div>
+    </div>
+</div>
+
+<div class="section-label">Proficiencies &amp; Languages</div>
+<div class="panel">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;font-size:0.82rem;color:#1a1a1a;">
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Armour</div>
+            Light armor, medium armor, shields
+        </div>
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Weapons</div>
+            Simple weapons, martial weapons
+        </div>
+        <div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:6px;">Languages</div>
+            Common, Goblin, Elvish, Dwarvish
+        </div>
+    </div>
+</div>
+
+<div class="section-label">Equipment &amp; Currency</div>
+<div class="equipment-panel">
+    <div class="currency-row">
+        <div class="coin">
+            <div class="coin-dot cp"></div>
+            <div>
+                <div class="coin-label">CP</div>
+                <input type="number" class="coin-input" id="coin-cp" value="0" min="0" oninput="saveCurrency()">
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot sp"></div>
+            <div>
+                <div class="coin-label">SP</div>
+                <input type="number" class="coin-input" id="coin-sp" value="0" min="0" oninput="saveCurrency()">
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot ep"></div>
+            <div>
+                <div class="coin-label">EP</div>
+                <input type="number" class="coin-input" id="coin-ep" value="0" min="0" oninput="saveCurrency()">
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot gp"></div>
+            <div>
+                <div class="coin-label">GP</div>
+                <input type="number" class="coin-input" id="coin-gp" value="10" min="0" oninput="saveCurrency()">
+            </div>
+        </div>
+        <div class="coin">
+            <div class="coin-dot pp"></div>
+            <div>
+                <div class="coin-label">PP</div>
+                <input type="number" class="coin-input" id="coin-pp" value="0" min="0" oninput="saveCurrency()">
+            </div>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="inventory-label">Equipment</div>
+    <textarea class="inventory-edit" id="inventory" oninput="saveInventory()">Leather armor · Druidic focus (bone amulet) · Quiver (20 arrows) · Dungeoneer's pack · Staff · Hunting trap · Shriveled head · Traveler's clothes</textarea>
+    <hr class="divider">
+    <div class="inventory-label">Treasure</div>
+    <textarea class="inventory-edit" id="treasure" oninput="saveTreasure()" style="min-height:44px"></textarea>
+</div>
+
+<div class="section-label">Personality</div>
+<div class="personality-grid">
+    <div class="personality-card">
+        <div class="pc-header">Traits</div>
+        <div class="pc-body">I place no stock in wealthy or well-mannered folk. Money and manners won't save you from a hungry owlbear.</div>
+    </div>
+    <div class="personality-card ideals">
+        <div class="pc-header">Ideals</div>
+        <div class="pc-body"><strong>Nature.</strong> The natural world is more important than all the constructs of civilization. (Neutral)</div>
+    </div>
+    <div class="personality-card bonds">
+        <div class="pc-header">Bonds</div>
+        <div class="pc-body">I am the last of my tribe, and it is up to me to ensure their names enter legend.</div>
+    </div>
+    <div class="personality-card flaws">
+        <div class="pc-header">Flaws</div>
+        <div class="pc-body">I am too enamored of ale, wine, and other intoxicants. There's no room for caution in a life lived to the fullest.</div>
+    </div>
+</div>
+
+<div class="section-label">Appearance</div>
+<div class="appearance-grid">
+    <div class="appearance-card">
+        <div class="app-label">Age</div>
+        <div class="app-value">41</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Height</div>
+        <div class="app-value">Medium</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Weight</div>
+        <div class="app-value">Medium</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Eyes</div>
+        <div class="app-value">Yellow</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Hair</div>
+        <div class="app-value">Black</div>
+    </div>
+    <div class="appearance-card">
+        <div class="app-label">Skin</div>
+        <div class="app-value">Black fur (shaven)</div>
+    </div>
+</div>
+
+<div class="section-label">Backstory</div>
+<div class="backstory-panel">
+    Tobias Purrson is the last survivor of his tribe, a Tabaxi who has made his living as a bounty hunter in the wild lands. He roams the forests and underdark, tracking dangerous prey—humanoid and monster alike—guided by an instinct honed through years of survival. What he lacks in social grace he makes up for in patience, precision, and a willingness to get the job done. He has little use for the trappings of civilization and less use for those who hide behind wealth or pretense.
+</div>
+
+<script>
+    const HP_MAX = 59;
+    const LS = {
+        hp:        'purrson_hp',
+        cp:        'purrson_cp',
+        sp:        'purrson_sp',
+        ep:        'purrson_ep',
+        gp:        'purrson_gp',
+        pp:        'purrson_pp',
+        inventory: 'purrson_inventory',
+        treasure:  'purrson_treasure',
+    };
+
+    function updateHPDisplay(val) {
+        const el = document.getElementById('hp-current');
+        el.textContent = val;
+        el.classList.remove('wounded', 'bloodied');
+        if (val <= 0)            el.classList.add('wounded');
+        else if (val <= HP_MAX / 2) el.classList.add('bloodied');
+    }
+
+    function adjustHP(delta) {
+        let cur = parseInt(document.getElementById('hp-current').textContent, 10);
+        cur = Math.max(0, Math.min(HP_MAX, cur + delta));
+        updateHPDisplay(cur);
+        localStorage.setItem(LS.hp, cur);
+    }
+
+    function resetHP() {
+        updateHPDisplay(HP_MAX);
+        localStorage.setItem(LS.hp, HP_MAX);
+    }
+
+    function saveCurrency() {
+        ['cp','sp','ep','gp','pp'].forEach(c => {
+            localStorage.setItem(LS[c], document.getElementById('coin-'+c).value);
+        });
+    }
+
+    function saveInventory() {
+        localStorage.setItem(LS.inventory, document.getElementById('inventory').value);
+    }
+
+    function saveTreasure() {
+        localStorage.setItem(LS.treasure, document.getElementById('treasure').value);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const hp = localStorage.getItem(LS.hp);
+        if (hp !== null) updateHPDisplay(parseInt(hp, 10));
+
+        ['cp','sp','ep','gp','pp'].forEach(c => {
+            const v = localStorage.getItem(LS[c]);
+            if (v !== null) document.getElementById('coin-'+c).value = v;
+        });
+
+        const inv = localStorage.getItem(LS.inventory);
+        if (inv !== null) document.getElementById('inventory').value = inv;
+
+        const tre = localStorage.getItem(LS.treasure);
+        if (tre !== null) document.getElementById('treasure').value = tre;
+    });
+</script>
+
+</body>
+</html>

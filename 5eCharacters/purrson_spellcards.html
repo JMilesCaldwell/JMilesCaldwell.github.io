@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tobias Purrson — Spell Cards</title>
+    <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cantrip:  #2e3e4e;
+            --level1:   #1a4d3a;
+            --level2:   #3d1f6b;
+            --level3:   #0f2d5c;
+            --paladin:  #7a5a1a;
+            --gold:     #d4a82a;
+            --paper:    #f5f0e8;
+            --ink:      #1a1a1a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Almendra', serif;
+            background-color: #1a1a2e;
+            background-image: radial-gradient(ellipse at top, #16213e 0%, #0f3460 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 30px 20px 60px;
+            color: var(--ink);
+        }
+
+        /* ── Page Header ── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .page-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.4rem;
+            color: #e8d5a3;
+            text-shadow: 0 0 20px rgba(212,168,42,0.5);
+            letter-spacing: 2px;
+        }
+        .page-header .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            color: #a0b8d0;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+        .stats-bar {
+            display: inline-flex;
+            gap: 30px;
+            margin-top: 14px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(212,168,42,0.3);
+            border-radius: 8px;
+            padding: 8px 24px;
+        }
+        .stats-bar span {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            color: #e8d5a3;
+        }
+        .stats-bar span strong { color: var(--gold); }
+
+        /* ── Section Headers ── */
+        .section-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #a0b8d0;
+            margin: 32px 0 14px;
+            border-bottom: 1px solid rgba(160,184,208,0.25);
+            padding-bottom: 6px;
+        }
+
+        /* ── Card Grid ── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        /* ── Spell Card ── */
+        .card {
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 12px 16px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .card.cantrip .card-header { background: var(--cantrip); }
+        .card.level1  .card-header { background: var(--level1);  }
+        .card.level2  .card-header { background: var(--level2);  }
+        .card.level3  .card-header { background: var(--level3);  }
+        .card.paladin .card-header { background: var(--paladin); }
+
+        .card-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+        }
+        .card-meta {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.75);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 3px;
+            padding: 1px 5px;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .badge.conc   { border-color: #f0c060; color: #f0c060; }
+        .badge.pal    { border-color: #d4a82a; color: #d4a82a; }
+        .badge.atk    { border-color: #f08080; color: #f08080; }
+        .badge.save   { border-color: #80d4f0; color: #80d4f0; }
+        .badge.ms     { border-color: #7abf8a; color: #7abf8a; }
+        .badge.ritual { border-color: #c0a060; color: #c0a060; }
+
+        .card-body {
+            padding: 12px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .prop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 12px;
+        }
+        .prop { display: flex; flex-direction: column; }
+        .prop-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            font-family: 'Cinzel', serif;
+        }
+        .prop-value { font-size: 0.8rem; color: #222; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #d0c8b8;
+            margin: 2px 0;
+        }
+
+        .desc { color: #1a1a1a; font-size: 0.8rem; line-height: 1.55; }
+        .upcast { margin-top: 6px; font-size: 0.75rem; color: #444; }
+        .upcast strong { color: #222; }
+        .damage-line {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #222;
+            text-align: center;
+            background: rgba(0,0,0,0.06);
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+
+        /* ── Print ── */
+        @media print {
+            body { background: #fff; padding: 10px; }
+            .page-header h1 { color: #000; text-shadow: none; }
+            .page-header .subtitle, .stats-bar span { color: #333; }
+            .stats-bar { border-color: #999; background: #f0f0f0; }
+            .section-label { color: #333; border-color: #999; }
+            .card { break-inside: avoid; box-shadow: 0 0 0 1px #ccc; }
+            .card-grid { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>Tobias Purrson</h1>
+    <div class="subtitle">Ranger 5 (Monster Slayer) / Fighter 2 &nbsp;·&nbsp; Tabaxi &nbsp;·&nbsp; Level 7</div>
+    <div class="stats-bar">
+        <span>Spell Save DC <strong>13</strong></span>
+        <span>Spell Attack <strong>+5</strong></span>
+        <span>Slayer's Prey <strong>1d6/hit</strong></span>
+        <span>Hunter's Sense <strong>2/LR</strong></span>
+    </div>
+    <div style="margin-top:12px;">
+        <a href="purrson_sheet.html" style="font-family:'Cinzel',serif;font-size:0.8rem;color:#d4a82a;text-decoration:none;letter-spacing:1px;border:1px solid rgba(212,168,42,0.3);border-radius:4px;padding:4px 14px;">&#9656; Character Sheet</a>
+    </div>
+</div>
+
+<!-- ══════════════ 1ST LEVEL ══════════════ -->
+<div class="section-label">1st Level &nbsp;<span style="font-size:0.75rem;letter-spacing:1px">(4 slots)</span></div>
+<div class="card-grid">
+
+    <div class="card level1">
+        <div class="card-header">
+            <div class="card-name">Protection from Evil and Good</div>
+            <div class="card-meta">1st-level · Abjuration <span class="badge conc">Concentration</span> <span class="badge ms">Monster Slayer</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Touch</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (holy water or powdered silver and iron, consumed)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 10 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">Until the spell ends, one willing creature you touch is protected against aberrations, celestials, elementals, fey, fiends, and undead. Those creature types have disadvantage on attack rolls against the target. The target also can't be charmed, frightened, or possessed by them. If already under such an effect, the target has advantage on a new saving throw to end it.</div>
+        </div>
+    </div>
+
+    <div class="card level1">
+        <div class="card-header">
+            <div class="card-name">Longstrider</div>
+            <div class="card-meta">1st-level · Transmutation</div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Touch</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (a pinch of dirt)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">1 hour</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">+10 ft speed (no concentration!)</div>
+            <div class="desc">Touch a creature. Its speed increases by 10 feet until the spell ends. With Feline Agility active, Purrson's speed becomes 80 ft.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1 additional target per slot level above 1st.</div>
+        </div>
+    </div>
+
+    <div class="card level1">
+        <div class="card-header">
+            <div class="card-name">Ensnaring Strike</div>
+            <div class="card-meta">1st-level · Conjuration <span class="badge conc">Concentration</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 bonus action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 1 min</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">Restrained · 1d6 piercing/turn (STR save DC 13)</div>
+            <div class="desc">The next time you hit a creature with a weapon attack before this spell ends, thorny vines appear and the target must succeed on a STR save or be restrained. While restrained, it takes 1d6 piercing damage at the start of each of its turns. A creature restrained by the vines or one that can touch it can use an action to make a STR check against your spell save DC to free it.</div>
+            <div class="upcast"><strong>Upcast:</strong> +1d6 damage per slot level above 1st.</div>
+        </div>
+    </div>
+
+    <div class="card level1">
+        <div class="card-header">
+            <div class="card-name">Speak with Animals</div>
+            <div class="card-meta">1st-level · Divination <span class="badge ritual">Ritual</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">10 minutes</span></div>
+            </div>
+            <hr class="divider">
+            <div class="desc">You gain the ability to comprehend and verbally communicate with beasts for the duration. The knowledge and awareness of many beasts is limited by their intelligence, but at minimum, beasts can give you information about nearby locations and monsters, including whatever they can perceive or have perceived within the past day. You might be able to persuade a beast to perform a small favor for you.</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ 2ND LEVEL ══════════════ -->
+<div class="section-label">2nd Level &nbsp;<span style="font-size:0.75rem;letter-spacing:1px">(2 slots)</span></div>
+<div class="card-grid">
+
+    <div class="card level2">
+        <div class="card-header">
+            <div class="card-name">Zone of Truth</div>
+            <div class="card-meta">2nd-level · Enchantment <span class="badge ms">Monster Slayer</span> <span class="badge save">CHA Save</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">60 ft</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">10 minutes</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">15-ft radius · CHA save DC 13</div>
+            <div class="desc">You create a magical zone that guards against deception in a 15-foot-radius sphere. A creature that enters the zone for the first time on a turn or starts its turn there must make a CHA saving throw. On a failed save, a creature can't speak a deliberate lie while in the radius. You know whether each creature succeeds or fails on its saving throw. An affected creature is aware of the spell and can thus avoid answering or be evasive. No concentration required.</div>
+        </div>
+    </div>
+
+    <div class="card level2">
+        <div class="card-header">
+            <div class="card-name">Pass Without Trace</div>
+            <div class="card-meta">2nd-level · Abjuration <span class="badge conc">Concentration</span></div>
+        </div>
+        <div class="card-body">
+            <div class="prop-grid">
+                <div class="prop"><span class="prop-label">Casting Time</span><span class="prop-value">1 action</span></div>
+                <div class="prop"><span class="prop-label">Range</span><span class="prop-value">Self</span></div>
+                <div class="prop"><span class="prop-label">Components</span><span class="prop-value">V, S, M (ashes from burned mistletoe and a sprig of spruce)</span></div>
+                <div class="prop"><span class="prop-label">Duration</span><span class="prop-value">Conc., up to 1 hour</span></div>
+            </div>
+            <hr class="divider">
+            <div class="damage-line">+10 bonus to Stealth (party-wide)</div>
+            <div class="desc">A veil of shadows and silence radiates from you, masking you and your companions from detection. For the duration, each creature you choose within 30 feet of you (including you) has a +10 bonus to Dexterity (Stealth) checks and can't be tracked except by magical means. A creature that receives this bonus leaves behind no tracks or other traces of its passage. With Purrson's Stealth of +7, this means a total of +17.</div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
