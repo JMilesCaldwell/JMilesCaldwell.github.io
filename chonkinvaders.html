@@ -2,21 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CHONK INVADERS</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     background:#080810;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
     min-height:100vh;
     font-family:'Press Start 2P', monospace;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
     color:#fff;
+    padding:4px 0;
   }
   #wrapper {
     position:relative;
-    width:620px;
+    width:100%;
+    max-width:620px;
+    display:flex;
+    flex-direction:column;
+  }
+  canvas {
+    display:block;
+    width:100% !important;
+    height:auto !important;
+    border:2px solid #1a1a3a;
+    box-shadow:0 0 30px #0044ffaa, 0 0 60px #0022ff44;
+    image-rendering:pixelated;
   }
   #wrapper:-webkit-full-screen {
     width:100vw; height:100vh;
@@ -234,10 +248,16 @@ let powerup; // { type:'twin'|'pierce', timer:600 }
 
 const keys = {};
 let mouse = { x: W/2, y: H/2 };
-canvas.addEventListener('mousemove', e => {
+function canvasCoords(clientX, clientY) {
   const r = canvas.getBoundingClientRect();
-  mouse.x = e.clientX - r.left;
-  mouse.y = e.clientY - r.top;
+  return {
+    x: (clientX - r.left) * (W / r.width),
+    y: (clientY - r.top)  * (H / r.height),
+  };
+}
+canvas.addEventListener('mousemove', e => {
+  const c = canvasCoords(e.clientX, e.clientY);
+  mouse.x = c.x; mouse.y = c.y;
 });
 canvas.addEventListener('click', () => { keys[' '] = true; setTimeout(()=>keys[' ']=false, 50); });
 window.addEventListener('keydown', e => {
@@ -258,15 +278,13 @@ holdKey(document.getElementById('btn-right'), 'ArrowRight');
 holdKey(document.getElementById('fire-btn'),  ' ');
 canvas.addEventListener('touchmove', e=>{
   e.preventDefault();
-  const r = canvas.getBoundingClientRect();
-  mouse.x = e.touches[0].clientX - r.left;
-  mouse.y = e.touches[0].clientY - r.top;
+  const c = canvasCoords(e.touches[0].clientX, e.touches[0].clientY);
+  mouse.x = c.x; mouse.y = c.y;
 }, {passive:false});
 canvas.addEventListener('touchstart', e=>{
   e.preventDefault();
-  const r = canvas.getBoundingClientRect();
-  mouse.x = e.touches[0].clientX - r.left;
-  mouse.y = e.touches[0].clientY - r.top;
+  const c = canvasCoords(e.touches[0].clientX, e.touches[0].clientY);
+  mouse.x = c.x; mouse.y = c.y;
   if (phase==='title'||gameOver) { keys['Enter']=true; setTimeout(()=>keys['Enter']=false,50); }
 }, {passive:false});
 
@@ -626,30 +644,18 @@ function draw() {
   // Drops (poops)
   for (const d of drops) {
     const px = d.x+4, py = d.y+4;
-    // base mound
     ctx.fillStyle='#5c3317';
     ctx.beginPath();
     ctx.ellipse(px,py+3,5,3.5,0,0,Math.PI*2); ctx.fill();
-    // middle blob
     ctx.beginPath();
     ctx.ellipse(px+0.5,py,4,3.5,0,0,Math.PI*2); ctx.fill();
-    // top swirl
     ctx.beginPath();
     ctx.ellipse(px,py-3.5,2.8,2.8,0,0,Math.PI*2); ctx.fill();
-    // tip
     ctx.beginPath();
     ctx.ellipse(px+0.5,py-6,1.5,1.8,0.2,0,Math.PI*2); ctx.fill();
-    // shine
     ctx.fillStyle='rgba(255,200,150,0.22)';
     ctx.beginPath();
     ctx.ellipse(px-1.5,py-4,1,0.8,-.4,0,Math.PI*2); ctx.fill();
-    // eyes
-    ctx.fillStyle='#fff';
-    ctx.beginPath(); ctx.arc(px-1.2,py-0.5,1,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px+1.8,py-0.5,1,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#222';
-    ctx.beginPath(); ctx.arc(px-1.2,py-0.5,0.5,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px+1.8,py-0.5,0.5,0,Math.PI*2); ctx.fill();
   }
 
   // Fly-offs
