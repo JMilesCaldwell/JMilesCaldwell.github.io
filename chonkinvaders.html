@@ -28,6 +28,29 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:#080810;
   }
+  #mobile-controls {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 4px 2px;
+    gap:8px;
+  }
+  .ctrl-btn {
+    font-family:'Press Start 2P',monospace;
+    font-size:16px;
+    background:#1a1a3a;
+    color:#aabbff;
+    border:2px solid #334499;
+    border-radius:6px;
+    padding:12px 20px;
+    cursor:pointer;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+    flex:1;
+    text-align:center;
+  }
+  .ctrl-btn:active { background:#2a2a5a; }
   #powerup-bar {
     font-size:9px; color:#ff88ff; text-align:center; height:16px;
     text-shadow:0 0 8px #ff88ffaa; letter-spacing:1px;
@@ -69,6 +92,11 @@
     <span style="font-size:9px;color:#334;letter-spacing:1px">← → MOVE &nbsp;|&nbsp; SPACE SHOOT</span>
     <button id="fsBtn" onclick="toggleFS()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:#1a1a3a;color:#aabbff;border:1px solid #334499;padding:3px 7px;cursor:pointer;letter-spacing:1px">⛶ FULL</button>
   </div>
+  <div id="mobile-controls">
+    <button class="ctrl-btn" id="btn-left">◀</button>
+    <button class="ctrl-btn" id="fire-btn">FEED</button>
+    <button class="ctrl-btn" id="btn-right">▶</button>
+  </div>
 </div>
 
 <script>
@@ -84,6 +112,7 @@ document.addEventListener('fullscreenchange', ()=>{
   const btn = document.getElementById('fsBtn');
   btn.textContent = document.fullscreenElement ? '✕ EXIT' : '⛶ FULL';
 });
+
 
 const canvas = document.getElementById('game');
 const ctx    = canvas.getContext('2d');
@@ -217,6 +246,29 @@ window.addEventListener('keydown', e => {
   if (e.key==='Enter' && (gameOver || phase==='title')) reset();
 });
 window.addEventListener('keyup', e => keys[e.key]=false);
+
+// Mobile controls — safely after canvas & mouse are declared
+function holdKey(el, key) {
+  el.addEventListener('touchstart', e=>{ e.preventDefault(); keys[key]=true; }, {passive:false});
+  el.addEventListener('touchend',   e=>{ e.preventDefault(); keys[key]=false; }, {passive:false});
+  el.addEventListener('touchcancel',e=>{ keys[key]=false; });
+}
+holdKey(document.getElementById('btn-left'),  'ArrowLeft');
+holdKey(document.getElementById('btn-right'), 'ArrowRight');
+holdKey(document.getElementById('fire-btn'),  ' ');
+canvas.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  mouse.x = e.touches[0].clientX - r.left;
+  mouse.y = e.touches[0].clientY - r.top;
+}, {passive:false});
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  mouse.x = e.touches[0].clientX - r.left;
+  mouse.y = e.touches[0].clientY - r.top;
+  if (phase==='title'||gameOver) { keys['Enter']=true; setTimeout(()=>keys['Enter']=false,50); }
+}, {passive:false});
 
 function makeStars() {
   stars=[];
@@ -571,16 +623,33 @@ function draw() {
     ctx.globalAlpha=1;
   }
 
-  // Drops (cat kibble)
+  // Drops (poops)
   for (const d of drops) {
-    ctx.fillStyle='#ff9933';
+    const px = d.x+4, py = d.y+4;
+    // base mound
+    ctx.fillStyle='#5c3317';
     ctx.beginPath();
-    ctx.arc(d.x+4,d.y+4,4.5,0,Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle='#ffdd88';
+    ctx.ellipse(px,py+3,5,3.5,0,0,Math.PI*2); ctx.fill();
+    // middle blob
     ctx.beginPath();
-    ctx.arc(d.x+2.5,d.y+2.5,1.8,0,Math.PI*2);
-    ctx.fill();
+    ctx.ellipse(px+0.5,py,4,3.5,0,0,Math.PI*2); ctx.fill();
+    // top swirl
+    ctx.beginPath();
+    ctx.ellipse(px,py-3.5,2.8,2.8,0,0,Math.PI*2); ctx.fill();
+    // tip
+    ctx.beginPath();
+    ctx.ellipse(px+0.5,py-6,1.5,1.8,0.2,0,Math.PI*2); ctx.fill();
+    // shine
+    ctx.fillStyle='rgba(255,200,150,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(px-1.5,py-4,1,0.8,-.4,0,Math.PI*2); ctx.fill();
+    // eyes
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(px-1.2,py-0.5,1,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px+1.8,py-0.5,1,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#222';
+    ctx.beginPath(); ctx.arc(px-1.2,py-0.5,0.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px+1.8,py-0.5,0.5,0,Math.PI*2); ctx.fill();
   }
 
   // Fly-offs
