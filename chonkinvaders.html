@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CAT INVADERS</title>
+<title>CHONK INVADERS</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -46,7 +46,7 @@
 <div id="wrapper">
   <div id="hud">
     <span>SCORE<br><span id="score" style="color:#fff;font-size:13px">0</span></span>
-    <span style="color:#ff88ff;font-size:13px;text-shadow:0 0 12px #ff88ffaa">CAT INVADERS</span>
+    <span style="color:#ff88ff;font-size:13px;text-shadow:0 0 12px #ff88ffaa">CHONK INVADERS</span>
     <span>LIVES<br><span id="lives" style="color:#fff;font-size:13px">❤❤❤</span></span>
   </div>
   <canvas id="game" width="620" height="580"></canvas>
@@ -172,6 +172,13 @@ let bowlCanvas;
 let stars;
 
 const keys = {};
+let mouse = { x: W/2, y: H/2 };
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouse.x = e.clientX - r.left;
+  mouse.y = e.clientY - r.top;
+});
+canvas.addEventListener('click', () => { keys[' '] = true; setTimeout(()=>keys[' ']=false, 50); });
 window.addEventListener('keydown', e => {
   keys[e.key]=true;
   if (e.key===' ') e.preventDefault();
@@ -254,11 +261,15 @@ function update() {
   shotCooldown--;
   if ((keys[' ']||keys['ArrowUp']) && shotCooldown<=0) {
     shotCooldown=14;
-    shots.push({ x:p.x+BOWL_W/2-5, y:p.y-12, w:10, h:10, speed:9 });
+    const ox = p.x+BOWL_W/2, oy = p.y;
+    const dx = mouse.x - ox, dy = mouse.y - oy;
+    const len = Math.sqrt(dx*dx+dy*dy) || 1;
+    const spd = 11;
+    shots.push({ x:ox-5, y:oy-12, w:10, h:10, vx:(dx/len)*spd, vy:(dy/len)*spd });
   }
 
   // Move shots
-  shots = shots.filter(s=>{ s.y-=s.speed; return s.y>-20; });
+  shots = shots.filter(s=>{ s.x+=s.vx; s.y+=s.vy; return s.y>-20 && s.y<H+20 && s.x>-20 && s.x<W+20; });
 
   // ── cat phase ────────────────────────────────────────────────────────────────
   if (phase==='play') {
@@ -519,7 +530,7 @@ function drawTitle() {
   ctx.fillStyle='#ff88ff';
   ctx.font='22px "Press Start 2P"';
   ctx.shadowColor='#ff44ff'; ctx.shadowBlur=20;
-  ctx.fillText('CAT INVADERS',W/2,H/2-30);
+  ctx.fillText('CHONK INVADERS',W/2,H/2-30);
   ctx.shadowBlur=0;
   ctx.fillStyle='#ffcc00';
   ctx.font='10px "Press Start 2P"';
