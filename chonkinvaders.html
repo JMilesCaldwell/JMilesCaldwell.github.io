@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CAT INVADERS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#080810;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh;
+    font-family:'Press Start 2P', monospace;
+    overflow:hidden;
+    color:#fff;
+  }
+  #wrapper {
+    position:relative;
+    width:620px;
+  }
+  #hud {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 4px;
+    font-size:11px;
+    color:#ffcc00;
+    text-shadow:0 0 10px #ffcc00aa;
+    letter-spacing:1px;
+  }
+  canvas {
+    display:block;
+    border:2px solid #1a1a3a;
+    box-shadow:0 0 30px #0044ffaa, 0 0 60px #0022ff44;
+    image-rendering:pixelated;
+  }
+  #footer {
+    font-size:9px;
+    color:#334;
+    text-align:center;
+    padding:6px 0;
+    letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+  <div id="hud">
+    <span>SCORE<br><span id="score" style="color:#fff;font-size:13px">0</span></span>
+    <span style="color:#ff88ff;font-size:13px;text-shadow:0 0 12px #ff88ffaa">CAT INVADERS</span>
+    <span>LIVES<br><span id="lives" style="color:#fff;font-size:13px">❤❤❤</span></span>
+  </div>
+  <canvas id="game" width="620" height="580"></canvas>
+  <div id="footer">← → MOVE &nbsp;|&nbsp; SPACE SHOOT</div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx    = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ── image loading ─────────────────────────────────────────────────────────────
+const IMGS = {};
+const SRC = {
+  cat1:'catgame/Cat1.png', cat2:'catgame/Cat2.png',
+  cat3:'catgame/Cat3.png', cat4:'catgame/Cat4.png',
+  chonker1:'catgame/Chonker1.png', chonker2:'catgame/Chonker2.png',
+  kibble:'catgame/kibble.png',
+};
+let loadedCount = 0;
+const totalImgs = Object.keys(SRC).length;
+for (const [k,src] of Object.entries(SRC)) {
+  IMGS[k] = new Image();
+  IMGS[k].onload  = () => { if (++loadedCount === totalImgs) startGame(); };
+  IMGS[k].onerror = () => { if (++loadedCount === totalImgs) startGame(); };
+  IMGS[k].src = src;
+}
+
+// ── bowl canvas (procedural) ──────────────────────────────────────────────────
+function makeBowl() {
+  const bc = document.createElement('canvas');
+  bc.width = 64; bc.height = 44;
+  const bx = bc.getContext('2d');
+
+  // Shadow
+  bx.fillStyle='rgba(0,0,0,0.3)';
+  bx.beginPath();
+  bx.ellipse(32,44,26,5,0,0,Math.PI*2);
+  bx.fill();
+
+  // Bowl body
+  const grad = bx.createRadialGradient(28,18,2,32,22,30);
+  grad.addColorStop(0,'#f5e8c8');
+  grad.addColorStop(0.6,'#d4b483');
+  grad.addColorStop(1,'#a07840');
+  bx.fillStyle = grad;
+  bx.beginPath();
+  bx.moveTo(4,20);
+  bx.bezierCurveTo(4,40, 60,40, 60,20);
+  bx.ellipse(32,20,28,9,0,Math.PI,0,true);
+  bx.closePath();
+  bx.fill();
+
+  // Inner bowl dark
+  bx.fillStyle='rgba(80,40,10,0.15)';
+  bx.beginPath();
+  bx.ellipse(32,20,22,7,0,0,Math.PI*2);
+  bx.fill();
+
+  // Rim highlight
+  bx.strokeStyle='#f0d8a0';
+  bx.lineWidth=2.5;
+  bx.beginPath();
+  bx.ellipse(32,20,28,9,0,Math.PI,0,false);
+  bx.stroke();
+
+  // Kibble pieces in bowl
+  const pieces = [{x:16,y:24},{x:24,y:28},{x:32,y:26},{x:40,y:28},{x:48,y:24}];
+  for (const p of pieces) {
+    bx.fillStyle='#c87040';
+    bx.beginPath();
+    bx.ellipse(p.x,p.y,5,4,Math.random()*1,0,Math.PI*2);
+    bx.fill();
+    bx.fillStyle='#e89060';
+    bx.beginPath();
+    bx.arc(p.x-1,p.y-1,2,0,Math.PI*2);
+    bx.fill();
+  }
+
+  // Shine
+  bx.fillStyle='rgba(255,255,255,0.28)';
+  bx.beginPath();
+  bx.ellipse(20,16,7,3.5,-0.4,0,Math.PI*2);
+  bx.fill();
+
+  return bc;
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function hit(a,b) {
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+
+function drawSprite(key,x,y,w,h,alpha=1) {
+  const img = IMGS[key];
+  ctx.globalAlpha = alpha;
+  if (img && img.complete && img.naturalWidth>0) {
+    ctx.drawImage(img,x,y,w,h);
+  } else {
+    ctx.fillStyle = key.startsWith('chonker') ? '#ff6655' : '#88ccff';
+    ctx.fillRect(x,y,w,h);
+    ctx.fillStyle='#fff';
+    ctx.font='10px sans-serif';
+    ctx.fillText(key,x+2,y+14);
+  }
+  ctx.globalAlpha=1;
+}
+
+// ── game state ────────────────────────────────────────────────────────────────
+const BOWL_W=64, BOWL_H=44;
+const CAT_W=50, CAT_H=50;
+const COLS=8, ROWS=4;
+const CAT_KEYS=['cat1','cat2','cat3','cat4'];
+
+let score, lives, level;
+let player, cats, shots, drops, flyOffs, chonker, chonkerPhase;
+let stepTimer, stepInterval, stepDir;
+let dropTimer;
+let shotCooldown;
+let gameOver, phase; // phase: 'play' | 'chonker' | 'over' | 'clear' | 'title'
+let frame;
+let bowlCanvas;
+let stars;
+
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key]=true;
+  if (e.key===' ') e.preventDefault();
+  if (e.key==='Enter' && (gameOver || phase==='title')) reset();
+});
+window.addEventListener('keyup', e => keys[e.key]=false);
+
+function makeStars() {
+  stars=[];
+  for(let i=0;i<80;i++){
+    stars.push({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.2+0.3, t:Math.random()*Math.PI*2 });
+  }
+}
+
+function reset() {
+  score=0; lives=3; level=1; frame=0;
+  gameOver=false; phase='play';
+  updateHUD();
+  bowlCanvas = makeBowl();
+  makeStars();
+  spawnWave();
+}
+
+function spawnWave() {
+  player  = { x:W/2-BOWL_W/2, y:H-60, w:BOWL_W, h:BOWL_H };
+  shots   = [];
+  drops   = [];
+  flyOffs = [];
+  chonker = null;
+  chonkerPhase = false;
+  stepDir = 1;
+  stepTimer = 0;
+  stepInterval = 55;
+  dropTimer = 0;
+  shotCooldown = 0;
+  phase = 'play';
+
+  cats=[];
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      cats.push({
+        x:50+c*66, y:60+r*64,
+        w:CAT_W, h:CAT_H,
+        img:CAT_KEYS[(r+c)%4],
+        hp:1, alive:true,
+      });
+    }
+  }
+}
+
+const CHONKER_MSGS = ['OH LAWD HE COMIN!', "IT'S A HECKIN' CHONKER!"];
+let chonkerMsg = null; // { text, timer }
+
+function spawnChonker() {
+  chonkerPhase=true;
+  const img = level%2===0 ? 'chonker2':'chonker1';
+  const maxHp = 15+level*8;
+  chonker = { x:W/2-50, y:-110, w:100, h:100, img, hp:maxHp, maxHp, dx:2+level*0.4, alive:true };
+  phase='chonker';
+  chonkerMsg = { text: CHONKER_MSGS[Math.floor(Math.random()*CHONKER_MSGS.length)], timer: 180 };
+}
+
+function updateHUD() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('lives').textContent = '❤'.repeat(Math.max(0,lives));
+}
+
+// ── update ────────────────────────────────────────────────────────────────────
+function update() {
+  if (phase==='over' || phase==='title') return;
+  frame++;
+
+  // Player
+  const p = player;
+  const spd = 5;
+  if ((keys['ArrowLeft']||keys['a'])  && p.x>0)        p.x-=spd;
+  if ((keys['ArrowRight']||keys['d']) && p.x<W-BOWL_W) p.x+=spd;
+
+  // Shoot
+  shotCooldown--;
+  if ((keys[' ']||keys['ArrowUp']) && shotCooldown<=0) {
+    shotCooldown=14;
+    shots.push({ x:p.x+BOWL_W/2-5, y:p.y-12, w:10, h:10, speed:9 });
+  }
+
+  // Move shots
+  shots = shots.filter(s=>{ s.y-=s.speed; return s.y>-20; });
+
+  // ── cat phase ────────────────────────────────────────────────────────────────
+  if (phase==='play') {
+    const alive = cats.filter(c=>c.alive);
+
+    // Step movement
+    stepTimer++;
+    if (stepTimer >= stepInterval) {
+      stepTimer=0;
+      let wall=false;
+      for (const c of alive) {
+        if ((stepDir>0 && c.x+CAT_W>=W-5)||(stepDir<0 && c.x<=5)) { wall=true; break; }
+      }
+      if (wall) {
+        stepDir*=-1;
+        for (const c of alive) c.y+=18;
+      } else {
+        for (const c of alive) c.x+=stepDir*18;
+      }
+      stepInterval = Math.max(8, 55 - (COLS*ROWS - alive.length)*1.5);
+    }
+
+    // Cat drops
+    dropTimer++;
+    if (dropTimer>35 && alive.length>0) {
+      dropTimer=0;
+      if (Math.random()<0.45) {
+        const d=alive[Math.floor(Math.random()*alive.length)];
+        drops.push({ x:d.x+CAT_W/2-4, y:d.y+CAT_H, w:8, h:8, speed:3.5+level*0.4 });
+      }
+    }
+
+    // Shots vs cats
+    for (const s of shots) {
+      for (const c of cats) {
+        if (!c.alive) continue;
+        if (hit(s,c)) {
+          s.dead=true; c.hp--;
+          if (c.hp<=0) {
+            c.alive=false;
+            score+=10+level*2; updateHUD();
+            flyOffs.push({ x:c.x, y:c.y, w:c.w, h:c.h, img:c.img,
+              dx:(Math.random()>0.5?1:-1)*(3+Math.random()*3), dy:-5-Math.random()*2,
+              grav:0.18, alpha:1, life:55 });
+          }
+        }
+      }
+    }
+    shots = shots.filter(s=>!s.dead);
+
+    // Cats reach player
+    for (const c of cats) {
+      if (c.alive && c.y+CAT_H >= p.y) { lives=0; updateHUD(); phase='over'; gameOver=true; }
+    }
+
+    // All cats gone → chonker
+    if (alive.filter(c=>c.alive).length===0 && !chonkerPhase) spawnChonker();
+  }
+
+  // ── chonker phase ─────────────────────────────────────────────────────────
+  if (phase==='chonker' && chonker && chonker.alive) {
+    const ch=chonker;
+    ch.x+=ch.dx;
+    if (ch.x<=0 || ch.x+ch.w>=W) ch.dx*=-1;
+    if (ch.y<70) ch.y+=2.5;
+
+    // Drops more
+    if (frame%20===0) {
+      drops.push({ x:ch.x+ch.w/2-4, y:ch.y+ch.h, w:8, h:8, speed:4+level*0.5 });
+    }
+    if (frame%45===0) { // spread shot
+      [-20,0,20].forEach(off=>{
+        drops.push({ x:ch.x+ch.w/2+off, y:ch.y+ch.h, w:8, h:8, speed:3.5+level*0.4 });
+      });
+    }
+
+    // Shots vs chonker
+    for (const s of shots) {
+      if (hit(s,ch)) {
+        s.dead=true; ch.hp--;
+        if (ch.hp<=0) {
+          ch.alive=false;
+          score+=150+level*50; updateHUD();
+          flyOffs.push({ x:ch.x, y:ch.y, w:ch.w, h:ch.h, img:ch.img,
+            dx:(ch.dx>0?6:-6), dy:-8, grav:0.2, alpha:1, life:80 });
+          chonkerPhase=false;
+          setTimeout(()=>{ level++; spawnWave(); }, 1800);
+        }
+      }
+    }
+    shots = shots.filter(s=>!s.dead);
+  }
+
+  // ── drops ────────────────────────────────────────────────────────────────────
+  drops = drops.filter(d=>{
+    d.y+=d.speed;
+    if (hit(d,p)) {
+      lives--; updateHUD();
+      if (lives<=0) { phase='over'; gameOver=true; }
+      return false;
+    }
+    return d.y<H+20;
+  });
+
+  // ── fly-offs ─────────────────────────────────────────────────────────────────
+  for (const f of flyOffs) {
+    f.x+=f.dx; f.y+=f.dy; f.dy+=f.grav;
+    f.alpha = Math.max(0, f.life/55);
+    f.life--;
+  }
+  flyOffs = flyOffs.filter(f=>f.life>0);
+
+  // stars twinkle
+  for (const s of stars) s.t+=0.03;
+}
+
+// ── draw ──────────────────────────────────────────────────────────────────────
+function draw() {
+  // BG
+  ctx.fillStyle='#080810';
+  ctx.fillRect(0,0,W,H);
+
+  // Stars
+  for (const s of stars) {
+    const b = 0.35+0.65*Math.abs(Math.sin(s.t));
+    ctx.globalAlpha=b*0.7;
+    ctx.fillStyle='#aabbff';
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // Scanlines
+  ctx.fillStyle='rgba(0,0,0,0.07)';
+  for (let y=0;y<H;y+=3) ctx.fillRect(0,y,W,1.5);
+
+  if (!player) {
+    drawTitle(); return;
+  }
+
+  // Ground
+  const gGrad = ctx.createLinearGradient(0,H-18,0,H);
+  gGrad.addColorStop(0,'#1a1a3a'); gGrad.addColorStop(1,'#080810');
+  ctx.fillStyle=gGrad;
+  ctx.fillRect(0,H-18,W,18);
+  ctx.strokeStyle='#2233aa';
+  ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,H-18); ctx.lineTo(W,H-18); ctx.stroke();
+
+  // Cats
+  for (const c of cats) {
+    if (!c.alive) continue;
+    drawSprite(c.img,c.x,c.y,c.w,c.h);
+  }
+
+  // Chonker
+  if (chonker && chonker.alive) {
+    const ch=chonker;
+    drawSprite(ch.img,ch.x,ch.y,ch.w,ch.h);
+    // glow
+    ctx.shadowColor='#ff4466'; ctx.shadowBlur=18;
+    ctx.strokeStyle='#ff4466';
+    ctx.lineWidth=2;
+    ctx.strokeRect(ch.x,ch.y,ch.w,ch.h);
+    ctx.shadowBlur=0;
+    // HP bar bg
+    ctx.fillStyle='#220011';
+    ctx.fillRect(ch.x,ch.y-16,ch.w,10);
+    // HP bar fill
+    const hpFrac = ch.hp/ch.maxHp;
+    const hpCol = hpFrac>0.5?'#44ff88':hpFrac>0.25?'#ffcc00':'#ff4444';
+    ctx.fillStyle=hpCol;
+    ctx.fillRect(ch.x,ch.y-16,ch.w*hpFrac,10);
+    ctx.strokeStyle='#ff88aa'; ctx.lineWidth=1;
+    ctx.strokeRect(ch.x,ch.y-16,ch.w,10);
+    // Label
+    ctx.fillStyle='#ff88aa';
+    ctx.font='7px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('CHONKER',ch.x+ch.w/2,ch.y-20);
+  }
+
+  // Player shots (kibble)
+  for (const s of shots) {
+    drawSprite('kibble',s.x,s.y,s.w,s.h);
+  }
+
+  // Drops (cat kibble)
+  for (const d of drops) {
+    ctx.fillStyle='#ff9933';
+    ctx.beginPath();
+    ctx.arc(d.x+4,d.y+4,4.5,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#ffdd88';
+    ctx.beginPath();
+    ctx.arc(d.x+2.5,d.y+2.5,1.8,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  // Fly-offs
+  for (const f of flyOffs) {
+    drawSprite(f.img,f.x,f.y,f.w,f.h,f.alpha);
+    // ✨ hearts
+    if (Math.random()<0.15) {
+      ctx.fillStyle='rgba(255,150,200,'+f.alpha+')';
+      ctx.font='14px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('❤',f.x+f.w/2+(Math.random()-0.5)*20, f.y-Math.random()*10);
+    }
+  }
+
+  // Player bowl
+  ctx.drawImage(bowlCanvas, player.x, player.y, BOWL_W, BOWL_H);
+
+  // Level badge
+  ctx.fillStyle='#334488';
+  ctx.fillRect(0,H-16,W,16);
+  ctx.fillStyle='#4466cc';
+  ctx.font='8px "Press Start 2P"';
+  ctx.textAlign='left';
+  ctx.fillText('LEVEL '+level, 8, H-4);
+
+  // Chonker announcement
+  if (chonkerMsg && chonkerMsg.timer > 0) {
+    chonkerMsg.timer--;
+    const t = chonkerMsg.timer;
+    const alpha = t > 150 ? 1 : t / 150;
+    const scale = t > 150 ? 1 + (180-t)*0.008 : 1;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(W/2, H/2);
+    ctx.scale(scale, scale);
+    ctx.textAlign = 'center';
+    // Shadow
+    ctx.font = '20px "Press Start 2P"';
+    ctx.fillStyle = '#000';
+    ctx.fillText(chonkerMsg.text, 3, 3);
+    // Colour cycle
+    const hue = (frame*4) % 360;
+    ctx.fillStyle = `hsl(${hue},100%,65%)`;
+    ctx.shadowColor = `hsl(${hue},100%,50%)`;
+    ctx.shadowBlur = 20;
+    ctx.fillText(chonkerMsg.text, 0, 0);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+
+  // Screens
+  if (phase==='over') drawGameOver();
+}
+
+function drawTitle() {
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ff88ff';
+  ctx.font='22px "Press Start 2P"';
+  ctx.shadowColor='#ff44ff'; ctx.shadowBlur=20;
+  ctx.fillText('CAT INVADERS',W/2,H/2-30);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#ffcc00';
+  ctx.font='10px "Press Start 2P"';
+  ctx.fillText('PRESS ENTER',W/2,H/2+20);
+}
+
+function drawGameOver() {
+  ctx.fillStyle='rgba(0,0,0,0.75)';
+  ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.font='26px "Press Start 2P"';
+  ctx.fillStyle='#ff3333';
+  ctx.shadowColor='#ff0000'; ctx.shadowBlur=25;
+  ctx.fillText('GAME OVER',W/2,H/2-40);
+  ctx.shadowBlur=0;
+  ctx.font='11px "Press Start 2P"';
+  ctx.fillStyle='#ffcc00';
+  ctx.fillText('SCORE: '+score,W/2,H/2+5);
+  ctx.fillStyle='#888';
+  ctx.font='8px "Press Start 2P"';
+  ctx.fillText('PRESS ENTER',W/2,H/2+38);
+}
+
+// ── loop ──────────────────────────────────────────────────────────────────────
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function startGame() {
+  phase='title';
+  makeStars();
+  frame=0;
+  loop();
+}
+</script>
+</body>
+</html>
