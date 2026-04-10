@@ -54,10 +54,9 @@
   }
   #wrapper:-webkit-full-screen #center-col canvas,
   #wrapper:fullscreen #center-col canvas {
-    width:auto !important;
-    height:100% !important;
+    width:100% !important;
+    height:auto !important;
     max-height:100vh;
-    max-width:100%;
   }
   /* side panels: hidden normally, shown in fullscreen */
   .fs-panel {
@@ -421,9 +420,12 @@ window.addEventListener('keyup', e => keys[e.key]=false);
 
 // Mobile controls — safely after canvas & mouse are declared
 function holdKey(el, key) {
-  el.addEventListener('touchstart', e=>{ e.preventDefault(); keys[key]=true; }, {passive:false});
-  el.addEventListener('touchend',   e=>{ e.preventDefault(); keys[key]=false; }, {passive:false});
-  el.addEventListener('touchcancel',e=>{ keys[key]=false; });
+  el.addEventListener('touchstart',  e=>{ e.preventDefault(); keys[key]=true; },  {passive:false});
+  el.addEventListener('touchend',    e=>{ e.preventDefault(); keys[key]=false; }, {passive:false});
+  el.addEventListener('touchcancel', e=>{ keys[key]=false; });
+  el.addEventListener('mousedown',   e=>{ keys[key]=true; });
+  el.addEventListener('mouseup',     e=>{ keys[key]=false; });
+  el.addEventListener('mouseleave',  e=>{ keys[key]=false; });
 }
 holdKey(document.getElementById('btn-left'),     'ArrowLeft');
 holdKey(document.getElementById('btn-right'),    'ArrowRight');
@@ -470,7 +472,10 @@ async function fetchLeaderboard() {
   try {
     const res = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC}/json`);
     const data = await res.json();
-    leaderboard = (data.dreamlo?.leaderboard || []).slice(0, 10);
+    const raw = data.dreamlo?.leaderboard?.entry;
+    if (!raw) { leaderboard = []; return; }
+    // Dreamlo returns a single object (not array) when only 1 entry exists
+    leaderboard = (Array.isArray(raw) ? raw : [raw]).slice(0, 10);
   } catch (e) {
     leaderboard = [];
   }
@@ -486,8 +491,7 @@ async function submitScore(name) {
   }
 }
 
-function showLeaderboard() {
-  phase = 'leaderboard';
+function renderLeaderboard() {
   const list = document.getElementById('leaderboard-list');
   list.innerHTML = '';
   if (leaderboard.length === 0) {
@@ -496,11 +500,17 @@ function showLeaderboard() {
     leaderboard.forEach((entry, i) => {
       const div = document.createElement('div');
       div.className = `leaderboard-entry ${i === 0 ? 'rank1' : i === 1 ? 'rank2' : i === 2 ? 'rank3' : ''}`;
-      div.innerHTML = `<span>${(i+1).toString().padStart(2, ' ')}. ${entry.playerName}</span><span>${entry.score}</span>`;
+      div.innerHTML = `<span>${i+1}. ${entry.name}</span><span>${entry.score}</span>`;
       list.appendChild(div);
     });
   }
+}
+
+function showLeaderboard() {
+  phase = 'leaderboard';
+  document.getElementById('leaderboard-list').innerHTML = '<div style="padding:20px;color:#888;font-size:8px;">LOADING...</div>';
   document.getElementById('leaderboard').classList.add('show');
+  fetchLeaderboard().then(renderLeaderboard);
 }
 
 function hideLeaderboard() {
