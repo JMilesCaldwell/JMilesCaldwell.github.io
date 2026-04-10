@@ -471,13 +471,14 @@ function makeStars() {
 async function fetchLeaderboard() {
   try {
     const res = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC}/json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const raw = data.dreamlo?.leaderboard?.entry;
     if (!raw) { leaderboard = []; return; }
-    // Dreamlo returns a single object (not array) when only 1 entry exists
     leaderboard = (Array.isArray(raw) ? raw : [raw]).slice(0, 10);
   } catch (e) {
-    leaderboard = [];
+    leaderboard = null; // null = error, [] = empty
+    console.error('Leaderboard fetch failed:', e);
   }
 }
 
@@ -494,7 +495,9 @@ async function submitScore(name) {
 function renderLeaderboard() {
   const list = document.getElementById('leaderboard-list');
   list.innerHTML = '';
-  if (leaderboard.length === 0) {
+  if (leaderboard === null) {
+    list.innerHTML = '<div style="padding:20px;color:#ff4444;font-size:7px;">FETCH ERROR — CHECK CONSOLE</div>';
+  } else if (leaderboard.length === 0) {
     list.innerHTML = '<div style="padding:20px;color:#888;font-size:8px;">NO SCORES YET</div>';
   } else {
     leaderboard.forEach((entry, i) => {
