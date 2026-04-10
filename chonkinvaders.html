@@ -468,16 +468,18 @@ function makeStars() {
 }
 
 // ── Dreamlo leaderboard ───────────────────────────────────────────────────────
+const DREAMLO_BASE = `https://corsproxy.io/?url=http://dreamlo.com/lb`;
+
 async function fetchLeaderboard() {
   try {
-    const res = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC}/json`);
+    const res = await fetch(`${DREAMLO_BASE}/${DREAMLO_PUBLIC}/json`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const raw = data.dreamlo?.leaderboard?.entry;
     if (!raw) { leaderboard = []; return; }
     leaderboard = (Array.isArray(raw) ? raw : [raw]).slice(0, 10);
   } catch (e) {
-    leaderboard = null; // null = error, [] = empty
+    leaderboard = null;
     console.error('Leaderboard fetch failed:', e);
   }
 }
@@ -485,7 +487,7 @@ async function fetchLeaderboard() {
 async function submitScore(name) {
   const cleanName = (name || 'ANON').substring(0, 20).toUpperCase();
   try {
-    await fetch(`https://dreamlo.com/lb/${DREAMLO_PRIVATE}/add/${encodeURIComponent(cleanName)}/${Math.floor(score)}`);
+    await fetch(`${DREAMLO_BASE}/${DREAMLO_PRIVATE}/add/${encodeURIComponent(cleanName)}/${Math.floor(score)}`);
     await fetchLeaderboard();
   } catch (e) {
     console.error('Score submit failed', e);
