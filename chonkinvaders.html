@@ -90,6 +90,59 @@
     padding:6px 0;
     letter-spacing:1px;
   }
+  #nameInput {
+    font-family:'Press Start 2P',monospace;
+    font-size:12px;
+    background:#1a1a3a;
+    color:#ffcc00;
+    border:2px solid #334499;
+    padding:8px;
+    width:200px;
+    text-align:center;
+  }
+  #leaderboard {
+    display:none;
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,0.95);
+    z-index:1000;
+    padding:20px;
+    overflow-y:auto;
+    font-family:'Press Start 2P',monospace;
+    color:#ffcc00;
+  }
+  #leaderboard.show {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+  }
+  #leaderboard h1 {
+    font-size:20px;
+    color:#ff88ff;
+    margin:20px 0;
+    text-shadow:0 0 10px #ff88ffaa;
+  }
+  #leaderboard-list {
+    width:100%;
+    max-width:400px;
+    font-size:10px;
+  }
+  .leaderboard-entry {
+    display:flex;
+    justify-content:space-between;
+    padding:8px 4px;
+    border-bottom:1px solid #334499;
+    color:#aabbff;
+  }
+  .leaderboard-entry.rank1 { color:#ffcc00; background:rgba(255,200,0,0.1); }
+  .leaderboard-entry.rank2 { color:#cccccc; }
+  .leaderboard-entry.rank3 { color:#cc9966; }
+  #leaderboard-close {
+    margin-top:20px;
+    font-size:9px;
+    color:#888;
+  }
 </style>
 </head>
 <body>
@@ -111,6 +164,11 @@
     <button class="ctrl-btn" id="fire-btn">FEED</button>
     <button class="ctrl-btn" id="btn-right">▶</button>
   </div>
+  <div id="leaderboard">
+    <h1>HIGH SCORES</h1>
+    <div id="leaderboard-list"></div>
+    <div id="leaderboard-close">PRESS ENTER / TAP TO CLOSE</div>
+  </div>
 </div>
 
 <script>
@@ -131,6 +189,11 @@ document.addEventListener('fullscreenchange', ()=>{
 const canvas = document.getElementById('game');
 const ctx    = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
+
+// Dreamlo leaderboard config
+const DREAMLO_PRIVATE = 'RQcgMra0b0eJcTc6B1EtcwBs4TGb5suEyNZvw1eGYIhA';
+const DREAMLO_PUBLIC = '69d8f23e8f40bc2f60342a03';
+let leaderboard = [];
 
 // ── image loading ─────────────────────────────────────────────────────────────
 const IMGS = {};
@@ -263,7 +326,22 @@ canvas.addEventListener('click', () => { keys[' '] = true; setTimeout(()=>keys['
 window.addEventListener('keydown', e => {
   keys[e.key]=true;
   if (e.key===' ') e.preventDefault();
-  if (e.key==='Enter' && (gameOver || phase==='title')) reset();
+  if (e.key==='Enter') {
+    if (phase==='title') reset();
+    if (gameOver && phase==='over') {
+      const name = prompt('Enter your name:', 'PLAYER');
+      if (name !== null) {
+        submitScore(name).then(() => {
+          phase = 'title';
+          gameOver = false;
+        });
+      }
+    }
+    if (phase==='leaderboard') hideLeaderboard();
+  }
+  if ((e.key==='l'||e.key==='L') && (gameOver || phase==='title')) {
+    showLeaderboard();
+  }
 });
 window.addEventListener('keyup', e => keys[e.key]=false);
 
@@ -285,7 +363,17 @@ canvas.addEventListener('touchstart', e=>{
   e.preventDefault();
   const c = canvasCoords(e.touches[0].clientX, e.touches[0].clientY);
   mouse.x = c.x; mouse.y = c.y;
-  if (phase==='title'||gameOver) reset();
+  if (phase==='title') reset();
+  if (gameOver && phase==='over') {
+    const name = prompt('Enter your name:', 'PLAYER');
+    if (name !== null) {
+      submitScore(name).then(() => {
+        phase = 'title';
+        gameOver = false;
+      });
+    }
+  }
+  if (phase==='leaderboard') hideLeaderboard();
 }, {passive:false});
 
 function makeStars() {
@@ -293,6 +381,49 @@ function makeStars() {
   for(let i=0;i<80;i++){
     stars.push({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.2+0.3, t:Math.random()*Math.PI*2 });
   }
+}
+
+// ── Dreamlo leaderboard ───────────────────────────────────────────────────────
+async function fetchLeaderboard() {
+  try {
+    const res = await fetch(`https://dreamlo.com/lb/${DREAMLO_PUBLIC}/json`);
+    const data = await res.json();
+    leaderboard = (data.dreamlo?.leaderboard || []).slice(0, 10);
+  } catch (e) {
+    leaderboard = [];
+  }
+}
+
+async function submitScore(name) {
+  const cleanName = (name || 'ANON').substring(0, 20).toUpperCase();
+  try {
+    await fetch(`https://dreamlo.com/lb/${DREAMLO_PRIVATE}/add/${encodeURIComponent(cleanName)}/${Math.floor(score)}`);
+    await fetchLeaderboard();
+  } catch (e) {
+    console.error('Score submit failed', e);
+  }
+}
+
+function showLeaderboard() {
+  phase = 'leaderboard';
+  const list = document.getElementById('leaderboard-list');
+  list.innerHTML = '';
+  if (leaderboard.length === 0) {
+    list.innerHTML = '<div style="padding:20px;color:#888;font-size:8px;">NO SCORES YET</div>';
+  } else {
+    leaderboard.forEach((entry, i) => {
+      const div = document.createElement('div');
+      div.className = `leaderboard-entry ${i === 0 ? 'rank1' : i === 1 ? 'rank2' : i === 2 ? 'rank3' : ''}`;
+      div.innerHTML = `<span>${(i+1).toString().padStart(2, ' ')}. ${entry.playerName}</span><span>${entry.score}</span>`;
+      list.appendChild(div);
+    });
+  }
+  document.getElementById('leaderboard').classList.add('show');
+}
+
+function hideLeaderboard() {
+  document.getElementById('leaderboard').classList.remove('show');
+  phase = 'title';
 }
 
 function reset() {
@@ -719,6 +850,10 @@ function draw() {
 
   // Screens
   if (phase==='over') drawGameOver();
+  if (phase==='leaderboard') {
+    ctx.fillStyle='rgba(0,0,0,0.5)';
+    ctx.fillRect(0,0,W,H);
+  }
 }
 
 function drawTitle() {
@@ -733,6 +868,9 @@ function drawTitle() {
   ctx.fillStyle='#ffcc00';
   ctx.font='10px "Press Start 2P"';
   ctx.fillText('TAP  /  ENTER',W/2,H/2+20);
+  ctx.fillStyle='#888';
+  ctx.font='8px "Press Start 2P"';
+  ctx.fillText('PRESS L FOR HIGH SCORES',W/2,H/2+50);
 }
 
 function drawGameOver() {
@@ -749,7 +887,7 @@ function drawGameOver() {
   ctx.fillText('SCORE: '+score,W/2,H/2+5);
   ctx.fillStyle='#888';
   ctx.font='8px "Press Start 2P"';
-  ctx.fillText('TAP  /  ENTER',W/2,H/2+38);
+  ctx.fillText('ENTER TO SUBMIT  /  L FOR SCORES',W/2,H/2+38);
 }
 
 // ── loop ──────────────────────────────────────────────────────────────────────
@@ -763,6 +901,7 @@ function startGame() {
   phase='title';
   makeStars();
   frame=0;
+  fetchLeaderboard();
   loop();
 }
 </script>
