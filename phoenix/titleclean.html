@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Title Handle Cleaner</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Calibri, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#fff; color:#333; margin:0; padding:0; }
+    header { background:#68437B; color:#fff; padding:16px 24px; display:flex; align-items:center; gap:16px; }
+    header h1 { font-size:18px; font-weight:600; margin:0; }
+    header img { height:36px; margin-left:auto; }
+    .content { padding:20px; max-width:960px; }
+    label { display:block; margin-top:14px; font-weight:600; font-size:14px; }
+    select, input[type="text"] { display:block; margin-top:4px; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; }
+    input[type="file"] { display:block; margin-top:4px; }
+    .buttons { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+    button { padding:10px 16px; border:0; border-radius:8px; background:#ca427e; color:#fff; cursor:pointer; font-size:14px; }
+    button:hover { background:#b33a6f; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    #stats { margin-top:12px; font-size:13px; color:#555; }
+    .table-wrap { overflow-x:auto; margin-top:14px; }
+    table { border-collapse:collapse; width:100%; font-size:13px; }
+    th { background:#68437B; color:#fff; padding:8px 10px; text-align:left; white-space:nowrap; }
+    td { border-bottom:1px solid #e5e7eb; padding:6px 10px; vertical-align:top; }
+    tr:nth-child(even) td { background:#faf9fb; }
+    tr:hover td { background:#f3eef6; }
+    .handle { font-family:monospace; color:#68437B; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Title Handle Cleaner</h1>
+    <a href="index.html" style="margin-left:auto;line-height:0;"><img src="logo.png" alt="Phoenix Import"></a>
+  </header>
+  <div class="content">
+    <p>Parses a titles file (Column A = SKU, Column B = Title) and converts titles to URL-safe Shopify handles. Language rules are applied before generic accent stripping.</p>
+
+    <label>Language</label>
+    <select id="lang">
+      <option value="EN">EN — English</option>
+      <option value="DE">DE — German (ä→ae, ö→oe, ü→ue, ß→ss)</option>
+      <option value="FR">FR — French (d'ange → d-ange, apostrophes → dash)</option>
+      <option value="ES">ES — Spanish</option>
+      <option value="IT">IT — Italian</option>
+      <option value="NL">NL — Dutch</option>
+    </select>
+
+    <label>Titles file (.xlsx) — Column A: SKU, Column B: Title</label>
+    <input id="titles" type="file" accept=".xlsx">
+
+    <label>Output filename</label>
+    <input id="filename" type="text" value="cleaned_handles.csv">
+
+    <div class="buttons">
+      <button id="process" disabled>Process</button>
+      <button id="download" disabled>Download CSV</button>
+    </div>
+
+    <div id="stats"></div>
+    <div class="table-wrap" id="tableContainer"></div>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+let fTitles = null;
+let processedData = null;
+
+$('titles').addEventListener('change', e => {
+  fTitles = e.target.files[0];
+  $('process').disabled = !fTitles;
+  $('download').disabled = true;
+  $('tableContainer').innerHTML = '';
+  $('stats').textContent = '';
+  processedData = null;
+});
+
+function readWorkbook(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        resolve(wb);
+      } catch(err) { reject(err); }
+    };
+    r.onerror = reject;
+    r.readAsArrayBuffer(file);
+  });
+}
+
+// Generic accent map (covers Romance, Germanic, Slavic, Baltic characters).
+// Text is lowercased before this runs, so uppercase entries are unreachable
+// but are kept to mirror urlgen.html exactly.
+const ACCENT_MAP = {
+  'á':'a','à':'a','ä':'a','â':'a','å':'a','ã':'a','ą':'a','ā':'a',
+  'é':'e','è':'e','ë':'e','ê':'e','ę':'e','ē':'e','ė':'e',
+  'í':'i','ì':'i','ï':'i','î':'i','į':'i','ī':'i',
+  'ó':'o','ò':'o','ö':'o','ô':'o','õ':'o','ø':'o','ō':'o',
+  'ú':'u','ù':'u','ü':'u','û':'u','ū':'u','ų':'u',
+  'ý':'y','ÿ':'y',
+  'ñ':'n','ń':'n',
+  'ç':'c','ć':'c','č':'c',
+  'ş':'s','š':'s','ś':'s',
+  'ž':'z','ź':'z','ż':'z',
+  'ł':'l',
+  'Á':'a','À':'a','Ä':'a','Â':'a','Å':'a','Ã':'a','Ą':'a','Ā':'a',
+  'É':'e','È':'e','Ë':'e','Ê':'e','Ę':'e','Ē':'e','Ė':'e',
+  'Í':'i','Ì':'i','Ï':'i','Î':'i','Į':'i','Ī':'i',
+  'Ó':'o','Ò':'o','Ö':'o','Ô':'o','Õ':'o','Ø':'o','Ō':'o',
+  'Ú':'u','Ù':'u','Ü':'u','Û':'u','Ū':'u','Ų':'u',
+  'Ý':'y','Ÿ':'y',
+  'Ñ':'n','Ń':'n',
+  'Ç':'c','Ć':'c','Č':'c',
+  'Ş':'s','Š':'s','Ś':'s',
+  'Ž':'z','Ź':'z','Ż':'z',
+  'Ł':'l'
+};
+
+function applyAccentMap(text) {
+  let s = text.toLowerCase();
+  for (const [accented, plain] of Object.entries(ACCENT_MAP)) {
+    s = s.replace(new RegExp(accented, 'g'), plain);
+  }
+  return s;
+}
+
+// Language-specific pre-processing applied BEFORE the generic accent map.
+// This ensures e.g. German ö→oe wins over the generic ö→o.
+function langPreProcess(text, lang) {
+  let s = text;
+  if (lang === 'DE') {
+    // German umlaut expansion and sharp-s — must happen before generic map
+    s = s.replace(/ä/g, 'ae').replace(/Ä/g, 'ae');
+    s = s.replace(/ö/g, 'oe').replace(/Ö/g, 'oe');
+    s = s.replace(/ü/g, 'ue').replace(/Ü/g, 'ue');
+    s = s.replace(/ß/g, 'ss');
+  }
+  if (lang === 'FR') {
+    // French elision: d'ange → d-ange, l'eau → l-eau, etc.
+    // Both straight apostrophe (U+0027) and right single quote (U+2019).
+    s = s.replace(/['\u2019]/g, '-');
+  }
+  return s;
+}
+
+function titleToHandle(title, lang) {
+  let s = langPreProcess(title, lang);  // language-specific first
+  s = applyAccentMap(s);                // generic accent stripping + lowercase
+  s = s.replace(/[^a-z0-9\s-]/g, ''); // keep only safe chars
+  s = s.replace(/[\s-]+/g, '-');        // collapse spaces and dashes
+  s = s.replace(/^-+|-+$/g, '');        // trim leading/trailing dashes
+  return s;
+}
+
+$('process').addEventListener('click', async () => {
+  $('process').disabled = true;
+  $('process').textContent = 'Processing…';
+  const lang = $('lang').value;
+  try {
+    const wb = await readWorkbook(fTitles);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+
+    // Find last row by scanning cell addresses
+    const allCells = Object.keys(ws).filter(a => !a.startsWith('!'));
+    let maxRow = 0;
+    for (const addr of allCells) {
+      const m = addr.match(/^[A-Z]+(\d+)$/);
+      if (m) maxRow = Math.max(maxRow, parseInt(m[1], 10));
+    }
+
+    processedData = [];
+    for (let R = 2; R <= maxRow; R++) {
+      const sku   = ws['A'+R] ? String(ws['A'+R].v).trim() : '';
+      const title = ws['B'+R] ? String(ws['B'+R].v).trim() : '';
+      if (!sku && !title) continue;
+      processedData.push({
+        sku,
+        title,
+        handle: title ? titleToHandle(title, lang) : ''
+      });
+    }
+
+    if (processedData.length === 0) {
+      $('tableContainer').innerHTML = '<p>No data found.</p>';
+      $('stats').textContent = '';
+      $('download').disabled = true;
+    } else {
+      renderTable(processedData);
+      $('stats').textContent = `${processedData.length} rows processed (${lang}).`;
+      $('download').disabled = false;
+    }
+  } catch(err) {
+    $('tableContainer').innerHTML = '<pre style="color:red">Error: ' + esc(err.message) + '\n\n' + esc(err.stack) + '</pre>';
+  } finally {
+    $('process').disabled = false;
+    $('process').textContent = 'Process';
+  }
+});
+
+function renderTable(data) {
+  let html = '<table><thead><tr><th>#</th><th>SKU</th><th>Original Title</th><th>Cleaned Handle</th></tr></thead><tbody>';
+  for (let i = 0; i < data.length; i++) {
+    const { sku, title, handle } = data[i];
+    html += `<tr><td>${i+1}</td><td>${esc(sku)}</td><td>${esc(title)}</td><td class="handle">${esc(handle)}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  $('tableContainer').innerHTML = html;
+}
+
+$('download').addEventListener('click', () => {
+  if (!processedData) return;
+  const lines = ['SKU,Original Title,Cleaned Handle'];
+  for (const { sku, title, handle } of processedData) {
+    lines.push([sku, title, handle].map(csvEscape).join(','));
+  }
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = $('filename').value.trim() || 'cleaned_handles.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function csvEscape(s) {
+  s = String(s);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+</script>
+</body>
+</html>
