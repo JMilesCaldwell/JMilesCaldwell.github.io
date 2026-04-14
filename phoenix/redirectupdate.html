@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Redirect Updater</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Calibri, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#fff; color:#333; margin:0; padding:0; }
+    header { background:#68437B; color:#fff; padding:16px 24px; display:flex; align-items:center; gap:16px; }
+    header h1 { font-size:18px; font-weight:600; margin:0; }
+    header img { height:36px; margin-left:auto; }
+    .content { padding:20px; max-width:1100px; }
+    label { display:block; margin-top:14px; font-weight:600; font-size:14px; }
+    input[type="file"] { display:block; margin-top:4px; }
+    input[type="text"] { display:block; margin-top:4px; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; width:260px; }
+    .buttons { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+    button { padding:10px 16px; border:0; border-radius:8px; background:#ca427e; color:#fff; cursor:pointer; font-size:14px; }
+    button:hover { background:#b33a6f; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    #stats { background:#f4f4f5; border:1px solid #d1d5db; border-radius:8px; padding:12px; margin-top:14px; font-size:13px; white-space:pre; display:none; }
+    .table-wrap { overflow-x:auto; margin-top:14px; }
+    table { border-collapse:collapse; width:100%; font-size:12px; }
+    th { background:#68437B; color:#fff; padding:7px 10px; text-align:left; white-space:nowrap; }
+    td { border-bottom:1px solid #e5e7eb; padding:5px 10px; vertical-align:top; word-break:break-all; }
+    tr:nth-child(even) td { background:#faf9fb; }
+    tr:hover td { background:#f3eef6; }
+    .new { color:#068b06; font-family:monospace; }
+    .old { color:#999; font-family:monospace; text-decoration:line-through; }
+    .same { color:#aaa; font-family:monospace; }
+    .tag-new { background:#d4edda; color:#155724; padding:1px 5px; border-radius:3px; font-size:11px; }
+    .tag-skip { background:#f8d7da; color:#721c24; padding:1px 5px; border-radius:3px; font-size:11px; }
+    .filter-bar { margin-top:12px; font-size:13px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .filter-bar label { margin:0; font-weight:normal; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Redirect Updater</h1>
+    <a href="index.html" style="margin-left:auto;line-height:0;"><img src="logo.png" alt="Phoenix Import"></a>
+  </header>
+  <div class="content">
+    <p>
+      Updates <code>product_redirects_{lang}.csv</code> with new Shopify handles.<br>
+      Input A: handles xlsx (SKU / Original Title / Cleaned Handle) — output of Title Handle Cleaner.<br>
+      Input B: existing product redirects CSV (Redirect from, Redirect to).<br>
+      SKU is matched from the old URL path: <code>/{lang}/4/<strong>SKU</strong>/title.aspx</code>
+    </p>
+
+    <label>A) Handles file (.xlsx)</label>
+    <input id="handles" type="file" accept=".xlsx">
+
+    <label>B) Product redirects (.csv)</label>
+    <input id="redirects" type="file" accept=".csv">
+
+    <label>Output filename</label>
+    <input id="filename" type="text" value="product_redirects_updated.csv">
+
+    <div class="buttons">
+      <button id="process" disabled>Process</button>
+      <button id="download" disabled>Download Updated CSV</button>
+    </div>
+
+    <pre id="stats"></pre>
+
+    <div class="filter-bar" id="filterBar" style="display:none">
+      Show:
+      <label><input type="checkbox" id="showUpdated" checked> Updated</label>
+      <label><input type="checkbox" id="showUnchanged"> Unchanged (no match)</label>
+      <label><input type="checkbox" id="showNew"> New products (no redirect)</label>
+    </div>
+
+    <div class="table-wrap" id="tableContainer"></div>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+let fHandles = null, fRedirects = null;
+let resultData = null; // { updatedRows, unchangedRows, newRows, outputLines }
+
+function checkReady() {
+  $('process').disabled = !(fHandles && fRedirects);
+}
+$('handles').addEventListener('change', e => { fHandles = e.target.files[0]; checkReady(); reset(); });
+$('redirects').addEventListener('change', e => { fRedirects = e.target.files[0]; checkReady(); reset(); });
+
+function reset() {
+  $('download').disabled = true;
+  $('stats').style.display = 'none';
+  $('tableContainer').innerHTML = '';
+  $('filterBar').style.display = 'none';
+  resultData = null;
+}
+
+function readWorkbook(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => {
+      try { resolve(XLSX.read(new Uint8Array(e.target.result), {type:'array'})); }
+      catch(err) { reject(err); }
+    };
+    r.onerror = reject;
+    r.readAsArrayBuffer(file);
+  });
+}
+function readText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsText(file);
+  });
+}
+
+// Simple CSV line parser (respects double-quoted fields)
+function parseCSVLine(line) {
+  const re = /("([^"]*)"|[^,]*)(,|$)/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(line)) !== null) {
+    out.push(m[2] !== undefined ? m[2] : m[1]);
+    if (m[3] === '') break;
+  }
+  return out;
+}
+function csvEscape(s) {
+  s = String(s);
+  return (s.includes(',') || s.includes('"') || s.includes('\n'))
+    ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+$('process').addEventListener('click', async () => {
+  $('process').disabled = true;
+  $('process').textContent = 'Processing…';
+  try {
+    const [wb, csvText] = await Promise.all([readWorkbook(fHandles), readText(fRedirects)]);
+
+    // --- Build SKU → handle map from xlsx ---
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const allCells = Object.keys(ws).filter(a => !a.startsWith('!'));
+    let maxRow = 0;
+    for (const addr of allCells) {
+      const m = addr.match(/^[A-Z]+(\d+)$/);
+      if (m) maxRow = Math.max(maxRow, parseInt(m[1], 10));
+    }
+    const skuToHandle = new Map();
+    for (let R = 2; R <= maxRow; R++) {
+      const sku    = ws['A'+R] ? String(ws['A'+R].v).trim() : '';
+      const handle = ws['C'+R] ? String(ws['C'+R].v).trim() : '';
+      if (sku && handle) skuToHandle.set(sku, handle);
+    }
+
+    // --- Parse redirect CSV ---
+    const lines = csvText.replace(/\r\n/g, '\n').split('\n');
+    const outputLines = [];
+    const updatedRows = [];   // { sku, oldHandle, newHandle, fromUrl }
+    const unchangedRows = []; // { sku, handle, fromUrl, reason }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) { outputLines.push(''); continue; }
+
+      const parts = parseCSVLine(line);
+
+      // Pass header through unchanged
+      if (i === 0) { outputLines.push(line); continue; }
+
+      const fromUrl  = (parts[0] || '').trim();
+      const oldTo    = (parts[1] || '').trim();
+
+      // Extract SKU: /{lang}/4/{SKU}/title.aspx → split('/')[3]
+      const segments = fromUrl.split('/');
+      const sku = segments[3] || '';
+
+      const newHandle = sku ? skuToHandle.get(sku) : null;
+
+      if (newHandle) {
+        const oldHandle = oldTo.replace(/^\/products\//, '');
+        const newTo     = '/products/' + newHandle;
+        parts[1] = newTo;
+        if (oldHandle !== newHandle) {
+          updatedRows.push({ sku, fromUrl, oldHandle, newHandle });
+        }
+        // (identical = no-op, still write it)
+      } else {
+        // No match — keep original
+        unchangedRows.push({ sku, fromUrl, oldTo, reason: sku ? 'SKU not in handles file' : 'no SKU in URL' });
+      }
+
+      outputLines.push(parts.map(csvEscape).join(','));
+    }
+
+    // --- Products in handles file with no redirect entry ---
+    const skusInRedirects = new Set();
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = parseCSVLine(line);
+      const segments = (parts[0]||'').split('/');
+      if (segments[3]) skusInRedirects.add(segments[3]);
+    }
+    const newRows = []; // products with handle but no redirect at all
+    for (const [sku, handle] of skuToHandle.entries()) {
+      if (!skusInRedirects.has(sku)) {
+        newRows.push({ sku, handle });
+      }
+    }
+
+    resultData = { updatedRows, unchangedRows, newRows, outputLines };
+
+    // Stats
+    $('stats').textContent =
+      `Handles loaded:        ${skuToHandle.size}\n` +
+      `Redirect rows:         ${lines.filter(l=>l.trim()).length - 1}\n` +
+      `Updated (new handle):  ${updatedRows.length}\n` +
+      `Unchanged (no match):  ${unchangedRows.length}\n` +
+      `New products (no redirect): ${newRows.length}`;
+    $('stats').style.display = 'block';
+    $('filterBar').style.display = 'flex';
+    $('download').disabled = false;
+    renderTable();
+
+  } catch(err) {
+    $('stats').textContent = 'Error: ' + err.message + '\n\n' + err.stack;
+    $('stats').style.display = 'block';
+  } finally {
+    $('process').disabled = false;
+    $('process').textContent = 'Process';
+  }
+});
+
+function renderTable() {
+  if (!resultData) return;
+  const showUpdated   = $('showUpdated').checked;
+  const showUnchanged = $('showUnchanged').checked;
+  const showNew       = $('showNew').checked;
+
+  let html = '';
+
+  if (showUpdated && resultData.updatedRows.length) {
+    html += '<h3 style="margin-top:16px;font-size:14px">Updated (' + resultData.updatedRows.length + ')</h3>';
+    html += '<table><thead><tr><th>SKU</th><th>Old handle</th><th>New handle</th><th>Redirect from</th></tr></thead><tbody>';
+    for (const r of resultData.updatedRows) {
+      html += `<tr>
+        <td>${esc(r.sku)}</td>
+        <td class="old">${esc(r.oldHandle)}</td>
+        <td class="new">${esc(r.newHandle)}</td>
+        <td>${esc(r.fromUrl)}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+  }
+
+  if (showNew && resultData.newRows.length) {
+    html += '<h3 style="margin-top:16px;font-size:14px">New products — no existing redirect <span class="tag-new">NEW</span> (' + resultData.newRows.length + ')</h3>';
+    html += '<table><thead><tr><th>SKU</th><th>New handle</th></tr></thead><tbody>';
+    for (const r of resultData.newRows) {
+      html += `<tr><td>${esc(r.sku)}</td><td class="new">${esc(r.handle)}</td></tr>`;
+    }
+    html += '</tbody></table>';
+  }
+
+  if (showUnchanged && resultData.unchangedRows.length) {
+    html += '<h3 style="margin-top:16px;font-size:14px">Unchanged <span class="tag-skip">NO MATCH</span> (' + resultData.unchangedRows.length + ')</h3>';
+    html += '<table><thead><tr><th>SKU</th><th>Existing redirect to</th><th>Reason</th><th>Redirect from</th></tr></thead><tbody>';
+    for (const r of resultData.unchangedRows) {
+      html += `<tr>
+        <td>${esc(r.sku)}</td>
+        <td class="same">${esc(r.oldTo)}</td>
+        <td>${esc(r.reason)}</td>
+        <td>${esc(r.fromUrl)}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+  }
+
+  $('tableContainer').innerHTML = html || '<p style="color:#888;margin-top:12px">Nothing to show with current filters.</p>';
+}
+
+['showUpdated','showUnchanged','showNew'].forEach(id => {
+  $(id).addEventListener('change', renderTable);
+});
+
+$('download').addEventListener('click', () => {
+  if (!resultData) return;
+  const blob = new Blob([resultData.outputLines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = $('filename').value.trim() || 'product_redirects_updated.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
