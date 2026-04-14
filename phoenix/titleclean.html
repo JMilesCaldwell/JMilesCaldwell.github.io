@@ -49,12 +49,13 @@
     <label>Titles file (.xlsx) — Column A: SKU, Column B: Title</label>
     <input id="titles" type="file" accept=".xlsx">
 
-    <label>Output filename</label>
-    <input id="filename" type="text" value="cleaned_handles.csv">
+    <label>Output filename (without extension)</label>
+    <input id="filename" type="text" value="cleaned_handles">
 
     <div class="buttons">
       <button id="process" disabled>Process</button>
-      <button id="download" disabled>Download CSV</button>
+      <button id="downloadCsv" disabled>Download CSV</button>
+      <button id="downloadXlsx" disabled>Download XLSX</button>
     </div>
 
     <div id="stats"></div>
@@ -69,7 +70,8 @@ let processedData = null;
 $('titles').addEventListener('change', e => {
   fTitles = e.target.files[0];
   $('process').disabled = !fTitles;
-  $('download').disabled = true;
+  $('downloadCsv').disabled = true;
+  $('downloadXlsx').disabled = true;
   $('tableContainer').innerHTML = '';
   $('stats').textContent = '';
   processedData = null;
@@ -184,11 +186,13 @@ $('process').addEventListener('click', async () => {
     if (processedData.length === 0) {
       $('tableContainer').innerHTML = '<p>No data found.</p>';
       $('stats').textContent = '';
-      $('download').disabled = true;
+      $('downloadCsv').disabled = true;
+      $('downloadXlsx').disabled = true;
     } else {
       renderTable(processedData);
       $('stats').textContent = `${processedData.length} rows processed (${lang}).`;
-      $('download').disabled = false;
+      $('downloadCsv').disabled = false;
+      $('downloadXlsx').disabled = false;
     }
   } catch(err) {
     $('tableContainer').innerHTML = '<pre style="color:red">Error: ' + esc(err.message) + '\n\n' + esc(err.stack) + '</pre>';
@@ -208,7 +212,7 @@ function renderTable(data) {
   $('tableContainer').innerHTML = html;
 }
 
-$('download').addEventListener('click', () => {
+$('downloadCsv').addEventListener('click', () => {
   if (!processedData) return;
   const lines = ['SKU,Original Title,Cleaned Handle'];
   for (const { sku, title, handle } of processedData) {
@@ -218,9 +222,21 @@ $('download').addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = $('filename').value.trim() || 'cleaned_handles.csv';
+  link.download = ($('filename').value.trim() || 'cleaned_handles') + '.csv';
   link.click();
   URL.revokeObjectURL(url);
+});
+
+$('downloadXlsx').addEventListener('click', () => {
+  if (!processedData) return;
+  const rows = [['SKU', 'Original Title', 'Cleaned Handle']];
+  for (const { sku, title, handle } of processedData) {
+    rows.push([sku, title, handle]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Handles');
+  XLSX.writeFile(wb, ($('filename').value.trim() || 'cleaned_handles') + '.xlsx');
 });
 
 function esc(s) {
