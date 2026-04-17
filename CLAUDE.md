@@ -10,6 +10,26 @@ A GitHub Pages site serving as the central hub for **The Evershroud Isles** tabl
 - Jekyll config (`_config.yml`) with the `minima` theme, though most pages are fully custom HTML
 - No npm, no bundler, no build step
 
+## Local Preview
+Quick preview (no Jekyll processing, fine for standalone HTML tools):
+```
+python3 -m http.server 8000
+```
+Then open `http://localhost:8000/<page>.html`.
+
+Full Jekyll preview (matches GitHub Pages exactly):
+```
+bundle exec jekyll serve
+```
+Then open `http://localhost:4000`.
+
+## Testing Changes
+Before committing a page change:
+1. Start a local server (see Local Preview).
+2. Open the modified page and walk the golden path.
+3. Open the browser console and confirm no errors.
+4. Test on a narrow viewport — most tools need to work on tablet/phone.
+
 ## Repository Structure
 ```
 /                        # Root — all interactive HTML tools live here
