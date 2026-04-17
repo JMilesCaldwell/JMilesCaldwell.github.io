@@ -32,13 +32,14 @@ Before committing a page change:
 
 ## Repository Structure
 ```
-/                        # Root — all interactive HTML tools live here
+/                        # Root — D&D tools + placeholder landing page
 /resources/              # Images, PDFs, audio, and YAML data (bestiary.yml, maps, lore PDFs)
 /resources/mapassets/    # Map generation assets
 /resources/mapgen/       # Map generator resources
 /5eCharacters/           # D&D 5e character sheets
-/catgame/                # Cat game project
-/imogen/                 # Imogen sub-project
+/imogen/                 # Imogen suite — labs, finished projects, and experiments
+/imogen/catgame/         # Cat game assets (used by chonkinvaders.html)
+/imogen/apocrypha/       # Apocrypha — cryptic transcript experiment
 /lifestyle/              # Lifestyle sub-project
 /phoenix/                # Phoenix sub-project
 ```
@@ -46,7 +47,8 @@ Before committing a page change:
 ## Key HTML Tools
 | File | Purpose |
 |------|---------|
-| `index.html` | Main landing page (Caldwell's Repository) |
+| `index.html` | Placeholder landing page (future general hub) |
+| `caldwell-repo.html` | D&D hub — Evershroud Isles tools and lore (was `index.html`) |
 | `commgen.html` / `genericcommgen.html` | NPC/commoner generators |
 | `encgen.html` | Encounter generator |
 | `ingen.html` | InGen tool |
@@ -56,14 +58,14 @@ Before committing a page change:
 | `calendar.html` | In-game calendar with weather/sea conditions |
 | `astrology.html` | Astrology/stars tool |
 | `exchange.html` / `evershroudtradesimulator2000.html` | Simulated stock exchange |
-| `apocrypha.html` | Apocrypha lore section |
 | `aberrantworks.html` | Aberrant Works section |
 | `tavern.html`, `forge.html`, `smithy.html`, etc. | Location/shop pages |
 | `fortune.html` | Fortune telling tool |
 | `harmony.html` | Crystal Harmony tool |
 | `isekaid.html` / `isekaidcards.html` | Isekai'd game |
-| `chonkinvaders.html` | Chonk Invaders mini-game |
-| `terminal.html` | Terminal interface |
+| `imogen/chonkinvaders.html` | Chonk Invaders mini-game |
+| `imogen/apocrypha/index.html` | Apocrypha — cryptic transcript experiment |
+| `imogen/apocrypha/terminal.html` | Terminal interface (part of Apocrypha) |
 
 ## Branch Strategy
 See `BRANCH-STRATEGY.md` for full details. Summary:
