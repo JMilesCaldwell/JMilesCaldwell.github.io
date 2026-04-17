@@ -10,67 +10,58 @@ This repository uses a protective branching strategy to safeguard the main D&D w
 ### `main` - Protected Branch
 **DO NOT MODIFY without explicit permission**
 
-This branch contains the core Caldwell's Repository content:
-- index.html (main repository page)
-- All generator files (commgen.html, encgen.html, ingen.html, mapgen.html, mapgen2.html, dmscreen.html, bestiary.html)
-- All location pages (brinealcazar.html, councilhall.html, embassy.html, etc.)
-- Travel systems (harbour.html, travel.html)
-- Observatory pages (calendar.html, astrology.html)
-- Other interactive pages (fortune.html, harmony.html, forge.html, madlab.html)
-- All resources in /resources/ directory
+This branch contains all live site content:
+- `index.html` — root landing page
+- `caldwell-repo.html` — D&D hub (Evershroud Isles tools and lore)
+- All generator files (`commgen.html`, `encgen.html`, `ingen.html`, `mapgen.html`, `mapgen2.html`, `dmscreen.html`, `bestiary.html`)
+- All location pages (`brinealcazar.html`, `councilhall.html`, `embassy.html`, etc.)
+- Travel systems (`harbour.html`, `travel.html`)
+- Observatory pages (`calendar.html`, `astrology.html`)
+- Other interactive pages (`fortune.html`, `harmony.html`, `forge.html`, `madlab.html`)
+- All resources in `/resources/`
+- `imogen/` — Imogen suite (labs, Chonk Invaders, Apocrypha)
+- `lifestyle/` — lifestyle sub-project
+- `phoenix/` — Phoenix sub-project
 
-### `claude/experimental-apocrypha-*` - Apocrypha Experimental Branch
+### `claude/feature-*` — Feature Branches
 **Safe to modify**
 
-Use this branch for:
-- Modifications to apocrypha.html
-- Experimental features related to the Apocrypha section
-- Testing new ideas that might be incorporated into Apocrypha
+Session branches follow the pattern `claude/<description>-<session-id>`. Use these for:
+- New tool pages or major changes to existing ones
+- Structural or navigation changes
+- Work on any subproject (`imogen/`, `phoenix/`, `lifestyle/`)
 
-### `claude/experimental-aberrant-works-*` - Aberrant Works Experimental Branch
-**Safe to modify**
-
-Use this branch for:
-- Modifications to aberrantworks.html
-- Experimental features related to the Aberrant Works section
-- Testing new ideas that might be incorporated into Aberrant Works
+All Claude work goes here by default. PRs from these branches into `main` require explicit user approval.
 
 ## Workflow
 
-### For Experimental Work:
-1. **Switch to the appropriate experimental branch**
-   ```bash
-   git checkout claude/experimental-apocrypha-*
-   # or
-   git checkout claude/experimental-aberrant-works-*
-   ```
-
-2. **Make your changes**
-
+### For All Claude Work:
+1. **Confirm the current branch** — the SessionStart hook prints it automatically
+2. **Make your changes** on the feature branch
 3. **Commit and push**
    ```bash
-   git add .
+   git add <specific files>
    git commit -m "Description of changes"
    git push -u origin <branch-name>
    ```
+4. **Open a PR** only when the user explicitly asks
 
 ### For Main Repository Changes:
 1. **Get explicit permission first**
-2. Work on a separate feature branch from main
+2. Work on a feature branch, never directly on `main`
 3. Review changes carefully before merging
 
 ## Safety Guidelines
 
-- **Never push directly to main** unless explicitly authorized
+- **Never push directly to `main`** unless explicitly authorized
 - **Always confirm which branch** you're working on before making changes
-- **Experimental branches** can be freely modified, broken, and reset
-- **Keep experimental work isolated** to prevent accidental modifications to main content
+- **Feature branches** can be freely modified, broken, and reset
+- **Keep work isolated** to prevent accidental modifications to main content
 
 ## Branch Naming Convention
 
 - Main branch: `main`
-- Experimental branches: `claude/experimental-<area>-<session-id>`
-- Feature branches (if needed): `claude/feature-<description>-<session-id>`
+- Session/feature branches: `claude/<description>-<session-id>`
 
 ---
 
