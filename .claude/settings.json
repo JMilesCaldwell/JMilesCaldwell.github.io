@@ -2,27 +2,57 @@
   "permissions": {
     "allow": [
       "Bash(git status)",
-      "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git branch*)",
-      "Bash(git show*)",
-      "Bash(git fetch*)",
-      "Bash(git checkout*)",
-      "Bash(git add*)",
-      "Bash(git commit*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
       "Bash(git push -u origin claude/*)",
-      "Bash(ls*)",
-      "Bash(cat*)",
-      "Bash(head*)",
-      "Bash(tail*)",
-      "Bash(wc*)",
-      "Bash(find . *)",
-      "Bash(mkdir -p .claude)"
+      "Bash(python3 -m http.server:*)",
+      "Bash(bundle exec jekyll serve:*)"
     ],
     "deny": [
-      "Bash(git push*origin main*)",
-      "Bash(git push --force*)",
-      "Bash(rm -rf*)"
+      "Bash(git push:* origin main:*)",
+      "Bash(git push:* origin main)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git commit --amend:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -rf /:*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== Branch ===' && git branch --show-current && echo '=== Recent commits ===' && git log --oneline -3 && echo '=== Uncommitted ===' && git status -s"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git status --porcelain | grep -q . && echo '⚠ You have uncommitted changes.' || true"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "printf '%s %s' \"$(git branch --show-current 2>/dev/null)\" \"$(git status --porcelain 2>/dev/null | head -c1 && echo '●' || echo '')\""
   }
 }
