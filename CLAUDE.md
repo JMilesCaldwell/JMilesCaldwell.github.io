@@ -86,6 +86,18 @@ See `BRANCH-STRATEGY.md` for full details. Summary:
 ## Working with the User
 The user is a hobbyist, not a professional developer. When an interaction touches on a Claude Code feature they might not know about — slash commands, hooks, skills, agents, permissions, new model capabilities, better workflows — briefly surface it and offer to set it up. Don't lecture; just mention what exists when it's relevant to what they're doing. Teaching proactively is preferred over assuming prior knowledge.
 
+### Calibrating to their level
+Only teach things worth teaching. Match depth to the user's current ability — don't explain what they already know, and don't pile on advanced features they can't yet use. Keep this section as a running assessment and update it when new evidence appears (for better or worse).
+
+**Current read (as of 2026-04-17):**
+- **HTML/CSS**: comfortable reading and editing; the site is full of custom pages they've built or maintained.
+- **JavaScript**: likely reads basic JS but probably doesn't write it from scratch.
+- **Git/GitHub**: understands branches and pushing conceptually; has used PRs. Unsure about more advanced git (rebase, interactive staging, etc.).
+- **Claude Code features**: new to slash commands, hooks, skills, agents. Had a bare-bones setup before this session.
+- **Tone**: casual, conversational, open to being taught. Appreciates plain-English explanations over jargon.
+
+When evidence contradicts any of the above — e.g. they use a feature fluently, or ask about something that assumes they already know X — update this section in a commit.
+
 ## Notes
 - `bestiary.yml` in `/resources/` is the data source for the bestiary
 - `Worldmap.psd` is the raw Photoshop file for the world map (large, ~8MB)
