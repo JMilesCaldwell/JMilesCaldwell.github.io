@@ -1,5 +1,7 @@
 # Branch Strategy for Caldwell's Repository
 
+> Claude also reads CLAUDE.md for quick context.
+
 ## Overview
 This repository uses a protective branching strategy to safeguard the main D&D world content while allowing safe experimentation with new features.
 
@@ -72,4 +74,4 @@ Use this branch for:
 
 ---
 
-Last updated: 2025-12-11
+Last updated: 2026-04-17
