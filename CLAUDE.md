@@ -83,6 +83,9 @@ See `BRANCH-STRATEGY.md` for full details. Summary:
 - No external JS frameworks (vanilla JS throughout)
 - Icons/images are `.png` files in `/resources/`
 
+## Working with the User
+The user is a hobbyist, not a professional developer. When an interaction touches on a Claude Code feature they might not know about — slash commands, hooks, skills, agents, permissions, new model capabilities, better workflows — briefly surface it and offer to set it up. Don't lecture; just mention what exists when it's relevant to what they're doing. Teaching proactively is preferred over assuming prior knowledge.
+
 ## Notes
 - `bestiary.yml` in `/resources/` is the data source for the bestiary
 - `Worldmap.psd` is the raw Photoshop file for the world map (large, ~8MB)
