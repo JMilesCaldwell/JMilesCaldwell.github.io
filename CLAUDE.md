@@ -70,20 +70,42 @@ Before committing a page change:
 ## Branch Strategy
 See `BRANCH-STRATEGY.md` for full details. Summary:
 
-- **`main`** — Protected. Never push directly without explicit user permission. Contains all live campaign content.
-- **`claude/experimental-apocrypha-*`** — Safe to modify. For `apocrypha.html` work.
-- **`claude/experimental-aberrant-works-*`** — Safe to modify. For `aberrantworks.html` work.
-- **`claude/feature-*`** — Feature branches for new work, branched from main.
-- Session branches follow the pattern `claude/<description>-<session-id>`.
+- **`main`** — Protected. Never push directly without explicit user permission. Contains all live site content.
+- **`claude/<description>-<session-id>`** — Session/feature branches. All Claude work happens here by default.
 
-**Default rule:** Do all work on a feature/experimental branch. Get explicit confirmation before touching `main`.
+**Default rule:** Do all work on a feature branch. Get explicit confirmation before touching `main`.
 
-## Style Conventions
-- Fantasy aesthetic throughout: dark translucent containers, parchment-colored text, serif fonts
-- Navigation bars are sticky, centered, `rgba(0,0,0,0.7)` background
-- Each page is self-contained — styles and scripts are inline or in `<style>`/`<script>` blocks within the HTML file
-- No external JS frameworks (vanilla JS throughout)
-- Icons/images are `.png` files in `/resources/`
+## Scope & Voice
+
+### These tools are not toys
+Assume every HTML file is a substantial self-contained engine with authored data. Read before editing. Notable examples:
+
+- **`mapgen2.html`** (~3,800 lines): procedural gen (cellular automata caverns, BSP-ish dungeons, meandering rivers with auto-bridging, door-to-road pathfinding, irregular city walls), multi-touch pan/zoom, **Foundry VTT `.vtt` import/export**, 15+ creature sprite categories with dozens of variants each.
+- **`commgen.html` / `genericcommgen.html`**: full D&D 5e character math — correct ability modifiers, AC with Dex cap, attack bonuses with proficiency, background-weapon proficiency gating. **~300 culturally-organized names** (Southern, Cajun/French, German, Finnish, Arabic, Phoenician, Southeast Asian, Posh British, Mix). **80+ hand-written personality traits** in consistent literary voice. Per-background nickname pools with 20% attach chance.
+- **`exchange.html`**: custom 250-day calendar (10 named months, 4 seasons) driving a **deterministic commodity market** across 32 locations × 19 goods × 4 seasons = 608 hand-tuned availability scores + 76 seasonal multipliers. Real-world date drives the in-world date. Deterministic hashing (Knuth 2654435761) means every player sees the same prices.
+- **`evershroudtradesimulator2000.html`**: Dopewars/Taipan-style trading game layered on `exchange.html`'s economy. Ships, debt (10% daily interest), crew wages, storm events, ship upgrades, scoreboard.
+
+### Hand-tuned data is content, not fill
+Name lists, availability scores, seasonal multipliers, personality traits, sprite libraries, equipment tables — these are worldbuilding expressed as values. **Never propose replacing curated corpora with procedural generation or LLM output.** The curation IS the work.
+
+When adding to these corpora, preserve the structural grouping (cultural blocks in name lists, seasonal sections in multipliers) with section comments.
+
+### Systems connect
+The calendar feeds the exchange. The exchange feeds the trade game. Bestiary and character backgrounds likely cross-reference. Astrology/weather feed the calendar. Treat the repo as a connected world, not a collection of unrelated pages. Before changing a shared data shape, consider what else consumes it.
+
+### Determinism is a design choice
+Where you see seeded hashing (e.g. `hashSeed` in `exchange.html`), it's load-bearing: it lets the DM and all players see the same shared state without a backend. Never replace with `Math.random()`.
+
+### Workflow
+The user designs systems in their head first, then iterates with an AI to render them into code. Your job is **faithful rendering, not freelance redesign**. Receive the concept, render it. Ask before changing shape.
+
+### Voice & conventions
+- **Fantasy aesthetic** on the D&D pages: dark translucent containers (`rgba(0,0,0,0.7)`), parchment text (`#FAF4E0`), Almendra body, Cinzel headings, sticky centered nav.
+- **British spelling** in the D&D tools: `harbour`, `honour`, `armour`, `colour`, `favourite`. This is a rule, not a preference.
+- **Prose voice**: measured, slightly archaic, literary. No casual modern idiom. "I harbour a quiet disdain for ostentatious wealth" is the register.
+- **Self-contained files**: styles and scripts inline. No external JS frameworks (vanilla JS throughout). No bundler.
+- **Print-to-table is real**: many tools have print buttons; output markup should be printable.
+- **Imogen is the exception** — its own gallery/clinical aesthetic (see `imogen/CLAUDE.md`). Apocrypha is an exception within the exception (see `imogen/apocrypha/CLAUDE.md`).
 
 ## Working with the User
 The user is a hobbyist, not a professional developer. When an interaction touches on a Claude Code feature they might not know about — slash commands, hooks, skills, agents, permissions, new model capabilities, better workflows — briefly surface it and offer to set it up. Don't lecture; just mention what exists when it's relevant to what they're doing. Teaching proactively is preferred over assuming prior knowledge.
