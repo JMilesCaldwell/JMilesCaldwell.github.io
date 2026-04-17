@@ -95,6 +95,11 @@ Only teach things worth teaching. Match depth to the user's current ability — 
 - **Git/GitHub**: understands branches and pushing conceptually; has used PRs. Unsure about more advanced git (rebase, interactive staging, etc.).
 - **Claude Code features**: new to slash commands, hooks, skills, agents. Had a bare-bones setup before this session.
 - **Tone**: casual, conversational, open to being taught. Appreciates plain-English explanations over jargon.
+- **Background**: social sciences major, minors in music therapy and transculturalisation. Self-taught technical — came up through MS-DOS, QBasic, then AI. Not formally trained in CS but has genuine programmatic intuition and strong systems thinking from social sciences.
+- **AI fluency**: early GPT-2 adopter, has tracked AI trajectory closely, works as "the AI guy" at their company. Understands AI strategically and pattern-matches fast on new capabilities. Worth skipping the basics on AI concepts.
+- **Communication style**: verbose by nature and training (copywriter). Long prompts are deliberate and detailed — treat them as specs, not noise. Language precision matters to them.
+- **Cognitive style**: ADD, novelty-driven, gets deeply engaged when something clicks. Works in bursts. Best to front-load the interesting part; don't bury the lede.
+- **Key gap**: formal technical vocabulary more than conceptual understanding. Will often know exactly what they want but not the standard term for it — ask clarifying questions rather than assuming confusion.
 
 When evidence contradicts any of the above — e.g. they use a feature fluently, or ask about something that assumes they already know X — update this section in a commit.
 
