@@ -4,9 +4,7 @@
 
 A personal GitHub Pages site (~57 single-file HTML tools) with no build process. Deployed via Jekyll (`_config.yml`). Everything runs in the browser as static files.
 
-The repo has two distinct purposes:
-
-### 1. D&D / Evershroud Isles Worldbuilding (primary)
+### D&D / Evershroud Isles Worldbuilding
 Tools to run a tabletop RPG campaign set in a custom world called the Evershroud Isles. Categories:
 - **Merchant shops** — alchemist, artificer, black-market, general-store, smithy, clothier: randomized inventory with 60-minute refresh cycles backed by localStorage
 - **Generators** — commgen, encgen, isekaid: NPC/encounter generators with randomized traits, names, and stats
@@ -16,14 +14,6 @@ Tools to run a tabletop RPG campaign set in a custom world called the Evershroud
 - **Lore/narrative** — apocrypha (memetic horror theme with glitch effects), entry1, entry2, terminal
 - **3D simulator** — templesimulator.html (Three.js Buddhist temple with NPC dialogue)
 - **Game** — chonkinvaders.html (canvas Space Invaders variant with cats, mobile controls, fullscreen, Dreamlo leaderboard via CORS proxy)
-
-### 2. Shopify Redirect CSV Tooling (work exception)
-Built as a one-off on this personal account, run in parallel with a professional account to get more done in a short time. Three browser-based tools for managing multilingual (EN/DE/ES/FR/IT/NL) Shopify product redirect CSVs:
-- **urlgen.html** — URL generation
-- **titleclean.html** — language-aware product title-to-handle converter with XLSX export
-- **redirectupdate.html** — ingests new product handles and patches missing rows across existing redirect CSVs
-
-This work is complete and was a specific exception — this account is normally for personal projects only.
 
 ---
 
