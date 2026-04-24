@@ -258,6 +258,47 @@ const canvas = document.getElementById('game');
 const ctx    = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
+// ── 8-bit SFX (WebAudio) ──────────────────────────────────────────────────────
+let audioCtx;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function beep({freq=440, type='square', dur=0.1, gain=0.08, sweep=null, delay=0}) {
+  const ac = ensureAudio();
+  if (!ac) return;
+  const t0 = ac.currentTime + delay;
+  const osc = ac.createOscillator();
+  const g = ac.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  if (sweep) osc.frequency.exponentialRampToValueAtTime(Math.max(1,sweep), t0+dur);
+  g.gain.setValueAtTime(gain, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(g).connect(ac.destination);
+  osc.start(t0);
+  osc.stop(t0+dur+0.02);
+}
+const sfx = {
+  shoot:      () => beep({freq:880, sweep:1760, dur:0.06, gain:0.05}),
+  kill:       () => { beep({freq:220, sweep:80, dur:0.14, gain:0.08});
+                      beep({freq:440, sweep:120, dur:0.14, gain:0.05, type:'triangle', delay:0.02}); },
+  chonkerHit: () => beep({freq:150, sweep:90, dur:0.09, gain:0.08}),
+  chonkerDie: () => [0,0.09,0.18,0.27].forEach((d,i)=>
+                      beep({freq:320-i*50, sweep:80-i*12, dur:0.22, gain:0.1, delay:d})),
+  hurt:       () => beep({freq:200, sweep:55, dur:0.28, gain:0.1, type:'sawtooth'}),
+  power:      () => [523,659,784].forEach((f,i)=>beep({freq:f, dur:0.08, gain:0.08, delay:i*0.06})),
+  heart:      () => { beep({freq:880, dur:0.06, gain:0.07});
+                      beep({freq:1320, dur:0.08, gain:0.07, delay:0.06}); },
+  gameOver:   () => [392,329,261,196].forEach((f,i)=>
+                      beep({freq:f, dur:0.3, gain:0.08, delay:i*0.15})),
+  levelUp:    () => [523,659,784,1047].forEach((f,i)=>
+                      beep({freq:f, dur:0.12, gain:0.08, delay:i*0.08})),
+};
+
 // Dreamlo leaderboard config
 const DREAMLO_PRIVATE = 'RQcgMra0b0eJcTc6B1EtcwBs4TGb5suEyNZvw1eGYIhA';
 const DREAMLO_PUBLIC = '69d8f23e8f40bc2f60342a03';
@@ -390,8 +431,9 @@ canvas.addEventListener('mousemove', e => {
   const c = canvasCoords(e.clientX, e.clientY);
   mouse.x = c.x; mouse.y = c.y;
 });
-canvas.addEventListener('click', () => { keys[' '] = true; setTimeout(()=>keys[' ']=false, 50); });
+canvas.addEventListener('click', () => { ensureAudio(); keys[' '] = true; setTimeout(()=>keys[' ']=false, 50); });
 window.addEventListener('keydown', e => {
+  ensureAudio();
   keys[e.key]=true;
   if (e.key===' ') e.preventDefault();
   if (e.key==='Enter') {
@@ -420,10 +462,10 @@ window.addEventListener('keyup', e => keys[e.key]=false);
 
 // Mobile controls — safely after canvas & mouse are declared
 function holdKey(el, key) {
-  el.addEventListener('touchstart',  e=>{ e.preventDefault(); keys[key]=true; },  {passive:false});
+  el.addEventListener('touchstart',  e=>{ ensureAudio(); e.preventDefault(); keys[key]=true; },  {passive:false});
   el.addEventListener('touchend',    e=>{ e.preventDefault(); keys[key]=false; }, {passive:false});
   el.addEventListener('touchcancel', e=>{ keys[key]=false; });
-  el.addEventListener('mousedown',   e=>{ keys[key]=true; });
+  el.addEventListener('mousedown',   e=>{ ensureAudio(); keys[key]=true; });
   el.addEventListener('mouseup',     e=>{ keys[key]=false; });
   el.addEventListener('mouseleave',  e=>{ keys[key]=false; });
 }
@@ -439,6 +481,7 @@ canvas.addEventListener('touchmove', e=>{
   mouse.x = c.x; mouse.y = c.y;
 }, {passive:false});
 canvas.addEventListener('touchstart', e=>{
+  ensureAudio();
   e.preventDefault();
   const c = canvasCoords(e.touches[0].clientX, e.touches[0].clientY);
   mouse.x = c.x; mouse.y = c.y;
@@ -604,15 +647,22 @@ function update() {
   if ((keys[' ']||keys['ArrowUp']) && shotCooldown<=0) {
     shotCooldown=14;
     const ox = p.x+BOWL_W/2, oy = p.y;
-    const dx = mouse.x - ox, dy = mouse.y - oy;
-    const len = Math.sqrt(dx*dx+dy*dy) || 1;
     const spd = 11;
+    let vx, vy;
+    if (isTouchDevice()) {
+      vx = 0; vy = -spd;
+    } else {
+      const dx = mouse.x - ox, dy = mouse.y - oy;
+      const len = Math.sqrt(dx*dx+dy*dy) || 1;
+      vx = (dx/len)*spd; vy = (dy/len)*spd;
+    }
     const pierce = powerup && powerup.type==='pierce';
     const twin   = powerup && powerup.type==='twin';
     const makeShot = (offX) => ({ x:ox+offX-5, y:oy-12, w:10, h:10,
-      vx:(dx/len)*spd, vy:(dy/len)*spd, pierce, hit:new Set() });
+      vx, vy, pierce, hit:new Set() });
     shots.push(makeShot(0));
     if (twin) { shots.push(makeShot(-14)); shots.push(makeShot(14)); }
+    sfx.shoot();
   }
 
   // Move shots
@@ -663,6 +713,7 @@ function update() {
           }
           if (c.hp<=0) {
             c.alive=false;
+            sfx.kill();
             score+=10+level*2; updateHUD();
             flyOffs.push({ x:c.x, y:c.y, w:c.w, h:c.h, img:c.img,
               dx:(Math.random()>0.5?1:-1)*(3+Math.random()*3), dy:-5-Math.random()*2,
@@ -684,7 +735,7 @@ function update() {
 
     // Cats reach player
     for (const c of cats) {
-      if (c.alive && c.y+CAT_H >= p.y) { lives=0; updateHUD(); phase='over'; gameOver=true; }
+      if (c.alive && c.y+CAT_H >= p.y) { lives=0; updateHUD(); phase='over'; gameOver=true; sfx.gameOver(); }
     }
 
     // All cats gone → chonker
@@ -715,11 +766,14 @@ function update() {
         s.dead=true; ch.hp--;
         if (ch.hp<=0) {
           ch.alive=false;
+          sfx.chonkerDie();
           score+=150+level*50; updateHUD();
           flyOffs.push({ x:ch.x, y:ch.y, w:ch.w, h:ch.h, img:ch.img,
             dx:(ch.dx>0?6:-6), dy:-8, grav:0.2, alpha:1, life:80 });
           chonkerPhase=false;
-          setTimeout(()=>{ level++; spawnWave(); }, 1800);
+          setTimeout(()=>{ level++; sfx.levelUp(); spawnWave(); }, 1800);
+        } else {
+          sfx.chonkerHit();
         }
       }
     }
@@ -731,7 +785,8 @@ function update() {
     d.y+=d.speed;
     if (hit(d,p)) {
       lives--; updateHUD();
-      if (lives<=0) { phase='over'; gameOver=true; }
+      sfx.hurt();
+      if (lives<=0) { phase='over'; gameOver=true; sfx.gameOver(); }
       return false;
     }
     return d.y<H+20;
@@ -752,8 +807,10 @@ function update() {
       if (h.pwup) {
         powerup = { type:h.pwup, timer:600 };
         updatePowerupBar();
+        sfx.power();
       } else {
         lives++; updateHUD();
+        sfx.heart();
       }
       return false;
     }
