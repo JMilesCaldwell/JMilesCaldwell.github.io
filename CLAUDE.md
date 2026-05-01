@@ -49,6 +49,7 @@ Before committing a page change:
 |------|---------|
 | `index.html` | Placeholder landing page (future general hub) |
 | `caldwell-repo.html` | D&D hub — Evershroud Isles tools and lore (was `index.html`) |
+| `sandbox.html` | Claude's scratch workspace — see "The Sandbox" section below |
 | `commgen.html` / `genericcommgen.html` | NPC/commoner generators |
 | `encgen.html` | Encounter generator |
 | `ingen.html` | InGen tool |
@@ -106,6 +107,23 @@ The user designs systems in their head first, then iterates with an AI to render
 - **Self-contained files**: styles and scripts inline. No external JS frameworks (vanilla JS throughout). No bundler.
 - **Print-to-table is real**: many tools have print buttons; output markup should be printable.
 - **Imogen is the exception** — its own gallery/clinical aesthetic (see `imogen/CLAUDE.md`). Apocrypha is an exception within the exception (see `imogen/apocrypha/CLAUDE.md`).
+
+## The Sandbox (`sandbox.html`)
+
+A blank HTML page at the repo root, deliberately set aside as **your scratch substrate**. The browser is at your disposal; so is the user. Use the sandbox to offload work that doesn't belong in the conversation token stream.
+
+### What it's for
+- **Heavy or repetitive calculation** — anything you'd otherwise burn tokens iterating on. Write the JS, push, ask the user to open `sandbox.html` and report back the output.
+- **Visual review** — anything that's faster to eyeball than to describe. SVG diagrams, layout tests, colour swatches, statistical plots, sprite previews, name-list samplers, dice-roll histograms, deterministic-hash distributions.
+- **Things your digital form can't do** — feel free to ask the user to run something, screenshot a result, paste a value back, or simply confirm "yes that looks right." If a `for` loop in their browser is cheaper than reasoning through it in tokens, ask.
+
+### Operating rules
+- **Update this section every time you change `sandbox.html`.** Document what's currently in it, what it computes, how to run it, and what the user is meant to report back. Future-you needs to know without re-reading the file.
+- **Treat it as ephemeral.** Each task overwrites the last. If something in the sandbox proves useful enough to keep, promote it to a proper page.
+- **Don't be shy about asking for help.** Token-cheap external compute beats token-expensive internal reasoning. The user is a willing collaborator, not just a code reviewer.
+
+### Current state of `sandbox.html`
+*Blank — valid HTML5 skeleton, empty `<body>`. Nothing to run.*
 
 ## Working with the User
 The user is a hobbyist, not a professional developer. When an interaction touches on a Claude Code feature they might not know about — slash commands, hooks, skills, agents, permissions, new model capabilities, better workflows — briefly surface it and offer to set it up. Don't lecture; just mention what exists when it's relevant to what they're doing. Teaching proactively is preferred over assuming prior knowledge.
