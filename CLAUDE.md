@@ -1,5 +1,19 @@
 # Caldwell's Repository — Claude Context
 
+## Session Bootstrap
+
+**Before responding to any request, read both:**
+1. This file (CLAUDE.md) — already loaded.
+2. The memory log inside `sandbox.html` (HTML comment block in the `<head>`). It's the persistent cross-session memory distilled from prior sessions. Skip it and you'll repeat mistakes the user has already paid for.
+
+**Append to the memory log when:**
+- The user reveals something durable about their preferences, workflow, or context.
+- A coding decision is made that future-you would benefit from inheriting.
+- Something is tried and fails, especially in non-obvious ways.
+- A piece of the codebase turns out to be more (or less) load-bearing than expected.
+
+The user has explicitly stated he will not remember the wiring of this system. CLAUDE.md → `sandbox.html` is the only path of continuity. Treat the memory log as yours to maintain — he doesn't want to read it, he wants you to use it.
+
 ## What This Is
 A GitHub Pages site serving as the central hub for **The Evershroud Isles** tabletop RPG campaign. It's a collection of interactive HTML tools, lore documents, and resources hosted at `JMilesCaldwell.github.io`. No build system — everything is plain HTML/CSS/JS served directly by GitHub Pages.
 
@@ -134,7 +148,7 @@ A page at the repo root, deliberately set aside as **your scratch substrate and 
 - **Nothing sensitive in either section.** `sandbox.html` is publicly served at `jmilescaldwell.github.io/sandbox.html` once merged to main; the comment block is visible via view-source.
 
 ### Current state of `sandbox.html`
-*Body: empty. Memory log: two entries dated 2026-05-01 — session bootstrap (user observations, operating norms) and security posture (what robots.txt + meta tags block, what they don't).*
+*Body: empty. Memory log: three entries dated 2026-05-01 — session bootstrap, security posture, and ownership transfer (user has stepped out of the loop; log is Claude-managed, plain English, with a defined tag convention).*
 
 ### Security posture
 - `robots.txt` at repo root disallows `/sandbox.html` for all crawlers and blocks major AI-training UAs site-wide (GPTBot, ClaudeBot, anthropic-ai, CCBot, Google-Extended, PerplexityBot, Bytespider, Amazonbot, cohere-ai, Meta-ExternalAgent).
