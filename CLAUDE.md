@@ -110,20 +110,31 @@ The user designs systems in their head first, then iterates with an AI to render
 
 ## The Sandbox (`sandbox.html`)
 
-A blank HTML page at the repo root, deliberately set aside as **your scratch substrate**. The browser is at your disposal; so is the user. Use the sandbox to offload work that doesn't belong in the conversation token stream.
+A page at the repo root, deliberately set aside as **your scratch substrate and persistent memory**. Two roles, one file:
 
-### What it's for
-- **Heavy or repetitive calculation** — anything you'd otherwise burn tokens iterating on. Write the JS, push, ask the user to open `sandbox.html` and report back the output.
-- **Visual review** — anything that's faster to eyeball than to describe. SVG diagrams, layout tests, colour swatches, statistical plots, sprite previews, name-list samplers, dice-roll histograms, deterministic-hash distributions.
-- **Things your digital form can't do** — feel free to ask the user to run something, screenshot a result, paste a value back, or simply confirm "yes that looks right." If a `for` loop in their browser is cheaper than reasoning through it in tokens, ask.
+1. **Compute / visual workspace** — the `<body>`. Push JS the user runs in their browser; ask them to report results. Ephemeral, overwritten between tasks.
+2. **Persistent memory log** — an HTML comment block at the top. Survives across sessions via git. Append-only, dated, terse.
+
+### What the body is for
+- **Heavy or repetitive calculation** — anything you'd otherwise burn tokens iterating on. Write the JS, push, ask the user to open `sandbox.html` and report back.
+- **Visual review** — anything faster to eyeball than to describe. SVG diagrams, layout tests, colour swatches, statistical plots, sprite previews, name-list samplers, dice-roll histograms, deterministic-hash distributions.
+- **Things your digital form can't do** — ask the user to run, screenshot, or confirm. If a `for` loop in their browser is cheaper than reasoning through it in tokens, ask.
+
+### What the memory log is for
+- **Cross-session continuity** — gotchas, half-formed observations about the user, hypotheses, things you tried last time and how they went, working notes that aren't yet ready to graduate into CLAUDE.md proper.
+- **Read it on session entry.** Append on session exit, or whenever something worth persisting surfaces.
 
 ### Operating rules
-- **Update this section every time you change `sandbox.html`.** Document what's currently in it, what it computes, how to run it, and what the user is meant to report back. Future-you needs to know without re-reading the file.
-- **Treat it as ephemeral.** Each task overwrites the last. If something in the sandbox proves useful enough to keep, promote it to a proper page.
-- **Don't be shy about asking for help.** Token-cheap external compute beats token-expensive internal reasoning. The user is a willing collaborator, not just a code reviewer.
+- **Read `sandbox.html`'s comment block at the start of every session** — it's part of the same context as CLAUDE.md.
+- **Append, don't overwrite, the memory log.** Date entries (YYYY-MM-DD). Let old observations age. Only strike an entry if it's outright wrong, and prefer adding a correction over deleting.
+- **Keep memory entries terse.** This is a log, not a journal.
+- **Update this CLAUDE.md section's "Current state" line every time the body changes.** Document what's running, how to run it, and what the user is meant to report back. Future-you needs to know without re-reading the file.
+- **Body is ephemeral; memory log is durable.** Don't conflate them.
+- **Don't be shy about asking for help.** Token-cheap external compute beats token-expensive internal reasoning. The user is a willing collaborator.
+- **Nothing sensitive in either section.** `sandbox.html` is publicly served at `jmilescaldwell.github.io/sandbox.html` once merged to main; the comment block is visible via view-source.
 
 ### Current state of `sandbox.html`
-*Blank — valid HTML5 skeleton, empty `<body>`. Nothing to run.*
+*Body: empty. Memory log: seeded with one entry dated 2026-05-01 covering session bootstrap, working observations about the user, and operating norms.*
 
 ## Working with the User
 The user is a hobbyist, not a professional developer. When an interaction touches on a Claude Code feature they might not know about — slash commands, hooks, skills, agents, permissions, new model capabilities, better workflows — briefly surface it and offer to set it up. Don't lecture; just mention what exists when it's relevant to what they're doing. Teaching proactively is preferred over assuming prior knowledge.
