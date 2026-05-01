@@ -148,7 +148,7 @@ A page at the repo root, deliberately set aside as **your scratch substrate and 
 - **Nothing sensitive in either section.** `sandbox.html` is publicly served at `jmilescaldwell.github.io/sandbox.html` once merged to main; the comment block is visible via view-source.
 
 ### Current state of `sandbox.html`
-*Body: empty. Memory log: three entries dated 2026-05-01 — session bootstrap, security posture, and ownership transfer (user has stepped out of the loop; log is Claude-managed, plain English, with a defined tag convention).*
+*Body: empty. Memory log: four entries dated 2026-05-01 — session bootstrap, security posture, ownership transfer, and a `[todo]` instruction targeted at the very next session (memory-chain verification test). Resolve the `[todo]` on the next session's first reply.*
 
 ### Security posture
 - `robots.txt` at repo root disallows `/sandbox.html` for all crawlers and blocks major AI-training UAs site-wide (GPTBot, ClaudeBot, anthropic-ai, CCBot, Google-Extended, PerplexityBot, Bytespider, Amazonbot, cohere-ai, Meta-ExternalAgent).
