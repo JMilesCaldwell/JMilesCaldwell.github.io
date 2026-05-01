@@ -134,7 +134,13 @@ A page at the repo root, deliberately set aside as **your scratch substrate and 
 - **Nothing sensitive in either section.** `sandbox.html` is publicly served at `jmilescaldwell.github.io/sandbox.html` once merged to main; the comment block is visible via view-source.
 
 ### Current state of `sandbox.html`
-*Body: empty. Memory log: seeded with one entry dated 2026-05-01 covering session bootstrap, working observations about the user, and operating norms.*
+*Body: empty. Memory log: two entries dated 2026-05-01 — session bootstrap (user observations, operating norms) and security posture (what robots.txt + meta tags block, what they don't).*
+
+### Security posture
+- `robots.txt` at repo root disallows `/sandbox.html` for all crawlers and blocks major AI-training UAs site-wide (GPTBot, ClaudeBot, anthropic-ai, CCBot, Google-Extended, PerplexityBot, Bytespider, Amazonbot, cohere-ai, Meta-ExternalAgent).
+- `sandbox.html` `<head>` has `noindex, nofollow, noarchive, nosnippet, noimageindex` plus `noai, noimageai`.
+- No navigable page links to `sandbox.html`. **Keep it that way.**
+- These mitigations stop compliant indexing, not adversarial scraping or anyone reading the GitHub repo directly. Treat sandbox content as effectively public; never put anything sensitive in it.
 
 ## Working with the User
 The user is a hobbyist, not a professional developer. When an interaction touches on a Claude Code feature they might not know about — slash commands, hooks, skills, agents, permissions, new model capabilities, better workflows — briefly surface it and offer to set it up. Don't lecture; just mention what exists when it's relevant to what they're doing. Teaching proactively is preferred over assuming prior knowledge.
