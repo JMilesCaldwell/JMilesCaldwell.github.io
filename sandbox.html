@@ -164,6 +164,22 @@
   reply. Memory log entries can drift between sessions when the
   user acts independently of Claude; cross-check against
   `git log` when surfacing carry-over items.
+
+  [2026-05-01] [code] Memory log promoted from instruction to hook.
+  Joe asked: "can we ensure this is how you start up by default?"
+  Added a second SessionStart hook entry in .claude/settings.json
+  that prints this comment block under `=== Memory log
+  (sandbox.html) ===` before the model speaks. CLAUDE.md bootstrap
+  section updated to match. Net effect: this log is now injected
+  into every session's context automatically — no Read call, no
+  reliance on me following an instruction. Implementation note:
+  initial attempt used `sed -n '/<!--/,/-->/p'` which greedily
+  spanned to EOF because line 157's inline `<!-- Compute ... -->`
+  reopened the range; replaced with
+  `awk '/<!--/{f=1} f; /-->/{exit}'` which terminates on the first
+  closing tag. Fallback: if the hook ever fails (missing file,
+  awk unavailable, settings overwritten), the CLAUDE.md note still
+  tells future-me to read sandbox.html manually. Belt and braces.
   ---------------------------------------------------------------------------
   -->
 </head>

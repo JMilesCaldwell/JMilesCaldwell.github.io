@@ -2,9 +2,11 @@
 
 ## Session Bootstrap
 
-**Before responding to any request, read both:**
-1. This file (CLAUDE.md) — already loaded.
-2. The memory log inside `sandbox.html` (HTML comment block in the `<head>`). It's the persistent cross-session memory distilled from prior sessions. Skip it and you'll repeat mistakes the user has already paid for.
+**Both of these are auto-loaded into your context at session start:**
+1. This file (CLAUDE.md) — loaded by Claude Code's standard project-context mechanism.
+2. The memory log inside `sandbox.html` (HTML comment block in the `<head>`) — loaded via a `SessionStart` hook in `.claude/settings.json` that prints it under `=== Memory log (sandbox.html) ===`.
+
+If you don't see the memory log block at session start, the hook failed — fall back to reading `sandbox.html` manually. Otherwise, no Read call is needed; it's already in your context. Skip reading it and you'll repeat mistakes the user has already paid for.
 
 **Append to the memory log when:**
 - The user reveals something durable about their preferences, workflow, or context.
