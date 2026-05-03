@@ -173,13 +173,14 @@
   section updated to match. Net effect: this log is now injected
   into every session's context automatically — no Read call, no
   reliance on me following an instruction. Implementation note:
-  initial attempt used `sed -n '/<!--/,/-->/p'` which greedily
-  spanned to EOF because line 157's inline `<!-- Compute ... -->`
+  initial attempt used `sed -n '/&lt;!--/,/--&gt;/p'` which greedily
+  spanned to EOF because line 157's inline `&lt;!-- Compute ... --&gt;`
   reopened the range; replaced with
-  `awk '/<!--/{f=1} f; /-->/{exit}'` which terminates on the first
-  closing tag. Fallback: if the hook ever fails (missing file,
-  awk unavailable, settings overwritten), the CLAUDE.md note still
-  tells future-me to read sandbox.html manually. Belt and braces.
+  `awk '/&lt;!--/{f=1} f; /--&gt;/{exit}'` which terminates on the
+  first closing tag. Fallback: if the hook ever fails (missing
+  file, awk unavailable, settings overwritten), the CLAUDE.md note
+  still tells future-me to read sandbox.html manually. Belt and
+  braces.
 
   [2026-05-01] [todo] Hook verification on next session.
   The SessionStart hook that prints this log was added but not
@@ -191,6 +192,36 @@
   .claude/settings.json wasn't reverted, awk is on PATH, CWD is
   repo root when hooks run). Branch claude/read-claude-md-x3njR
   carries the change; not yet merged to main as of session close.
+
+  [2026-05-01] [resolved] Re: 2026-05-01 [todo] (Hook verification
+  on next session) — chain verified end-to-end. Joe ran a fresh
+  session on a new branch (claude/review-claude-docs-fEJ6P), the
+  hook fired, and the log appeared in bootstrap context without a
+  Read call. He reported back here with proof: the log was
+  truncating mid-entry at the line quoting `sed -n '/...'`.
+  Diagnosis turned out worse than first read: entries 176-179
+  contained literal HTML-comment tokens (`&lt;!--` and `--&gt;`)
+  inside backticks. HTML parsers don't see backticks — those
+  literals were both (a) tripping awk's exit and (b) breaking the
+  HTML at file level (head comment closing at the first in-prose
+  `--&gt;`, leaking subsequent entries into live document context).
+  Fix in this commit: escape `&lt;!--` and `--&gt;` in offending
+  prose (HTML entities — read correctly to a human, don't terminate
+  a comment to a parser); tighten awk regex to standalone-line-only
+  match; restore the missing closing tag at the end of the head
+  comment.
+
+  [2026-05-01] [lesson] Memory-log entries cannot contain the
+  literal HTML-comment tokens — even in backticks, prose, or
+  quoted regex. HTML parsers see `&lt;!--` and `--&gt;` as comment
+  delimiters wherever they appear inside a comment block; the
+  spec disallows them. Convention: escape both as HTML entities
+  in source text. The awk extractor is now hardened to require a
+  standalone-line match, so a slip won't truncate the log on
+  output — but the file itself would still be malformed HTML.
+  This is a hard rule, not a polite suggestion.
+  ---------------------------------------------------------------------------
+  -->
 </head>
 <body>
   <!-- Compute / visual workspace. Currently empty. -->
