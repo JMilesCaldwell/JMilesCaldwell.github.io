@@ -5,50 +5,100 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard &mdash; J. Miles Caldwell</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    /* set theme before paint to avoid flash */
+    (function() {
+      var stored = localStorage.getItem('theme');
+      var t = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <style>
     :root {
-      --bg: #1a1a1a;
-      --panel: rgba(0,0,0,0.7);
-      --ink: #FAF4E0;
-      --accent: #C9B37E;
-      --rule: rgba(250,244,224,0.15);
-      --muted: rgba(250,244,224,0.55);
+      --bg: #0b0d10;
+      --panel: #14171c;
+      --panel-elev: #1a1e24;
+      --ink: #e6e8ec;
+      --ink-strong: #ffffff;
+      --muted: #8b919a;
+      --border: rgba(255,255,255,0.08);
+      --accent: #7aa2f7;
+      --danger: #f87171;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.25);
+    }
+    :root[data-theme="light"] {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --panel-elev: #f0f2f5;
+      --ink: #1a1d23;
+      --ink-strong: #000000;
+      --muted: #6b7280;
+      --border: rgba(0,0,0,0.08);
+      --accent: #2563eb;
+      --danger: #dc2626;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
     }
     * { box-sizing: border-box; }
+    html, body { background: var(--bg); }
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--bg);
       color: var(--ink);
-      font-family: 'Almendra', serif;
-      font-size: 16px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
       line-height: 1.5;
+      transition: background-color 0.2s, color 0.2s;
+      -webkit-font-smoothing: antialiased;
     }
+
     header {
-      padding: 1.25rem 1.5rem 0.75rem;
-      text-align: center;
-      border-bottom: 1px solid var(--rule);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
     }
-    header h1 {
-      font-family: 'Cinzel', serif;
-      font-weight: 700;
-      margin: 0 0 0.25rem;
-      font-size: 1.6rem;
-      letter-spacing: 0.05em;
-    }
-    header p {
+    .brand h1 {
       margin: 0;
-      color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
     }
+    .brand p {
+      margin: 0.15rem 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .theme-toggle {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--ink);
+      transition: background-color 0.15s, border-color 0.15s, transform 0.15s;
+    }
+    .theme-toggle:hover { background: var(--panel-elev); border-color: var(--accent); }
+    .theme-toggle:active { transform: scale(0.96); }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .theme-toggle .sun { display: none; }
+    .theme-toggle .moon { display: block; }
+    :root[data-theme="light"] .theme-toggle .sun { display: block; }
+    :root[data-theme="light"] .theme-toggle .moon { display: none; }
+
     main {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 1.25rem;
+      padding: 1.5rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.25rem;
@@ -56,127 +106,147 @@
     @media (max-width: 900px) {
       main { grid-template-columns: 1fr; }
     }
+
     .panel {
       background: var(--panel);
-      border: 1px solid var(--rule);
-      border-radius: 6px;
-      padding: 1rem 1.25rem;
-      min-height: 360px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      min-height: 380px;
       display: flex;
       flex-direction: column;
+      box-shadow: var(--shadow);
     }
     .panel-head {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: 0.5rem;
-      padding-bottom: 0.5rem;
-      margin-bottom: 0.75rem;
-      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.85rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
     }
     .panel-head h2 {
-      font-family: 'Cinzel', serif;
-      font-size: 1.05rem;
-      letter-spacing: 0.04em;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       margin: 0;
-      color: var(--accent);
+      color: var(--muted);
     }
     .panel-head .meta {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--muted);
     }
     .panel-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
-    /* ---- Tabs ---- */
+    /* Tabs */
     .tabs {
-      display: flex;
-      gap: 0;
+      display: inline-flex;
+      gap: 2px;
       margin-bottom: 0.75rem;
-      border-bottom: 1px solid var(--rule);
+      padding: 3px;
+      background: var(--panel-elev);
+      border-radius: 9px;
+      width: fit-content;
     }
     .tab {
       background: transparent;
       border: none;
       color: var(--muted);
-      font-family: 'Cinzel', serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.05em;
-      padding: 0.4rem 0.9rem;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.35rem 0.85rem;
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
+      border-radius: 6px;
+      transition: background-color 0.15s, color 0.15s;
     }
     .tab:hover { color: var(--ink); }
     .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
+      color: var(--ink-strong);
+      background: var(--panel);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+    :root[data-theme="light"] .tab.active {
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
     .tab-panel { display: none; flex: 1; overflow-y: auto; }
     .tab-panel.active { display: block; }
 
-    /* ---- Weather ---- */
+    /* Weather */
     .wx-row {
       display: grid;
       grid-template-columns: 70px 32px 1fr auto;
       gap: 0.75rem;
       align-items: center;
-      padding: 0.4rem 0;
-      border-bottom: 1px dashed var(--rule);
-      font-size: 0.95rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
     }
     .wx-row:last-child { border-bottom: none; }
-    .wx-time { color: var(--muted); font-size: 0.85rem; }
-    .wx-icon { font-size: 1.3rem; text-align: center; }
+    .wx-time { color: var(--muted); font-size: 0.8rem; }
+    .wx-icon { font-size: 1.25rem; text-align: center; }
     .wx-desc { color: var(--ink); }
-    .wx-temp { font-weight: 700; color: var(--accent); white-space: nowrap; }
-    .wx-precip { font-size: 0.8rem; color: var(--muted); margin-left: 0.4rem; }
+    .wx-temp { font-weight: 600; color: var(--ink-strong); white-space: nowrap; }
+    .wx-precip { font-size: 0.75rem; color: var(--accent); margin-left: 0.4rem; }
 
-    /* ---- News ---- */
+    /* News */
     .news-item {
-      padding: 0.6rem 0;
-      border-bottom: 1px dashed var(--rule);
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--border);
     }
     .news-item:last-child { border-bottom: none; }
     .news-item a {
       color: var(--ink);
       text-decoration: none;
-      font-size: 0.95rem;
-      line-height: 1.35;
+      font-size: 0.92rem;
+      line-height: 1.4;
       display: block;
+      font-weight: 500;
     }
     .news-item a:hover { color: var(--accent); }
     .news-meta {
       display: flex;
       justify-content: space-between;
       gap: 0.5rem;
-      margin-top: 0.25rem;
-      font-size: 0.75rem;
+      margin-top: 0.3rem;
+      font-size: 0.7rem;
       color: var(--muted);
     }
-    .news-source { font-family: 'Cinzel', serif; letter-spacing: 0.04em; }
+    .news-source {
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
 
     .loading, .error {
       color: var(--muted);
-      font-style: italic;
-      padding: 1rem 0;
-      font-size: 0.9rem;
+      padding: 0.75rem 0;
+      font-size: 0.88rem;
     }
-    .error { color: #c98a8a; }
+    .error { color: var(--danger); }
 
     footer {
       text-align: center;
-      padding: 1rem;
-      font-size: 0.85rem;
+      padding: 1.5rem 1rem 2rem;
+      font-size: 0.78rem;
       color: var(--muted);
     }
-    footer a { color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; }
     footer a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
   <header>
-    <h1>Dashboard</h1>
-    <p>A single pane of glass.</p>
+    <div class="brand">
+      <h1>Dashboard</h1>
+      <p>A single pane of glass.</p>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
   </header>
 
   <main>
@@ -199,9 +269,9 @@
       </div>
       <div class="panel-body">
         <div class="tabs" role="tablist">
-          <button class="tab active" data-tab="wx-12h">12 h</button>
-          <button class="tab" data-tab="wx-24h">24 h</button>
-          <button class="tab" data-tab="wx-7d">7 d</button>
+          <button class="tab active" data-tab="wx-12h">12h</button>
+          <button class="tab" data-tab="wx-24h">24h</button>
+          <button class="tab" data-tab="wx-7d">7d</button>
         </div>
         <div id="wx-12h" class="tab-panel active"><div class="loading">Fetching forecast&hellip;</div></div>
         <div id="wx-24h" class="tab-panel"><div class="loading">Fetching forecast&hellip;</div></div>
@@ -218,6 +288,16 @@
   </footer>
 
   <script>
+  /* =========================================================================
+     Theme toggle
+     ========================================================================= */
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  });
+
   /* =========================================================================
      Tabs
      ========================================================================= */
@@ -236,8 +316,6 @@
      ========================================================================= */
   const WX_FALLBACK = { lat: 52.5168, lon: 6.0830, label: 'Zwolle, NL (default)' };
 
-  // WMO weather code -> {icon, text}
-  // https://open-meteo.com/en/docs (WMO Weather interpretation codes)
   const WX_CODES = {
     0:  ['☀️', 'Clear'],
     1:  ['\u{1F324}️', 'Mostly clear'],
@@ -269,9 +347,7 @@
     99: ['⛈️', 'Severe thunderstorm']
   };
 
-  function wxDesc(code) {
-    return WX_CODES[code] || ['❓', 'Unknown'];
-  }
+  function wxDesc(code) { return WX_CODES[code] || ['?', 'Unknown']; }
 
   function getLocation() {
     return new Promise(resolve => {
@@ -285,7 +361,6 @@
   }
 
   async function reverseGeocode(lat, lon) {
-    // Open-Meteo's reverse geocode endpoint is search-only; use BigDataCloud free reverse geocode.
     try {
       const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
       if (!r.ok) return null;
@@ -298,7 +373,7 @@
 
   function fmtHour(iso) {
     const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   }
   function fmtDay(iso) {
     const d = new Date(iso);
@@ -379,9 +454,9 @@
      News (RSS via rss2json proxy)
      ========================================================================= */
   const NEWS_FEEDS = [
-    { source: 'BBC',      url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
-    { source: 'NPR',      url: 'https://feeds.npr.org/1004/rss.xml' },
-    { source: 'Guardian', url: 'https://www.theguardian.com/world/rss' },
+    { source: 'BBC',        url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+    { source: 'NPR',        url: 'https://feeds.npr.org/1004/rss.xml' },
+    { source: 'Guardian',   url: 'https://www.theguardian.com/world/rss' },
     { source: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' }
   ];
   const PER_FEED = 8;
@@ -443,9 +518,6 @@
     meta.textContent = `${items.length} headlines`;
   }
 
-  /* =========================================================================
-     Init
-     ========================================================================= */
   loadWeather();
   loadNews();
   </script>
