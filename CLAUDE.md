@@ -150,7 +150,7 @@ A page at the repo root, deliberately set aside as **your scratch substrate and 
 - **Nothing sensitive in either section.** `sandbox.html` is publicly served at `jmilescaldwell.github.io/sandbox.html` once merged to main; the comment block is visible via view-source.
 
 ### Current state of `sandbox.html`
-*Body: empty. Memory log: four entries dated 2026-05-01 — session bootstrap, security posture, ownership transfer, and a `[todo]` instruction targeted at the very next session (memory-chain verification test). Resolve the `[todo]` on the next session's first reply.*
+*Body: dashboard feed-health diagnostic. Probes every RSS URL the dashboard uses (news Local / National / World + Discover panel sources), renders a status table, dumps `discover.json` array sizes, and exposes a "Copy results JSON" button so Joe can hand the full blob back. Run by visiting `/sandbox.html` after the dashboard is deployed. Memory log: many entries — bootstrap, security, aesthetic conventions, Zwolle context, news editorial intent, weather + map decisions, Discover panel rationale.*
 
 ### Security posture
 - `robots.txt` at repo root disallows `/sandbox.html` for all crawlers and blocks major AI-training UAs site-wide (GPTBot, ClaudeBot, anthropic-ai, CCBot, Google-Extended, PerplexityBot, Bytespider, Amazonbot, cohere-ai, Meta-ExternalAgent).
