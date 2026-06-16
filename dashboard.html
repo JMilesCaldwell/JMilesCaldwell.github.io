@@ -175,6 +175,77 @@
     .tab-panel.active { display: block; }
     .wx-map { width: 100%; height: 440px; border: none; border-radius: 8px; display: block; }
 
+    /* Discover (full-width curio) */
+    .panel.full { grid-column: 1 / -1; min-height: 0; }
+    .curio {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    .curio-img {
+      flex: 0 0 240px;
+      aspect-ratio: 4 / 3;
+      background: var(--panel-elev);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .curio-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .curio-body { flex: 1; min-width: 0; }
+    .curio-source {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .curio-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 0.6rem;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+    }
+    .curio-title a { color: var(--ink-strong); text-decoration: none; }
+    .curio-title a:hover { color: var(--accent); }
+    .curio-excerpt {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0 0 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .curio-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .curio-link:hover { text-decoration: underline; }
+    .curio-refresh {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, border-color 0.15s, transform 0.4s;
+    }
+    .curio-refresh:hover { color: var(--accent); border-color: var(--accent); }
+    .curio-refresh.spin { transform: rotate(360deg); }
+    .curio-refresh svg { width: 16px; height: 16px; }
+    @media (max-width: 640px) {
+      .curio { flex-direction: column; }
+      .curio-img { flex: 0 0 auto; width: 100%; }
+    }
+
     /* Weather */
     .wx-row {
       display: grid;
@@ -270,7 +341,7 @@
     </section>
 
     <!-- WEATHER (top right) -->
-    <section class="panel" id="weather-panel">
+    <section class="panel" id="weather-panel" data-panel="weather">
       <div class="panel-head">
         <h2>Weather</h2>
         <span class="meta" id="wx-location">locating&hellip;</span>
@@ -290,6 +361,19 @@
             src="https://embed.windy.com/embed2.html?lat=52.5168&lon=6.0830&zoom=7&overlay=rain&menu=&message=true&marker=true&metricWind=km%2Fh&metricTemp=%C2%B0C"
             title="Weather map (Windy.com)"></iframe>
         </div>
+      </div>
+    </section>
+
+    <!-- DISCOVER (full-width below) -->
+    <section class="panel full" id="curio-panel">
+      <div class="panel-head">
+        <h2>Discover</h2>
+        <button class="curio-refresh" id="curio-refresh" aria-label="Another curio" title="Another curio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+        </button>
+      </div>
+      <div class="panel-body">
+        <div id="curio-card" class="loading">Foraging&hellip;</div>
       </div>
     </section>
   </main>
@@ -589,8 +673,130 @@
     updateNewsMeta();
   }
 
+  /* =========================================================================
+     Discover (curio engine)
+     - Live RSS sources are pulled at random; one random item is shown.
+     - Static sources live in /resources/discover.json; one random entry shown.
+     - On each load (and refresh click) a random source is picked first, then
+       a random item from it. Failed sources are silently skipped.
+     ========================================================================= */
+  const CURIO_SOURCES = [
+    // Live RSS (best-guess URLs; quietly fail if 404)
+    { name: 'The Oatmeal',          type: 'rss', url: 'https://theoatmeal.com/feed/rss' },
+    { name: 'Public Domain Review', type: 'rss', url: 'https://publicdomainreview.org/rss.xml' },
+    { name: 'Futility Closet',      type: 'rss', url: 'https://www.futilitycloset.com/feed/' },
+    { name: 'Comics Curmudgeon',    type: 'rss', url: 'https://joshreads.com/feed' },
+    { name: '50 Watts',             type: 'rss', url: 'https://50watts.com/rss' },
+    { name: 'Lileks',               type: 'rss', url: 'https://lileks.com/bleats/index.rdf' },
+    { name: 'Goblins',              type: 'rss', url: 'https://www.goblinscomic.com/feed/' },
+    // Static (curated permalinks in discover.json)
+    { name: 'Lileks Galleries', type: 'static', key: 'lileks-galleries' },
+    { name: 'Maddox',           type: 'static', key: 'maddox' },
+    { name: 'FreakAngels',      type: 'static', key: 'freakangels' },
+    { name: 'Plan59',           type: 'static', key: 'plan59' },
+    { name: 'Ectoguide',        type: 'static', key: 'ectoguide' }
+  ];
+
+  let staticCache = null;
+  async function loadStaticCurios() {
+    if (staticCache) return staticCache;
+    try {
+      const r = await fetch('/resources/discover.json', { cache: 'no-cache' });
+      staticCache = r.ok ? await r.json() : {};
+    } catch { staticCache = {}; }
+    return staticCache;
+  }
+
+  function stripHTML(s) {
+    if (!s) return '';
+    const div = document.createElement('div');
+    div.innerHTML = s;
+    return div.textContent.replace(/\s+/g, ' ').trim();
+  }
+  function extractImage(item) {
+    if (item.thumbnail) return item.thumbnail;
+    if (item.enclosure?.link) return item.enclosure.link;
+    const m = item.description?.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return m ? m[1] : null;
+  }
+
+  async function tryFetchCurio(source) {
+    if (source.type === 'rss') {
+      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source.url);
+      try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        const j = await r.json();
+        if (j.status !== 'ok' || !j.items?.length) return null;
+        const item = j.items[Math.floor(Math.random() * j.items.length)];
+        if (!item.title || !item.link) return null;
+        return {
+          source: source.name,
+          title: item.title,
+          link: item.link,
+          excerpt: stripHTML(item.description).slice(0, 240),
+          image: extractImage(item)
+        };
+      } catch { return null; }
+    } else if (source.type === 'static') {
+      const cache = await loadStaticCurios();
+      const list = cache?.[source.key];
+      if (!list?.length) return null;
+      const item = list[Math.floor(Math.random() * list.length)];
+      return {
+        source: source.name,
+        title: item.title,
+        link: item.link,
+        excerpt: item.excerpt || '',
+        image: item.image || null
+      };
+    }
+    return null;
+  }
+
+  function renderCurio(item) {
+    const card = document.getElementById('curio-card');
+    if (!item) {
+      card.className = 'error';
+      card.textContent = "Nothing found. Try refreshing.";
+      return;
+    }
+    card.className = '';
+    card.innerHTML = `
+      <div class="curio">
+        ${item.image ? `<div class="curio-img"><img src="${item.image}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>` : ''}
+        <div class="curio-body">
+          <div class="curio-source">${item.source}</div>
+          <h3 class="curio-title"><a href="${item.link}" target="_blank" rel="noopener">${item.title}</a></h3>
+          ${item.excerpt ? `<p class="curio-excerpt">${item.excerpt}</p>` : ''}
+          <a class="curio-link" href="${item.link}" target="_blank" rel="noopener">visit &rarr;</a>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadCurio() {
+    const card = document.getElementById('curio-card');
+    card.className = 'loading';
+    card.textContent = 'Foraging…';
+    const candidates = [...CURIO_SOURCES].sort(() => Math.random() - 0.5);
+    for (const source of candidates) {
+      const item = await tryFetchCurio(source);
+      if (item) { renderCurio(item); return; }
+    }
+    renderCurio(null);
+  }
+
+  document.getElementById('curio-refresh').addEventListener('click', () => {
+    const btn = document.getElementById('curio-refresh');
+    btn.classList.add('spin');
+    setTimeout(() => btn.classList.remove('spin'), 400);
+    loadCurio();
+  });
+
   loadWeather();
   loadNews();
+  loadCurio();
   </script>
 </body>
 </html>
