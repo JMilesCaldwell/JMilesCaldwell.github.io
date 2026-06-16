@@ -246,6 +246,74 @@
       .curio-img { flex: 0 0 auto; width: 100%; }
     }
 
+    /* Listen (web radio) */
+    .listen-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border);
+    }
+    #listen-toggle {
+      background: var(--panel-elev);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 0.95rem;
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+    }
+    #listen-toggle:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+    #listen-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+    #listen-volume {
+      flex: 0 1 180px;
+      accent-color: var(--accent);
+    }
+    #listen-now {
+      flex: 1;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+    #listen-now.playing { color: var(--ink); font-style: normal; }
+    #listen-now.err { color: var(--danger); font-style: normal; }
+    .listen-stations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .listen-station {
+      background: var(--panel-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+    }
+    .listen-station:hover { color: var(--accent); border-color: var(--accent); }
+    .listen-station.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+    .listen-station.loading {
+      opacity: 0.7;
+    }
+    .listen-station.failed {
+      opacity: 0.45;
+      text-decoration: line-through;
+    }
+
     /* Weather */
     .wx-row {
       display: grid;
@@ -374,6 +442,22 @@
       </div>
       <div class="panel-body">
         <div id="curio-card" class="loading">Foraging&hellip;</div>
+      </div>
+    </section>
+
+    <!-- LISTEN (web radio) -->
+    <section class="panel full" id="listen-panel">
+      <div class="panel-head">
+        <h2>Listen</h2>
+      </div>
+      <div class="panel-body">
+        <div class="listen-controls">
+          <button id="listen-toggle" disabled title="Play/pause">&#9658;</button>
+          <span id="listen-now">pick a station&hellip;</span>
+          <input type="range" id="listen-volume" min="0" max="1" step="0.05" value="0.7" aria-label="Volume">
+        </div>
+        <div class="listen-stations" id="listen-stations"></div>
+        <audio id="listen-audio" preload="none" crossorigin="anonymous"></audio>
       </div>
     </section>
   </main>
@@ -683,6 +767,7 @@
   const CURIO_SOURCES = [
     // Live RSS (best-guess URLs; quietly fail if 404)
     { name: 'The Oatmeal',          type: 'rss', url: 'https://theoatmeal.com/feed/rss' },
+    { name: 'Radiolab',             type: 'rss', url: 'https://feeds.wnyc.org/radiolab' },
     { name: 'Public Domain Review', type: 'rss', url: 'https://publicdomainreview.org/rss.xml' },
     { name: 'Futility Closet',      type: 'rss', url: 'https://www.futilitycloset.com/feed/' },
     { name: 'Comics Curmudgeon',    type: 'rss', url: 'https://joshreads.com/feed' },
@@ -792,6 +877,88 @@
     setTimeout(() => btn.classList.remove('spin'), 400);
     loadCurio();
   });
+
+  /* =========================================================================
+     Listen (web radio)
+     ========================================================================= */
+  const STATIONS = [
+    { name: 'NPO Radio 1',          url: 'https://icecast.omroep.nl/radio1-bb-mp3' },
+    { name: 'NPO Radio 2',          url: 'https://icecast.omroep.nl/radio2-bb-mp3' },
+    { name: 'NPO 3FM',              url: 'https://icecast.omroep.nl/3fm-bb-mp3' },
+    { name: 'BNR Nieuwsradio',      url: 'https://stream.bnr.nl/bnr_mp3_128_03' },
+    { name: 'KEXP',                 url: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+    { name: 'NPR (WBUR)',           url: 'https://wbur.streamguys1.com/wbur' },
+    { name: 'KFFA Helena, AR',      url: 'https://kffa.streamguys1.com/kffaam' },
+    { name: 'WFMU Freeform',        url: 'https://stream0.wfmu.org/freeform-128k' },
+    { name: 'SomaFM Mission Ctrl',  url: 'https://ice1.somafm.com/missioncontrol-128-mp3' },
+    { name: 'SomaFM Drone Zone',    url: 'https://ice1.somafm.com/dronezone-128-mp3' },
+    { name: 'SomaFM Cliqhop IDM',   url: 'https://ice1.somafm.com/cliqhop-128-mp3' },
+    { name: 'The Lot Radio',        url: 'https://thelot.radio:8000/main.mp3' },
+    { name: 'Resonance FM',         url: 'https://stream.resonance.fm:8000/resonance' },
+    { name: 'UVB-76 (Buzzer)',      url: 'https://stream.uvb-76.net:8000/uvb76' }
+  ];
+
+  (function initListen() {
+    const audio = document.getElementById('listen-audio');
+    const toggle = document.getElementById('listen-toggle');
+    const volume = document.getElementById('listen-volume');
+    const nowEl = document.getElementById('listen-now');
+    const grid = document.getElementById('listen-stations');
+
+    audio.volume = parseFloat(volume.value);
+    let currentBtn = null;
+
+    STATIONS.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'listen-station';
+      btn.textContent = s.name;
+      btn.addEventListener('click', () => {
+        if (currentBtn) currentBtn.classList.remove('active', 'loading');
+        btn.classList.remove('failed');
+        btn.classList.add('loading');
+        currentBtn = btn;
+        nowEl.className = '';
+        nowEl.textContent = 'Connecting to ' + s.name + '…';
+        audio.src = s.url;
+        audio.play().catch(err => {
+          btn.classList.remove('loading', 'active');
+          btn.classList.add('failed');
+          nowEl.className = 'err';
+          nowEl.textContent = "Couldn't play " + s.name;
+        });
+      });
+      grid.appendChild(btn);
+    });
+
+    toggle.addEventListener('click', () => {
+      if (!audio.src) return;
+      if (audio.paused) audio.play(); else audio.pause();
+    });
+
+    volume.addEventListener('input', () => { audio.volume = parseFloat(volume.value); });
+
+    audio.addEventListener('playing', () => {
+      toggle.disabled = false;
+      toggle.innerHTML = '&#10074;&#10074;';
+      if (currentBtn) {
+        currentBtn.classList.remove('loading');
+        currentBtn.classList.add('active');
+      }
+      nowEl.className = 'playing';
+      nowEl.textContent = currentBtn ? currentBtn.textContent + ' — on air' : 'on air';
+    });
+    audio.addEventListener('pause', () => {
+      toggle.innerHTML = '&#9658;';
+    });
+    audio.addEventListener('error', () => {
+      if (currentBtn) {
+        currentBtn.classList.remove('loading', 'active');
+        currentBtn.classList.add('failed');
+      }
+      nowEl.className = 'err';
+      nowEl.textContent = currentBtn ? "Couldn't play " + currentBtn.textContent : "Stream error";
+    });
+  })();
 
   loadWeather();
   loadNews();
