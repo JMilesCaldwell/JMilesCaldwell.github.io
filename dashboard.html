@@ -171,8 +171,9 @@
     :root[data-theme="light"] .tab.active {
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-    .tab-panel { display: none; flex: 1; overflow-y: auto; }
+    .tab-panel { display: none; flex: 1; max-height: 460px; overflow-y: auto; }
     .tab-panel.active { display: block; }
+    .wx-map { width: 100%; height: 440px; border: none; border-radius: 8px; display: block; }
 
     /* Weather */
     .wx-row {
@@ -257,7 +258,14 @@
         <span class="meta" id="news-meta">loading&hellip;</span>
       </div>
       <div class="panel-body">
-        <div id="news-list" class="loading">Fetching feeds&hellip;</div>
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="news-local">Local</button>
+          <button class="tab" data-tab="news-national">National</button>
+          <button class="tab" data-tab="news-international">World</button>
+        </div>
+        <div id="news-local" class="tab-panel active"><div class="loading">Fetching feeds&hellip;</div></div>
+        <div id="news-national" class="tab-panel"><div class="loading">Fetching feeds&hellip;</div></div>
+        <div id="news-international" class="tab-panel"><div class="loading">Fetching feeds&hellip;</div></div>
       </div>
     </section>
 
@@ -272,10 +280,16 @@
           <button class="tab active" data-tab="wx-12h">12h</button>
           <button class="tab" data-tab="wx-24h">24h</button>
           <button class="tab" data-tab="wx-7d">7d</button>
+          <button class="tab" data-tab="wx-map">Map</button>
         </div>
         <div id="wx-12h" class="tab-panel active"><div class="loading">Fetching forecast&hellip;</div></div>
         <div id="wx-24h" class="tab-panel"><div class="loading">Fetching forecast&hellip;</div></div>
         <div id="wx-7d" class="tab-panel"><div class="loading">Fetching forecast&hellip;</div></div>
+        <div id="wx-map" class="tab-panel">
+          <iframe class="wx-map" loading="lazy"
+            src="https://embed.windy.com/embed2.html?lat=52.5168&lon=6.0830&zoom=7&overlay=rain&menu=&message=true&marker=true&metricWind=km%2Fh&metricTemp=%C2%B0C"
+            title="Weather map (Windy.com)"></iframe>
+        </div>
       </div>
     </section>
   </main>
@@ -299,15 +313,17 @@
   });
 
   /* =========================================================================
-     Tabs
+     Tabs (scoped to the containing panel so news tabs don't toggle weather)
      ========================================================================= */
   document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
+      const panel = btn.closest('.panel');
       const target = btn.dataset.tab;
-      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
-      document.querySelectorAll('.tab-panel').forEach(p => {
+      panel.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+      panel.querySelectorAll('.tab-panel').forEach(p => {
         p.classList.toggle('active', p.id === target);
       });
+      if (panel.id === 'news-panel') updateNewsMeta();
     });
   });
 
@@ -453,16 +469,37 @@
   /* =========================================================================
      News (RSS via rss2json proxy)
      ========================================================================= */
-  const NEWS_FEEDS = [
-    { source: 'Stentor',      url: 'https://www.destentor.nl/zwolle/rss.xml' },
-    { source: 'RTV Oost',     url: 'https://www.rtvoost.nl/rss' },
-    { source: 'NOS',          url: 'https://feeds.nos.nl/nosnieuwsalgemeen' },
-    { source: 'Correspondent', url: 'https://decorrespondent.nl/rss' },
-    { source: 'FtM',          url: 'https://www.ftm.nl/rss' },
-    { source: 'Groene',       url: 'https://www.groene.nl/feed/rss2' }
-  ];
-  const PER_FEED = 6;
-  const MAX_HEADLINES = 28;
+  const NEWS_GROUPS = {
+    local: {
+      tab: 'news-local',
+      feeds: [
+        { source: '112 Zwolle',  url: 'https://www.112zwolle.nl/feed/' },
+        { source: 'RTV Focus',   url: 'https://www.rtvfocuszwolle.nl/feed/' },
+        { source: 'WeblogZwolle', url: 'https://weblogzwolle.nl/feed/' },
+        { source: 'RTV Oost',    url: 'https://www.rtvoost.nl/rss' }
+      ]
+    },
+    national: {
+      tab: 'news-national',
+      feeds: [
+        { source: 'NOS',           url: 'https://feeds.nos.nl/nosnieuwsalgemeen' },
+        { source: 'Correspondent', url: 'https://decorrespondent.nl/rss' },
+        { source: 'FtM',           url: 'https://www.ftm.nl/rss' },
+        { source: 'Groene',        url: 'https://www.groene.nl/feed/rss2' }
+      ]
+    },
+    international: {
+      tab: 'news-international',
+      feeds: [
+        { source: 'BBC',        url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+        { source: 'NPR',        url: 'https://feeds.npr.org/1004/rss.xml' },
+        { source: 'Guardian',   url: 'https://www.theguardian.com/world/rss' },
+        { source: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' }
+      ]
+    }
+  };
+  const PER_FEED = 8;
+  const MAX_PER_GROUP = 24;
 
   function fmtRelative(date) {
     const diff = (Date.now() - date.getTime()) / 1000;
@@ -491,24 +528,14 @@
     }
   }
 
-  async function loadNews() {
-    const list = document.getElementById('news-list');
-    const meta = document.getElementById('news-meta');
-    const results = await Promise.all(NEWS_FEEDS.map(fetchFeed));
-    const items = results.flat()
-      .filter(i => i.title && i.link)
-      .sort((a, b) => b.date - a.date)
-      .slice(0, MAX_HEADLINES);
-
+  function renderNewsItems(container, items) {
     if (!items.length) {
-      list.className = 'error';
-      list.textContent = "Couldn't load any feeds.";
-      meta.textContent = '';
+      container.className = 'tab-panel error';
+      container.textContent = "Couldn't load any feeds.";
       return;
     }
-
-    list.className = '';
-    list.innerHTML = items.map(i => `
+    container.className = container.classList.contains('active') ? 'tab-panel active' : 'tab-panel';
+    container.innerHTML = items.map(i => `
       <div class="news-item">
         <a href="${i.link}" target="_blank" rel="noopener">${i.title}</a>
         <div class="news-meta">
@@ -517,7 +544,49 @@
         </div>
       </div>
     `).join('');
-    meta.textContent = `${items.length} headlines`;
+  }
+
+  function updateNewsMeta() {
+    const activeTab = document.querySelector('#news-panel .tab.active');
+    if (!activeTab) return;
+    const container = document.getElementById(activeTab.dataset.tab);
+    const count = container.querySelectorAll('.news-item').length;
+    document.getElementById('news-meta').textContent = count ? `${count} headlines` : '';
+  }
+
+  /* Round-robin pick across sources so no single prolific feed crowds the
+     others out. Each per-source array is sorted newest-first; we take one
+     from each in turn until we hit maxTotal or every source is exhausted.
+     Final result is re-sorted by date so the feed reads chronologically. */
+  function balanceBySource(perSourceArrays, maxTotal) {
+    const picked = [];
+    const idx = perSourceArrays.map(() => 0);
+    while (picked.length < maxTotal) {
+      let any = false;
+      for (let s = 0; s < perSourceArrays.length; s++) {
+        if (idx[s] < perSourceArrays[s].length) {
+          picked.push(perSourceArrays[s][idx[s]++]);
+          any = true;
+          if (picked.length >= maxTotal) break;
+        }
+      }
+      if (!any) break;
+    }
+    return picked.sort((a, b) => b.date - a.date);
+  }
+
+  async function loadNews() {
+    await Promise.all(Object.values(NEWS_GROUPS).map(async group => {
+      const perSource = await Promise.all(group.feeds.map(async f => {
+        const items = await fetchFeed(f);
+        return items
+          .filter(i => i.title && i.link)
+          .sort((a, b) => b.date - a.date);
+      }));
+      const items = balanceBySource(perSource, MAX_PER_GROUP);
+      renderNewsItems(document.getElementById(group.tab), items);
+    }));
+    updateNewsMeta();
   }
 
   loadWeather();
