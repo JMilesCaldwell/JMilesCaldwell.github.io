@@ -918,14 +918,35 @@
     { name: 'NPO 3FM',              url: 'https://icecast.omroep.nl/3fm-bb-mp3' },
     { name: 'BNR Nieuwsradio',      url: 'https://stream.bnr.nl/bnr_mp3_128_03' },
     { name: 'KEXP',                 url: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
-    { name: 'WNYC',                 url: 'https://fm939.wnyc.org/wnycfm-mp3' },
-    { name: 'WMMT Whitesburg, KY',  url: 'https://wmmtfm.streamguys1.com/wmmtfm' },
+    { name: 'WNYC 93.9 FM',         url: 'https://hls-live.wnyc.org/wnycfmapp-hls.aac/playlist.m3u8' },
+    { name: 'Radio Paradise',       url: 'https://stream.radioparadise.com/mp3-192' },
+    { name: 'SomaFM Boot Liquor',   url: 'https://ice1.somafm.com/bootliquor-128-mp3' },
     { name: 'WFMU Freeform',        url: 'https://stream0.wfmu.org/freeform-128k' },
     { name: 'SomaFM Mission Ctrl',  url: 'https://ice1.somafm.com/missioncontrol-128-mp3' },
     { name: 'SomaFM Drone Zone',    url: 'https://ice1.somafm.com/dronezone-128-mp3' },
     { name: 'SomaFM Cliqhop IDM',   url: 'https://ice1.somafm.com/cliqhop-128-mp3' },
     { name: 'Lofi Hip Hop',         url: 'https://stream.zeno.fm/f3wvbbqmdg8uv' }
   ];
+
+  /* HLS detection + lazy-loaded hls.js. Most modern public radio (WNYC,
+     WNYC AM, many NPR member stations) streams as HLS .m3u8 playlists.
+     Safari plays HLS natively; Chrome/Firefox need the hls.js shim. */
+  function isHLS(url) {
+    return /\.m3u8(\?|$)/i.test(url);
+  }
+  let hlsJsPromise = null;
+  function loadHlsJs() {
+    if (window.Hls) return Promise.resolve();
+    if (hlsJsPromise) return hlsJsPromise;
+    hlsJsPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1';
+      s.onload = resolve;
+      s.onerror = () => { hlsJsPromise = null; reject(new Error('hls.js failed to load')); };
+      document.head.appendChild(s);
+    });
+    return hlsJsPromise;
+  }
 
   (function initListen() {
     const audio = document.getElementById('listen-audio');
@@ -936,26 +957,44 @@
 
     audio.volume = parseFloat(volume.value);
     let currentBtn = null;
+    let currentHls = null;
+
+    async function playStation(s, btn) {
+      if (currentBtn) currentBtn.classList.remove('active', 'loading');
+      btn.classList.remove('failed');
+      btn.classList.add('loading');
+      currentBtn = btn;
+      nowEl.className = '';
+      nowEl.textContent = 'Connecting to ' + s.name + '…';
+
+      if (currentHls) { try { currentHls.destroy(); } catch {} currentHls = null; }
+
+      try {
+        if (isHLS(s.url) && !audio.canPlayType('application/vnd.apple.mpegurl')) {
+          await loadHlsJs();
+          currentHls = new window.Hls();
+          currentHls.loadSource(s.url);
+          currentHls.attachMedia(audio);
+          currentHls.on(window.Hls.Events.ERROR, (_evt, data) => {
+            if (data.fatal) audio.dispatchEvent(new Event('error'));
+          });
+        } else {
+          audio.src = s.url;
+        }
+        await audio.play();
+      } catch (err) {
+        btn.classList.remove('loading', 'active');
+        btn.classList.add('failed');
+        nowEl.className = 'err';
+        nowEl.textContent = "Couldn't play " + s.name;
+      }
+    }
 
     STATIONS.forEach(s => {
       const btn = document.createElement('button');
       btn.className = 'listen-station';
       btn.textContent = s.name;
-      btn.addEventListener('click', () => {
-        if (currentBtn) currentBtn.classList.remove('active', 'loading');
-        btn.classList.remove('failed');
-        btn.classList.add('loading');
-        currentBtn = btn;
-        nowEl.className = '';
-        nowEl.textContent = 'Connecting to ' + s.name + '…';
-        audio.src = s.url;
-        audio.play().catch(err => {
-          btn.classList.remove('loading', 'active');
-          btn.classList.add('failed');
-          nowEl.className = 'err';
-          nowEl.textContent = "Couldn't play " + s.name;
-        });
-      });
+      btn.addEventListener('click', () => playStation(s, btn));
       grid.appendChild(btn);
     });
 
