@@ -492,7 +492,7 @@
     }
   };
   const PER_FEED = 8;
-  const MAX_PER_GROUP = 30;
+  const MAX_PER_GROUP = 24;
 
   function fmtRelative(date) {
     const diff = (Date.now() - date.getTime()) / 1000;
@@ -547,13 +547,36 @@
     document.getElementById('news-meta').textContent = count ? `${count} headlines` : '';
   }
 
+  /* Round-robin pick across sources so no single prolific feed crowds the
+     others out. Each per-source array is sorted newest-first; we take one
+     from each in turn until we hit maxTotal or every source is exhausted.
+     Final result is re-sorted by date so the feed reads chronologically. */
+  function balanceBySource(perSourceArrays, maxTotal) {
+    const picked = [];
+    const idx = perSourceArrays.map(() => 0);
+    while (picked.length < maxTotal) {
+      let any = false;
+      for (let s = 0; s < perSourceArrays.length; s++) {
+        if (idx[s] < perSourceArrays[s].length) {
+          picked.push(perSourceArrays[s][idx[s]++]);
+          any = true;
+          if (picked.length >= maxTotal) break;
+        }
+      }
+      if (!any) break;
+    }
+    return picked.sort((a, b) => b.date - a.date);
+  }
+
   async function loadNews() {
     await Promise.all(Object.values(NEWS_GROUPS).map(async group => {
-      const results = await Promise.all(group.feeds.map(fetchFeed));
-      const items = results.flat()
-        .filter(i => i.title && i.link)
-        .sort((a, b) => b.date - a.date)
-        .slice(0, MAX_PER_GROUP);
+      const perSource = await Promise.all(group.feeds.map(async f => {
+        const items = await fetchFeed(f);
+        return items
+          .filter(i => i.title && i.link)
+          .sort((a, b) => b.date - a.date);
+      }));
+      const items = balanceBySource(perSource, MAX_PER_GROUP);
       renderNewsItems(document.getElementById(group.tab), items);
     }));
     updateNewsMeta();
