@@ -457,7 +457,7 @@
           <input type="range" id="listen-volume" min="0" max="1" step="0.05" value="0.7" aria-label="Volume">
         </div>
         <div class="listen-stations" id="listen-stations"></div>
-        <audio id="listen-audio" preload="none" crossorigin="anonymous"></audio>
+        <audio id="listen-audio" preload="none"></audio>
       </div>
     </section>
   </main>
@@ -773,6 +773,8 @@
     { name: 'Comics Curmudgeon',    type: 'rss', url: 'https://joshreads.com/feed' },
     { name: '50 Watts',             type: 'rss', url: 'https://50watts.com/rss' },
     { name: 'Goblins',              type: 'rss', url: 'https://www.goblinscomic.com/feed/' },
+    // Wikipedia random article
+    { name: 'Wikipedia',            type: 'wiki' },
     // Static (curated permalinks in discover.json)
     { name: 'Lileks Galleries', type: 'static', key: 'lileks-galleries' },
     { name: 'Maddox',           type: 'static', key: 'maddox' },
@@ -834,6 +836,20 @@
         excerpt: item.excerpt || '',
         image: item.image || null
       };
+    } else if (source.type === 'wiki') {
+      try {
+        const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/random/summary');
+        if (!r.ok) return null;
+        const j = await r.json();
+        if (!j.title || !j.content_urls?.desktop?.page) return null;
+        return {
+          source: 'Wikipedia',
+          title: j.title,
+          link: j.content_urls.desktop.page,
+          excerpt: j.extract || '',
+          image: j.thumbnail?.source || null
+        };
+      } catch { return null; }
     }
     return null;
   }
@@ -859,14 +875,31 @@
     `;
   }
 
+  /* Fisher-Yates: Array.sort(() => Math.random() - 0.5) is biased. */
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   async function loadCurio() {
     const card = document.getElementById('curio-card');
     card.className = 'loading';
     card.textContent = 'Foraging…';
-    const candidates = [...CURIO_SOURCES].sort(() => Math.random() - 0.5);
+    /* Exclude the most-recent source so we never repeat it back-to-back. */
+    const last = sessionStorage.getItem('curio-last');
+    const pool = CURIO_SOURCES.filter(s => s.name !== last);
+    const candidates = shuffle(pool.length ? pool : CURIO_SOURCES);
     for (const source of candidates) {
       const item = await tryFetchCurio(source);
-      if (item) { renderCurio(item); return; }
+      if (item) {
+        sessionStorage.setItem('curio-last', source.name);
+        renderCurio(item);
+        return;
+      }
     }
     renderCurio(null);
   }
@@ -893,6 +926,7 @@
     { name: 'SomaFM Mission Ctrl',  url: 'https://ice1.somafm.com/missioncontrol-128-mp3' },
     { name: 'SomaFM Drone Zone',    url: 'https://ice1.somafm.com/dronezone-128-mp3' },
     { name: 'SomaFM Cliqhop IDM',   url: 'https://ice1.somafm.com/cliqhop-128-mp3' },
+    { name: 'Lofi Hip Hop',         url: 'https://stream.zeno.fm/f3wvbbqmdg8uv' },
     { name: 'The Lot Radio',        url: 'https://thelot.radio:8000/main.mp3' },
     { name: 'Resonance FM',         url: 'https://stream.resonance.fm:8000/resonance' },
     { name: 'UVB-76 (Buzzer)',      url: 'https://stream.uvb-76.net:8000/uvb76' }

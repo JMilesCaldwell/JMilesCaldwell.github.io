@@ -338,15 +338,48 @@
   Podcast RSS via rss2json: title/description/link work; audio
   enclosure is ignored by our current renderer, which is fine.
 
-  [2026-06-16] [listen] New panel: Listen. Native HTML5 audio with
+  [2026-06-16] [discover] Two anti-Oatmeal-bias fixes. (1) Replaced
+  `Array.sort(() => Math.random() - 0.5)` with proper Fisher-Yates
+  shuffle &mdash; the .sort-with-random-comparator trick has known
+  bias in V8 etc. (2) Added sticky-last-source exclusion via
+  sessionStorage: the most-recent source is excluded from the next
+  draw (unless it's the only option). Combined with adding Wikipedia
+  to the pool, Oatmeal's effective share should drop from ~13% to
+  more like 6-7%.
+
+  [2026-06-16] [discover] Added Wikipedia as a Discover source.
+  Uses en.wikipedia.org/api/rest_v1/page/random/summary (no key,
+  CORS-enabled) which returns one random article's title, extract,
+  thumbnail and URL per call. New type='wiki' in CURIO_SOURCES,
+  handled inline in tryFetchCurio. Sandbox does NOT probe this
+  (it's not RSS); reliability is built-in.
+
+  [2026-06-16] [sandbox] Stream-probe section added. Loads each
+  station URL into a hidden Audio element, races 'canplay'/
+  'loadeddata'/'playing'/'error' against an 8s timeout, reports
+  per-station. "timeout" doesn't strictly mean broken &mdash; some
+  streams take a moment to send their first audio frame; cross-
+  reference with a real click in the dashboard. "unsupported /
+  CORS / mixed-content" almost always means the URL is dead or
+  HTTP-only (and HTTPS Pages blocks mixed content).
+
+  [2026-06-16] [listen] Removed crossorigin="anonymous" from the
+  Listen panel's &lt;audio&gt; element. It was unnecessary (we
+  don't use Web Audio API on the stream) and was actively making
+  some streams fail by requiring CORS headers the server didn't
+  send. Without it, basic playback works as long as the URL is
+  reachable.
+
+  [2026-06-16] [listen] Original entry: New panel: Listen. Native HTML5 audio with
   a station-picker grid. Joe explicitly said "the weirder the
   better, feel free to go batshit". Starter pack of 14:
     Dutch:    NPO Radio 1, NPO Radio 2, NPO 3FM, BNR Nieuwsradio
     US news:  NPR (WBUR), KEXP, KFFA (Helena, AR &mdash; King
               Biscuit Time delta blues, since 1941)
     Weirdos:  WFMU Freeform, SomaFM Mission Control, SomaFM Drone
-              Zone, SomaFM Cliqhop IDM, The Lot Radio, Resonance FM,
-              UVB-76 (Russian numbers station "The Buzzer")
+              Zone, SomaFM Cliqhop IDM, Lofi Hip Hop (via Zeno.fm),
+              The Lot Radio, Resonance FM, UVB-76 (Russian numbers
+              station "The Buzzer")
   Stream URLs are best-guesses for several (KFFA, Lot, Resonance,
   UVB-76, BNR, WBUR) &mdash; we iterate based on which actually
   play. Failed streams get marked with .listen-station.failed
@@ -393,6 +426,15 @@
   <table id="feeds-table">
     <thead><tr>
       <th>Group</th><th>Source</th><th>Status</th><th>Items</th><th>Img</th><th>First title</th><th>ms</th><th>Error</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Stream probes (web radio)</h2>
+  <p class="status" id="streams-status">Idle.</p>
+  <table id="streams-table">
+    <thead><tr>
+      <th>Group</th><th>Station</th><th>Status</th><th>ms</th><th>Error</th>
     </tr></thead>
     <tbody></tbody>
   </table>
@@ -485,6 +527,85 @@
 
     statusEl.textContent = `Done. ${results.filter(r => r.status === 'OK').length} / ${results.length} feeds healthy.`;
 
+    // -----------------------------------------------------------------------
+    // Stream probes (web radio): try to load each URL in a hidden Audio
+    // element, race against a timeout, record whichever event fires first.
+    // -----------------------------------------------------------------------
+    const STREAMS = [
+      ['Dutch',   'NPO Radio 1',         'https://icecast.omroep.nl/radio1-bb-mp3'],
+      ['Dutch',   'NPO Radio 2',         'https://icecast.omroep.nl/radio2-bb-mp3'],
+      ['Dutch',   'NPO 3FM',             'https://icecast.omroep.nl/3fm-bb-mp3'],
+      ['Dutch',   'BNR Nieuwsradio',     'https://stream.bnr.nl/bnr_mp3_128_03'],
+      ['US',      'KEXP',                'https://kexp-mp3-128.streamguys1.com/kexp128.mp3'],
+      ['US',      'NPR (WBUR)',          'https://wbur.streamguys1.com/wbur'],
+      ['US',      'KFFA Helena, AR',     'https://kffa.streamguys1.com/kffaam'],
+      ['Weird',   'WFMU Freeform',       'https://stream0.wfmu.org/freeform-128k'],
+      ['Weird',   'SomaFM Mission Ctrl', 'https://ice1.somafm.com/missioncontrol-128-mp3'],
+      ['Weird',   'SomaFM Drone Zone',   'https://ice1.somafm.com/dronezone-128-mp3'],
+      ['Weird',   'SomaFM Cliqhop IDM',  'https://ice1.somafm.com/cliqhop-128-mp3'],
+      ['Weird',   'Lofi Hip Hop',        'https://stream.zeno.fm/f3wvbbqmdg8uv'],
+      ['Weird',   'The Lot Radio',       'https://thelot.radio:8000/main.mp3'],
+      ['Weird',   'Resonance FM',        'https://stream.resonance.fm:8000/resonance'],
+      ['Weird',   'UVB-76 (Buzzer)',     'https://stream.uvb-76.net:8000/uvb76']
+    ];
+
+    const stbody = document.querySelector('#streams-table tbody');
+    const sstatus = document.getElementById('streams-status');
+
+    function probeStream(name, url, timeoutMs = 8000) {
+      return new Promise(resolve => {
+        const t0 = performance.now();
+        const a = new Audio();
+        a.preload = 'auto';
+        let done = false;
+        const finish = (status, error = '') => {
+          if (done) return;
+          done = true;
+          try { a.pause(); } catch {}
+          a.removeAttribute('src');
+          try { a.load(); } catch {}
+          resolve({ name, url, status, ms: Math.round(performance.now() - t0), error });
+        };
+        const codes = { 1: 'aborted', 2: 'network', 3: 'decode', 4: 'unsupported / CORS / mixed-content' };
+        a.addEventListener('canplay',    () => finish('OK'));
+        a.addEventListener('loadeddata', () => finish('OK'));
+        a.addEventListener('playing',    () => finish('OK'));
+        a.addEventListener('error', () => {
+          const e = a.error;
+          finish('error', e ? ((codes[e.code] || 'media') + ' (code ' + e.code + ')') : 'media error');
+        });
+        setTimeout(() => finish('timeout'), timeoutMs);
+        a.src = url;
+        a.load();
+      });
+    }
+
+    function addStreamRow(r) {
+      const tr = document.createElement('tr');
+      const cls = r.status === 'OK' ? 'ok' : (r.status === 'timeout' ? 'warn' : 'fail');
+      tr.innerHTML = `
+        <td class="dim">${r.group}</td>
+        <td>${r.name}</td>
+        <td class="${cls}">${r.status}</td>
+        <td class="dim">${r.ms}</td>
+        <td class="fail">${(r.error || '').replace(/</g, '&lt;')}</td>
+      `;
+      stbody.appendChild(tr);
+    }
+
+    sstatus.textContent = `Probing ${STREAMS.length} streams (up to 8s each, run in parallel)…`;
+    const streamResults = [];
+    await Promise.all(STREAMS.map(async ([group, name, url]) => {
+      const r = await probeStream(name, url);
+      const row = { group, ...r };
+      streamResults.push(row);
+      addStreamRow(row);
+    }));
+    sstatus.textContent =
+      `Done. ${streamResults.filter(r => r.status === 'OK').length} / ${streamResults.length} streams playable. ` +
+      `Note: a "timeout" can mean the stream is reachable but slow to send the first audio packet — not necessarily broken. ` +
+      `"unsupported / CORS / mixed-content" usually means the URL is dead or HTTP-only.`;
+
     // discover.json
     let discoverData = null;
     try {
@@ -509,6 +630,7 @@
     const blob = {
       timestamp: new Date().toISOString(),
       feeds: results.sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name)),
+      streams: streamResults.sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name)),
       discover_summary: discoverData ? Object.fromEntries(Object.entries(discoverData).filter(([k,v]) => Array.isArray(v)).map(([k,v]) => [k, v.length])) : null,
       env: { tz: Intl.DateTimeFormat().resolvedOptions().timeZone, ua: navigator.userAgent }
     };
