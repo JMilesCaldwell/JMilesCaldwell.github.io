@@ -370,6 +370,17 @@
   listen-live page, or use stations whose URL patterns are
   publicly documented (SomaFM, Radio Paradise, KEXP).
 
+  [2026-06-16] [listen] HLS support added. Most modern public
+  radio streams as HLS .m3u8 playlists, not Icecast .mp3. The
+  Listen panel now detects .m3u8 URLs and lazy-loads hls.js
+  (~150KB from jsdelivr CDN) on first HLS click; Safari uses
+  native HLS support and skips the shim. WNYC 93.9 FM wired
+  with hls-live.wnyc.org/wnycfmapp-hls.aac/playlist.m3u8 (Joe
+  grabbed the playlist URL from DevTools after I asked twice).
+  Sandbox probe still uses bare &lt;audio&gt; so HLS URLs will
+  show "error" there in Chrome/Firefox &mdash; that's expected,
+  not a real failure. To verify HLS, click in the dashboard.
+
   [2026-06-16] [discover] Two anti-Oatmeal-bias fixes. (1) Replaced
   `Array.sort(() => Math.random() - 0.5)` with proper Fisher-Yates
   shuffle &mdash; the .sort-with-random-comparator trick has known
@@ -567,7 +578,7 @@
       ['Dutch',   'NPO 3FM',             'https://icecast.omroep.nl/3fm-bb-mp3'],
       ['Dutch',   'BNR Nieuwsradio',     'https://stream.bnr.nl/bnr_mp3_128_03'],
       ['US',      'KEXP',                'https://kexp-mp3-128.streamguys1.com/kexp128.mp3'],
-      ['US',      'WNYC 93.9 FM',        'https://fm939.wnyc.org/wnycfm'],
+      ['US',      'WNYC 93.9 FM (HLS)',  'https://hls-live.wnyc.org/wnycfmapp-hls.aac/playlist.m3u8'],
       ['US',      'Radio Paradise',      'https://stream.radioparadise.com/mp3-192'],
       ['US',      'SomaFM Boot Liquor',  'https://ice1.somafm.com/bootliquor-128-mp3'],
       ['Weird',   'WFMU Freeform',       'https://stream0.wfmu.org/freeform-128k'],
@@ -632,7 +643,9 @@
     sstatus.textContent =
       `Done. ${streamResults.filter(r => r.status === 'OK').length} / ${streamResults.length} streams playable. ` +
       `Note: a "timeout" can mean the stream is reachable but slow to send the first audio packet — not necessarily broken. ` +
-      `"unsupported / CORS / mixed-content" usually means the URL is dead or HTTP-only.`;
+      `"unsupported / CORS / mixed-content" usually means the URL is dead or HTTP-only. ` +
+      `HLS (.m3u8) streams will show "error" here in Chrome/Firefox because this probe uses bare <audio>; ` +
+      `the dashboard lazy-loads hls.js so HLS still plays there.`;
 
     // discover.json
     let discoverData = null;
