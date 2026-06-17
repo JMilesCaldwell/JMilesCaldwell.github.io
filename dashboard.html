@@ -542,7 +542,6 @@
       panel.querySelectorAll('.tab-panel').forEach(p => {
         p.classList.toggle('active', p.id === target);
       });
-      if (panel.id === 'news-panel') updateNewsMeta();
     });
   });
 
@@ -764,12 +763,24 @@
     `).join('');
   }
 
-  function updateNewsMeta() {
-    const activeTab = document.querySelector('#news-panel .tab.active');
-    if (!activeTab) return;
-    const container = document.getElementById(activeTab.dataset.tab);
-    const count = container.querySelectorAll('.news-item').length;
-    document.getElementById('news-meta').textContent = count ? `${count} headlines` : '';
+  /* Live ticking date+time in panel headers. Locale-aware so an NL browser
+     gets "ma 16 jun 2026 10:33" etc. Replaces the static "24 headlines"
+     count, which was tautological with the cap. */
+  function fmtNowMeta() {
+    return new Date().toLocaleString([], {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+  function updateMetaClocks() {
+    const stamp = fmtNowMeta();
+    ['news-meta', 'tech-meta', 'reddit-meta'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = stamp;
+    });
   }
 
   /* Round-robin pick across sources so no single prolific feed crowds the
@@ -804,7 +815,6 @@
       const items = balanceBySource(perSource, MAX_PER_GROUP);
       renderNewsItems(document.getElementById(group.tab), items);
     }));
-    updateNewsMeta();
   }
 
   /* =========================================================================
@@ -1098,7 +1108,6 @@
 
   async function loadTech() {
     const list = document.getElementById('tech-list');
-    const meta = document.getElementById('tech-meta');
     const perSource = await Promise.all(TECH_FEEDS.map(async f => {
       const items = await fetchFeed({ source: f.source, url: f.url });
       return items
@@ -1111,7 +1120,6 @@
     if (!items.length) {
       list.className = 'error';
       list.textContent = "Couldn't load any tech feeds.";
-      meta.textContent = '';
       return;
     }
     list.className = '';
@@ -1124,7 +1132,6 @@
         </div>
       </div>
     `).join('');
-    meta.textContent = `${items.length} items`;
   }
 
   /* =========================================================================
@@ -1175,7 +1182,6 @@
 
   async function loadReddit() {
     const list = document.getElementById('reddit-list');
-    const meta = document.getElementById('reddit-meta');
     const perSub = await Promise.all(REDDIT_SUBS.map(async sub => {
       const items = await fetchSubreddit(sub);
       return items.sort((a, b) => b.date - a.date);
@@ -1185,7 +1191,6 @@
     if (!items.length) {
       list.className = 'error';
       list.textContent = "Couldn't load any subreddits.";
-      meta.textContent = '';
       return;
     }
 
@@ -1201,8 +1206,10 @@
         </div>
       </div>
     `).join('');
-    meta.textContent = `${items.length} threads`;
   }
+
+  updateMetaClocks();
+  setInterval(updateMetaClocks, 30000);
 
   loadWeather();
   loadNews();
