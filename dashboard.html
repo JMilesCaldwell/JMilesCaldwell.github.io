@@ -461,6 +461,17 @@
       </div>
     </section>
 
+    <!-- TECH -->
+    <section class="panel full" id="tech-panel">
+      <div class="panel-head">
+        <h2>Tech</h2>
+        <span class="meta" id="tech-meta">loading&hellip;</span>
+      </div>
+      <div class="panel-body">
+        <div id="tech-list" class="loading">Fetching feeds&hellip;</div>
+      </div>
+    </section>
+
     <!-- DISCOVER (full-width below) -->
     <section class="panel full" id="curio-panel">
       <div class="panel-head">
@@ -811,10 +822,6 @@
     { name: 'Comics Curmudgeon',    type: 'rss', url: 'https://joshreads.com/feed' },
     { name: '50 Watts',             type: 'rss', url: 'https://50watts.com/rss' },
     { name: 'Goblins',              type: 'rss', url: 'https://www.goblinscomic.com/feed/' },
-    // AI lab blogs (substance over tweets)
-    { name: 'Anthropic',            type: 'rss', url: 'https://www.anthropic.com/news/rss.xml' },
-    { name: 'OpenAI',               type: 'rss', url: 'https://openai.com/blog/rss.xml' },
-    { name: 'Google DeepMind',      type: 'rss', url: 'https://deepmind.google/blog/rss.xml' },
     // Wikipedia random article
     { name: 'Wikipedia',            type: 'wiki' },
     // Static (curated permalinks in discover.json)
@@ -1075,6 +1082,52 @@
   })();
 
   /* =========================================================================
+     Tech. Same RSS engine as News but a single flat list (no tabs).
+     Round-robin balanced across sources so HN's firehose doesn't dominate.
+     ========================================================================= */
+  const TECH_FEEDS = [
+    { source: 'HN',         url: 'https://hnrss.org/frontpage' },
+    { source: 'Anthropic',  url: 'https://www.anthropic.com/news/rss.xml' },
+    { source: 'OpenAI',     url: 'https://openai.com/blog/rss.xml' },
+    { source: 'DeepMind',   url: 'https://deepmind.google/blog/rss.xml' },
+    { source: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index' },
+    { source: '404 Media',  url: 'https://www.404media.co/rss/' }
+  ];
+  const TECH_PER_FEED = 6;
+  const TECH_MAX = 24;
+
+  async function loadTech() {
+    const list = document.getElementById('tech-list');
+    const meta = document.getElementById('tech-meta');
+    const perSource = await Promise.all(TECH_FEEDS.map(async f => {
+      const items = await fetchFeed({ source: f.source, url: f.url });
+      return items
+        .filter(i => i.title && i.link)
+        .sort((a, b) => b.date - a.date)
+        .slice(0, TECH_PER_FEED);
+    }));
+    const items = balanceBySource(perSource, TECH_MAX);
+
+    if (!items.length) {
+      list.className = 'error';
+      list.textContent = "Couldn't load any tech feeds.";
+      meta.textContent = '';
+      return;
+    }
+    list.className = '';
+    list.innerHTML = items.map(i => `
+      <div class="news-item">
+        <a href="${i.link}" target="_blank" rel="noopener">${i.title}</a>
+        <div class="news-meta">
+          <span class="news-source">${i.source}</span>
+          <span>${fmtRelative(i.date)}</span>
+        </div>
+      </div>
+    `).join('');
+    meta.textContent = `${items.length} items`;
+  }
+
+  /* =========================================================================
      Social (Reddit). Public subreddit JSON: no auth, CORS-enabled, generous
      for personal use. Filter stickied + NSFW. Round-robin balance across
      subs so no single hot-thread subreddit dominates.
@@ -1153,6 +1206,7 @@
 
   loadWeather();
   loadNews();
+  loadTech();
   loadCurio();
   loadReddit();
   </script>
