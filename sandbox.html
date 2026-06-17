@@ -510,6 +510,17 @@
   only reliable for POPULAR feeds it already caches; never route a fan-out
   of obscure feeds through it. CORS proxies can rot &mdash; if social dies
   again, swap a fresh host into CORS_PROXIES in dashboard.html.
+  [2026-06-17] [social] CORS proxies ALSO dead, confirmed by Joe's console:
+  allorigins=520/500 (overloaded), corsproxy.io=403 (needs API key now),
+  thingproxy=dead. Root cause: Reddit IP-bans proxy services AND blocks
+  requests with default User-Agent &mdash; you can't set the UA through a
+  public proxy. Conclusion: Reddit from a pure static site is NOT solvable
+  with off-the-shelf proxies. Only durable fix = a proxy you control (e.g.
+  Cloudflare Worker that sets a real UA + ACAO header). Joe's call: leave
+  Reddit OUT for now. Disabled the Social panel (HTML section + loadReddit()
+  call both commented, dated 2026-06-17) &mdash; revival is uncommenting two
+  spots once a Worker exists. fetchSubreddit/CORS_PROXIES left in place but
+  inert. Don't retry public proxies; that road is fully explored & dead.
   ---------------------------------------------------------------------------
   -->
   <style>
