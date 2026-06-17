@@ -510,6 +510,72 @@
   only reliable for POPULAR feeds it already caches; never route a fan-out
   of obscure feeds through it. CORS proxies can rot &mdash; if social dies
   again, swap a fresh host into CORS_PROXIES in dashboard.html.
+  [2026-06-17] [social] CORS proxies ALSO dead, confirmed by Joe's console:
+  allorigins=520/500 (overloaded), corsproxy.io=403 (needs API key now),
+  thingproxy=dead. Root cause: Reddit IP-bans proxy services AND blocks
+  requests with default User-Agent &mdash; you can't set the UA through a
+  public proxy. Conclusion: Reddit from a pure static site is NOT solvable
+  with off-the-shelf proxies. Only durable fix = a proxy you control (e.g.
+  Cloudflare Worker that sets a real UA + ACAO header). Joe's call: leave
+  Reddit OUT for now. Disabled the Social panel (HTML section + loadReddit()
+  call both commented, dated 2026-06-17) &mdash; revival is uncommenting two
+  spots once a Worker exists. fetchSubreddit/CORS_PROXIES left in place but
+  inert. Don't retry public proxies; that road is fully explored & dead.
+  [2026-06-17] [social] Joe: "take it out entirely, keep our code clean."
+  Fully removed the Social/Reddit panel &mdash; HTML section, all JS
+  (REDDIT_SUBS, CORS_PROXIES, fetchSubreddit, fmtScore, loadReddit), the
+  .reddit-* CSS, and the reddit-meta clock ref. balanceBySource stays
+  (News/Tech use it). Dashboard panels now: News, Weather, Tech, Discover,
+  Listen. If Reddit ever returns it's a from-scratch rebuild behind a
+  Cloudflare Worker &mdash; git history (this branch) has the old impl.
+  [2026-06-17] [discover] Seeded the "maddox" key in discover.json (17
+  entries). Joe pasted the full Best-Page-In-The-Universe landing source;
+  I hand-picked the iconic evergreen rants (LotR, Matrix, Garfield, pepperoni,
+  BuzzFeed, onions, math, etc.) and SKIPPED the shock titles (suicide/pedo/
+  coronavirus) &mdash; surfacing those at random on a personal dashboard is
+  different from burying them in a 150-link archive. Links normalised to
+  https://maddox.xmission.com/c.cgi?u=&lt;slug&gt; (stable redirector host).
+  Still empty: plan59, ectoguide (freakangels intentionally dropped &mdash;
+  Joe found it downloadable, didn't want to re-host).
+  [2026-06-17] [discover] Added Lileks's current Substack column as a LIVE
+  RSS source ("Lileks (the Column)" -&gt; jameslileks.substack.com/feed),
+  NOT static permalinks. Joe pasted the sitemap (~120 entries) but it's
+  mostly repeating series (Gallery of Regrettable Food, Joe Ohio 1957);
+  a live feed self-refreshes weekly and surfaces the standalone essays.
+  Distinct from the existing static "lileks-galleries" (the timeless
+  Institute galleries) &mdash; both now in rotation. Lesson reinforced:
+  when a pasted page exposes an RSS feed, prefer a live source over
+  freezing static links, unless the archive is curated/finite (Maddox).
+  [2026-06-17] [discover] Seeded "plan59" (19 entries) from Joe's pasted
+  index pages 1+2. Static site, no RSS, so curated permalinks (like Maddox).
+  Base path confirmed by Joe: https://www.plan59.com/av/avNNN.htm (the /av/
+  dir; page links are relative so I had to ask). Picked the retro-futurist
+  standouts (WWW-in-1960, cell-phone-1945, radioactive barbecue, lunar
+  unicycle) over the generic illustrator-credit entries. No images (the
+  only assets are 64px TN64 thumbnails, too small for the curio box).
+  Remaining empty: ectoguide. Discover now: 5 live RSS + wiki + 3 static.
+  [2026-06-17] [discover] Ectoguide done, cleverly: it's a finite archive
+  but has a /random redirect endpoint, so instead of curated permalinks
+  the single ectoguide entry LINKS to http://ectoguide.org/random &mdash;
+  every surfacing + every click = a fresh random artist. "Infinite curio,
+  one JSON line." Host confirmed via web search (ectoguide.org, http-only;
+  used http:// so the outbound nav link doesn't break on no-TLS &mdash;
+  fine because it's top-level navigation, not a mixed-content subresource).
+  Also REMOVED freakangels entirely (empty key + dead CURIO_SOURCES entry)
+  per Joe's clean-code pref; left a "_dropped" breadcrumb in discover.json.
+  Discover curated keys final: lileks-galleries(4), maddox(17), plan59(19),
+  ectoguide(1=random). Pattern worth remembering: when an old site has a
+  /random endpoint, a link-out curio beats freezing permalinks.
+  [2026-06-17] [discover] Curio weighting question settled: loadCurio is
+  SOURCE-weighted, not entry-weighted. It shuffles CURIO_SOURCES (each
+  source = 1 slot, ~1/13), picks the first that returns an item, THEN
+  tryFetchCurio picks a random entry WITHIN that source. So Maddox's 17
+  entries do NOT make Maddox more frequent &mdash; entry count only varies
+  WHICH item shows, never the source's odds. Joe worried it'd "become a
+  pile of maddox"; it won't. Only residual skew: live RSS feeds fail
+  (rss2json throttle) and fall back to always-on sources (wiki + 4 curated),
+  mildly over-representing curated when feeds are down. Joe's call: leave
+  it, already equal. DON'T "fix" this again &mdash; it's working as intended.
   ---------------------------------------------------------------------------
   -->
   <style>

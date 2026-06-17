@@ -360,35 +360,6 @@
       text-transform: uppercase;
     }
 
-    /* Reddit / Social */
-    .reddit-item {
-      padding: 0.7rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .reddit-item:last-child { border-bottom: none; }
-    .reddit-item a {
-      color: var(--ink);
-      text-decoration: none;
-      font-size: 0.92rem;
-      line-height: 1.4;
-      display: block;
-      font-weight: 500;
-    }
-    .reddit-item a:hover { color: var(--accent); }
-    .reddit-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.85rem;
-      margin-top: 0.3rem;
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-    .reddit-sub {
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      color: var(--accent);
-    }
-
     .loading, .error {
       color: var(--muted);
       padding: 0.75rem 0;
@@ -482,17 +453,6 @@
       </div>
       <div class="panel-body">
         <div id="curio-card" class="loading">Foraging&hellip;</div>
-      </div>
-    </section>
-
-    <!-- SOCIAL (Reddit) -->
-    <section class="panel full" id="reddit-panel">
-      <div class="panel-head">
-        <h2>Social</h2>
-        <span class="meta" id="reddit-meta">loading&hellip;</span>
-      </div>
-      <div class="panel-body">
-        <div id="reddit-list" class="loading">Fetching threads&hellip;</div>
       </div>
     </section>
 
@@ -777,7 +737,7 @@
   }
   function updateMetaClocks() {
     const stamp = fmtNowMeta();
-    ['news-meta', 'tech-meta', 'reddit-meta'].forEach(id => {
+    ['news-meta', 'tech-meta'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = stamp;
     });
@@ -832,12 +792,12 @@
     { name: 'Comics Curmudgeon',    type: 'rss', url: 'https://joshreads.com/feed' },
     { name: '50 Watts',             type: 'rss', url: 'https://50watts.com/rss' },
     { name: 'Goblins',              type: 'rss', url: 'https://www.goblinscomic.com/feed/' },
+    { name: 'Lileks (the Column)',  type: 'rss', url: 'https://jameslileks.substack.com/feed' },
     // Wikipedia random article
     { name: 'Wikipedia',            type: 'wiki' },
     // Static (curated permalinks in discover.json)
     { name: 'Lileks Galleries', type: 'static', key: 'lileks-galleries' },
     { name: 'Maddox',           type: 'static', key: 'maddox' },
-    { name: 'FreakAngels',      type: 'static', key: 'freakangels' },
     { name: 'Plan59',           type: 'static', key: 'plan59' },
     { name: 'Ectoguide',        type: 'static', key: 'ectoguide' }
   ];
@@ -1134,101 +1094,6 @@
     `).join('');
   }
 
-  /* =========================================================================
-     Social (Reddit). Fetched via a public CORS proxy on the raw hot.json
-     (see CORS_PROXIES below for the why). Round-robin balance across subs
-     so no single hot subreddit dominates.
-     ========================================================================= */
-  const REDDIT_SUBS = [
-    'Netherlands',
-    'InternetIsBeautiful',
-    'Damnthatsinteresting',
-    'AskHistorians',
-    'artificial',
-    'LocalLLaMA',
-    'todayilearned',
-    'oddlysatisfying',
-    'tifu'
-  ];
-  const REDDIT_PER_SUB = 6;
-  const REDDIT_MAX = 24;
-
-  /* Reddit blocks direct cross-origin browser fetches of /r/<sub>/hot.json
-     (CORS + 403 since the 2023 API lockdown). rss2json isn't an option
-     either: it rate-limits uncached/obscure feeds ("converting new feeds
-     in a very short period"), and 9 per-sub feeds is exactly that pattern.
-     So we go through a public CORS proxy that fetches the JSON server-side
-     and re-serves it with CORS headers. Try proxies in order; first valid
-     JSON wins. Keeps full metadata (score/comments) since it's the raw API.
-     If these rot, swap in a fresh proxy host here. */
-  const CORS_PROXIES = [
-    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
-    u => 'https://thingproxy.freeboard.io/fetch/' + u
-  ];
-
-  async function fetchSubreddit(sub) {
-    const redditUrl = `https://www.reddit.com/r/${sub}/hot.json?limit=${REDDIT_PER_SUB * 2}&raw_json=1`;
-    for (const wrap of CORS_PROXIES) {
-      try {
-        const r = await fetch(wrap(redditUrl));
-        if (!r.ok) continue;
-        const j = await r.json();
-        const children = j.data?.children;
-        if (!Array.isArray(children)) continue;
-        return children
-          .map(c => c.data)
-          .filter(d => d && !d.stickied && !d.over_18 && d.title)
-          .slice(0, REDDIT_PER_SUB)
-          .map(d => ({
-            sub: d.subreddit,
-            title: d.title,
-            link: 'https://reddit.com' + d.permalink,
-            score: d.score || 0,
-            comments: d.num_comments || 0,
-            date: new Date((d.created_utc || 0) * 1000)
-          }));
-      } catch (err) {
-        console.warn('Proxy failed for r/' + sub + ':', err);
-      }
-    }
-    return [];
-  }
-
-  function fmtScore(n) {
-    if (n >= 10000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return String(n);
-  }
-
-  async function loadReddit() {
-    const list = document.getElementById('reddit-list');
-    const perSub = await Promise.all(REDDIT_SUBS.map(async sub => {
-      const items = await fetchSubreddit(sub);
-      return items.sort((a, b) => b.date - a.date);
-    }));
-    const items = balanceBySource(perSub, REDDIT_MAX);
-
-    if (!items.length) {
-      list.className = 'error';
-      list.textContent = "Couldn't load any subreddits.";
-      return;
-    }
-
-    list.className = '';
-    list.innerHTML = items.map(i => `
-      <div class="reddit-item">
-        <a href="${i.link}" target="_blank" rel="noopener">${i.title.replace(/</g, '&lt;')}</a>
-        <div class="reddit-row">
-          <span class="reddit-sub">r/${i.sub}</span>
-          <span>${fmtScore(i.score)} upvotes</span>
-          <span>${i.comments.toLocaleString()} comments</span>
-          <span>${fmtRelative(i.date)}</span>
-        </div>
-      </div>
-    `).join('');
-  }
-
   updateMetaClocks();
   setInterval(updateMetaClocks, 30000);
 
@@ -1236,7 +1101,6 @@
   loadNews();
   loadTech();
   loadCurio();
-  loadReddit();
   </script>
 </body>
 </html>
