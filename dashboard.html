@@ -1135,9 +1135,12 @@
   }
 
   /* =========================================================================
-     Social (Reddit). Public subreddit JSON: no auth, CORS-enabled, generous
-     for personal use. Filter stickied + NSFW. Round-robin balance across
-     subs so no single hot-thread subreddit dominates.
+     Social (Reddit). Reddit killed direct cross-origin browser fetches of
+     /r/<sub>/hot.json after the 2023 API lockdown (CORS reject + 403), so
+     we go through rss2json on the subreddit .rss feed exactly like News.
+     Tradeoff: RSS carries no upvote/comment counts, so the meta line is
+     just subreddit + author + age. Round-robin balance across subs so no
+     single hot subreddit dominates.
      ========================================================================= */
   const REDDIT_SUBS = [
     'Netherlands',
@@ -1154,30 +1157,27 @@
   const REDDIT_MAX = 24;
 
   async function fetchSubreddit(sub) {
-    const url = `https://www.reddit.com/r/${sub}/hot.json?limit=${REDDIT_PER_SUB * 2}&raw_json=1`;
+    const feed = `https://www.reddit.com/r/${sub}/hot/.rss?limit=${REDDIT_PER_SUB * 2}`;
+    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed);
     try {
       const r = await fetch(url);
-      if (!r.ok) return [];
+      if (!r.ok) throw new Error(r.status);
       const j = await r.json();
-      return (j.data?.children || [])
-        .map(c => c.data)
-        .filter(d => d && !d.stickied && !d.over_18 && d.title)
+      if (j.status !== 'ok') throw new Error(j.message || 'feed error');
+      return (j.items || [])
+        .filter(it => it && it.title && it.link)
         .slice(0, REDDIT_PER_SUB)
-        .map(d => ({
-          sub: d.subreddit,
-          title: d.title,
-          link: 'https://reddit.com' + d.permalink,
-          score: d.score || 0,
-          comments: d.num_comments || 0,
-          date: new Date((d.created_utc || 0) * 1000)
+        .map(it => ({
+          sub,
+          title: it.title,
+          link: it.link,
+          author: (it.author || '').replace(/^\/?u\//, ''),
+          date: new Date(it.pubDate || Date.now())
         }));
-    } catch { return []; }
-  }
-
-  function fmtScore(n) {
-    if (n >= 10000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return String(n);
+    } catch (err) {
+      console.warn('Subreddit failed:', sub, err);
+      return [];
+    }
   }
 
   async function loadReddit() {
@@ -1200,8 +1200,7 @@
         <a href="${i.link}" target="_blank" rel="noopener">${i.title.replace(/</g, '&lt;')}</a>
         <div class="reddit-row">
           <span class="reddit-sub">r/${i.sub}</span>
-          <span>${fmtScore(i.score)} upvotes</span>
-          <span>${i.comments.toLocaleString()} comments</span>
+          ${i.author ? `<span>u/${i.author}</span>` : ''}
           <span>${fmtRelative(i.date)}</span>
         </div>
       </div>
