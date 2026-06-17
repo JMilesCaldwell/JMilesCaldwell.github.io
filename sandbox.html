@@ -488,6 +488,18 @@
   zeno, laut.fm), and WebFetch 403s on laut.fm/zeno/internet-radio. Stream
   verification is browser-only now &mdash; the sandbox probe is the tool.
   ---------------------------------------------------------------------------
+  [2026-06-17] [social] Reddit panel was dead ("don't do shit" &mdash; Joe).
+  Cause: direct browser fetch of /r/&lt;sub&gt;/hot.json is blocked by Reddit
+  since the 2023 API lockdown (CORS reject + 403); the old "CORS-enabled"
+  comment was stale. Fix: route subs through rss2json on the .rss feed,
+  same pipeline as News (Joe picked reliable-lean over a flaky CORS proxy).
+  Tradeoff: RSS has no upvote/comment counts &mdash; meta line is now
+  sub + u/author + age. Note: adds 9 rss2json calls per load on top of
+  News/Tech/Discover; free tier is rate-limited, so aggressive refresh may
+  starve some subs. If reliability still poor, the .rss feed itself may be
+  IP-blocked at rss2json's end &mdash; next fallback would be a CORS proxy
+  on hot.json. Verify on the live page (container egress blocks reddit).
+  ---------------------------------------------------------------------------
   -->
   <style>
     body {
