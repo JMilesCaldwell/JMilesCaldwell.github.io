@@ -1135,12 +1135,9 @@
   }
 
   /* =========================================================================
-     Social (Reddit). Reddit killed direct cross-origin browser fetches of
-     /r/<sub>/hot.json after the 2023 API lockdown (CORS reject + 403), so
-     we go through rss2json on the subreddit .rss feed exactly like News.
-     Tradeoff: RSS carries no upvote/comment counts, so the meta line is
-     just subreddit + author + age. Round-robin balance across subs so no
-     single hot subreddit dominates.
+     Social (Reddit). Fetched via a public CORS proxy on the raw hot.json
+     (see CORS_PROXIES below for the why). Round-robin balance across subs
+     so no single hot subreddit dominates.
      ========================================================================= */
   const REDDIT_SUBS = [
     'Netherlands',
@@ -1156,28 +1153,52 @@
   const REDDIT_PER_SUB = 6;
   const REDDIT_MAX = 24;
 
+  /* Reddit blocks direct cross-origin browser fetches of /r/<sub>/hot.json
+     (CORS + 403 since the 2023 API lockdown). rss2json isn't an option
+     either: it rate-limits uncached/obscure feeds ("converting new feeds
+     in a very short period"), and 9 per-sub feeds is exactly that pattern.
+     So we go through a public CORS proxy that fetches the JSON server-side
+     and re-serves it with CORS headers. Try proxies in order; first valid
+     JSON wins. Keeps full metadata (score/comments) since it's the raw API.
+     If these rot, swap in a fresh proxy host here. */
+  const CORS_PROXIES = [
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+    u => 'https://thingproxy.freeboard.io/fetch/' + u
+  ];
+
   async function fetchSubreddit(sub) {
-    const feed = `https://www.reddit.com/r/${sub}/hot/.rss?limit=${REDDIT_PER_SUB * 2}`;
-    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed);
-    try {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(r.status);
-      const j = await r.json();
-      if (j.status !== 'ok') throw new Error(j.message || 'feed error');
-      return (j.items || [])
-        .filter(it => it && it.title && it.link)
-        .slice(0, REDDIT_PER_SUB)
-        .map(it => ({
-          sub,
-          title: it.title,
-          link: it.link,
-          author: (it.author || '').replace(/^\/?u\//, ''),
-          date: new Date(it.pubDate || Date.now())
-        }));
-    } catch (err) {
-      console.warn('Subreddit failed:', sub, err);
-      return [];
+    const redditUrl = `https://www.reddit.com/r/${sub}/hot.json?limit=${REDDIT_PER_SUB * 2}&raw_json=1`;
+    for (const wrap of CORS_PROXIES) {
+      try {
+        const r = await fetch(wrap(redditUrl));
+        if (!r.ok) continue;
+        const j = await r.json();
+        const children = j.data?.children;
+        if (!Array.isArray(children)) continue;
+        return children
+          .map(c => c.data)
+          .filter(d => d && !d.stickied && !d.over_18 && d.title)
+          .slice(0, REDDIT_PER_SUB)
+          .map(d => ({
+            sub: d.subreddit,
+            title: d.title,
+            link: 'https://reddit.com' + d.permalink,
+            score: d.score || 0,
+            comments: d.num_comments || 0,
+            date: new Date((d.created_utc || 0) * 1000)
+          }));
+      } catch (err) {
+        console.warn('Proxy failed for r/' + sub + ':', err);
+      }
     }
+    return [];
+  }
+
+  function fmtScore(n) {
+    if (n >= 10000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+    return String(n);
   }
 
   async function loadReddit() {
@@ -1200,7 +1221,8 @@
         <a href="${i.link}" target="_blank" rel="noopener">${i.title.replace(/</g, '&lt;')}</a>
         <div class="reddit-row">
           <span class="reddit-sub">r/${i.sub}</span>
-          ${i.author ? `<span>u/${i.author}</span>` : ''}
+          <span>${fmtScore(i.score)} upvotes</span>
+          <span>${i.comments.toLocaleString()} comments</span>
           <span>${fmtRelative(i.date)}</span>
         </div>
       </div>

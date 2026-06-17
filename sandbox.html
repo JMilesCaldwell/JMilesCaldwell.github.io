@@ -499,6 +499,17 @@
   starve some subs. If reliability still poor, the .rss feed itself may be
   IP-blocked at rss2json's end &mdash; next fallback would be a CORS proxy
   on hot.json. Verify on the live page (container egress blocks reddit).
+  [2026-06-17] [social] CORRECTION to above: rss2json does NOT work for
+  Reddit. Sandbox probe caught it: rss2json rate-limits uncached/obscure
+  feeds ("converting new feeds in a very short period, use an API key") &mdash;
+  9 per-sub feeds trip it instantly, and it even starved the Discover/PDR
+  feed in the same probe. Switched Reddit to a public CORS-proxy chain on
+  raw hot.json (allorigins -&gt; corsproxy.io -&gt; thingproxy, first valid
+  JSON wins). Bonus: raw API restores upvotes/comments, and it takes Reddit
+  load OFF rss2json so Discover/News breathe easier. Lesson: rss2json is
+  only reliable for POPULAR feeds it already caches; never route a fan-out
+  of obscure feeds through it. CORS proxies can rot &mdash; if social dies
+  again, swap a fresh host into CORS_PROXIES in dashboard.html.
   ---------------------------------------------------------------------------
   -->
   <style>
