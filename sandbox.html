@@ -392,6 +392,16 @@
   show "error" there in Chrome/Firefox &mdash; that's expected,
   not a real failure. To verify HLS, click in the dashboard.
 
+  [2026-06-17] [social] Reddit panel wasn't loading. Cause: Reddit's
+  .json endpoints stopped sending Access-Control-Allow-Origin
+  (post-2023 API lockdown), so direct browser fetch is CORS-blocked
+  &mdash; built on a stale assumption, never worked on the live page.
+  Fix: route through api.allorigins.win/raw?url=ENCODED (server-side
+  fetch, returns raw body), which preserves the rich .json incl.
+  score/comments. If allorigins is flaky, fallbacks are corsproxy.io
+  or switching to Reddit .rss via rss2json (loses upvote/comment
+  counts). Watch for allorigins latency/downtime.
+
   [2026-06-17] [probe-triage] Sandbox run after Tech panel ship.
   Findings:
     - Anthropic RSS (anthropic.com/news/rss.xml) returns HTML, not

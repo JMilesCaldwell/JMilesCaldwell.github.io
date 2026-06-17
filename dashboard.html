@@ -1153,7 +1153,11 @@
   const REDDIT_MAX = 24;
 
   async function fetchSubreddit(sub) {
-    const url = `https://www.reddit.com/r/${sub}/hot.json?limit=${REDDIT_PER_SUB * 2}&raw_json=1`;
+    // Reddit's .json endpoints no longer send CORS headers, so a direct
+    // browser fetch is blocked. Route through allorigins (server-side
+    // fetch, returns raw body) to keep the rich data incl. score/comments.
+    const redditUrl = `https://www.reddit.com/r/${sub}/hot.json?limit=${REDDIT_PER_SUB * 2}&raw_json=1`;
+    const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(redditUrl);
     try {
       const r = await fetch(url);
       if (!r.ok) return [];
