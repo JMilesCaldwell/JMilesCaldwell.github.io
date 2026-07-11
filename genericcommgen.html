@@ -81,9 +81,12 @@
       color: #666;
       font-family: inherit;
     }
-    /* Hide print button until a character is generated */
-    #printButton {
+    /* Hide print / download buttons until a character is generated */
+    #printButton, #downloadPdfButton {
       display: none;
+    }
+    @media print {
+      #downloadPdfButton { display: none !important; }
     }
     @media print {
       body * { visibility: hidden !important; }
@@ -168,7 +171,8 @@
     
     <!-- PRINT BUTTON -->
     <button class="button" id="printButton" onclick="window.print()">Print</button>
-    
+    <button class="button" id="downloadPdfButton" onclick="downloadCharacterPDF()">Download PDF</button>
+
     <!-- OGL NOTICE -->
     <div class="footer">
       <h3>Open Game License</h3>
@@ -1215,8 +1219,9 @@
       document.getElementById("charTraits").innerHTML = traitsHTML;
       
       document.getElementById("printButton").style.display = "inline-block";
+      document.getElementById("downloadPdfButton").style.display = "inline-block";
     }
-    
+
     function formatAbilityScores(scoresArr) {
       const labels = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
       let out = "<strong>Ability Scores:</strong><br/>";
@@ -1262,6 +1267,190 @@
       return equipmentArray;
     }
     
+    // ---------- PDF Export (self-contained, no external libraries) ----------
+    // Builds a valid PDF byte-for-byte using the standard Courier fonts (no
+    // font embedding required) and hands it to the browser as a download.
+    // Text is read straight from the rendered #output block so the PDF always
+    // matches what the player sees on screen.
+
+    // Reduce the rendered text to plain ASCII the standard PDF fonts can draw.
+    function pdfAsciiSafe(str) {
+      return str
+        .replace(/☑/g, "[x]")   // ☑ checked
+        .replace(/☐/g, "[ ]")   // ☐ unchecked
+        .replace(/[‘’]/g, "'")
+        .replace(/[“”]/g, '"')
+        .replace(/[–—]/g, "-")
+        .replace(/•/g, "-")     // bullet
+        .replace(/ /g, " ")     // nbsp
+        .replace(/[^\x20-\x7E]/g, ""); // drop anything else unprintable
+    }
+
+    // Escape the three characters that are special inside a PDF ( ) string.
+    function pdfEscape(str) {
+      return str.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+    }
+
+    // Turn the rendered output HTML into structured text lines. Done from the
+    // markup (not innerText) so line breaks are deterministic and don't depend
+    // on browser layout quirks. Leading indentation (from &nbsp;) is preserved.
+    function pdfExtractLines(el) {
+      let html = el.innerHTML
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<li[^>]*>/gi, "- ")
+        .replace(/<hr\s*\/?>/gi, "\n")
+        .replace(/<\/(div|p|h[1-6]|li|ul|ol)>/gi, "\n")
+        .replace(/<[^>]+>/g, ""); // strip any remaining tags
+      const decoder = document.createElement("textarea");
+      const lines = [];
+      let prevBlank = false;
+      html.split("\n").forEach(raw => {
+        decoder.innerHTML = raw;
+        // Decode entities, strip the leading/trailing source-code indentation
+        // baked into the template literals, then render the intentional
+        // &nbsp; skill-row indentation as real spaces.
+        const line = decoder.value
+          .replace(/^[ \t\r\n]+/, "")
+          .replace(/[ \t\r\n]+$/, "")
+          .replace(/\u00A0/g, " ");
+        const blank = line.trim() === "";
+        if (blank && prevBlank) return; // collapse runs of blank lines
+        lines.push(line);
+        prevBlank = blank;
+      });
+      return lines;
+    }
+
+    // Wrap a line to a maximum character count, preserving leading indentation.
+    function pdfWrapLine(line, maxChars) {
+      if (line.length <= maxChars) return [line];
+      const indentMatch = line.match(/^\s*/);
+      const indent = indentMatch ? indentMatch[0] : "";
+      const words = line.trim().split(/\s+/);
+      const out = [];
+      let cur = indent;
+      for (const w of words) {
+        const candidate = cur === indent ? cur + w : cur + " " + w;
+        if (candidate.length > maxChars && cur.trim() !== "") {
+          out.push(cur);
+          cur = indent + w;
+        } else {
+          cur = candidate;
+        }
+      }
+      if (cur.trim() !== "") out.push(cur);
+      return out.length ? out : [line];
+    }
+
+    function downloadCharacterPDF() {
+      const output = document.getElementById("output");
+      if (!output || output.style.display === "none") return;
+
+      const title = pdfAsciiSafe((document.getElementById("charName").textContent || "Commoner").trim());
+
+      // Everything the player sees, as visible text lines.
+      const bodyLines = pdfExtractLines(output).map(pdfAsciiSafe);
+      // Drop leading blanks, then the name line (rendered separately as the title).
+      while (bodyLines.length && bodyLines[0].trim() === "") bodyLines.shift();
+      if (bodyLines.length && bodyLines[0].trim() === title.trim()) bodyLines.shift();
+      while (bodyLines.length && bodyLines[0].trim() === "") bodyLines.shift();
+
+      // --- Page geometry (US Letter) ---
+      const pageW = 612, pageH = 792;
+      const margin = 54;
+      const bodySize = 10, bodyLead = 13;
+      const titleSize = 18, titleLead = 26;
+      const maxChars = Math.floor((pageW - 2 * margin) / (bodySize * 0.6)); // Courier is 0.6em wide
+
+      // Break the body into wrapped, drawable lines.
+      const drawLines = [];
+      drawLines.push({ text: title, size: titleSize, bold: true, lead: titleLead });
+      drawLines.push({ text: "", size: bodySize, bold: false, lead: bodyLead }); // spacer
+      for (const line of bodyLines) {
+        if (line.trim() === "") { drawLines.push({ text: "", size: bodySize, bold: false, lead: bodyLead }); continue; }
+        // Bold un-indented "Header:" style lines and section titles.
+        const bold = /^[^\s].*:\s*$/.test(line) || /^(Personality Traits)$/i.test(line.trim());
+        for (const wrapped of pdfWrapLine(line, maxChars)) {
+          drawLines.push({ text: wrapped, size: bodySize, bold, lead: bodyLead });
+        }
+      }
+
+      // --- Paginate into content streams ---
+      const pages = [];
+      let cur = [];
+      let y = pageH - margin;
+      for (const dl of drawLines) {
+        if (y - dl.lead < margin) { pages.push(cur); cur = []; y = pageH - margin; }
+        cur.push({ ...dl, y });
+        y -= dl.lead;
+      }
+      if (cur.length) pages.push(cur);
+      if (!pages.length) pages.push([]);
+
+      const contentStreams = pages.map(pageLines => {
+        let s = "";
+        for (const l of pageLines) {
+          if (l.text === "") continue;
+          const font = l.bold ? "F2" : "F1";
+          s += `BT /${font} ${l.size} Tf ${margin} ${l.y} Td (${pdfEscape(l.text)}) Tj ET\n`;
+        }
+        return s;
+      });
+
+      // --- Assemble PDF objects ---
+      // Object layout: 1 Catalog, 2 Pages, then per page: Page + Content,
+      // then 2 shared font objects.
+      const numPages = pages.length;
+      const objects = [];
+      const pageObjNums = [];
+      for (let i = 0; i < numPages; i++) pageObjNums.push(3 + i * 2);
+      const fontF1Num = 3 + numPages * 2;
+      const fontF2Num = fontF1Num + 1;
+
+      objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+      objects[2] = `<< /Type /Pages /Kids [${pageObjNums.map(n => n + " 0 R").join(" ")}] /Count ${numPages} >>`;
+      for (let i = 0; i < numPages; i++) {
+        const pageNum = 3 + i * 2;
+        const contentNum = pageNum + 1;
+        objects[pageNum] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+          `/Resources << /Font << /F1 ${fontF1Num} 0 R /F2 ${fontF2Num} 0 R >> >> ` +
+          `/Contents ${contentNum} 0 R >>`;
+        const stream = contentStreams[i];
+        objects[contentNum] = `<< /Length ${stream.length} >>\nstream\n${stream}endstream`;
+      }
+      objects[fontF1Num] = "<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>";
+      objects[fontF2Num] = "<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>";
+
+      // --- Serialise with a cross-reference table ---
+      let pdf = "%PDF-1.4\n";
+      const offsets = [];
+      for (let i = 1; i < objects.length; i++) {
+        offsets[i] = pdf.length;
+        pdf += `${i} 0 obj\n${objects[i]}\nendobj\n`;
+      }
+      const xrefStart = pdf.length;
+      const total = objects.length; // objects are 1..total-1
+      pdf += `xref\n0 ${total}\n`;
+      pdf += "0000000000 65535 f \n";
+      for (let i = 1; i < total; i++) {
+        pdf += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+      }
+      pdf += `trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+
+      // --- Hand off as a download ---
+      const bytes = new Uint8Array(pdf.length);
+      for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xff;
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (title.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "_") || "commoner") + ".pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
     // ---------- Initialization ----------
     window.addEventListener("DOMContentLoaded", () => {
       populateSelect("race-select", RACES.map(r => r.name));
