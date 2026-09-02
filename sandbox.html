@@ -611,6 +611,44 @@
   he says "uploaded", fetch main (not just the branch), find what actually
   landed, then point the href at the real name and merge main into the
   branch. Link text is what he cares about; the filename is incidental.
+
+  [2026-09-02] [news] Follow the Money dropped from the dashboard's
+  National tab. Joe: "I like the articles but they are paywalled all the
+  to fuck so... not a good source." The RSS worked fine &mdash; the feed
+  itself was healthy in the June probe &mdash; so this is an EDITORIAL
+  prune, not a broken-feed prune. Lesson worth generalising: a feed
+  passing the sandbox probe only proves the XML parses, NOT that the
+  destination article is readable. When adding a Dutch outlet, check the
+  business model before the feed URL. Reader-funded / member-funded
+  (FtM, Correspondent, NRC) almost always means a hard wall; public
+  broadcaster, foundation-funded, and ad-supported almost always don't.
+  Don't re-add FtM.
+
+  [2026-09-02] [news] Replacements chosen by Joe from a shortlist:
+  Investico and de Kanttekening. Rationale &mdash; Investico is the
+  closest functional match to FtM (money-and-power investigative,
+  non-profit) but publishes free on its own site because it earns
+  through co-publication with partner outlets rather than subscriptions.
+  De Kanttekening is independent and emancipatory, free website, covers
+  migration/religion/foreign-policy angles the big Dutch press underplays.
+  Offered but not taken: Pointer (KRO-NCRV).
+
+  GOTCHA, nearly cost a dead link: Investico's domain is
+  platform-investico.nl, NOT investico.nl &mdash; the latter does not
+  resolve at all. I would have shipped a dead feed straight from memory
+  had I not searched. Verify Dutch outlet domains; several of them sit on
+  non-obvious hostnames.
+
+  ENVIRONMENT NOTE for future-me: in the Claude-Code-on-the-web container
+  the egress proxy blocks basically every Dutch news domain (WebFetch
+  returns EGRESS_BLOCKED; curl gets nothing). So feed URLs CANNOT be
+  verified from here &mdash; this is exactly why the sandbox probe exists.
+  Useful distinction in the error text: EGRESS_BLOCKED means the domain
+  resolves and is real but is walled off; ENOTFOUND means DNS genuinely
+  failed, i.e. the domain probably doesn't exist. That is how
+  investico.nl was caught. Both new feed URLs are therefore best-guesses
+  pending a browser probe; sandbox now lists 4 Investico + 2 Kanttekening
+  URL variants so one round settles the path rather than three.
   ---------------------------------------------------------------------------
   -->
   <style>
@@ -681,7 +719,14 @@
       ['News:Local',  'WeblogZwolle', 'https://weblogzwolle.nl/feed/'],
       ['News:Local',  'RTV Oost',     'https://www.rtvoost.nl/rss'],
       ['News:Nat',    'NOS',          'https://feeds.nos.nl/nosnieuwsalgemeen'],
-      ['News:Nat',    'FtM',          'https://www.ftm.nl/feed/'],
+      // FtM dropped 2026-09-02 (paywalled). Candidate replacements below;
+      // several URL variants each so one probe round settles the path.
+      ['News:Nat',    'Investico A',  'https://www.platform-investico.nl/feed'],
+      ['News:Nat',    'Investico B',  'https://www.platform-investico.nl/feed/'],
+      ['News:Nat',    'Investico C',  'https://www.platform-investico.nl/rss'],
+      ['News:Nat',    'Investico D',  'https://www.platform-investico.nl/onderzoeken/feed/'],
+      ['News:Nat',    'Kantt. A',     'https://dekanttekening.nl/feed/'],
+      ['News:Nat',    'Kantt. B',     'https://www.dekanttekening.nl/feed/'],
       ['News:Nat',    'OneWorld',     'https://www.oneworld.nl/feed/'],
       ['News:World',  'BBC',          'https://feeds.bbci.co.uk/news/world/rss.xml'],
       ['News:World',  'NPR',          'https://feeds.npr.org/1004/rss.xml'],
