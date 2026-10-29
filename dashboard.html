@@ -477,7 +477,7 @@
     <a href="index.html">&larr; back to landing</a>
     &nbsp;&middot;&nbsp;
     weather via <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>,
-    headlines via <a href="https://rss2json.com/" target="_blank" rel="noopener">rss2json</a>
+    headlines fetched straight from the publishers' RSS feeds
   </footer>
 
   <script>
@@ -645,7 +645,50 @@
   }
 
   /* =========================================================================
-     News (RSS via rss2json proxy)
+     RSS fetching.
+     rss2json started answering every request with a 403 (no CORS header on
+     the error response, which the browser reports as a CORS block), so feeds
+     are now fetched as raw XML through public CORS proxies and parsed here
+     with DOMParser. Proxies are tried in order; the first one that returns
+     parseable items wins. Handles both RSS (<item>) and Atom (<entry>).
+     Returned items keep the same shape the rest of the page already expects:
+     { title, link, pubDate, description, thumbnail, enclosure }.
+     ========================================================================= */
+  const PROXIES = [
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u)
+  ];
+
+  async function fetchRssItems(feedUrl) {
+    for (const proxy of PROXIES) {
+      try {
+        const r = await fetch(proxy(feedUrl));
+        if (!r.ok) continue;
+        const doc = new DOMParser().parseFromString(await r.text(), 'text/xml');
+        if (doc.querySelector('parsererror')) continue;
+        const nodes = [...doc.querySelectorAll('item, entry')];
+        if (!nodes.length) continue;
+        return nodes.map(n => {
+          const t = sel => n.querySelector(sel)?.textContent?.trim() || '';
+          const linkEl = n.querySelector('link');
+          const encl = n.querySelector('enclosure')?.getAttribute('url');
+          const media = n.getElementsByTagName('media:thumbnail')[0]?.getAttribute('url');
+          return {
+            title: t('title'),
+            link: linkEl?.getAttribute('href') || linkEl?.textContent?.trim() || '',
+            pubDate: t('pubDate') || t('published') || t('updated'),
+            description: t('description') || t('summary') || t('content'),
+            thumbnail: media || null,
+            enclosure: encl ? { link: encl } : null
+          };
+        });
+      } catch (err) { /* try next proxy */ }
+    }
+    return [];
+  }
+
+  /* =========================================================================
+     News
      ========================================================================= */
   const NEWS_GROUPS = {
     local: {
@@ -695,22 +738,17 @@
   }
 
   async function fetchFeed(feed) {
-    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url);
-    try {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(r.status);
-      const j = await r.json();
-      if (j.status !== 'ok') throw new Error(j.message || 'feed error');
-      return (j.items || []).slice(0, PER_FEED).map(it => ({
+    const items = await fetchRssItems(feed.url);
+    if (!items.length) console.warn('Feed failed:', feed.source);
+    return items.slice(0, PER_FEED).map(it => {
+      const d = new Date(it.pubDate || Date.now());
+      return {
         source: feed.source,
         title: it.title,
         link: it.link,
-        date: new Date(it.pubDate || Date.now())
-      }));
-    } catch (err) {
-      console.warn('Feed failed:', feed.source, err);
-      return [];
-    }
+        date: isNaN(d.getTime()) ? new Date() : d
+      };
+    });
   }
 
   function renderNewsItems(container, items) {
@@ -835,22 +873,17 @@
 
   async function tryFetchCurio(source) {
     if (source.type === 'rss') {
-      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source.url);
-      try {
-        const r = await fetch(url);
-        if (!r.ok) return null;
-        const j = await r.json();
-        if (j.status !== 'ok' || !j.items?.length) return null;
-        const item = j.items[Math.floor(Math.random() * j.items.length)];
-        if (!item.title || !item.link) return null;
-        return {
-          source: source.name,
-          title: item.title,
-          link: item.link,
-          excerpt: stripHTML(item.description).slice(0, 240),
-          image: extractImage(item)
-        };
-      } catch { return null; }
+      const items = await fetchRssItems(source.url);
+      if (!items.length) return null;
+      const item = items[Math.floor(Math.random() * items.length)];
+      if (!item.title || !item.link) return null;
+      return {
+        source: source.name,
+        title: item.title,
+        link: item.link,
+        excerpt: stripHTML(item.description).slice(0, 240),
+        image: extractImage(item)
+      };
     } else if (source.type === 'static') {
       const cache = await loadStaticCurios();
       const list = cache?.[source.key];
