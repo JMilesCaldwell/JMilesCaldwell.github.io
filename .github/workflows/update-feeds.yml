@@ -1,0 +1,34 @@
+name: Update feeds
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-feeds
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch feeds
+        run: python3 scripts/fetch_feeds.py
+
+      - name: Commit feeds.json if it changed
+        run: |
+          if [ -z "$(git status --porcelain feeds.json)" ]; then
+            echo "feeds.json unchanged, nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add feeds.json
+          git commit -m "Update feeds"
+          git push
