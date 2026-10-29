@@ -477,7 +477,7 @@
     <a href="index.html">&larr; back to landing</a>
     &nbsp;&middot;&nbsp;
     weather via <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>,
-    headlines fetched straight from the publishers' RSS feeds
+    headlines from the publishers' own RSS feeds, refreshed every 30 minutes
   </footer>
 
   <script>
@@ -645,88 +645,54 @@
   }
 
   /* =========================================================================
-     RSS fetching.
-     rss2json started answering every request with a 403 (no CORS header on
-     the error response, which the browser reports as a CORS block), so feeds
-     are now fetched as raw XML through public CORS proxies and parsed here
-     with DOMParser. Proxies are tried in order; the first one that returns
-     parseable items wins. Handles both RSS (<item>) and Atom (<entry>).
-     Returned items keep the same shape the rest of the page already expects:
-     { title, link, pubDate, description, thumbnail, enclosure }.
+     Feed data
+     All feeds are fetched server-side by a scheduled GitHub Action
+     (scripts/fetch_feeds.py) and saved to feeds.json next to this page.
+     The page only reads that one file, so there is no CORS, no third-party
+     proxy and no rate limit. To change which feeds appear, edit the script.
      ========================================================================= */
-  const PROXIES = [
-    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-    u => 'https://corsproxy.io/?url=' + encodeURIComponent(u)
-  ];
-
-  async function fetchRssItems(feedUrl) {
-    for (const proxy of PROXIES) {
-      try {
-        const r = await fetch(proxy(feedUrl));
-        if (!r.ok) continue;
-        const doc = new DOMParser().parseFromString(await r.text(), 'text/xml');
-        if (doc.querySelector('parsererror')) continue;
-        const nodes = [...doc.querySelectorAll('item, entry')];
-        if (!nodes.length) continue;
-        return nodes.map(n => {
-          const t = sel => n.querySelector(sel)?.textContent?.trim() || '';
-          const linkEl = n.querySelector('link');
-          const encl = n.querySelector('enclosure')?.getAttribute('url');
-          const media = n.getElementsByTagName('media:thumbnail')[0]?.getAttribute('url');
-          return {
-            title: t('title'),
-            link: linkEl?.getAttribute('href') || linkEl?.textContent?.trim() || '',
-            pubDate: t('pubDate') || t('published') || t('updated'),
-            description: t('description') || t('summary') || t('content'),
-            thumbnail: media || null,
-            enclosure: encl ? { link: encl } : null
-          };
-        });
-      } catch (err) { /* try next proxy */ }
+  let feedDataPromise = null;
+  function loadFeedData() {
+    if (!feedDataPromise) {
+      feedDataPromise = fetch('feeds.json', { cache: 'no-cache' })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .catch(err => { console.warn('feeds.json failed:', err); return null; });
     }
-    return [];
+    return feedDataPromise;
+  }
+
+  /* Titles and links come from third-party feeds, so escape them before they
+     go into innerHTML. */
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  /* One sorted array per source for a group, ready for balanceBySource(). */
+  function groupSources(data, group) {
+    const feeds = data?.groups?.[group] || {};
+    return Object.entries(feeds).map(([source, list]) =>
+      (list || [])
+        .map(it => ({
+          source,
+          title: it.title,
+          link: it.link,
+          date: it.date ? new Date(it.date) : new Date()
+        }))
+        .filter(i => i.title && i.link)
+        .sort((a, b) => b.date - a.date)
+    );
   }
 
   /* =========================================================================
      News
      ========================================================================= */
-  const NEWS_GROUPS = {
-    local: {
-      tab: 'news-local',
-      feeds: [
-        { source: '112 Zwolle',  url: 'https://www.112zwolle.nl/feed/' },
-        { source: 'RTV Focus',   url: 'https://www.rtvfocuszwolle.nl/feed/' },
-        { source: 'WeblogZwolle', url: 'https://weblogzwolle.nl/feed/' },
-        { source: 'RTV Oost',    url: 'https://www.rtvoost.nl/rss' }
-      ]
-    },
-    national: {
-      tab: 'news-national',
-      feeds: [
-        { source: 'NOS',      url: 'https://feeds.nos.nl/nosnieuwsalgemeen' },
-        /* Follow the Money removed 2026-09-02: good reporting, but almost
-           everything is behind their member paywall, so the headlines were
-           mostly teasers. Investico fills the investigative slot instead —
-           same money-and-power remit, published free on their own site
-           because they earn through co-publication partners. Note the
-           domain is platform-investico.nl; plain investico.nl does not
-           resolve. */
-        { source: 'Investico',    url: 'https://www.platform-investico.nl/feed' },
-        { source: 'Kanttekening', url: 'https://dekanttekening.nl/feed/' },
-        { source: 'OneWorld',     url: 'https://www.oneworld.nl/feed/' }
-      ]
-    },
-    international: {
-      tab: 'news-international',
-      feeds: [
-        { source: 'BBC',        url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
-        { source: 'NPR',        url: 'https://feeds.npr.org/1004/rss.xml' },
-        { source: 'Guardian',   url: 'https://www.theguardian.com/world/rss' },
-        { source: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' }
-      ]
-    }
+  const NEWS_TABS = {
+    local: 'news-local',
+    national: 'news-national',
+    international: 'news-international'
   };
-  const PER_FEED = 8;
   const MAX_PER_GROUP = 24;
 
   function fmtRelative(date) {
@@ -737,30 +703,16 @@
     return Math.floor(diff / 86400) + 'd ago';
   }
 
-  async function fetchFeed(feed) {
-    const items = await fetchRssItems(feed.url);
-    if (!items.length) console.warn('Feed failed:', feed.source);
-    return items.slice(0, PER_FEED).map(it => {
-      const d = new Date(it.pubDate || Date.now());
-      return {
-        source: feed.source,
-        title: it.title,
-        link: it.link,
-        date: isNaN(d.getTime()) ? new Date() : d
-      };
-    });
-  }
-
   function renderNewsItems(container, items) {
     if (!items.length) {
       container.className = 'tab-panel error';
-      container.textContent = "Couldn't load any feeds.";
+      container.textContent = "No feed data yet. Run the Update feeds workflow on GitHub.";
       return;
     }
     container.className = container.classList.contains('active') ? 'tab-panel active' : 'tab-panel';
     container.innerHTML = items.map(i => `
       <div class="news-item">
-        <a href="${i.link}" target="_blank" rel="noopener">${i.title}</a>
+        <a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.title)}</a>
         <div class="news-meta">
           <span class="news-source">${i.source}</span>
           <span>${fmtRelative(i.date)}</span>
@@ -811,16 +763,11 @@
   }
 
   async function loadNews() {
-    await Promise.all(Object.values(NEWS_GROUPS).map(async group => {
-      const perSource = await Promise.all(group.feeds.map(async f => {
-        const items = await fetchFeed(f);
-        return items
-          .filter(i => i.title && i.link)
-          .sort((a, b) => b.date - a.date);
-      }));
-      const items = balanceBySource(perSource, MAX_PER_GROUP);
-      renderNewsItems(document.getElementById(group.tab), items);
-    }));
+    const data = await loadFeedData();
+    Object.entries(NEWS_TABS).forEach(([group, tabId]) => {
+      const items = balanceBySource(groupSources(data, group), MAX_PER_GROUP);
+      renderNewsItems(document.getElementById(tabId), items);
+    });
   }
 
   /* =========================================================================
@@ -831,14 +778,14 @@
        a random item from it. Failed sources are silently skipped.
      ========================================================================= */
   const CURIO_SOURCES = [
-    // Live RSS (best-guess URLs; quietly fail if 404)
-    { name: 'The Oatmeal',          type: 'rss', url: 'https://theoatmeal.com/feed/rss' },
-    { name: 'Public Domain Review', type: 'rss', url: 'https://publicdomainreview.org/rss.xml' },
-    { name: 'Futility Closet',      type: 'rss', url: 'https://www.futilitycloset.com/feed/' },
-    { name: 'Comics Curmudgeon',    type: 'rss', url: 'https://joshreads.com/feed' },
-    { name: '50 Watts',             type: 'rss', url: 'https://50watts.com/rss' },
-    { name: 'Goblins',              type: 'rss', url: 'https://www.goblinscomic.com/feed/' },
-    { name: 'Lileks (the Column)',  type: 'rss', url: 'https://jameslileks.substack.com/feed' },
+    // Live RSS (fetched by scripts/fetch_feeds.py; names must match CURIO there)
+    { name: 'The Oatmeal',          type: 'rss' },
+    { name: 'Public Domain Review', type: 'rss' },
+    { name: 'Futility Closet',      type: 'rss' },
+    { name: 'Comics Curmudgeon',    type: 'rss' },
+    { name: '50 Watts',             type: 'rss' },
+    { name: 'Goblins',              type: 'rss' },
+    { name: 'Lileks (the Column)',  type: 'rss' },
     // Wikipedia random article
     { name: 'Wikipedia',            type: 'wiki' },
     // Static (curated permalinks in discover.json)
@@ -858,31 +805,18 @@
     return staticCache;
   }
 
-  function stripHTML(s) {
-    if (!s) return '';
-    const div = document.createElement('div');
-    div.innerHTML = s;
-    return div.textContent.replace(/\s+/g, ' ').trim();
-  }
-  function extractImage(item) {
-    if (item.thumbnail) return item.thumbnail;
-    if (item.enclosure?.link) return item.enclosure.link;
-    const m = item.description?.match(/<img[^>]+src=["']([^"']+)["']/i);
-    return m ? m[1] : null;
-  }
-
   async function tryFetchCurio(source) {
     if (source.type === 'rss') {
-      const items = await fetchRssItems(source.url);
-      if (!items.length) return null;
-      const item = items[Math.floor(Math.random() * items.length)];
-      if (!item.title || !item.link) return null;
+      const data = await loadFeedData();
+      const list = data?.curio?.[source.name];
+      if (!list?.length) return null;
+      const item = list[Math.floor(Math.random() * list.length)];
       return {
         source: source.name,
         title: item.title,
         link: item.link,
-        excerpt: stripHTML(item.description).slice(0, 240),
-        image: extractImage(item)
+        excerpt: item.excerpt || '',
+        image: item.image || null
       };
     } else if (source.type === 'static') {
       const cache = await loadStaticCurios();
@@ -924,12 +858,12 @@
     card.className = '';
     card.innerHTML = `
       <div class="curio">
-        ${item.image ? `<div class="curio-img"><img src="${item.image}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>` : ''}
+        ${item.image ? `<div class="curio-img"><img src="${esc(item.image)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>` : ''}
         <div class="curio-body">
-          <div class="curio-source">${item.source}</div>
-          <h3 class="curio-title"><a href="${item.link}" target="_blank" rel="noopener">${item.title}</a></h3>
-          ${item.excerpt ? `<p class="curio-excerpt">${item.excerpt}</p>` : ''}
-          <a class="curio-link" href="${item.link}" target="_blank" rel="noopener">visit &rarr;</a>
+          <div class="curio-source">${esc(item.source)}</div>
+          <h3 class="curio-title"><a href="${esc(item.link)}" target="_blank" rel="noopener">${esc(item.title)}</a></h3>
+          ${item.excerpt ? `<p class="curio-excerpt">${esc(item.excerpt)}</p>` : ''}
+          <a class="curio-link" href="${esc(item.link)}" target="_blank" rel="noopener">visit &rarr;</a>
         </div>
       </div>
     `;
@@ -1096,37 +1030,22 @@
      Tech. Same RSS engine as News but a single flat list (no tabs).
      Round-robin balanced across sources so HN's firehose doesn't dominate.
      ========================================================================= */
-  const TECH_FEEDS = [
-    { source: 'HN',         url: 'https://hnrss.org/frontpage' },
-    { source: 'Willison',   url: 'https://simonwillison.net/atom/everything/' },
-    { source: 'OpenAI',     url: 'https://openai.com/blog/rss.xml' },
-    { source: 'DeepMind',   url: 'https://deepmind.google/blog/rss.xml' },
-    { source: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index' },
-    { source: '404 Media',  url: 'https://www.404media.co/rss/' }
-  ];
-  const TECH_PER_FEED = 6;
   const TECH_MAX = 5;
 
   async function loadTech() {
     const list = document.getElementById('tech-list');
-    const perSource = await Promise.all(TECH_FEEDS.map(async f => {
-      const items = await fetchFeed({ source: f.source, url: f.url });
-      return items
-        .filter(i => i.title && i.link)
-        .sort((a, b) => b.date - a.date)
-        .slice(0, TECH_PER_FEED);
-    }));
-    const items = balanceBySource(perSource, TECH_MAX);
+    const data = await loadFeedData();
+    const items = balanceBySource(groupSources(data, 'tech'), TECH_MAX);
 
     if (!items.length) {
       list.className = 'error';
-      list.textContent = "Couldn't load any tech feeds.";
+      list.textContent = "No feed data yet. Run the Update feeds workflow on GitHub.";
       return;
     }
     list.className = '';
     list.innerHTML = items.map(i => `
       <div class="news-item">
-        <a href="${i.link}" target="_blank" rel="noopener">${i.title}</a>
+        <a href="${esc(i.link)}" target="_blank" rel="noopener">${esc(i.title)}</a>
         <div class="news-meta">
           <span class="news-source">${i.source}</span>
           <span>${fmtRelative(i.date)}</span>
