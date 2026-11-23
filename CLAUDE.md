@@ -70,7 +70,8 @@ Before committing a page change:
 | `encgen.html` | Encounter generator |
 | `ingen.html` | InGen tool |
 | `mapgen.html` / `mapgen2.html` | Map generators |
-| `dmscreen.html` | DM screen |
+| `dmscreen.html` | DM screen (in-person table play) |
+| `dmscreen-online.html` | DM screen for online play (Discord/Owlbear): initiative/HP/AC tracker, 2014 rules, shops (shared stock with the shop pages + draft additions), SRD prices, Open5e search, other pages in an iframe. Modern-utility look by request. |
 | `bestiary.html` | Monster bestiary |
 | `calendar.html` | In-game calendar with weather/sea conditions |
 | `astrology.html` | Astrology/stars tool |
