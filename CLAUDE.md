@@ -79,7 +79,7 @@ Before committing a page change:
 | `aberrantworks.html` | Aberrant Works section |
 | `tavern.html`, `forge.html`, `smithy.html`, etc. | Location/shop pages |
 | `fortune.html` | Fortune telling tool |
-| `slots.html` | The Curio Bandit: a tavern slot machine (3x3, 5 lines, rarity-weighted, one wild joker per reel, pays about 1 pull in 3 through `FORCED_WIN`). Includes a Tankard Mimic that shows as an Oaken Tankard until the finder makes the roll (`disguise` + `check` fields). Three in a line opens the item card and prints it to a card-sized PDF. Item data is in `ITEMS` and the portraits are in `resources/slotitems/`. |
+| `slots.html` | Two tavern slot machines (3x3, 5 lines, one wild joker per reel) built by a shared `makeMachine()`. **The Curio Bandit**: Joe's own 25 items + the Tankard Mimic (shows as an Oaken Tankard until the finder makes the roll), pays ~1 in 3 (`CURIO_FORCED_WIN`). **The Hoard Engine**: reels show 5 rarity tiers; a win draws a random item of that tier from `resources/loottable.js` (979 rows from the community 'One Loot Table To Rule Them All'). Pays exactly 1 in 5 (`HOARD_WIN`), tier odds in `TIERS`. Missing gp are estimated from the sheet's Value Rules bands. Wins open a card that prints as a card-sized PDF; long text continues onto extra cards/pages. Tier art: `resources/slotitems/tier-*.jpg`. |
 | `harmony.html` | Crystal Harmony tool |
 | `isekaid.html` / `isekaidcards.html` | Isekai'd game |
 | `imogen/chonkinvaders.html` | Chonk Invaders mini-game |
