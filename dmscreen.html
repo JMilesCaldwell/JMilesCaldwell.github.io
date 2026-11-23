@@ -4,238 +4,113 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Caldwell's DM Screen</title>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
-    rel="stylesheet"
-  />
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* GLOBAL RESETS & FONTS */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      color: #FAF4E0;
-      background: url('resources/index.png') no-repeat center center fixed;
-      background-size: cover;
-    }
-    a {
-      text-decoration: none;
-      color: #FAF4E0;
-      transition: color 0.3s ease, background-color 0.3s ease;
-    }
-    a:hover {
-      background-color: rgba(139, 0, 0, 0.7);
-      border-radius: 4px;
-    }
-    h1, h2, h3 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin-bottom: 0.5rem;
-    }
-    p {
-      margin-bottom: 1rem;
-      line-height: 1.4;
-    }
-    ul {
-      list-style: none;
-      margin-bottom: 1rem;
-    }
-    li {
-      margin: 0.3rem 0;
-    }
+    body.es { background-image: url('resources/index.png'); }
+    .main-content ul, .sidebar ul { list-style: none; margin: 0; padding: 0; }
 
-    /* LAYOUT WRAPPER */
-    .layout {
-      display: flex;
-      flex-wrap: nowrap;
-      min-height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-    }
-
-    /* HEADER (TOP BAR) */
-    header {
-      width: 100%;
-      background: rgba(139, 0, 0, 0.85);
-      padding: 0.5rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .header-left h1 {
-      margin: 0.5rem 0;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    /* HAMBURGER MENU FOR SIDEBAR TOGGLE */
+    /* Top bar: the shared trail bar plus the menu button on narrow screens */
     .hamburger {
-      display: none;
-      cursor: pointer;
-      font-size: 1.4rem;
-      background: none;
-      border: none;
-      color: #FAF4E0;
+      display: none; flex: none; width: 44px; height: 40px; margin-left: -0.4rem;
+      align-items: center; justify-content: center; cursor: pointer;
+      background: none; border: 1px solid var(--es-rule-strong); border-radius: 10px;
+      color: var(--es-ink); font-size: 1.2rem;
     }
 
-    /* SIDEBAR */
-    .sidebar {
-      width: 300px;
-      min-width: 220px;
-      background: rgba(0, 0, 0, 0.9);
-      overflow-y: auto;
-      transition: transform 0.3s ease;
+    /* Two columns: the Repository menu and the reference */
+    .layout {
+      display: flex; align-items: flex-start; gap: 1.25rem;
+      max-width: 1400px; margin: 0 auto;
+      padding: 1.25rem max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
     }
-    .sidebar.hidden {
-      transform: translateX(-100%);
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      z-index: 999;
+    .sidebar.es-panel {
+      flex: none; width: 290px; margin: 0; padding: 1rem 0.9rem;
+      position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow-y: auto;
+      scrollbar-width: thin;
     }
-    .sidebar-content {
-      padding: 1rem;
-    }
-    .sidebar h2 {
-      margin-top: 0;
-    }
-    .accordion-section {
-      margin-bottom: 1rem;
-    }
-    .accordion-header {
-      background: rgba(139, 0, 0, 0.8);
-      padding: 0.5rem;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-bottom: 0.3rem;
-    }
-    .accordion-content {
-      max-height: 0;
-      overflow: hidden;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
-      transition: max-height 0.4s ease-out;
-      margin-bottom: 0.5rem;
-    }
-    .accordion-content ul {
-      padding: 0.5rem 1rem;
-    }
+    .sidebar h2 { margin: 0 0 0.6rem; color: var(--es-copper); }
+    .main-content { flex: 1; min-width: 0; }
+    .main-content > .es-panel { margin: 0 0 1.25rem; max-width: none; }
+    .section-title { margin: 0 0 0.9rem; color: var(--es-copper); }
 
-    /* MAIN CONTENT */
-    .main-content {
-      flex: 1;
-      padding: 1rem;
+    /* Folding sections, menu and reference alike */
+    .accordion-section, .dm-accordion-section { border-bottom: 1px solid var(--es-rule); }
+    .dm-accordion-section:last-of-type { border-bottom: none; }
+    .accordion-header, .dm-accordion-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+      min-height: 46px; padding: 0.4rem 0.4rem; cursor: pointer;
+      font-family: var(--es-f-head); font-weight: var(--es-head-weight); letter-spacing: 0.04em;
+      color: var(--es-head); border-radius: 8px;
     }
-    .section-title {
-      margin: 1.5rem 0 1rem 0;
-      font-size: 1.4rem;
+    .dm-accordion-header { font-size: 1.05rem; }
+    .accordion-header:hover, .dm-accordion-header:hover { background: var(--es-well); }
+    .accordion-header::after, .dm-accordion-header::after {
+      content: "\203A"; flex: none; color: var(--es-copper); font-size: 1.3rem; line-height: 1;
+      transition: transform 0.2s ease;
     }
-    hr {
-      margin: 1rem 0;
-      border: 1px solid #8B0000;
+    .accordion-header.open::after, .dm-accordion-header.open::after { transform: rotate(90deg); }
+    .accordion-header:focus-visible, .dm-accordion-header:focus-visible { outline: 2px solid var(--es-copper); outline-offset: 1px; }
+    .accordion-content, .dm-accordion-content {
+      max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out;
     }
-    .divider {
-      margin: 2rem 0;
-      text-align: center;
-      font-size: 1.4rem;
+    .accordion-content ul { padding: 0 0 0.6rem 0.4rem; }
+    .accordion-content ul ul { padding: 0 0 0 0.8rem; }
+    .accordion-content li a {
+      display: flex; align-items: center; min-height: 38px; padding: 0.2rem 0.5rem;
+      color: var(--es-ink); text-decoration: none; border-radius: 6px; line-height: 1.3;
     }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.4rem;
-    }
+    .accordion-content li a:hover, .accordion-content li a:focus-visible { background: var(--es-well); color: var(--es-link); outline: none; }
+    .accordion-content li > strong { display: block; padding: 0.4rem 0.5rem 0.1rem; color: var(--es-copper); font-family: var(--es-f-head); font-weight: var(--es-head-weight); letter-spacing: 0.04em; }
 
-    /* DM ACCORDIONS */
-    .dm-accordion-section {
-      margin-bottom: 1rem;
-      border: 1px solid #8B0000;
-      border-radius: 4px;
-    }
-    .dm-accordion-header {
-      background: rgba(139, 0, 0, 0.8);
-      padding: 0.5rem;
-      border-radius: 4px 4px 0 0;
-      cursor: pointer;
-    }
-    .dm-accordion-content {
-      max-height: 0;
-      overflow: hidden;
-      background-color: rgba(0, 0, 0, 0.3);
-      padding: 0 0.5rem;
-      border-radius: 0 0 4px 4px;
-      transition: max-height 0.4s ease-out;
-    }
-    .dm-accordion-content table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0;
-    }
-    .dm-accordion-content table,
-    .dm-accordion-content th,
-    .dm-accordion-content td {
-      border: 1px solid #8B0000;
-    }
-    .dm-accordion-content th,
-    .dm-accordion-content td {
-      padding: 0.4rem;
-    }
+    .dm-accordion-content { padding: 0 0.5rem; }
+    .dm-accordion-content > :first-child { margin-top: 0.4rem; }
+    .dm-accordion-content > :last-child { margin-bottom: 1rem; }
+    .dm-accordion-content p { line-height: 1.5; }
+    .dm-accordion-content ul { margin: 0 0 0.8rem; }
+    .dm-accordion-content li { padding: 0.3rem 0; border-bottom: 1px solid var(--es-rule); line-height: 1.45; }
+    .dm-accordion-content li:last-child { border-bottom: none; }
+    .dm-accordion-content li strong { color: var(--es-head); }
+    .dm-accordion-content table { margin: 0.4rem 0 1rem; border: 1px solid var(--es-rule-strong); }
+    .dm-accordion-content h3, .dm-accordion-content h4 { color: var(--es-copper); }
+    hr { border: none; border-top: 1px solid var(--es-rule-strong); margin: 1rem 0; }
 
-    /* GOOGLE SEARCH SECTION */
-    .google-search-section {
-      margin-top: 1rem;
-    }
-    /* The custom search snippet automatically handles its own styling */
+    .google-search-section h2 { margin-top: 0; }
+    .search-note { margin-top: 0.5rem; }
 
-    /* FOOTER */
-    footer {
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.7);
-      text-align: center;
-    }
+    footer { max-width: 70ch; line-height: 1.5; }
+    footer a { color: inherit; }
 
-    /* MEDIA QUERIES */
+    /* Narrow screens: the menu slides in from the left when ☰ is pressed */
     @media (max-width: 768px) {
-      .hamburger {
-        display: block;
+      .hamburger { display: inline-flex; }
+      .layout { display: block; }
+      .sidebar.es-panel {
+        position: fixed; top: 48px; left: 0; bottom: 0; z-index: 950;
+        width: min(86vw, 320px); max-height: none; border-radius: 0 var(--es-radius) var(--es-radius) 0;
+        transform: translateX(-105%); transition: transform 0.25s ease;
+        --es-panel: rgba(14, 30, 33, 0.92);
       }
-      .sidebar {
-        position: fixed;
-        top: 4rem; /* So it appears just below the header */
-        bottom: 0;
-      }
+      .sidebar.es-panel.open { transform: none; }
     }
   </style>
 </head>
-<body>
+<body class="es">
 
   <!-- TOP BAR -->
-  <header>
-    <div class="header-left">
-      <button class="hamburger" onclick="toggleSidebar()">☰</button>
-      <h1>Caldwell's DM Screen</h1>
-    </div>
-    <div class="header-right">
-      <!-- (Removed the old Google search from here entirely) -->
-    </div>
-  </header>
+  <nav class="es-trail" aria-label="Where you are">
+    <button class="hamburger" type="button" onclick="toggleSidebar()" aria-label="Show or hide the Repository menu" aria-controls="sidebar">☰</button>
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span aria-current="page">Caldwell's DM Screen</span></li>
+    </ol>
+  </nav>
 
   <!-- LAYOUT WRAPPER -->
   <div class="layout">
 
     <!-- SIDEBAR -->
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar es-panel" id="sidebar" aria-label="Repository">
       <div class="sidebar-content">
         <h2>Repository</h2>
 
@@ -407,6 +282,7 @@
     
     <!-- MAIN CONTENT -->
     <div class="main-content">
+      <section class="es-panel">
       
       <!-- DM CHEAT SHEET -->
       <h2 class="section-title">DM Reference</h2>
@@ -982,15 +858,15 @@
 <!-- END UNIFIED DM REFERENCE ACCORDIONS -->
 
 
-      <div class="divider"></div>
+      </section>
 
       <!-- GOOGLE CUSTOM SEARCH SECTION -->
-      <section class="google-search-section">
+      <section class="google-search-section es-panel">
         <h2>Quick dnd5e.wikidot.com Search</h2>
         <!-- Your custom search engine snippet -->
         <script async src="https://cse.google.com/cse.js?cx=922767594c27d4dc0"></script>
         <div class="gcse-search"></div>
-        <p style="color:#FFA07A; margin-top:0.5rem; font-size:0.85rem;">
+        <p class="es-small search-note">
           <em>
             Search is powered by Google Custom Search Engine and restricted to dnd5e.wikidot.com.
           </em>
@@ -1015,11 +891,12 @@
     // Toggle entire sidebar on small screens
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('hidden');
+      sidebar.classList.toggle('open');
     }
 
     // Sidebar accordions
     function toggleAccordion(header) {
+      header.classList.toggle('open');
       const content = header.nextElementSibling;
       if (content.style.maxHeight) {
         content.style.maxHeight = null;
@@ -1030,6 +907,8 @@
 
     // DM Cheat Sheet accordions
     function toggleDmAccordion(header) {
+      header.classList.toggle('open');
+      header.setAttribute('aria-expanded', header.classList.contains('open'));
       const content = header.nextElementSibling;
       if (content.style.maxHeight) {
         content.style.maxHeight = null;

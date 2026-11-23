@@ -120,7 +120,7 @@ The user designs systems in their head first, then iterates with an AI to render
 ### Voice & conventions
 - **One look on the D&D pages: Mistglass** (Joe's choice for PC and tablet, 2026-11-23), from `resources/evershroud.css`: frosted teal panels over each page's painting, pale sea-foam text, copper details. Marcellus SC headings, Alegreya body, Alegreya Sans for numbers (all self-hosted in `resources/fonts/`). Almendra and Cinzel are retired. Chartroom and Verdigris & Copper were tried and dropped; there is no skin switch.
   - **Converting a page**: `<link rel="stylesheet" href="resources/evershroud.css">` in `<head>`; `<body class="es">`; set the painting with `body.es { background-image: url(...) }`; add an `.es-trail` breadcrumb nav; delete the page's own copies of `.container`, `.button`, `.home-button`, `.divider`, `table`/`th`/`td`, `footer` and font rules. Colours come from the `--es-*` tokens; don't hard-code new ones. Leave the page's scripts and element IDs alone.
-  - Converted so far: `caldwell-repo.html`, `exchange.html`, `smithy.html`. `dmscreen.html` is in scope; `dmscreen-online.html` keeps its own minimal look.
+  - Converted so far: `caldwell-repo.html`, `exchange.html`, `smithy.html`, `dmscreen.html`; `dmscreen-online.html` keeps its own minimal look.
 - **British spelling** in the D&D tools: `harbour`, `honour`, `armour`, `colour`, `favourite`. This is a rule, not a preference.
 - **Prose voice**: measured, slightly archaic, literary. No casual modern idiom. "I harbour a quiet disdain for ostentatious wealth" is the register.
 - **Self-contained files**: styles and scripts inline. No external JS frameworks (vanilla JS throughout). No bundler.
