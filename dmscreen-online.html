@@ -484,7 +484,7 @@
          ================================================================ -->
     <aside class="col-tracker" id="tracker">
       <div class="tr-head">
-        <h2>Initiative <span class="tr-round" id="tr-round"></span></h2>
+        <h2>Initiative <span class="tr-round" id="tr-round"></span> <button class="btn small hidden" id="tr-reset" title="Reset the round counter (combatants stay)">&#8634;</button></h2>
         <button class="btn small" id="tr-prev" title="Previous turn">&lsaquo; Prev</button>
         <button class="btn small primary" id="tr-next" title="Next turn">Start</button>
         <div class="menu">
@@ -494,6 +494,7 @@
             <button data-act="rollnpc">Re-roll initiative for non-PCs</button>
             <button data-act="cleardef">Remove defeated enemies</button>
             <hr>
+            <button data-act="resetround">Reset round counter</button>
             <button data-act="end">End combat (keep PCs)</button>
             <button data-act="clearall" class="danger">Clear everything</button>
           </div>
@@ -1751,6 +1752,14 @@ function step(dir) {
   if (cur) reveal(cur, $('#tracker'));
 }
 
+/* Back to 'press Start': round 0, no active turn. Combatants, HP and
+   conditions stay put. */
+function resetRound() {
+  S.round = 0; S.turnId = null;
+  save(); renderTracker();
+  toast('Round counter reset. Press Start when the next fight begins.');
+}
+
 function startOfTurn(c) {
   if (!c) return;
   const expired = [];
@@ -1853,6 +1862,7 @@ function renderTracker() {
   // round + strip
   const cur = byId(S.turnId);
   $('#tr-round').textContent = S.round ? `· Round ${S.round}` : '';
+  $('#tr-reset').classList.toggle('hidden', !S.round);
   $('#tr-next').textContent = S.round ? 'Next ›' : 'Start';
   $('#ts-round').textContent = S.round ? `Round ${S.round} · ` : 'No combat · ';
   $('#ts-name').textContent = S.round && cur ? cur.name : (S.list.length ? 'press Start' : 'add combatants');
@@ -2071,6 +2081,7 @@ function wireTracker() {
   });
 
   const next = () => step(1), prev = () => { if (S.round) step(-1); };
+  $('#tr-reset').onclick = resetRound;
   $('#tr-next').onclick = next; $('#ts-next').onclick = next;
   $('#tr-prev').onclick = prev; $('#ts-prev').onclick = prev;
 
@@ -2082,6 +2093,7 @@ function wireTracker() {
     if (act === 'copy') copyText(discordOrder(), 'Initiative order copied');
     if (act === 'rollnpc') { S.list.forEach(c => { if (c.type !== 'pc') c.init = d(20) + (c.mod || 0); }); toast('Non-PC initiative re-rolled.'); }
     if (act === 'cleardef') { S.list = S.list.filter(c => isActive(c)); }
+    if (act === 'resetround') resetRound();
     if (act === 'end') {
       if (!confirm('End combat? Enemies and allies are removed; PCs stay (initiative cleared).')) return;
       S.list = S.list.filter(c => c.type === 'pc');
