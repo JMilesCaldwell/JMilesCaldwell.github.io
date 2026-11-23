@@ -33,7 +33,7 @@
       text-align: center;
     }
     .container {
-      max-width: 720px;
+      max-width: 1060px;
       margin: 2rem auto;
       background: rgba(0,0,0,0.7);
       padding: 1.5rem 1rem 2rem;
@@ -51,6 +51,25 @@
     /* ============================================================
        THE MACHINE — wooden cabinet, brass trim, lever on the right
        ============================================================ */
+    .machines { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem 2rem; }
+    .machines section { flex: 0 1 auto; display: flex; flex-direction: column; justify-content: flex-end; }
+    .blurb { max-width: 24rem; margin: 0 auto .8rem; font-size: .95rem; opacity: .9; }
+    .blurb b { font-family: 'Cinzel', serif; color: var(--brass-hi); }
+    /* the Hoard Engine: older, darker wood and tarnished brass */
+    .machine-wrap.iron .cabinet {
+      background:
+        repeating-linear-gradient(92deg, rgba(0,0,0,.14) 0 3px, transparent 3px 11px),
+        linear-gradient(180deg, #3b2a22, #22160f 60%, #120b07);
+      border-color: #9c7f3c;
+    }
+    .machine-wrap.iron .plaque { background: linear-gradient(180deg, #d8c48e, #9c7f3c 55%, #5a451a); }
+    /* tier symbols carry the usual rarity colours round their frames */
+    .cell.tier img { border-width: 3px; }
+    .cell.t0 img { border-color: #9a9a9a; }
+    .cell.t1 img { border-color: #2fae4a; }
+    .cell.t2 img { border-color: #3b7fe0; }
+    .cell.t3 img { border-color: #9b4fd8; }
+    .cell.t4 img { border-color: #e8a317; box-shadow: 0 0 8px rgba(255,190,60,.8); }
     .machine-wrap {
       position: relative;
       display: inline-block;
@@ -284,6 +303,9 @@
       white-space: nowrap;
       overflow: hidden;
     }
+    .card .title small { font-size: .6em; }
+    .card-holder { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+    .card .price em { font-style: normal; display: block; white-space: nowrap; }
     .card .head { display: flex; gap: .6em; padding: .5em .45em .55em; }
     .card .portrait {
       flex: 0 0 7.2em; height: 7.2em;
@@ -372,37 +394,27 @@
       body > *:not(.overlay) { display: none !important; }
       .overlay { position: static; display: block !important; background: none; padding: 0; overflow: visible; }
       .payout > *:not(.card-holder) { display: none !important; }
-      .card { font-size: 2.53mm; margin: 0; page-break-inside: avoid; }
+      .card-holder { display: block; }
+      .card { font-size: 2.53mm; margin: 0; page-break-inside: avoid; break-after: page; }
+      .card:last-child { break-after: auto; }
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>The Curio Bandit</h1>
-    <p class="lede">A one-armed contraption of brass and blackened oak, wedged into the corner of the taproom. Pull the lever; should three curios align upon a row or a diagonal, the machine shall surrender one.</p>
+    <h1>The Piglet&rsquo;s Corner Machines</h1>
+    <p class="lede">Two one-armed contraptions of brass and blackened oak, wedged into the corner of the taproom. Pull a lever; should three alike align upon a row or a diagonal, the machine shall surrender its prize.</p>
 
-    <div class="machine-wrap">
-      <div class="cabinet">
-        <div class="plaque">❖ The Curio Bandit ❖</div>
-        <div class="window-row">
-          <div class="lamps" id="lampsL"></div>
-          <div class="window" id="window">
-            <div class="reel"><div class="strip" id="strip0"></div></div>
-            <div class="reel"><div class="strip" id="strip1"></div></div>
-            <div class="reel"><div class="strip" id="strip2"></div></div>
-            <div class="grid-overlay" id="gridOverlay"></div>
-            <svg class="lines" id="lines"></svg>
-          </div>
-          <div class="lamps" id="lampsR"></div>
-        </div>
-        <div class="controls">
-          <button class="spin-btn" id="spinBtn">Spin</button>
-          <button class="mute" id="muteBtn" title="Toggle sound">Sound: on</button>
-        </div>
-        <div class="message" id="message">&nbsp;</div>
-      </div>
-      <button class="lever" id="lever" aria-label="Pull the lever"><span class="mount"></span><span class="arm"></span></button>
+    <div class="machines">
+      <section>
+        <p class="blurb"><b>The Curio Bandit</b> deals in the house&rsquo;s own oddities, and pays roughly one pull in three.</p>
+        <div class="machine-wrap" id="machineCurio"></div>
+      </section>
+      <section>
+        <p class="blurb"><b>The Hoard Engine</b>, older and less forgiving, is fed from <i>The One Loot Table To Rule Them All</i>: nigh on a thousand oddments gathered by the community. One pull in five pays.</p>
+        <div class="machine-wrap iron" id="machineHoard"></div>
+      </section>
     </div>
 
     <br>
@@ -430,6 +442,7 @@
     </div>
   </div>
 
+<script src="resources/loottable.js"></script>
 <script>
 /* ==================================================================
    ITEMS — transcribed from the printed card sheets; typos and
@@ -437,7 +450,7 @@
    Body blocks: [style, text]
      p  plain      i  italic     b  bold     bi bold italic
      q  quote (large bold italic)   by attribution   hr divider
-   rarity drives reel weighting (see WEIGHTS below).
+   rarity drives reel weighting (see CURIO_WEIGHTS below).
    ================================================================== */
 const ITEMS = [
   // ---- Sheet one ----------------------------------------------------
@@ -578,15 +591,12 @@ const ITEMS = [
 ];
 
 /* ==================================================================
-   REELS
-   Each reel is a fixed physical strip: every item appears WEIGHTS[rarity]
-   times, plus exactly one joker (wild). Strips are shuffled with a
-   seeded PRNG so they are the same strip for everyone, every visit —
-   like a real machine. Only where the reel stops is left to chance.
-   On its own that pays roughly one spin in 28, so on top of it a share
-   of pulls are "loaded" (see FORCED_WIN below).
+   SHARED MACHINERY
+   Both cabinets are built by makeMachine() below. Each reel is a fixed
+   physical strip, shuffled with a seeded PRNG so it is the same strip
+   for everyone, every visit — like a real machine. Each machine decides
+   how its reels stop (and so how often it pays) in its own `decide`.
    ================================================================== */
-const WEIGHTS = { 'uncommon':3, 'rare':2, 'very rare':1, 'unique':1, 'epic':1 };
 const JOKER = 'joker';
 
 function mulberry32(a) {
@@ -597,9 +607,10 @@ function mulberry32(a) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
-function buildStrip(seed) {
+// counts: [[symbol, copies], ...] — plus exactly one joker per strip
+function buildStrip(counts, seed) {
   const s = [];
-  ITEMS.forEach(it => { for (let n = 0; n < WEIGHTS[it.rarity]; n++) s.push(it.id); });
+  counts.forEach(([sym, n]) => { for (let i = 0; i < n; i++) s.push(sym); });
   s.push(JOKER);
   const rnd = mulberry32(seed);
   for (let i = s.length - 1; i > 0; i--) {           // Fisher–Yates
@@ -607,45 +618,20 @@ function buildStrip(seed) {
     [s[i], s[j]] = [s[j], s[i]];
   }
   // nudge apart identical neighbours so a column rarely shows a pair
-  for (let i = 1; i < s.length; i++) {
-    if (s[i] === s[i-1]) { const k = (i + 7) % s.length; [s[i], s[k]] = [s[k], s[i]]; }
-  }
+  for (let pass = 0; pass < 4; pass++)
+    for (let i = 1; i < s.length; i++)
+      if (s[i] === s[i-1]) { const k = (i + 7 + pass) % s.length; [s[i], s[k]] = [s[k], s[i]]; }
   return s;
 }
-const STRIPS = [buildStrip(784), buildStrip(1725), buildStrip(2654)];
-const L = STRIPS[0].length;
-const COPIES = 6;                                    // strip rendered 6x for long spins
-const byId = Object.fromEntries(ITEMS.map(i => [i.id, i]));
-
-function cellHTML(sym) {
-  if (sym === JOKER) return '<div class="cell joker"><span><b>★</b>Joker</span></div>';
-  const it = byId[sym];
-  const face = it.disguise || it;                   // the mimic hides on the reels too
-  return `<div class="cell"><img src="resources/slotitems/${face.id}.jpg" alt="${face.name}" draggable="false"></div>`;
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function pickWeighted(pairs) {                        // [[value, weight], ...]
+  let roll = Math.random() * pairs.reduce((n, p) => n + p[1], 0);
+  for (const [v, w] of pairs) { roll -= w; if (roll < 0) return v; }
+  return pairs[0][0];
 }
-const stripEls = [0,1,2].map(r => document.getElementById('strip' + r));
-stripEls.forEach((el, r) => {
-  let html = '';
-  for (let c = 0; c < COPIES; c++) html += STRIPS[r].map(cellHTML).join('');
-  el.innerHTML = html;
-});
 
-const cellPx = () => parseFloat(getComputedStyle(document.querySelector('.cell')).height);
-// pos[r] = index on the strip of the TOP visible symbol on reel r
-const pos = [0,1,2].map(() => Math.floor(Math.random() * L));
-function place(r, index, animate, ms) {
-  const el = stripEls[r];
-  el.style.transition = animate ? `transform ${ms}ms cubic-bezier(.15,.55,.25,1.04)` : 'none';
-  el.style.transform = `translateY(${-index * cellPx()}px)`;
-}
-pos.forEach((p, r) => place(r, p, false));
-window.addEventListener('resize', () => pos.forEach((p, r) => place(r, p, false)));
-
-/* ==================================================================
-   LAMPS & PAYLINES
-   Lines: 1-3 rows, 4 = diagonal top-left→bottom-right,
-          5 = diagonal bottom-left→top-right.
-   ================================================================== */
+/* Lines: 1-3 rows, 4 = diagonal top-left→bottom-right,
+          5 = diagonal bottom-left→top-right. Points are [reel, row]. */
 const LINES = [
   [[0,0],[1,0],[2,0]],
   [[0,1],[1,1],[2,1]],
@@ -653,37 +639,26 @@ const LINES = [
   [[0,0],[1,1],[2,2]],
   [[0,2],[1,1],[2,0]],
 ];
-const lampsL = document.getElementById('lampsL'), lampsR = document.getElementById('lampsR');
-// left: 4 (top), 1, 2, 3, 5 (bottom) — right mirrors with diagonals swapped
-const lampOrder = [[4,1,2,3,5],[5,1,2,3,4]];
-[lampsL, lampsR].forEach((box, side) => {
-  box.innerHTML = lampOrder[side].map(n => `<div class="lamp" data-line="${n}">${n}</div>`).join('');
-});
-const overlayGrid = document.getElementById('gridOverlay');
-overlayGrid.innerHTML = Array.from({length:9}, (_, i) => `<div data-cell="${i % 3},${Math.floor(i / 3)}"></div>`).join('');
-const linesSvg = document.getElementById('lines');
-
-function clearWins() {
-  document.querySelectorAll('.lamp.lit, .grid-overlay .win').forEach(e => e.classList.remove('lit','win'));
-  linesSvg.innerHTML = '';
+// every line where all real symbols match (jokers are wild)
+function lineWins(strips, stops) {
+  const L = strips[0].length, wins = [];
+  LINES.forEach((pts, i) => {
+    const syms = pts.map(([r, row]) => strips[r][(stops[r] + row) % strips[r].length]);
+    const real = syms.filter(s => s !== JOKER);
+    if (real.every(s => s === real[0])) wins.push({ line: i + 1, sym: real.length ? real[0] : JOKER });
+  });
+  return wins;
 }
-function showWinLine(n) {
-  document.querySelectorAll(`.lamp[data-line="${n}"]`).forEach(e => e.classList.add('lit'));
-  const pts = LINES[n - 1];
-  pts.forEach(([c, row]) => overlayGrid.querySelector(`[data-cell="${c},${row}"]`).classList.add('win'));
-  const cp = cellPx(), gap = 6;
-  const cx = c => c * (cp + gap) + cp / 2, cy = row => row * cp + cp / 2;
-  const [a, , b] = pts;
-  const x1 = cx(a[0]), y1 = cy(a[1]), x2 = cx(b[0]), y2 = cy(b[1]);
-  const len = Math.hypot(x2 - x1, y2 - y1), ext = cp * 0.42;
-  const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
-  linesSvg.insertAdjacentHTML('beforeend',
-    `<line x1="${x1 - ux*ext}" y1="${y1 - uy*ext}" x2="${x2 + ux*ext}" y2="${y2 + uy*ext}"/>`);
+// stops for reel r that put `sym` on `row`
+function stopsShowing(strip, sym, row) {
+  const ok = [];
+  for (let p = 0; p < strip.length; p++) if (strip[(p + row) % strip.length] === sym) ok.push(p);
+  return ok;
 }
 
-/* ==================================================================
+/* ------------------------------------------------------------------
    SOUND — tiny WebAudio clicks and a chime; no files needed.
-   ================================================================== */
+   ------------------------------------------------------------------ */
 let audio = null, muted = false;
 function tone(freq, dur, type = 'square', vol = .05, when = 0) {
   if (muted) return;
@@ -698,166 +673,404 @@ function tone(freq, dur, type = 'square', vol = .05, when = 0) {
 }
 const clunk = () => { tone(110, .12, 'square', .08); tone(70, .18, 'sine', .12); };
 const chime = () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .45, 'triangle', .07, i * .12));
-document.getElementById('muteBtn').onclick = e => { muted = !muted; e.target.textContent = 'Sound: ' + (muted ? 'off' : 'on'); };
-
-/* ==================================================================
-   SPIN
-   ================================================================== */
-const spinBtn = document.getElementById('spinBtn');
-const lever = document.getElementById('lever');
-const msg = document.getElementById('message');
-let spinning = false;
-
-function symbolAt(r, row) { return STRIPS[r][(pos[r] + row) % L]; }
-
-function evaluate() {
-  const wins = [];                                   // {line, item}
-  LINES.forEach((pts, i) => {
-    const syms = pts.map(([c, row]) => symbolAt(c, row));
-    const real = syms.filter(s => s !== JOKER);
-    if (real.every(s => s === real[0])) {
-      // three jokers: the machine picks a curio itself, by reel weight
-      const item = real.length ? real[0] : STRIPS[0].filter(s => s !== JOKER)[Math.floor(Math.random() * (L - 1))];
-      wins.push({ line: i + 1, item, allJokers: !real.length });
-    }
-  });
-  return wins;
+function toggleMute() {
+  muted = !muted;
+  document.querySelectorAll('.mute').forEach(b => b.textContent = 'Sound: ' + (muted ? 'off' : 'on'));
 }
 
 /* ------------------------------------------------------------------
-   LOADED PULLS — the party is three players who each earn a coin per
-   finished contract, so Joe wants roughly one pull in three to pay.
-   On a loaded pull the machine first picks the prize, using the same
-   rarity weights as the reel strips (uncommon 3 : rare 2 : rest 1),
-   then picks a random line and spins each reel to a stop that puts
-   that item on it. Every other pull is left entirely to the strips.
-   0.31 loaded + ~3.5% natural on the rest ≈ 1 in 3 overall.
+   makeMachine — builds one cabinet into `root`.
+   cfg: name, strips, cellHTML(sym), decide() → stops,
+        prizes(wins) → [prize, ...], winText(prizes), loseTexts
    ------------------------------------------------------------------ */
-const FORCED_WIN = 0.31;
+const COPIES = 6;                                    // strip rendered 6x for long spins
+const GAP = 6;
+let activeMachine = null;                            // the one Space pulls
 
-function pickWeighted() {
-  const total = ITEMS.reduce((n, it) => n + WEIGHTS[it.rarity], 0);
-  let roll = Math.random() * total;
-  for (const it of ITEMS) { roll -= WEIGHTS[it.rarity]; if (roll < 0) return it.id; }
-  return ITEMS[0].id;
-}
-function chooseStops() {
-  if (Math.random() >= FORCED_WIN) return [0,1,2].map(() => Math.floor(Math.random() * L));
-  const item = pickWeighted();
-  const line = LINES[Math.floor(Math.random() * LINES.length)];
-  return line.map(([reel, row]) => {
-    const ok = [];
-    for (let p = 0; p < L; p++) if (STRIPS[reel][(p + row) % L] === item) ok.push(p);
-    return ok[Math.floor(Math.random() * ok.length)];
+function makeMachine(root, cfg) {
+  const lampOrder = [[4,1,2,3,5],[5,1,2,3,4]];
+  root.innerHTML = `
+    <div class="cabinet">
+      <div class="plaque">❖ ${cfg.name} ❖</div>
+      <div class="window-row">
+        <div class="lamps">${lampOrder[0].map(n => `<div class="lamp" data-line="${n}">${n}</div>`).join('')}</div>
+        <div class="window">
+          ${[0,1,2].map(() => '<div class="reel"><div class="strip"></div></div>').join('')}
+          <div class="grid-overlay">${Array.from({length:9}, (_, i) => `<div data-cell="${i % 3},${Math.floor(i / 3)}"></div>`).join('')}</div>
+          <svg class="lines"></svg>
+        </div>
+        <div class="lamps">${lampOrder[1].map(n => `<div class="lamp" data-line="${n}">${n}</div>`).join('')}</div>
+      </div>
+      <div class="controls">
+        <button class="spin-btn">Spin</button>
+        <button class="mute" title="Toggle sound">Sound: ${muted ? 'off' : 'on'}</button>
+      </div>
+      <div class="message">&nbsp;</div>
+    </div>
+    <button class="lever" aria-label="Pull the lever"><span class="mount"></span><span class="arm"></span></button>`;
+
+  const strips = cfg.strips, L = strips[0].length;
+  const stripEls = [...root.querySelectorAll('.strip')];
+  const grid = root.querySelector('.grid-overlay'), svg = root.querySelector('svg.lines');
+  const spinBtn = root.querySelector('.spin-btn'), lever = root.querySelector('.lever');
+  const msg = root.querySelector('.message');
+  stripEls.forEach((el, r) => {
+    let html = '';
+    for (let c = 0; c < COPIES; c++) html += strips[r].map(cfg.cellHTML).join('');
+    el.innerHTML = html;
   });
-}
 
-function spin() {
-  if (spinning) return;
-  spinning = true;
-  spinBtn.disabled = true;
-  clearWins();
-  msg.innerHTML = '&nbsp;';
-  const durations = [1500, 2000, 2500];
-  const stops = chooseStops();
-  pos.forEach((p, r) => {
-    const target = stops[r];
-    // jump (invisibly) to the same symbol four strip-lengths down, then roll back up to the target
-    place(r, p + 4 * L, false);
-    stripEls[r].getBoundingClientRect();              // force reflow so the jump isn't animated
-    stripEls[r].classList.add('spinning');
-    place(r, target + (2 - r) * L, true, durations[r]);
-    pos[r] = target;
-    setTimeout(() => {
-      stripEls[r].classList.remove('spinning');
-      clunk();
-      if (r === 2) finish();
-    }, durations[r]);
-  });
-}
-
-function finish() {
-  pos.forEach((p, r) => place(r, p, false));        // settle onto the first copy
-  spinning = false;
-  spinBtn.disabled = false;
-  const wins = evaluate();
-  if (!wins.length) {
-    msg.textContent = ['Nothing. The machine is unmoved.', 'A hollow clatter, and no more.', 'The brass grins at you. Try again.', 'Not this time, friend.'][Math.floor(Math.random() * 4)];
-    return;
+  const cellPx = () => parseFloat(getComputedStyle(root.querySelector('.cell')).height);
+  const pos = [0,1,2].map(() => Math.floor(Math.random() * L));   // top visible index per reel
+  function place(r, index, animate, ms) {
+    const el = stripEls[r];
+    el.style.transition = animate ? `transform ${ms}ms cubic-bezier(.15,.55,.25,1.04)` : 'none';
+    el.style.transform = `translateY(${-index * cellPx()}px)`;
   }
-  wins.forEach(w => showWinLine(w.line));
-  chime();
-  // one card per distinct item won this spin
-  const seen = new Set(), queue = [];
-  wins.forEach(w => { if (!seen.has(w.item)) { seen.add(w.item); queue.push(w); } });
-  const shown = id => (byId[id].disguise || byId[id]).name;
-  msg.textContent = queue.length > 1 ? `${queue.length} curios tumble into the tray!` : `${shown(queue[0].item)}!`;
-  setTimeout(() => openPayout(queue), 900);
+  pos.forEach((p, r) => place(r, p, false));
+  window.addEventListener('resize', () => pos.forEach((p, r) => place(r, p, false)));
+
+  function clearWins() {
+    root.querySelectorAll('.lamp.lit, .grid-overlay .win').forEach(e => e.classList.remove('lit','win'));
+    svg.innerHTML = '';
+  }
+  function showWinLine(n) {
+    root.querySelectorAll(`.lamp[data-line="${n}"]`).forEach(e => e.classList.add('lit'));
+    const pts = LINES[n - 1];
+    pts.forEach(([c, row]) => grid.querySelector(`[data-cell="${c},${row}"]`).classList.add('win'));
+    const cp = cellPx();
+    const cx = c => c * (cp + GAP) + cp / 2, cy = row => row * cp + cp / 2;
+    const [a, , b] = pts;
+    const x1 = cx(a[0]), y1 = cy(a[1]), x2 = cx(b[0]), y2 = cy(b[1]);
+    const len = Math.hypot(x2 - x1, y2 - y1), ext = cp * 0.42;
+    const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+    svg.insertAdjacentHTML('beforeend',
+      `<line x1="${x1 - ux*ext}" y1="${y1 - uy*ext}" x2="${x2 + ux*ext}" y2="${y2 + uy*ext}"/>`);
+  }
+
+  let spinning = false, pulling = false;
+  function spin() {
+    spinning = true;
+    spinBtn.disabled = true;
+    clearWins();
+    msg.innerHTML = '&nbsp;';
+    const durations = [1500, 2000, 2500];
+    const stops = cfg.decide();
+    pos.forEach((p, r) => {
+      // jump (invisibly) to the same symbol four strip-lengths down, then roll back up to the stop
+      place(r, p + 4 * L, false);
+      stripEls[r].getBoundingClientRect();            // force reflow so the jump isn't animated
+      stripEls[r].classList.add('spinning');
+      place(r, stops[r] + (2 - r) * L, true, durations[r]);
+      pos[r] = stops[r];
+      setTimeout(() => {
+        stripEls[r].classList.remove('spinning');
+        clunk();
+        if (r === 2) finish();
+      }, durations[r]);
+    });
+  }
+  function finish() {
+    pos.forEach((p, r) => place(r, p, false));      // settle onto the first copy
+    spinning = false;
+    spinBtn.disabled = false;
+    const wins = lineWins(strips, pos);
+    if (!wins.length) { msg.textContent = pick(cfg.loseTexts); return; }
+    wins.forEach(w => showWinLine(w.line));
+    chime();
+    const prizes = cfg.prizes(wins);
+    msg.textContent = cfg.winText(prizes);
+    setTimeout(() => openPayout(prizes), 900);
+  }
+  function pull() {
+    activeMachine = machine;
+    if (spinning || pulling) return;
+    pulling = true;
+    lever.classList.remove('release');
+    lever.classList.add('pulled');
+    setTimeout(() => { lever.classList.remove('pulled'); lever.classList.add('release'); pulling = false; spin(); }, 230);
+  }
+  lever.onclick = pull;
+  spinBtn.onclick = pull;
+  root.querySelector('.mute').onclick = toggleMute;
+  root.addEventListener('pointerdown', () => { activeMachine = machine; });
+
+  const machine = { pull, pos, strips, finish, root };
+  return machine;
 }
 
-let pulling = false;
-function pull() {
-  if (spinning || pulling) return;
-  pulling = true;
-  lever.classList.remove('release');
-  lever.classList.add('pulled');
-  setTimeout(() => { lever.classList.remove('pulled'); lever.classList.add('release'); pulling = false; spin(); }, 230);
-}
-lever.onclick = pull;
-spinBtn.onclick = pull;
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && !overlay.classList.contains('open')) { e.preventDefault(); if (!e.repeat) pull(); }
   if (e.code === 'Escape') closePayout();
+  if (e.code === 'Space' && !overlay.classList.contains('open') && activeMachine) {
+    e.preventDefault();
+    if (!e.repeat) activeMachine.pull();
+  }
 });
 
 /* ==================================================================
-   PAYOUT POPUP + CARD
+   MACHINE ONE — THE CURIO BANDIT
+   Each item appears on the strip CURIO_WEIGHTS[rarity] times, plus one
+   joker. On its own that pays roughly one spin in 28, so a share of
+   pulls are "loaded": the party is three players who each earn a coin
+   per finished contract, and Joe wants about one pull in three to pay.
+   A loaded pull picks the prize by the same weights as the strips,
+   then spins each reel to a stop that puts it on a random line. Every
+   other pull is left to the strips. 0.31 + ~3.5% natural ≈ 1 in 3.
+   ================================================================== */
+const CURIO_WEIGHTS = { 'uncommon':3, 'rare':2, 'very rare':1, 'unique':1, 'epic':1 };
+const CURIO_FORCED_WIN = 0.31;
+const byId = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+const curioCounts = ITEMS.map(it => [it.id, CURIO_WEIGHTS[it.rarity]]);
+const curioWeighted = ITEMS.map(it => [it.id, CURIO_WEIGHTS[it.rarity]]);
+const CURIO_STRIPS = [buildStrip(curioCounts, 784), buildStrip(curioCounts, 1725), buildStrip(curioCounts, 2654)];
+
+const curioImg = it => `resources/slotitems/${it.id}.jpg`;
+function curioCard(it) {
+  return { name: it.name, type: it.type, price: { n: it.price, unit: 'GP' }, attune: it.attune, img: curioImg(it), body: it.body };
+}
+function curioPrize(id, allJokers) {
+  const it = byId[id];
+  const p = { title: allJokers ? 'Three jokers — the machine chooses!' : 'The machine relents!', card: curioCard(it) };
+  if (it.disguise) {
+    p.disguise = Object.assign(curioCard(Object.assign({}, it.disguise)), { img: `resources/slotitems/${it.disguise.id}.jpg` });
+    p.check = it.check;
+  }
+  return p;
+}
+
+const curio = makeMachine(document.getElementById('machineCurio'), {
+  name: 'The Curio Bandit',
+  strips: CURIO_STRIPS,
+  cellHTML(sym) {
+    if (sym === JOKER) return '<div class="cell joker"><span><b>★</b>Joker</span></div>';
+    const it = byId[sym], face = it.disguise || it;  // the mimic hides on the reels too
+    return `<div class="cell"><img src="resources/slotitems/${face.id}.jpg" alt="${face.name}" draggable="false"></div>`;
+  },
+  decide() {
+    if (Math.random() >= CURIO_FORCED_WIN) return [0,1,2].map(() => Math.floor(Math.random() * CURIO_STRIPS[0].length));
+    const item = pickWeighted(curioWeighted);
+    return pick(LINES).map(([reel, row]) => pick(stopsShowing(CURIO_STRIPS[reel], item, row)));
+  },
+  prizes(wins) {                                     // one card per distinct item won
+    const seen = new Set(), out = [];
+    wins.forEach(w => {
+      const id = w.sym === JOKER ? pickWeighted(curioWeighted) : w.sym;
+      if (!seen.has(id)) { seen.add(id); out.push(curioPrize(id, w.sym === JOKER)); }
+    });
+    return out;
+  },
+  winText: ps => ps.length > 1 ? `${ps.length} curios tumble into the tray!` : `${(ps[0].disguise || ps[0].card).name}!`,
+  loseTexts: ['Nothing. The machine is unmoved.', 'A hollow clatter, and no more.', 'The brass grins at you. Try again.', 'Not this time, friend.'],
+});
+activeMachine = curio;
+
+/* ==================================================================
+   MACHINE TWO — THE HOARD ENGINE
+   Fed from The One Loot Table To Rule Them All (resources/loottable.js).
+   The reels show rarity TIERS, not items; three of a tier on a line
+   draws a random item of that tier from the table.
+
+   Joe's numbers: pays one pull in five, and a win lands on each tier
+   with the chances in TIERS[].odds (gentle slope, dragons kept scarce).
+   Every pull is decided up front — a win is placed on a random line,
+   a loss is re-rolled until no line matches — so those numbers are
+   exact rather than approximate. Strip copies are only for looks.
+   ================================================================== */
+const HOARD_WIN = 0.20;
+const TIERS = [
+  { key:'t0', label:'Mundane & Common', rarities:['Mundane','Common'], img:'tier-common',    odds:42, copies:8 },
+  { key:'t1', label:'Uncommon',         rarities:['Uncommon'],         img:'tier-uncommon',  odds:25, copies:6 },
+  { key:'t2', label:'Rare',             rarities:['Rare'],             img:'tier-rare',      odds:18, copies:5 },
+  { key:'t3', label:'Very Rare',        rarities:['Very Rare'],        img:'tier-very-rare', odds:11, copies:4 },
+  { key:'t4', label:'Legendary',        rarities:['Legendary'],        img:'tier-legendary', odds:4,  copies:3 },
+];
+const tierByKey = Object.fromEntries(TIERS.map(t => [t.key, t]));
+const tierOdds = TIERS.map(t => [t.key, t.odds]);
+const tierOfRarity = {};
+TIERS.forEach(t => t.rarities.forEach(r => tierOfRarity[r] = t));
+const lootByTier = Object.fromEntries(TIERS.map(t => [t.key, LOOT.filter(row => t.rarities.includes(row[3]))]));
+const hoardCounts = TIERS.map(t => [t.key, t.copies]);
+const HOARD_STRIPS = [buildStrip(hoardCounts, 3101), buildStrip(hoardCounts, 4517), buildStrip(hoardCounts, 5923)];
+
+function hoardDecide() {
+  const L = HOARD_STRIPS[0].length, rand = () => [0,1,2].map(() => Math.floor(Math.random() * L));
+  if (Math.random() < HOARD_WIN) {
+    const tier = pickWeighted(tierOdds);
+    for (let tries = 0; tries < 400; tries++) {
+      const stops = pick(LINES).map(([reel, row]) => pick(stopsShowing(HOARD_STRIPS[reel], tier, row)));
+      if (lineWins(HOARD_STRIPS, stops).every(w => w.sym === tier)) return stops;
+    }
+  }
+  for (let tries = 0; tries < 400; tries++) {
+    const stops = rand();
+    if (!lineWins(HOARD_STRIPS, stops).length) return stops;
+  }
+  return rand();
+}
+
+/* Missing gp values are estimated from the Value Rules bands on the
+   sheet: a fixed number per item (hashed from its name, spread on a
+   log scale inside the band), so the same item always costs the same. */
+const VALUE_BANDS = { 'Mundane':[0.1,10], 'Common':[10,100], 'Uncommon':[101,500], 'Rare':[501,5000], 'Very Rare':[5001,50000], 'Legendary':[50001,200000] };
+function hashName(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0) / 4294967296;
+}
+function estimateGp(name, rarity) {
+  const [lo, hi] = VALUE_BANDS[rarity];
+  const v = Math.exp(Math.log(lo) + hashName(name) * (Math.log(hi) - Math.log(lo)));
+  const mag = Math.pow(10, Math.floor(Math.log10(v)) - 1);   // two significant figures
+  return Math.min(hi, Math.max(lo, Math.round(v / mag) * mag));
+}
+function priceOf(gp) {
+  if (gp >= 1 || gp === 0) return { n: gp.toLocaleString('en-GB', { maximumFractionDigits: 2 }), unit: 'GP' };
+  if (gp >= 0.1) return { n: +(gp * 10).toFixed(1), unit: 'SP' };
+  return { n: Math.round(gp * 100), unit: 'CP' };
+}
+
+function lootCard(row) {
+  const [name, desc, gp, rarity, weight, cat, props, req, author] = row;
+  const body = [];
+  let lines = desc.split('\n').map(s => s.trim()).filter(Boolean);
+  // A description that is really a long numbered table (the Grog of
+  // Substantial Whimsy has 338 effects) gets one entry rolled onto the card.
+  const numbered = lines.filter(l => /^\d+[A-Z]/.test(l));
+  if (numbered.length > 50) {
+    const roll = pick(numbered), n = roll.match(/^\d+/)[0];
+    body.push(['i', `Whoever drinks it rolls on a table of ${numbered.length} effects. This draught came up ${n}:`]);
+    body.push(['b', roll.slice(n.length)]);
+  } else {
+    lines.forEach(l => body.push(['p', l]));
+  }
+  const extra = [];
+  props.split(/\n|\|/).map(s => s.trim()).filter(Boolean).forEach(p => extra.push(['i', p]));
+  if (req) extra.push(['p', 'Requires: ' + req]);
+  // the sheet's weight column also holds commenters' jokes; only print real weights
+  const wt = weight.replace(/\s*(lbs?\.?|pounds?)$/i, '');
+  if (/^[\d.,]+$/.test(wt)) extra.push(['p', 'Weight: ' + wt + ' lb.']);
+  if (extra.length) body.push(['hr'], ...extra);
+  if (author) body.push(['by', '~ ' + author]);
+  const tier = tierOfRarity[rarity];
+  return {
+    name,
+    type: [cat && cat !== rarity ? cat : '', rarity].filter(Boolean).join(', '),
+    price: priceOf(gp != null ? gp : estimateGp(name, rarity)),
+    attune: /attun/i.test(req + ' ' + props + ' ' + desc),
+    img: `resources/slotitems/${tier.img}.jpg`,
+    body,
+  };
+}
+
+const hoard = makeMachine(document.getElementById('machineHoard'), {
+  name: 'The Hoard Engine',
+  strips: HOARD_STRIPS,
+  cellHTML(sym) {
+    if (sym === JOKER) return '<div class="cell joker"><span><b>★</b>Joker</span></div>';
+    const t = tierByKey[sym];
+    return `<div class="cell tier ${t.key}"><img src="resources/slotitems/${t.img}.jpg" alt="${t.label}" draggable="false"></div>`;
+  },
+  decide: hoardDecide,
+  prizes(wins) {
+    const w = wins[0], key = w.sym === JOKER ? pickWeighted(tierOdds) : w.sym;
+    const row = pick(lootByTier[key]);
+    return [{ title: w.sym === JOKER ? 'Three jokers — the engine chooses!' : `${tierByKey[key].label}!`, card: lootCard(row) }];
+  },
+  winText: ps => `${ps[0].card.name}!`,
+  loseTexts: ['The engine wheezes and offers nothing.', 'Gears grind; the tray stays shut.', 'A puff of steam, and silence.', 'The hoard keeps its own counsel.'],
+});
+
+/* ==================================================================
+   PAYOUT POPUP + CARDS
+   A prize is { title, card, disguise?, check? }. A card is
+   { name, type, price:{n,unit}, attune, img, body:[[style,text],...] }.
+   Text that will not fit one card at a readable size runs on to
+   continuation cards; each card prints on its own page.
    ================================================================== */
 const overlay = document.getElementById('overlay');
 const holder = document.getElementById('cardHolder');
 const nextBtn = document.getElementById('nextBtn');
+const inspect = document.getElementById('inspect');
 let queue = [], qi = 0;
 
-const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function cardHTML(it) {
-  const body = it.body.map(([k, t]) => k === 'hr' ? '<hr>' : `<p class="${k}">${esc(t)}</p>`).join('');
-  const foot = '<b></b>'.repeat(5) + '<span class="gem"></span>' + '<b></b>'.repeat(5);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const FOOT = '<b></b>'.repeat(5) + '<span class="gem"></span>' + '<b></b>'.repeat(5);
+function cardShell(c, cont) {
   return `
-  <div class="card">
+  <div class="card${cont ? ' cont' : ''}">
     <div class="frame"></div><div class="frame-in"></div>
     <div class="frame-in2">
-      <div class="title">${esc(it.name)}</div>
+      <div class="title">${esc(c.name)}${cont ? ' <small>(cont.)</small>' : ''}</div>
+      ${cont ? '' : `
       <div class="head">
-        <div class="portrait"><div class="pf"><img src="resources/slotitems/${it.img || it.id}.jpg" alt=""></div></div>
+        <div class="portrait"><div class="pf"><img src="${c.img}" alt=""></div></div>
         <div class="meta">
           <div class="tiny">Type</div>
-          <div class="type">${esc(it.type)}</div>
+          <div class="type">${esc(c.type)}</div>
           <div class="price-row">
-            <div class="price"><span>${it.price}<sup>GP</sup></span></div>
+            <div class="price"><span><em>${esc(c.price.n)}</em><sup>${c.price.unit}</sup></span></div>
             <div class="attune">
               <div class="tiny">Requires<br>attunement?</div>
-              <div class="boxes"><i>YES</i><b class="${it.attune ? 'on' : ''}"></b><i>NO</i><b class="${it.attune ? '' : 'on'}"></b></div>
+              <div class="boxes"><i>YES</i><b class="${c.attune ? 'on' : ''}"></b><i>NO</i><b class="${c.attune ? '' : 'on'}"></b></div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="body">${body}</div>
-      <div class="foot">${foot}</div>
+      </div>`}
+      <div class="body"></div>
+      <div class="foot">${FOOT}</div>
     </div>
   </div>`;
 }
+const blockEl = ([k, t]) => {
+  if (k === 'hr') return document.createElement('hr');
+  const p = document.createElement('p'); p.className = k; p.textContent = t; return p;
+};
 // shrink a box's font-size (in em, so it scales to print) until its content fits
 function fitEm(el, horizontal, start = 1, min = .55) {
   let s = start;
   el.style.fontSize = s + 'em';
   const over = () => horizontal ? el.scrollWidth > el.clientWidth + 1 : el.scrollHeight > el.clientHeight + 1;
   while (over() && s > min) { s -= .02; el.style.fontSize = s + 'em'; }
+  return !over();
 }
-function fitCard() {
-  const card = holder.querySelector('.card');
-  fitEm(card.querySelector('.title'), true, 1.3);
-  fitEm(card.querySelector('.type'), true, .95);
-  fitEm(card.querySelector('.body'), false, 1.15, .5);
+const overflows = el => el.scrollHeight > el.clientHeight + 1;
+const MIN_TEXT = .82;                                // smallest body size before text runs on
+
+function layoutCards(c) {
+  holder.innerHTML = '';
+  let blocks = c.body.slice();
+  for (let n = 0; n < 8 && blocks.length; n++) {
+    holder.insertAdjacentHTML('beforeend', cardShell(c, n > 0));
+    const card = holder.lastElementChild, body = card.querySelector('.body');
+    fitEm(card.querySelector('.title'), true, n ? 1.1 : 1.3);
+    if (!n) { fitEm(card.querySelector('.type'), true, .95); fitEm(card.querySelector('.price span'), true, 1.25); }
+    blocks.forEach(b => body.appendChild(blockEl(b)));
+    if (fitEm(body, false, 1.15, MIN_TEXT)) { blocks = []; break; }
+    // too long: fill this card at the minimum size, carry the rest over
+    body.style.fontSize = MIN_TEXT + 'em';
+    body.innerHTML = '';
+    const rest = [];
+    for (let i = 0; i < blocks.length; i++) {
+      const el = body.appendChild(blockEl(blocks[i]));
+      if (!overflows(body)) continue;
+      body.removeChild(el);
+      const [k, t] = blocks[i];
+      if (k !== 'hr') {                              // split the paragraph by sentence
+        const parts = t.match(/[^.!?;:]+[.!?;:]*\s*/g) || [t];
+        const p = body.appendChild(blockEl([k, '']));
+        let j = 0;
+        for (; j < parts.length; j++) {
+          p.textContent += parts[j];
+          if (overflows(body)) { p.textContent = p.textContent.slice(0, -parts[j].length); break; }
+        }
+        if (!p.textContent.trim()) body.removeChild(p);
+        if (j < parts.length) rest.push([k, parts.slice(j).join('')]);
+      }
+      rest.push(...blocks.slice(i + 1));
+      break;
+    }
+    blocks = rest[0] && rest[0][0] === 'hr' ? rest.slice(1) : rest;
+  }
 }
 
 const FLAVOUR = [
@@ -865,45 +1078,43 @@ const FLAVOUR = [
   'Three alike! The cabinet shudders and coughs up its prize.',
   'Bells, a puff of soot, and something clatters into the tray.',
 ];
-// which face of the card is up: the item itself, or its disguise until seen through
-function face(w) {
-  const it = byId[w.item];
-  if (!it.disguise || w.state === 'seen') return it;
-  return Object.assign({ img: it.disguise.id }, it.disguise);
-}
-const inspect = document.getElementById('inspect');
-function showCard(keepFlavour) {
-  const w = queue[qi], it = byId[w.item];
-  if (!keepFlavour) {
-    document.getElementById('payoutTitle').textContent = w.allJokers ? 'Three jokers — the machine chooses!' : 'The machine relents!';
-    document.getElementById('payoutFlavour').textContent = FLAVOUR[Math.floor(Math.random() * FLAVOUR.length)];
-  }
-  holder.innerHTML = cardHTML(face(w));
-  inspect.style.display = it.disguise && !w.state ? '' : 'none';
-  if (it.disguise) document.getElementById('inspectCheck').textContent = it.check;
-  const img = holder.querySelector('img');
-  fitCard();
-  if (!img.complete) img.onload = fitCard;
-  document.fonts && document.fonts.ready.then(fitCard);
+function face(p) { return p.disguise && p.state !== 'seen' ? p.disguise : p.card; }
+function render() {
+  const p = queue[qi];
+  layoutCards(face(p));
+  holder.querySelectorAll('img').forEach(img => { if (!img.complete) img.onload = () => layoutCards(face(p)); });
+  inspect.style.display = p.disguise && !p.state ? '' : 'none';
+  if (p.disguise) document.getElementById('inspectCheck').textContent = p.check;
   document.getElementById('pager').textContent = queue.length > 1 ? `Curio ${qi + 1} of ${queue.length}` : '';
   nextBtn.style.display = queue.length > 1 ? '' : 'none';
 }
-function openPayout(q) { queue = q; qi = 0; showCard(); overlay.classList.add('open'); }
+function showPrize() {
+  document.getElementById('payoutTitle').textContent = queue[qi].title;
+  document.getElementById('payoutFlavour').textContent = pick(FLAVOUR);
+  render();
+}
+function openPayout(q) {
+  queue = q; qi = 0;
+  overlay.classList.add('open');                     // open first: layout needs real measurements
+  overlay.scrollTop = 0;
+  showPrize();
+  document.fonts && document.fonts.ready.then(render);
+}
 function closePayout() { overlay.classList.remove('open'); }
-nextBtn.onclick = () => { qi = (qi + 1) % queue.length; showCard(); };
+nextBtn.onclick = () => { qi = (qi + 1) % queue.length; showPrize(); };
+document.getElementById('closeBtn').onclick = closePayout;
+overlay.addEventListener('click', e => { if (e.target === overlay) closePayout(); });
 document.getElementById('inspectYes').onclick = () => {
   queue[qi].state = 'seen';
   document.getElementById('payoutTitle').textContent = 'It has teeth!';
   document.getElementById('payoutFlavour').textContent = 'The tankard’s rim splits into a grin, and a long wet tongue lolls out over the ale.';
-  showCard(true);
+  render();
 };
 document.getElementById('inspectNo').onclick = () => {
   queue[qi].state = 'fooled';
   document.getElementById('payoutFlavour').textContent = 'A perfectly ordinary tankard. Probably.';
-  showCard(true);
+  render();
 };
-document.getElementById('closeBtn').onclick = closePayout;
-overlay.addEventListener('click', e => { if (e.target === overlay) closePayout(); });
 
 // Print → "Save as PDF". The document title becomes the PDF's default filename.
 document.getElementById('printBtn').onclick = () => {
@@ -912,9 +1123,6 @@ document.getElementById('printBtn').onclick = () => {
   window.print();
   setTimeout(() => { document.title = old; }, 500);
 };
-// re-fit for the print size and back again
-window.addEventListener('beforeprint', () => { if (overlay.classList.contains('open')) fitCard(); });
-window.addEventListener('afterprint',  () => { if (overlay.classList.contains('open')) fitCard(); });
 </script>
 </body>
 </html>
