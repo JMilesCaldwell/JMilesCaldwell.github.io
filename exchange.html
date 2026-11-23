@@ -15,7 +15,7 @@
       background: url('resources/exchange.png') no-repeat center center fixed;
       background-size: cover;
       color: #FAF4E0;
-      font-family: 'Almendra', serif;
+      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
       text-align: center;
     }
     .container {
@@ -26,7 +26,7 @@
       border-radius: 10px;
     }
     h1, h2, h3 {
-      font-family: 'Cinzel', serif;
+      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
     }
     /* Interactive Controls */
     .controls {
@@ -40,7 +40,7 @@
       margin-right: 0.5rem;
     }
     .controls select, .controls button {
-      font-family: 'Cinzel', serif;
+      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
       background-color: #8B0000;
       color: #FAF4E0;
       border: none;
@@ -103,7 +103,7 @@
       cursor: pointer;
       font-size: 1rem;
       margin: 0.5rem 0;
-      font-family: 'Cinzel', serif;
+      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
       text-decoration: none;
       display: inline-block;
       border-radius: 5px;
@@ -115,8 +115,9 @@
     footer {
       margin-top: 2rem;
       font-size: 0.9rem;
-      color: #666;
-      font-family: 'Almendra', serif;
+      color: #CFC6B0;
+      text-shadow: 0 1px 3px #000;
+      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
     }
     #countdown-timer {
       margin-top: 1rem;
@@ -128,11 +129,39 @@
     .price-change {
       margin-left: 0.5rem;
     }
+    .current-price {
+      color: #F2C879;
+      font-weight: bold;
+    }
+    .previous-price {
+      opacity: 0.75;
+    }
     .price-up {
-      color: green;
+      color: #8FD694;
     }
     .price-down {
-      color: red;
+      color: #FF9B8A;
+    }
+    .price-up::before { content: "\25B2\00A0"; font-size: 0.75em; }
+    .price-down::before { content: "\25BC\00A0"; font-size: 0.75em; }
+    /* Keep the location visible while the goods scroll sideways */
+    #stock-exchange tbody td:first-child,
+    #stock-exchange thead th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background-color: #1f1414;
+    }
+    #stock-exchange thead th:first-child {
+      background-color: #8B0000;
+      z-index: 2;
+    }
+    #modalChart {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      margin: 1rem auto 0;
     }
     /* Hover effect for commodity cells */
     .commodity-cell:hover {
@@ -160,7 +189,7 @@
       max-width: 500px;
       border-radius: 10px;
       color: #FAF4E0;
-      font-family: 'Almendra', serif;
+      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
       text-align: left;
     }
     .close-modal {
@@ -245,7 +274,7 @@
     <div class="divider"></div>
 
     <!-- Home Button -->
-    <a href="https://jmilescaldwell.github.io" class="button">Home</a>
+    <a href="caldwell-repo.html" class="button">Home</a>
   </div>
 
   <footer>
@@ -258,6 +287,7 @@
       <span class="close-modal">&times;</span>
       <h2>Commodity Details</h2>
       <p id="modalContent"></p>
+      <canvas id="modalChart" width="300" height="150" aria-label="Price history"></canvas>
     </div>
   </div>
 
@@ -507,8 +537,8 @@
     }
 
     // Draw a simple line graph of the prices on the given canvas
-    function drawPriceChart(prices) {
-      const canvas = document.getElementById("priceChart");
+    function drawPriceChart(prices, canvasId = "priceChart") {
+      const canvas = document.getElementById(canvasId);
       const ctx = canvas.getContext("2d");
       const width = canvas.width;
       const height = canvas.height;
@@ -637,7 +667,7 @@
           const cell = document.createElement("td");
           cell.innerHTML = `
             <span class="previous-price">${yesterdayPrice.toFixed(2)} GP</span><br>
-            <span class="current-price" style="color: blue; font-weight: bold;">
+            <span class="current-price">
               ${todayPrice.toFixed(2)} GP
             </span>
           `;
@@ -670,10 +700,20 @@
               <strong>Price Change:</strong> ${this.getAttribute("data-change")} GP
             `;
             modal.style.display = "block";
+            // The price history used to be mouse-over only; show it in the
+            // popup as well so a tap on a tablet reveals it too.
+            drawPriceChart(
+              computeHistoricalPrices(this.getAttribute("data-location"),
+                                      parseInt(this.getAttribute("data-index"))),
+              "modalChart"
+            );
           });
 
           // Mouse-over graph: show tooltip with historical price graph
           cell.addEventListener("mouseenter", function(event) {
+            // Touch screens fire mouseenter on tap and never fire mouseleave,
+            // which would strand the tooltip; the popup shows the chart there.
+            if (!window.matchMedia("(hover: hover)").matches) return;
             const location = this.getAttribute("data-location");
             const commodityIndex = parseInt(this.getAttribute("data-index"));
             const prices = computeHistoricalPrices(location, commodityIndex);
