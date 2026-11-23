@@ -4,175 +4,57 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Council Hall</title>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
-    rel="stylesheet"
-  >
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
 
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* General Page Styling */
-    body {
-      margin: 0;
-      background: url('resources/councilhall.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
-    }
+    body.es { background-image: url('resources/councilhall.png'); }
+    .container { max-width: 900px; }
+    .container > h1 { text-align: center; }
+    .container > p { max-width: 62ch; margin: 0 auto; text-align: center; font-style: italic; }
 
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-
-    h1, h2 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin: 0.5rem 0;
-    }
-
+    /* One card per guild */
     .faction-section {
-      margin-bottom: 2rem;
-      border: 2px solid #660000;
-      border-radius: 8px;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.1);
+      margin: 0 0 1.25rem; padding: 1.1rem 1.2rem;
+      border: 1px solid var(--es-rule-strong); border-radius: calc(var(--es-radius) * 0.8);
+      background: var(--es-well);
+    }
+    .faction-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .faction-header h2 { margin: 0; color: var(--es-copper); }
+    .faction-img { width: 96px; height: 96px; flex: none; object-fit: cover; border-radius: 10px; border: 1px solid var(--es-rule-strong); }
+    .faction-content p { margin: 0 0 0.6rem; }
+    .faction-content strong { color: var(--es-head); }
+    th, td { text-align: left; vertical-align: middle; }
+    .rep-portrait { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--es-rule-strong); display: block; }
+    td .action-button { margin: 0.2rem 0.4rem 0.2rem 0; min-height: 40px; padding: 0 0.8rem; font-size: 0.92rem; }
+    @media (max-width: 560px) {
+      .faction-img { width: 64px; height: 64px; }
+      th:first-child, td:first-child { display: none; }
     }
 
-    .faction-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .faction-img {
-      width: 150px;  /* square faction image */
-      height: 150px;
-      border: 2px solid #8B0000;
-      border-radius: 8px;
-      object-fit: cover;
-      margin-bottom: 0.5rem;
-    }
-
-    .faction-content {
-      text-align: left;
-      margin: 0.5rem 1rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-    }
-
-    th, td {
-      border: 1px solid #8B0000;
-      padding: 0.5rem;
-      text-align: center;
-      vertical-align: middle;
-    }
-
-    th {
-      background: #8B0000;
-      color: #FAF4E0;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-    }
-
-    .rep-portrait {
-      width: 80px;  /* representative portrait size */
-      height: 80px;
-      border: 2px solid #660000;
-      border-radius: 8px;
-      object-fit: cover;
-    }
-
-    /* Buttons */
-    .action-button, .home-button {
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin: 0.2rem;
-      text-decoration: none;
-    }
-    .action-button:hover, .home-button:hover {
-      background: #660000;
-    }
-
-    /* Modal Overlay */
-    #modalOverlay {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0; 
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.8); /* black overlay */
-    }
-
+    /* Join / service popup */
+    #modalOverlay { display: none; position: fixed; z-index: 999; inset: 0; overflow: auto; padding: 16px; background: var(--es-scrim); }
     .modal-content {
-      background-color: #2a2a2a;
-      margin: 10% auto;
-      padding: 1rem;
-      border: 2px solid #660000;
-      max-width: 500px;
-      border-radius: 10px;
-      position: relative;
-      text-align: left;
+      position: relative; max-width: 480px; margin: 10vh auto; padding: 1.4rem 1.5rem;
+      background: var(--es-panel-solid); border: 1px solid var(--es-rule-strong);
+      border-radius: var(--es-radius); box-shadow: var(--es-shadow);
     }
-    .close-button {
-      background: #8B0000;
-      border: 1px solid #660000;
-      color: #FAF4E0;
-      padding: 0.3rem 0.6rem;
-      cursor: pointer;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      border-radius: 4px;
-    }
-    .close-button:hover {
-      background: #660000;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-    }
-
-    input {
-      width: 100%;
-      padding: 0.4rem;
-      margin-bottom: 0.8rem;
-      box-sizing: border-box;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
-
-    .divider {
-      margin: 1rem auto;
-      font-size: 1.5rem;
-    }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
-    }
-
+    .modal-content h2 { margin: 0 4.5rem 0.6rem 0; }
+    .close-button.es-btn { position: absolute; top: 0.8rem; right: 0.8rem; margin: 0; min-height: 40px; }
+    label { display: block; margin-bottom: 0.4rem; font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); }
+    #bribeAmount { width: 100%; margin-bottom: 0.8rem; }
   </style>
 </head>
-<body>
+<body class="es">
+
+  <nav class="es-trail" aria-label="Where you are">
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span>Upper City</span></li>
+      <li><span aria-current="page">Council Hall</span></li>
+    </ol>
+  </nav>
+
 
   <div class="container">
     <h1>Council Hall</h1>
@@ -214,8 +96,8 @@
               Prince d'Azure
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('artemise')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('artemise')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('artemise')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('artemise')">Request Audience</button>
             </td>
           </tr>
           <!-- Additional Rep -->
@@ -228,8 +110,8 @@
               Marquise de Jornath
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('aurelia')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('aurelia')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('aurelia')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('aurelia')">Request Audience</button>
             </td>
           </tr>
         </tbody>
@@ -270,8 +152,8 @@
               Baron Villegrom
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('ulrich')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('ulrich')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('ulrich')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('ulrich')">Request Audience</button>
             </td>
           </tr>
           <!-- Additional Rep -->
@@ -284,8 +166,8 @@
               Pentarch of Rael
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('ravella')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('ravella')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('ravella')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('ravella')">Request Audience</button>
             </td>
           </tr>
         </tbody>
@@ -326,8 +208,8 @@
               Archduke Margraeve
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('ezekiel')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('ezekiel')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('ezekiel')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('ezekiel')">Request Audience</button>
             </td>
           </tr>
           <!-- Additional Rep -->
@@ -340,8 +222,8 @@
               Duskhaven Ealdorman
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('seraphine')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('seraphine')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('seraphine')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('seraphine')">Request Audience</button>
             </td>
           </tr>
         </tbody>
@@ -382,8 +264,8 @@
                Caldwell Laborer's Party Chancellor
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('paxton')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('paxton')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('paxton')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('paxton')">Request Audience</button>
             </td>
           </tr>
           <!-- Additional Rep -->
@@ -396,22 +278,19 @@
               CLP Representative
             </td>
             <td>
-              <button class="action-button" onclick="openBribeModal('avelia')">Bribe</button>
-              <button class="action-button" onclick="attemptAudience('avelia')">Request Audience</button>
+              <button class="action-button es-btn" onclick="openBribeModal('avelia')">Bribe</button>
+              <button class="action-button es-btn" onclick="attemptAudience('avelia')">Request Audience</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <!-- HOME BUTTON AT THE BOTTOM -->
-    <a href="caldwell-repo.html" class="home-button">Home</a>
   </div>
 
   <!-- Modal Overlay -->
   <div id="modalOverlay">
     <div class="modal-content">
-      <button class="close-button" onclick="closeModal()">Close</button>
+      <button class="close-button es-btn ghost" onclick="closeModal()">Close</button>
       <h2 id="modalTitle"></h2>
       <p id="modalDialogue"></p>
 
@@ -420,7 +299,7 @@
         <label for="bribeAmount">Bribe Amount (GP):</label>
         <input type="number" id="bribeAmount" min="0" value="0" />
         <p id="bribeResult"></p>
-        <button class="action-button" onclick="submitBribe()">Offer Bribe</button>
+        <button class="action-button es-btn" onclick="submitBribe()">Offer Bribe</button>
       </div>
     </div>
   </div>

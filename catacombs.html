@@ -5,201 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shrine to Mazd Gildan</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png" />
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
-    rel="stylesheet"
-  />
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    body {
-      margin: 0;
-      background: url('resources/catacombs.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
-    }
+    body.es { background-image: url('resources/catacombs.png'); }
+    .container { max-width: 860px; text-align: center; }
+    .container > p { max-width: 58ch; margin: 0 auto 1rem; font-style: italic; }
 
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
+    .god-image { display: block; margin: 0 auto 1rem; width: 150px; border-radius: 12px; border: 1px solid var(--es-rule-strong); box-shadow: var(--es-shadow); }
 
-    h1, h2, h3 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin: 0.5rem 0;
+    /* The Five (Pentarchon only) */
+    .gods-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 0.75rem; margin: 0.5rem 0 1.25rem; }
+    .god {
+      cursor: pointer; overflow: hidden; border-radius: 12px;
+      border: 1px solid var(--es-rule-strong); background: var(--es-well);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+    .god img { width: 100%; display: block; }
+    .god h3 { margin: 0.4rem 0 0.5rem; font-size: 1rem; }
+    .god:hover { transform: translateY(-2px); }
+    .selected-god { border-color: var(--es-copper) !important; box-shadow: 0 0 0 2px var(--es-copper), 0 0 22px rgba(211, 154, 106, 0.55) !important; }
+    .selected-god h3 { color: var(--es-copper); }
 
-    .god-image {
-      display: block;
-      margin: 0 auto 1rem;
-      width: 150px;
-      border: 2px solid #8B0000;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
-    }
+    /* Offering */
+    .donation-section { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.6rem; margin: 1rem 0 1.25rem; }
+    .donation-section label { font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); }
+    #donation-input { width: 7rem; text-align: center; }
+    .donation-section .es-btn { margin: 0; }
 
-    /* Donation section */
-    .donation-section {
-      margin: 1.5rem 0;
-    }
-    .donation-section label {
-      margin-right: 0.5rem;
-    }
-    .donation-section input[type="number"] {
-      width: 6rem;
-      padding: 0.3rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      text-align: center;
-    }
-    .donation-section button {
-      background-color: #8B0000;
-      color: #FAF4E0;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin-left: 0.5rem;
-    }
-    .donation-section button:hover {
-      background-color: #660000;
-    }
-
-    /* Blessing display */
     #blessing-result {
-      margin-top: 2rem;
-      min-height: 100px;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 10px;
-      border: 2px solid #8B0000;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: left;
+      min-height: 100px; padding: 1rem 1.25rem; text-align: left;
+      display: flex; flex-direction: column; justify-content: center;
+      border: 1px solid var(--es-rule-strong); border-radius: calc(var(--es-radius) * 0.8);
+      background: var(--es-well);
     }
-    #blessing-result h2 {
-      margin-bottom: 1rem;
-    }
+    #blessing-result h2 { margin: 0 0 0.6rem; color: var(--es-copper); }
+    #blessing-result p:last-child { margin-bottom: 0; }
 
-    /* Help button & modal */
-    .help-button {
-      display: inline-block;
-      margin: 1rem;
-      padding: 0.5rem 1rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      font-size: 1rem;
-      background-color: #8B0000;
-      color: #FAF4E0;
-      border: 2px solid #660000;
-      border-radius: 5px;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .help-button:hover {
-      background-color: #660000;
-    }
-
-    .modal-overlay {
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
+    /* Rules popup */
+    .modal-overlay { position: fixed; inset: 0; z-index: 1000; display: none; justify-content: center; align-items: center; padding: 16px; background: var(--es-scrim); }
     .modal {
-      background: rgba(40, 40, 40, 0.95);
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 700px;
-      max-height: 80vh;
-      overflow-y: auto;
+      position: relative; max-width: 640px; max-height: 80vh; overflow-y: auto; text-align: left;
+      padding: 1.5rem 1.6rem; background: var(--es-panel-solid);
+      border: 1px solid var(--es-rule-strong); border-radius: var(--es-radius); box-shadow: var(--es-shadow);
     }
-    .modal h2 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin-bottom: 1rem;
-    }
-    .close-modal {
-      float: right;
-      background: #8B0000;
-      border: none;
-      color: #FAF4E0;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin-top: -1rem;
-      margin-right: -1rem;
-      border-radius: 5px;
-      transition: background 0.3s ease;
-    }
-    .close-modal:hover {
-      background: #660000;
-    }
-
-    /* Home Button Styling */
-    .home-button {
-      display: inline-block;
-      margin: 2rem 0;
-      padding: 0.5rem 1rem;
-      font-size: 1.2rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      color: #FAF4E0;
-      background: #8B0000;
-      text-decoration: none;
-      border-radius: 5px;
-      border: 2px solid #660000;
-      letter-spacing: 0.1rem;
-      transition: background 0.3s ease;
-    }
-    .home-button:hover {
-      background: #660000;
-      border-color: #8B0000;
-      color: #FAF4E0;
-    }
-
-    footer {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #CFC6B0;
-      text-shadow: 0 1px 3px #000;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
-
-    /* Arrow links (left & right) */
-    .arrow-links {
-      position: fixed;
-      bottom: 1rem;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      pointer-events: none;
-    }
-    .arrow-link {
-      pointer-events: auto;
-      text-decoration: none;
-      font-size: 2rem;
-      color: #FAF4E0;
-      background: #8B0000;
-      padding: 0.3rem 0.8rem;
-      border: 2px solid #660000;
-      border-radius: 50%;
-      margin: 0 1rem;
-      transition: background 0.3s ease;
-    }
-    .arrow-link:hover {
-      background: #660000;
-    }
+    .modal h2 { margin: 0 3.5rem 0.8rem 0; }
+    .modal strong { color: var(--es-head); }
+    .close-modal.es-btn { position: absolute; top: 0.8rem; right: 0.8rem; margin: 0; min-height: 40px; min-width: 44px; padding: 0 0.7rem; }
   </style>
 </head>
-<body>
+<body class="es">
+
+<nav class="es-trail" aria-label="Where you are">
+  <ol>
+    <li><a href="caldwell-repo.html">Repository</a></li>
+    <li><span>Temple District</span></li>
+    <li><span aria-current="page">Catacombs</span></li>
+  </ol>
+</nav>
+
+<nav class="es-tabs" aria-label="Temple District">
+  <a href="temple.html">Pentarchon</a>
+  <a href="tower.html">Spire of Kar'El</a>
+  <a href="catacombs.html" aria-current="page">Catacombs</a>
+</nav>
+
 
 <div class="container">
   <h1>Shrine to Mazd Gildan</h1>
@@ -211,8 +81,8 @@
   <div class="donation-section">
     <label for="donation-input">Donate GP:</label>
     <input type="number" id="donation-input" min="0" step="1" value="0">
-    <button id="donate-button">Make an Offering</button>
-    <button class="help-button" id="help-button">Help</button>
+    <button id="donate-button" class="es-btn">Make an Offering</button>
+    <button class="help-button es-btn ghost" id="help-button">Help</button>
   </div>
 
   <!-- Blessing result -->
@@ -221,24 +91,16 @@
   </div>
 </div>
 
-<div style="text-align: center;">
-  <a href="caldwell-repo.html" class="home-button">Home</a>
-</div>
 
 <footer>
   &copy; 2025 Caldwell. Showcasing the wonders of the Evershroud Isles.
 </footer>
 
-<!-- Arrow links -->
-<div class="arrow-links">
-  <a href="temple.html" class="arrow-link left-arrow">←</a>
-  <a href="tower.html" class="arrow-link right-arrow">→</a>
-</div>
 
 <!-- Modal for help/rules -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
-    <button class="close-modal" id="close-modal">X</button>
+    <button class="close-modal es-btn ghost" id="close-modal" aria-label="Close">✕</button>
     <h2>Blessing Rules & Invocation</h2>
     <p><strong>Blessing Duration:</strong></p>
     <p><em>Immediate Use:</em> Blessings take effect immediately and last for 24 hours.</p>
