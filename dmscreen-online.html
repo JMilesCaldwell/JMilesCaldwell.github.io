@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DM Screen &mdash; Online</title>
+  <link rel="icon" href="resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    /* Set theme before paint (shares the 'theme' key with dashboard.html). */
+    (function () {
+      var t;
+      try { t = localStorage.getItem('theme'); } catch (e) {}
+      if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <!-- YAML parser for resources/bestiary.yml (same lib + version bestiary.html uses) -->
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" defer></script>
+  <style>
+    /* =====================================================================
+       TOKENS — same system as dashboard.html (modern utility bucket)
+       ===================================================================== */
+    :root {
+      --bg: #0b0d10;
+      --panel: #14171c;
+      --panel-elev: #1a1e24;
+      --ink: #e6e8ec;
+      --ink-strong: #ffffff;
+      --muted: #8b919a;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.16);
+      --accent: #2dd4bf;
+      --accent-ink: #04221e;
+      --accent-soft: rgba(45,212,191,0.12);
+      --danger: #f87171;
+      --danger-soft: rgba(248,113,113,0.14);
+      --warn: #fbbf24;
+      --good: #4ade80;
+      --pc: #60a5fa;
+      --ally: #4ade80;
+      --enemy: #f87171;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.25);
+      --radius: 12px;
+      --topbar-h: 56px;
+    }
+    :root[data-theme="light"] {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --panel-elev: #f0f2f5;
+      --ink: #1a1d23;
+      --ink-strong: #000000;
+      --muted: #6b7280;
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.18);
+      --accent: #0d9488;
+      --accent-ink: #ffffff;
+      --accent-soft: rgba(13,148,136,0.10);
+      --danger: #dc2626;
+      --danger-soft: rgba(220,38,38,0.08);
+      --warn: #b45309;
+      --good: #16a34a;
+      --pc: #2563eb;
+      --ally: #16a34a;
+      --enemy: #dc2626;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); }
+    h1, h2, h3, h4 { margin: 0; color: var(--ink-strong); font-weight: 600; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    .num { font-variant-numeric: tabular-nums; }
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+
+    /* ---------- generic controls ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      background: var(--panel-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s, background .15s;
+    }
+    a.btn { text-decoration: none; color: inherit; }
+    .btn:hover { border-color: var(--border-strong); }
+    .btn:focus-visible, .input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+    .btn.danger { color: var(--danger); }
+    .btn.small { padding: 3px 8px; font-size: 12px; border-radius: 6px; }
+    .btn.icon { padding: 6px; width: 32px; height: 32px; }
+    .btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      min-width: 0;
+    }
+    .input:focus { border-color: var(--accent); outline: none; }
+    select.input { padding-right: 4px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+
+    /* =====================================================================
+       TOP BAR
+       ===================================================================== */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      min-height: var(--topbar-h);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 8px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand a { color: var(--muted); text-decoration: none; font-size: 18px; line-height: 1; }
+    .brand a:hover { color: var(--ink-strong); }
+    .brand h1 { font-size: 16px; letter-spacing: .01em; }
+    .turnstrip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--panel-elev); border: 1px solid var(--border);
+      border-radius: 10px; padding: 4px 4px 4px 12px;
+      min-width: 0; flex: 1 1 260px; max-width: 460px;
+    }
+    .turnstrip .ts-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .turnstrip .ts-round { color: var(--muted); font-size: 12px; margin-right: 6px; }
+    .turnstrip .ts-name { font-weight: 600; color: var(--ink-strong); }
+    .dice { display: flex; align-items: center; gap: 6px; position: relative; flex: 0 1 300px; min-width: 200px; }
+    .dice .input { flex: 1; }
+    .dice-out {
+      font-weight: 700; color: var(--accent); min-width: 2.5em; text-align: right; cursor: pointer;
+      font-variant-numeric: tabular-nums;
+    }
+    .dice-history {
+      position: absolute; top: calc(100% + 6px); right: 0; width: 300px; max-height: 320px; overflow: auto;
+      padding: 6px; z-index: 60;
+    }
+    .dice-history div { padding: 5px 8px; border-radius: 6px; display: flex; justify-content: space-between; gap: 10px; }
+    .dice-history div:nth-child(odd) { background: var(--panel-elev); }
+    .dice-history .expr { color: var(--muted); }
+    .dice-history .detail { font-size: 12px; color: var(--muted); }
+    .topbar .spacer { flex: 1; }
+
+    /* =====================================================================
+       APP LAYOUT
+       wide  (>=1000px): tracker column left, reference column right,
+                        each scrolling independently.
+       narrow (<1000px): one column, tracker becomes a tab.
+       ===================================================================== */
+    .app {
+      display: grid;
+      grid-template-columns: minmax(380px, 440px) 1fr;
+      height: calc(100vh - var(--topbar-h));
+    }
+    .col-tracker, .col-ref { overflow: auto; min-width: 0; }
+    .col-tracker { border-right: 1px solid var(--border); padding: 14px; }
+    .col-ref { display: flex; flex-direction: column; }
+    .tabs {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; gap: 4px; overflow-x: auto;
+      padding: 10px 14px 0; background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      background: none; border: none; cursor: pointer;
+      padding: 8px 12px; border-bottom: 2px solid transparent;
+      color: var(--muted); font-weight: 500; white-space: nowrap;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab[aria-selected="true"] { color: var(--ink-strong); border-bottom-color: var(--accent); }
+    .tab.only-narrow { display: none; }
+    .tabpanel { padding: 14px; display: none; flex: 1; }
+    .tabpanel.active { display: block; }
+
+    @media (min-width: 1000px) {
+      /* the two columns scroll; the window never does */
+      body { overflow: hidden; }
+      .app { height: calc(100vh - var(--topbar-h-actual, var(--topbar-h))); }
+    }
+    @media (max-width: 999px) {
+      .app { display: flex; flex-direction: column; height: auto; }
+      .col-ref, .col-tracker { overflow: visible; }   /* window scrolls; sticky tabs pin under the top bar */
+      .col-ref { order: 0; }
+      .col-tracker { order: 1; border-right: none; display: none; padding: 14px; }
+      body[data-tab="tracker"] .col-tracker { display: block; }
+      body[data-tab="tracker"] .tabpanel { display: none !important; }
+      .tab.only-narrow { display: inline-block; }
+      .tabs { top: var(--topbar-h-actual, var(--topbar-h)); }
+    }
+    @media (max-width: 999px) {
+      .turnstrip { flex: 1 1 200px; }
+      .dice { flex: 1 1 200px; min-width: 170px; }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: 8px 10px; gap: 8px; }
+      .brand { flex: 1; order: 0; }
+      #theme-toggle { order: 1; }
+      .turnstrip { order: 2; max-width: none; flex-basis: 100%; }
+      .dice { order: 3; flex-basis: 100%; }
+    }
+
+    /* =====================================================================
+       TRACKER
+       ===================================================================== */
+    .tr-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tr-head h2 { font-size: 15px; margin-right: auto; }
+    .tr-round { font-size: 12px; color: var(--muted); }
+    .menu { position: relative; }
+    .menu-list {
+      position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 220px; padding: 4px;
+    }
+    .menu-list button {
+      display: block; width: 100%; text-align: left; background: none; border: none;
+      padding: 7px 10px; border-radius: 6px; cursor: pointer;
+    }
+    .menu-list button:hover { background: var(--panel-elev); }
+    .menu-list hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+    .addform { padding: 10px; margin-bottom: 12px; position: relative; }
+    .addform .row { display: grid; gap: 6px; }
+    .addform .row1 { grid-template-columns: 1fr auto; }
+    .addform .row2 { grid-template-columns: repeat(5, minmax(0, 1fr)) 1.4fr; margin-top: 6px; }
+    .addform label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); }
+    .addform .input { width: 100%; }
+    .addform .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .suggest {
+      position: absolute; left: 10px; right: 10px; top: 46px; z-index: 40;
+      max-height: 280px; overflow: auto; padding: 4px;
+    }
+    .suggest button {
+      display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left;
+      background: none; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer;
+    }
+    .suggest button:hover, .suggest button.hi { background: var(--panel-elev); }
+    .suggest .src { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    .clist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .cb {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      border-left: 3px solid var(--muted);
+    }
+    .cb.pc { border-left-color: var(--pc); }
+    .cb.ally { border-left-color: var(--ally); }
+    .cb.enemy { border-left-color: var(--enemy); }
+    .cb.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; background: var(--accent-soft); }
+    .cb.current.pc, .cb.current.ally, .cb.current.enemy { border-left-width: 3px; }
+    .cb.defeated { opacity: .45; }
+    .cb-main {
+      display: grid; align-items: center; gap: 8px;
+      grid-template-columns: 38px minmax(0,1fr) 36px 108px 62px;
+      padding: 7px 8px;
+    }
+    .cb-init {
+      width: 38px; text-align: center; font-weight: 700; font-size: 16px;
+      background: none; border: 1px solid transparent; border-radius: 6px; padding: 2px 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .cb-init:hover, .cb-init:focus { border-color: var(--border-strong); background: var(--bg); outline: none; }
+    .cb-name { min-width: 0; cursor: pointer; }
+    .cb-name .nm { font-weight: 600; color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+    .cb-name .sub { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+    .chip {
+      font-size: 10.5px; line-height: 1; padding: 3px 6px; border-radius: 999px;
+      background: var(--panel-elev); border: 1px solid var(--border); color: var(--ink);
+      white-space: nowrap;
+    }
+    .chip.cond { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+    .chip.conc { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+    .chip.dur { opacity: .8; }
+    .cb-ac {
+      text-align: center; font-weight: 600; font-size: 13px;
+      border: 1px solid var(--border); border-radius: 6px 6px 10px 10px; padding: 2px 0;
+    }
+    .cb-ac small { display: block; font-size: 9px; color: var(--muted); font-weight: 500; letter-spacing: .05em; }
+    .cb-hp { font-size: 12px; }
+    .cb-hp .vals { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+    .cb-hp .vals b { font-size: 14px; color: var(--ink-strong); }
+    .cb-hp .temp { color: var(--pc); font-weight: 600; }
+    .bar { height: 5px; background: var(--panel-elev); border-radius: 99px; overflow: hidden; margin-top: 3px; }
+    .bar i { display: block; height: 100%; background: var(--good); border-radius: 99px; transition: width .2s; }
+    .bar i.mid { background: var(--warn); }
+    .bar i.low { background: var(--danger); }
+    .cb-dmg { width: 62px; text-align: center; padding: 5px 4px; }
+    .cb-detail { border-top: 1px solid var(--border); padding: 10px; display: none; }
+    .cb.open .cb-detail { display: block; }
+    .fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+    .fgrid label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); }
+    .fgrid label.wide { grid-column: span 2; }
+    .fgrid .input { width: 100%; padding: 4px 6px; }
+    .sect { margin-top: 10px; }
+    .sect > .label { display: block; margin-bottom: 4px; }
+    .condgrid { display: flex; flex-wrap: wrap; gap: 4px; }
+    .condgrid .btn { padding: 3px 8px; font-size: 12px; border-radius: 999px; }
+    .row-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .saves { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .saves .dots { display: inline-flex; gap: 4px; }
+    .saves .dot {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-strong);
+      background: none; cursor: pointer; padding: 0;
+    }
+    .saves .s .dot.on { background: var(--good); border-color: var(--good); }
+    .saves .f .dot.on { background: var(--danger); border-color: var(--danger); }
+    .statblock {
+      margin-top: 10px; padding: 10px; border-radius: 8px; background: var(--bg);
+      border: 1px solid var(--border); font-size: 13px;
+    }
+    .statblock h4 { font-size: 14px; }
+    .statblock .meta { color: var(--muted); font-style: italic; font-size: 12px; margin-bottom: 6px; }
+    .statblock .abil { display: grid; grid-template-columns: repeat(6, 1fr); text-align: center; margin: 6px 0; gap: 2px; }
+    .statblock .abil b { display: block; font-size: 10px; color: var(--muted); }
+    .statblock p { margin: 4px 0; }
+    .statblock .h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-top: 8px; border-bottom: 1px solid var(--border); }
+    .empty { text-align: center; color: var(--muted); padding: 24px 10px; border: 1px dashed var(--border-strong); border-radius: 10px; }
+    .enc { margin-top: 14px; padding: 10px; font-size: 13px; }
+    .enc .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .enc .input { width: 60px; padding: 4px 6px; }
+    .enc .verdict { font-weight: 700; }
+    .enc .verdict.Trivial, .enc .verdict.Easy { color: var(--good); }
+    .enc .verdict.Medium { color: var(--warn); }
+    .enc .verdict.Hard, .enc .verdict.Deadly { color: var(--danger); }
+    a.rl { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; cursor: pointer; }
+    a.rl:hover { border-bottom-style: solid; }
+    .kbd-hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
+    kbd { font-family: inherit; font-size: 10.5px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
+    /* =====================================================================
+       REFERENCE PANELS
+       ===================================================================== */
+    .panel-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .panel-head .input { flex: 1 1 220px; }
+    .masonry { columns: 360px; column-gap: 12px; }
+    .masonry > * { break-inside: avoid; margin: 0 0 12px; display: block; }
+    details.rule { padding: 0; }
+    details.rule > summary {
+      list-style: none; cursor: pointer; padding: 10px 12px; font-weight: 600; color: var(--ink-strong);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    details.rule > summary::-webkit-details-marker { display: none; }
+    details.rule > summary::after { content: '+'; color: var(--muted); font-weight: 400; }
+    details.rule[open] > summary::after { content: '\2212'; }
+    details.rule .body { padding: 0 12px 12px; }
+    .rule .body p { margin: 6px 0; }
+    .rule .body ul { margin: 6px 0; padding-left: 18px; }
+    .rule .body li { margin: 3px 0; }
+    .rule dl { margin: 0; }
+    .rule dt { font-weight: 600; color: var(--ink-strong); margin-top: 6px; }
+    .rule dd { margin: 1px 0 0 0; }
+
+    table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.t th, table.t td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    table.t th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; background: var(--panel); position: sticky; top: 0; }
+    table.t tr:hover td { background: var(--panel-elev); }
+    table.t td.r, table.t th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    table.t td.c, table.t th.c { text-align: center; }
+    .tablewrap { overflow-x: auto; }
+
+    /* ---------- shops ---------- */
+    .shoppicker { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .shophead { padding: 14px; margin-bottom: 12px; }
+    .shophead h2 { font-size: 18px; }
+    .shophead .blurb { color: var(--muted); margin: 6px 0 10px; font-style: italic; }
+    .shophead .bar2 { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .shophead .timer { margin-right: auto; font-size: 12px; color: var(--muted); }
+    .shopsect { padding: 12px; margin-bottom: 12px; }
+    .shopsect h3 { font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .itemname { font-weight: 600; color: var(--ink-strong); }
+    .itemdesc { color: var(--muted); font-size: 12px; }
+    .badge-new { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
+    .props { font-size: 12px; }
+
+    /* ---------- prices ---------- */
+    .pricecat { padding: 12px; }
+    .pricecat h3 { font-size: 14px; margin-bottom: 6px; }
+    .pricecat .note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* ---------- search ---------- */
+    .scopes { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .ext { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+    .results { display: flex; flex-direction: column; gap: 8px; }
+    .res { padding: 0; }
+    .res > summary { list-style: none; cursor: pointer; padding: 10px 12px; display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+    .res > summary::-webkit-details-marker { display: none; }
+    .res .rname { font-weight: 600; color: var(--ink-strong); }
+    .res .rmeta { font-size: 12px; color: var(--muted); text-align: right; }
+    .res .body { padding: 0 12px 12px; font-size: 13px; }
+    .res .body p { margin: 6px 0; }
+    .status { color: var(--muted); padding: 8px 0; }
+
+    /* ---------- places ---------- */
+    .placegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .placegroup { padding: 10px; }
+    .placegroup .label { display: block; margin-bottom: 6px; }
+    .placegroup button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
+    .placegroup button:hover { background: var(--panel-elev); }
+    .placegroup button.on { color: var(--accent); font-weight: 600; }
+    .viewer { overflow: hidden; }
+    .viewer-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .viewer-bar .t { font-weight: 600; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .viewer iframe { display: block; width: 100%; height: calc(100vh - 170px); min-height: 480px; border: 0; background: #000; }
+
+    /* ---------- notes ---------- */
+    .notes textarea {
+      width: 100%; min-height: calc(100vh - 210px); resize: vertical;
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; line-height: 1.6; font-size: 14px;
+    }
+    .notes textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* ---------- toasts ---------- */
+    .toasts { position: fixed; right: 16px; bottom: 16px; z-index: 100; display: flex; flex-direction: column; gap: 8px; max-width: min(360px, calc(100vw - 32px)); }
+    .toast { padding: 10px 14px; font-size: 13px; animation: tin .18s ease-out; border-left: 3px solid var(--accent); }
+    .toast.warn { border-left-color: var(--warn); }
+    .toast.bad { border-left-color: var(--danger); }
+    @keyframes tin { from { transform: translateY(8px); opacity: 0; } }
+
+    /* =====================================================================
+       PRINT — reference tables print cleanly; chrome hidden
+       ===================================================================== */
+    @media print {
+      .topbar, .tabs, .col-tracker, .toasts, .panel-head, .shoppicker, .btn { display: none !important; }
+      .app { display: block; height: auto; }
+      .col-ref { overflow: visible; }
+      body { background: #fff; color: #000; }
+      .card { box-shadow: none; border-color: #ccc; }
+      details.rule .body { display: block; }
+    }
+  </style>
+</head>
+<body data-tab="rules">
+
+  <!-- ================================================================
+       TOP BAR — back link, turn strip, dice roller, theme
+       ================================================================ -->
+  <header class="topbar" id="topbar">
+    <div class="brand">
+      <a href="caldwell-repo.html" title="Back to Caldwell's Repository" aria-label="Back to Caldwell's Repository">&larr;</a>
+      <h1>DM Screen</h1>
+    </div>
+
+    <div class="turnstrip" aria-live="polite">
+      <div class="ts-text"><span class="ts-round" id="ts-round">No combat</span><span class="ts-name" id="ts-name">&mdash;</span></div>
+      <button class="btn small" id="ts-prev" title="Previous turn (P)">&lsaquo;</button>
+      <button class="btn small primary" id="ts-next" title="Next turn (N)">Next &rsaquo;</button>
+    </div>
+
+    <form class="dice" id="dice-form" autocomplete="off">
+      <input class="input" id="dice-input" placeholder="Roll: 1d20+5 · 8d6 · 4d6kh3 · adv+3" aria-label="Dice expression">
+      <button class="btn" type="submit">Roll</button>
+      <span class="dice-out" id="dice-out" title="Show roll history">&mdash;</span>
+      <div class="dice-history card hidden" id="dice-history"></div>
+    </form>
+
+    <button class="btn icon" id="theme-toggle" title="Toggle light / dark" aria-label="Toggle light / dark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+  </header>
+
+  <div class="app">
+
+    <!-- ================================================================
+         TRACKER COLUMN
+         ================================================================ -->
+    <aside class="col-tracker" id="tracker">
+      <div class="tr-head">
+        <h2>Initiative <span class="tr-round" id="tr-round"></span></h2>
+        <button class="btn small" id="tr-prev" title="Previous turn">&lsaquo; Prev</button>
+        <button class="btn small primary" id="tr-next" title="Next turn">Start</button>
+        <div class="menu">
+          <button class="btn small" id="tr-menu-btn" aria-haspopup="true">&middot;&middot;&middot;</button>
+          <div class="menu-list card hidden" id="tr-menu">
+            <button data-act="copy">Copy order for Discord</button>
+            <button data-act="rollnpc">Re-roll initiative for non-PCs</button>
+            <button data-act="cleardef">Remove defeated enemies</button>
+            <hr>
+            <button data-act="end">End combat (keep PCs)</button>
+            <button data-act="clearall" class="danger">Clear everything</button>
+          </div>
+        </div>
+      </div>
+
+      <form class="addform card" id="add-form" autocomplete="off">
+        <div class="row row1">
+          <input class="input" name="name" id="add-name" placeholder="Name &mdash; or type to search the bestiary" aria-label="Name">
+          <button class="btn primary" type="submit">Add</button>
+        </div>
+        <div class="suggest card hidden" id="suggest"></div>
+        <div class="row row2">
+          <label>Init<input class="input num" name="init" placeholder="roll" inputmode="numeric"></label>
+          <label>Mod<input class="input num" name="mod" placeholder="+0" inputmode="numeric"></label>
+          <label>HP<input class="input num" name="hp" placeholder="&ndash;" inputmode="numeric"></label>
+          <label>AC<input class="input num" name="ac" placeholder="&ndash;" inputmode="numeric"></label>
+          <label>Qty<input class="input num" name="qty" value="1" inputmode="numeric"></label>
+          <label>Side<select class="input" name="type">
+            <option value="enemy">Enemy</option>
+            <option value="pc">PC</option>
+            <option value="ally">Ally / NPC</option>
+          </select></label>
+        </div>
+        <input type="hidden" name="cr">
+        <input type="hidden" name="ref">
+        <div class="hint">Blank init rolls d20 + mod. Qty &gt; 1 numbers them (Goblin 1, Goblin 2&hellip;), each rolling its own initiative.</div>
+      </form>
+
+      <ol class="clist" id="clist"></ol>
+
+      <div class="enc card" id="enc">
+        <div class="row">
+          <span class="label">Encounter</span>
+          <label>Party <input class="input num" id="enc-size" inputmode="numeric" title="Party size (defaults to number of PCs)"></label>
+          <label>Level <input class="input num" id="enc-level" inputmode="numeric" value="3"></label>
+        </div>
+        <div id="enc-out" class="muted" style="margin-top:6px">Add enemies with a CR to rate the encounter.</div>
+      </div>
+
+      <div class="kbd-hint">
+        HP box: type <kbd>7</kbd> + <kbd>Enter</kbd> to damage, <kbd>+7</kbd> to heal, <kbd>t5</kbd> for temp HP.
+        Click a name for details, conditions &amp; stat block. Outside text boxes: <kbd>N</kbd> next, <kbd>P</kbd> previous, <kbd>/</kbd> dice.
+      </div>
+    </aside>
+
+    <!-- ================================================================
+         REFERENCE COLUMN
+         ================================================================ -->
+    <main class="col-ref">
+      <nav class="tabs" role="tablist" id="tabs">
+        <button class="tab only-narrow" role="tab" data-tab="tracker">Initiative</button>
+        <button class="tab" role="tab" data-tab="rules">Rules</button>
+        <button class="tab" role="tab" data-tab="shops">Shops</button>
+        <button class="tab" role="tab" data-tab="prices">Prices</button>
+        <button class="tab" role="tab" data-tab="search">Search</button>
+        <button class="tab" role="tab" data-tab="places">Places</button>
+        <button class="tab" role="tab" data-tab="notes">Notes</button>
+      </nav>
+
+      <!-- RULES -->
+      <section class="tabpanel" data-panel="rules">
+        <div class="panel-head">
+          <input class="input" id="rules-filter" placeholder="Filter rules (e.g. grapple, cover, exhaustion)&hellip;" aria-label="Filter rules">
+          <button class="btn" id="rules-expand">Expand all</button>
+          <button class="btn" id="rules-collapse">Collapse all</button>
+        </div>
+        <div class="masonry" id="rules"></div>
+      </section>
+
+      <!-- SHOPS -->
+      <section class="tabpanel" data-panel="shops">
+        <div class="shoppicker" id="shoppicker"></div>
+        <div id="shop"></div>
+      </section>
+
+      <!-- PRICES -->
+      <section class="tabpanel" data-panel="prices">
+        <div class="panel-head">
+          <input class="input" id="prices-filter" placeholder="Filter price lists (e.g. rope, horse, inn, ruby)&hellip;" aria-label="Filter prices">
+        </div>
+        <div class="masonry" id="prices"></div>
+      </section>
+
+      <!-- SEARCH -->
+      <section class="tabpanel" data-panel="search">
+        <form class="panel-head" id="search-form" autocomplete="off">
+          <input class="input" id="search-q" placeholder="Search items, spells, monsters&hellip;" aria-label="Search">
+          <button class="btn primary" type="submit">Search</button>
+        </form>
+        <div class="scopes" id="search-scopes">
+          <button class="btn small on" data-scope="magicitems">Magic items</button>
+          <button class="btn small on" data-scope="spells">Spells</button>
+          <button class="btn small on" data-scope="monsters">Monsters</button>
+          <button class="btn small on" data-scope="weapons">Weapons</button>
+          <button class="btn small on" data-scope="armor">Armour</button>
+          <span style="flex:1"></span>
+          <button class="btn small on" id="search-srd" title="Only Wizards' SRD content; off includes third-party books on Open5e">SRD only</button>
+        </div>
+        <div class="ext" id="search-ext">
+          <span class="label">Open elsewhere:</span>
+        </div>
+        <div class="results" id="search-results">
+          <div class="status">Results from Open5e (SRD 5.1) appear here. The buttons above open the same search on other sites in a new tab.</div>
+        </div>
+      </section>
+
+      <!-- PLACES -->
+      <section class="tabpanel" data-panel="places">
+        <div class="placegrid" id="placegrid"></div>
+        <div class="viewer card hidden" id="viewer">
+          <div class="viewer-bar">
+            <span class="t" id="viewer-title"></span>
+            <button class="btn small" id="viewer-reload">Reload</button>
+            <a class="btn small" id="viewer-newtab" target="_blank" rel="noopener">Open in new tab</a>
+            <button class="btn small" id="viewer-close">Close</button>
+          </div>
+          <iframe id="viewer-frame" title="Place viewer"></iframe>
+        </div>
+      </section>
+
+      <!-- NOTES -->
+      <section class="tabpanel notes" data-panel="notes">
+        <div class="panel-head">
+          <span class="muted" id="notes-status" style="margin-right:auto">Saved in this browser.</span>
+          <button class="btn" id="notes-stamp">Insert timestamp</button>
+          <button class="btn" id="notes-copy">Copy all</button>
+        </div>
+        <textarea id="notes" spellcheck="true" placeholder="Session notes &mdash; names you improvised, loot handed out, promises made, who owes whom&hellip;"></textarea>
+      </section>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+/* =========================================================================
+   DM SCREEN — ONLINE
+   Built for Discord + Owlbear Rodeo sessions: one tab instead of twelve.
+   Sections:
+     1. Small helpers (storage, escaping, coins, toasts)
+     2. Data — conditions, rules (5e 2014), SRD price lists, shops, places
+     3. Dice roller
+     4. Initiative tracker
+     5. Bestiary + Open5e lookups
+     6. Reference tabs (rules, shops, prices, search, places, notes)
+     7. Boot
+   Rules edition: 5e 2014 (PHB/DMG/SRD 5.1). British spelling throughout.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   1. HELPERS
+   ------------------------------------------------------------------------- */
+const store = {
+  get(k, fallback) {
+    try { const v = localStorage.getItem(k); return v === null ? fallback : JSON.parse(v); }
+    catch (e) { return fallback; }
+  },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  raw(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  setRaw(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const signed = n => (n >= 0 ? '+' : '') + n;
+const modOf = score => Math.floor((Number(score) - 10) / 2);
+const d = n => 1 + Math.floor(Math.random() * n);   // table dice: true randomness is the point here
+
+/* Format a gold-piece amount as coins: 0.05 -> "5 cp", 1.5 -> "1 gp 5 sp". */
+function coins(gp) {
+  let cp = Math.round(Number(gp) * 100);
+  if (!isFinite(cp)) return '—';
+  const g = Math.floor(cp / 100), s = Math.floor((cp % 100) / 10), c = cp % 10;
+  const out = [];
+  if (g) out.push(g.toLocaleString('en-GB') + ' gp');
+  if (s) out.push(s + ' sp');
+  if (c) out.push(c + ' cp');
+  return out.length ? out.join(' ') : '0 cp';
+}
+
+function toast(msg, kind = '', ms = 4200) {
+  const el = document.createElement('div');
+  el.className = 'toast card ' + kind;
+  el.innerHTML = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+async function copyText(text, label = 'Copied') {
+  try { await navigator.clipboard.writeText(text); toast(label + ' to clipboard.'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); toast(label + ' to clipboard.');
+  }
+}
+
+/* -------------------------------------------------------------------------
+   2a. CONDITIONS (5e 2014) — used by the tracker and the rules tab
+   ------------------------------------------------------------------------- */
+const CONDITIONS = {
+  'Blinded':       'Can’t see; automatically fails any check that requires sight. Attack rolls against it have advantage; its attack rolls have disadvantage.',
+  'Charmed':       'Can’t attack the charmer or target them with harmful abilities or magical effects. The charmer has advantage on checks to interact socially with it.',
+  'Deafened':      'Can’t hear; automatically fails any check that requires hearing.',
+  'Frightened':    'Disadvantage on ability checks and attack rolls while the source of its fear is within line of sight. Can’t willingly move closer to the source.',
+  'Grappled':      'Speed 0 and can’t benefit from bonuses to speed. Ends if the grappler is incapacitated, or if an effect moves the creature out of the grappler’s reach.',
+  'Incapacitated': 'Can’t take actions or reactions.',
+  'Invisible':     'Can’t be seen without magic or a special sense; heavily obscured for hiding, though noise and tracks may give it away. Attacks against it have disadvantage; its attacks have advantage.',
+  'Paralysed':     'Incapacitated; can’t move or speak. Automatically fails Str and Dex saves. Attacks against it have advantage, and any hit from within 5 ft is a critical hit.',
+  'Petrified':     'Turned to inanimate substance (weight ×10, stops ageing). Incapacitated, can’t move or speak, unaware of surroundings. Attacks against it have advantage. Fails Str and Dex saves. Resistance to all damage. Immune to poison and disease (existing ones are suspended).',
+  'Poisoned':      'Disadvantage on attack rolls and ability checks.',
+  'Prone':         'Can only crawl unless it stands up (costs half its speed). Disadvantage on attack rolls. Attacks against it have advantage within 5 ft, disadvantage from further away.',
+  'Restrained':    'Speed 0. Attacks against it have advantage; its attacks have disadvantage. Disadvantage on Dex saves.',
+  'Stunned':       'Incapacitated; can’t move; can speak only falteringly. Automatically fails Str and Dex saves. Attacks against it have advantage.',
+  'Unconscious':   'Incapacitated, can’t move or speak, unaware of surroundings. Drops what it holds and falls prone. Fails Str and Dex saves. Attacks against it have advantage, and any hit from within 5 ft is a critical hit.'
+};
+const EXHAUSTION = [
+  'Disadvantage on ability checks',
+  'Speed halved',
+  'Disadvantage on attack rolls and saving throws',
+  'Hit point maximum halved',
+  'Speed reduced to 0',
+  'Death'
+];
+/* Handy non-condition markers for the tracker. */
+const MARKERS = ['Blessed', 'Baned', 'Hasted', 'Slowed', 'Hexed', 'Marked', 'Dodging', 'Hidden', 'Raging', 'Burning'];
+
+/* -------------------------------------------------------------------------
+   2b. RULES CHEAT SHEET (5e 2014)
+   Each card: title, keywords (for the filter), html body.
+   ------------------------------------------------------------------------- */
+const XP_THRESHOLDS = { // level: [easy, medium, hard, deadly] — DMG p.82
+  1:[25,50,75,100], 2:[50,100,150,200], 3:[75,150,225,400], 4:[125,250,375,500],
+  5:[250,500,750,1100], 6:[300,600,900,1400], 7:[350,750,1100,1700], 8:[450,900,1400,2100],
+  9:[550,1100,1600,2400], 10:[600,1200,1900,2800], 11:[800,1600,2400,3600], 12:[1000,2000,3000,4500],
+  13:[1100,2200,3400,5100], 14:[1250,2500,3800,5700], 15:[1400,2800,4300,6400], 16:[1600,3200,4800,7200],
+  17:[2000,3900,5900,8800], 18:[2100,4200,6300,9500], 19:[2400,4900,7300,10900], 20:[2800,5700,8500,12700]
+};
+const CR_XP = {
+  '0':10, '1/8':25, '1/4':50, '1/2':100, '1':200, '2':450, '3':700, '4':1100, '5':1800, '6':2300,
+  '7':2900, '8':3900, '9':5000, '10':5900, '11':7200, '12':8400, '13':10000, '14':11500, '15':13000,
+  '16':15000, '17':18000, '18':20000, '19':22000, '20':25000, '21':33000, '22':41000, '23':50000,
+  '24':62000, '25':75000, '26':90000, '27':105000, '28':120000, '29':135000, '30':155000
+};
+/* DMG p.274 — Monster Statistics by Challenge Rating */
+const CR_STATS = [
+  ['0','+2','≤13','1–6','≤+3','0–1','≤13'], ['1/8','+2','13','7–35','+3','2–3','13'],
+  ['1/4','+2','13','36–49','+3','4–5','13'], ['1/2','+2','13','50–70','+3','6–8','13'],
+  ['1','+2','13','71–85','+3','9–14','13'], ['2','+2','13','86–100','+3','15–20','13'],
+  ['3','+2','13','101–115','+4','21–26','13'], ['4','+2','14','116–130','+5','27–32','14'],
+  ['5','+3','15','131–145','+6','33–38','15'], ['6','+3','15','146–160','+6','39–44','15'],
+  ['7','+3','15','161–175','+6','45–50','15'], ['8','+3','16','176–190','+7','51–56','16'],
+  ['9','+4','16','191–205','+7','57–62','16'], ['10','+4','17','206–220','+7','63–68','16'],
+  ['11','+4','17','221–235','+8','69–74','17'], ['12','+4','17','236–250','+8','75–80','17'],
+  ['13','+5','18','251–265','+8','81–86','18'], ['14','+5','18','266–280','+8','87–92','18'],
+  ['15','+5','18','281–295','+8','93–98','18'], ['16','+5','18','296–310','+9','99–104','18'],
+  ['17','+6','19','311–325','+10','105–110','19'], ['18','+6','19','326–340','+10','111–116','19'],
+  ['19','+6','19','341–355','+10','117–122','19'], ['20','+6','19','356–400','+10','123–140','19'],
+  ['21','+7','19','401–445','+11','141–158','20'], ['22','+7','19','446–490','+11','159–176','20'],
+  ['23','+7','19','491–535','+11','177–194','20'], ['24','+7','19','536–580','+12','195–212','21'],
+  ['25','+8','19','581–625','+12','213–230','21'], ['26','+8','19','626–670','+12','231–248','21'],
+  ['27','+8','19','671–715','+13','249–266','22'], ['28','+8','19','716–760','+13','267–284','22'],
+  ['29','+9','19','761–805','+13','285–302','22'], ['30','+9','19','806–850','+14','303–320','23']
+];
+
+const tbl = (heads, rows, rightCols = []) =>
+  `<div class="tablewrap"><table class="t"><thead><tr>${heads.map((h, i) => `<th class="${rightCols.includes(i) ? 'r' : ''}">${h}</th>`).join('')}</tr></thead><tbody>` +
+  rows.map(r => `<tr>${r.map((c, i) => `<td class="${rightCols.includes(i) ? 'r' : ''}">${c}</td>`).join('')}</tr>`).join('') +
+  `</tbody></table></div>`;
+
+const RULES = [
+  { t: 'Conditions', k: 'status blinded charmed deafened frightened grappled incapacitated invisible paralysed paralyzed petrified poisoned prone restrained stunned unconscious',
+    h: '<dl>' + Object.entries(CONDITIONS).map(([n, t]) => `<dt>${n}</dt><dd>${t}</dd>`).join('') + '</dl>' },
+
+  { t: 'Exhaustion', k: 'fatigue levels tired',
+    h: tbl(['Lvl', 'Effect'], EXHAUSTION.map((e, i) => [i + 1, e])) +
+       '<p>Effects are cumulative. A long rest with food and drink reduces exhaustion by 1 level. Raise dead &amp; co. reduce it by 1 too.</p>' },
+
+  { t: 'Actions in Combat', k: 'attack dash disengage dodge help hide ready search use object grapple shove escape',
+    h: `<dl>
+      <dt>Attack</dt><dd>One weapon or unarmed attack (more with Extra Attack). Grapple and shove replace one attack.</dd>
+      <dt>Cast a Spell</dt><dd>Casting time of 1 action. Bonus-action spell that turn? Then the only other spell you may cast is a cantrip with a casting time of 1 action.</dd>
+      <dt>Dash</dt><dd>Extra movement equal to your speed (after modifiers).</dd>
+      <dt>Disengage</dt><dd>Your movement doesn’t provoke opportunity attacks for the rest of the turn.</dd>
+      <dt>Dodge</dt><dd>Until your next turn: attacks against you have disadvantage if you can see the attacker; advantage on Dex saves. Lost if incapacitated or speed drops to 0.</dd>
+      <dt>Help</dt><dd>An ally gains advantage on their next check for the task, or on their next attack against a creature within 5 ft of you, before your next turn.</dd>
+      <dt>Hide</dt><dd>Dex (Stealth) check against passive Perception; needs to be unseen (obscured or behind cover).</dd>
+      <dt>Ready</dt><dd>Choose a trigger and an action (or move); it uses your reaction. A readied spell is held with concentration and the slot is spent even if unused.</dd>
+      <dt>Search</dt><dd>Wis (Perception) or Int (Investigation) check.</dd>
+      <dt>Use an Object</dt><dd>For a second object interaction, or an object that needs an action. One object interaction per turn is free (draw a sword, open a door).</dd>
+      <dt>Grapple</dt><dd>Free hand; target no more than one size larger. Your Str (Athletics) vs its Str (Athletics) or Dex (Acrobatics). Drag or carry at half speed. Escape: action, Athletics or Acrobatics vs your Athletics.</dd>
+      <dt>Shove</dt><dd>Target no more than one size larger. Same contest; knock it prone or push it 5 ft away.</dd>
+    </dl>` },
+
+  { t: 'Reactions, Bonus Actions & Two Weapons', k: 'opportunity attack reaction bonus action two-weapon dual wield offhand',
+    h: `<dl>
+      <dt>Opportunity attack</dt><dd>When a hostile creature you can see moves out of your reach, use your reaction for one melee attack. Not triggered by teleporting or being moved without using movement, action or reaction.</dd>
+      <dt>Reaction</dt><dd>One per round; regained at the start of your turn.</dd>
+      <dt>Bonus action</dt><dd>Only when a feature, spell or ability grants one. One per turn.</dd>
+      <dt>Two-weapon fighting</dt><dd>When you Attack with a light melee weapon, you can use a bonus action to attack with a different light melee weapon in the other hand. No ability modifier to that damage unless negative.</dd>
+    </dl>` },
+
+  { t: 'Cover', k: 'half three-quarters total ac bonus',
+    h: tbl(['Cover', 'Effect'], [
+      ['Half', '+2 AC and Dex saves (low wall, furniture, another creature)'],
+      ['Three-quarters', '+5 AC and Dex saves (portcullis, arrow slit, thick trunk)'],
+      ['Total', 'Can’t be targeted directly by attacks or spells']]) +
+      '<p>Only the most protective cover applies; degrees don’t stack.</p>' },
+
+  { t: 'Attacks & Combat Basics', k: 'surprise initiative critical crit advantage ranged melee long range unseen squeeze underwater mounted',
+    h: `<ul>
+      <li><b>Surprise:</b> a surprised creature can’t move or act on its first turn, nor take reactions until that turn ends.</li>
+      <li><b>Initiative:</b> Dex check. Ties: the DM decides between monsters; players decide between PCs.</li>
+      <li><b>Critical hit:</b> natural 20; roll all damage dice twice, then add modifiers. Natural 1 always misses.</li>
+      <li><b>Ranged in melee:</b> disadvantage if a hostile creature that can see you and isn’t incapacitated is within 5 ft.</li>
+      <li><b>Long range:</b> disadvantage; can’t attack beyond long range.</li>
+      <li><b>Unseen attacker:</b> advantage. <b>Unseen target:</b> disadvantage (guess the square).</li>
+      <li><b>Squeezing</b> into a space one size smaller: each foot costs 1 extra, disadvantage on attacks and Dex saves, attacks against it have advantage.</li>
+      <li><b>Underwater:</b> melee has disadvantage without a swim speed, unless dagger, javelin, shortsword, spear or trident. Ranged attacks miss beyond normal range and have disadvantage within it (except crossbow, net, thrown javelin/spear/trident/dart). Fully immersed creatures resist fire.</li>
+      <li><b>Mounted:</b> mounting or dismounting costs half your speed. A controlled mount acts on your initiative and can only Dash, Disengage or Dodge; an independent mount keeps its own.</li>
+    </ul>` },
+
+  { t: 'Damage, Dying & Healing', k: 'death saving throw saves stabilise stabilize massive damage instant death resistance vulnerability temporary hit points knock out zero',
+    h: `<ul>
+      <li><b>Resistance</b> halves, <b>vulnerability</b> doubles (applied after other modifiers). Multiple instances of either count once.</li>
+      <li><b>Instant death:</b> if damage left over after dropping to 0 HP equals or exceeds your HP maximum.</li>
+      <li><b>Death saves:</b> DC 10 at the start of each turn. Three successes: stable. Three failures: dead. Natural 1 = two failures; natural 20 = regain 1 HP.</li>
+      <li><b>Damage at 0 HP:</b> one failure (critical hit: two). Damage ≥ HP maximum: death.</li>
+      <li><b>Stabilise:</b> action, Wis (Medicine) DC 10, or a healer’s kit use. A stable creature regains 1 HP after 1d4 hours.</li>
+      <li><b>Knock out:</b> when a melee attack drops a creature to 0, the attacker may leave it unconscious and stable.</li>
+      <li><b>Temporary HP:</b> lost first; don’t stack (keep the higher); not healing; vanish after a long rest unless stated.</li>
+    </ul>` },
+
+  { t: 'Concentration', k: 'spell save constitution con',
+    h: `<p>Taking damage: Con save, <b>DC 10 or half the damage taken, whichever is higher</b>. One save per source of damage.</p>
+      <p>Also broken by casting another concentration spell, or by being incapacitated or killed. The DM may call for a DC 10 save in violent surroundings (a ship in a storm).</p>` },
+
+  { t: 'Resting', k: 'short rest long rest hit dice recovery',
+    h: `<dl>
+      <dt>Short rest</dt><dd>At least 1 hour. Spend Hit Dice: roll each + Con modifier, regain that many HP.</dd>
+      <dt>Long rest</dt><dd>At least 8 hours, no more than 2 of them light activity. Regain all HP and up to half your total Hit Dice (minimum 1). Once per 24 hours; must start with at least 1 HP. An hour of strenuous activity interrupts it.</dd>
+    </dl>` },
+
+  { t: 'Ability Checks & DCs', k: 'difficulty class skills passive group check contest athletics acrobatics stealth arcana perception insight',
+    h: tbl(['Difficulty', 'DC'], [['Very easy', 5], ['Easy', 10], ['Medium', 15], ['Hard', 20], ['Very hard', 25], ['Nearly impossible', 30]], [1]) +
+      `<dl>
+      <dt>Strength</dt><dd>Athletics</dd>
+      <dt>Dexterity</dt><dd>Acrobatics, Sleight of Hand, Stealth</dd>
+      <dt>Intelligence</dt><dd>Arcana, History, Investigation, Nature, Religion</dd>
+      <dt>Wisdom</dt><dd>Animal Handling, Insight, Medicine, Perception, Survival</dd>
+      <dt>Charisma</dt><dd>Deception, Intimidation, Performance, Persuasion</dd>
+      </dl>
+      <p><b>Passive:</b> 10 + modifiers (+5 with advantage, −5 with disadvantage). <b>Group check:</b> succeeds if at least half succeed. <b>Contest:</b> ties keep the status quo.</p>` },
+
+  { t: 'Movement & Environment', k: 'difficult terrain climb swim crawl jump long high fall falling suffocate breath carry lift push drag encumbrance',
+    h: `<ul>
+      <li><b>Difficult terrain:</b> each foot costs 1 extra foot.</li>
+      <li><b>Climb, swim, crawl:</b> each foot costs 1 extra (2 extra in difficult terrain) unless you have the speed.</li>
+      <li><b>Standing up</b> from prone costs half your speed.</li>
+      <li><b>Long jump:</b> Str score in feet with a 10 ft run-up; half from standing.</li>
+      <li><b>High jump:</b> 3 + Str mod feet with a 10 ft run-up; half from standing.</li>
+      <li><b>Falling:</b> 1d6 bludgeoning per 10 ft (max 20d6); land prone.</li>
+      <li><b>Holding breath:</b> 1 + Con mod minutes (min 30 s). Then Con mod rounds (min 1), then drop to 0 HP.</li>
+      <li><b>Carrying:</b> Str × 15 lb. Push, drag or lift: Str × 30 lb (speed 5 ft beyond carrying capacity). Large ×2, Tiny ×½.</li>
+    </ul>` },
+
+  { t: 'Vision & Light', k: 'obscured darkness dim bright darkvision blindsight truesight tremorsense',
+    h: `<dl>
+      <dt>Lightly obscured</dt><dd>Dim light, patchy fog, moderate foliage: disadvantage on sight-based Perception.</dd>
+      <dt>Heavily obscured</dt><dd>Darkness, opaque fog, dense foliage: effectively blinded.</dd>
+      <dt>Darkvision</dt><dd>Within range: dim light as bright, darkness as dim (shades of grey only).</dd>
+      <dt>Blindsight</dt><dd>Perceive surroundings without sight within range.</dd>
+      <dt>Truesight</dt><dd>See in darkness, see invisible, spot illusions, see into the Ethereal, see true forms.</dd>
+    </dl>` },
+
+  { t: 'Travel', k: 'pace fast normal slow forced march food water foraging navigate miles per day hour overland',
+    h: tbl(['Pace', '/min', '/hour', '/day', 'Effect'], [
+      ['Fast', '400 ft', '4 mi', '30 mi', '−5 passive Perception'],
+      ['Normal', '300 ft', '3 mi', '24 mi', '—'],
+      ['Slow', '200 ft', '2 mi', '18 mi', 'Can use Stealth']]) +
+      `<ul>
+      <li><b>Forced march:</b> each hour beyond 8, Con save DC 10 + 1 per extra hour or gain 1 exhaustion.</li>
+      <li><b>Food:</b> 1 lb a day. Can go 3 + Con mod days without (min 1), then 1 exhaustion per day.</li>
+      <li><b>Water:</b> 1 gallon a day (2 in heat). Half rations: DC 15 Con save or 1 exhaustion; less than half: automatic.</li>
+      <li><b>Mounts:</b> can gallop at double the fast pace for one hour. Vehicles move at their listed speed per hour.</li>
+      </ul>` },
+
+  { t: 'Spellcasting', k: 'components verbal somatic material focus ritual save dc attack area of effect cone cube sphere line cylinder',
+    h: `<ul>
+      <li><b>Spell save DC</b> = 8 + proficiency + casting mod. <b>Spell attack</b> = proficiency + casting mod.</li>
+      <li><b>Components:</b> V (speak), S (free hand), M (pouch or focus; costed or consumed materials must be supplied).</li>
+      <li><b>Ritual:</b> +10 minutes casting time, no slot spent; needs the ritual tag (and the class feature).</li>
+      <li><b>Bonus-action spell</b> on a turn: the only other spell that turn is a 1-action cantrip.</li>
+      <li><b>Areas:</b> cone width = distance from origin; cube origin on a face; sphere/cylinder from a point; line from you.</li>
+      <li>Can’t cast in armour you aren’t proficient with.</li>
+    </ul>` },
+
+  { t: 'Encounter Building', k: 'xp budget thresholds difficulty easy medium hard deadly multiplier adventuring day',
+    h: tbl(['Lvl', 'Easy', 'Medium', 'Hard', 'Deadly'], Object.entries(XP_THRESHOLDS).map(([l, v]) => [l, ...v.map(x => x.toLocaleString('en-GB'))]), [1, 2, 3, 4]) +
+      tbl(['Monsters', '×'], [['1', '1'], ['2', '1.5'], ['3–6', '2'], ['7–10', '2.5'], ['11–14', '3'], ['15+', '4']], [1]) +
+      '<p>Fewer than 3 PCs: use the next multiplier up. 6 or more: the next one down (½ for a single monster). Sum each PC’s threshold for the party budget. The tracker’s encounter box does this for you.</p>' +
+      tbl(['Lvl', 'Adventuring day XP / PC'], [[1,300],[2,600],[3,1200],[4,1700],[5,3500],[6,4000],[7,5000],[8,6000],[9,7500],[10,9000],[11,10500],[12,11500],[13,13500],[14,15000],[15,18000],[16,20000],[17,25000],[18,27000],[19,30000],[20,40000]].map(([a, b]) => [a, b.toLocaleString('en-GB')]), [1]) },
+
+  { t: 'Challenge Rating → XP', k: 'cr xp experience reward',
+    h: tbl(['CR', 'XP', 'CR', 'XP'], (() => {
+      const e = Object.entries(CR_XP), half = Math.ceil(e.length / 2), rows = [];
+      for (let i = 0; i < half; i++) rows.push([e[i][0], e[i][1].toLocaleString('en-GB'), e[i + half]?.[0] ?? '', e[i + half] ? e[i + half][1].toLocaleString('en-GB') : '']);
+      return rows;
+    })(), [1, 3]) },
+
+  { t: 'Monster Stats by CR', k: 'improvise statblock homebrew monster creation hp ac attack damage per round save dc proficiency',
+    h: tbl(['CR', 'Prof', 'AC', 'HP', 'Atk', 'Dmg/rd', 'DC'], CR_STATS, [1, 2, 4, 6]) +
+       '<p>DMG quick-build: start from the row, then nudge one stat up and another down.</p>' },
+
+  { t: 'Improvised Damage & Traps', k: 'trap hazard damage setback dangerous deadly falling rubble acid lava',
+    h: tbl(['Level', 'Setback', 'Dangerous', 'Deadly'], [['1–4', '1d10', '2d10', '4d10'], ['5–10', '2d10', '4d10', '10d10'], ['11–16', '4d10', '10d10', '18d10'], ['17–20', '10d10', '18d10', '24d10']]) +
+      tbl(['Severity', 'Save DC', 'Attack'], [['Setback', '10–11', '+3 to +5'], ['Dangerous', '12–15', '+6 to +8'], ['Deadly', '16–20', '+9 to +12']]) +
+      `<ul><li><b>1d10</b> burned by coals, hit by a falling bookcase, pricked by a poison needle</li>
+      <li><b>2d10</b> struck by lightning, stumbling into a fire pit</li>
+      <li><b>4d10</b> hit by collapsing tunnel rubble, stumbling into a vat of acid</li>
+      <li><b>10d10</b> crushed by compacting walls, wading through a lava stream</li>
+      <li><b>18d10</b> submerged in lava</li>
+      <li><b>24d10</b> crushed in the jaws of a godlike creature</li></ul>` },
+
+  { t: 'Objects', k: 'object ac hp break door chest wood stone iron',
+    h: tbl(['Substance', 'AC'], [['Cloth, paper, rope', 11], ['Crystal, glass, ice', 13], ['Wood, bone', 15], ['Stone', 17], ['Iron, steel', 19], ['Mithral', 21], ['Adamantine', 23]], [1]) +
+      tbl(['Size', 'Fragile', 'Resilient'], [['Tiny (bottle, lock)', '2 (1d4)', '5 (2d4)'], ['Small (chest, lute)', '3 (1d6)', '10 (3d6)'], ['Medium (barrel)', '4 (1d8)', '18 (4d8)'], ['Large (cart)', '5 (1d10)', '27 (5d10)']], [1, 2]) +
+      '<p>Objects are immune to poison and psychic damage. Huge and bigger: treat sections as separate objects.</p>' },
+
+  { t: 'Size, Advancement & Proficiency', k: 'size space tiny small medium large huge gargantuan level xp proficiency bonus',
+    h: tbl(['Size', 'Space', 'Hit die'], [['Tiny', '2½ ft', 'd4'], ['Small', '5 ft', 'd6'], ['Medium', '5 ft', 'd8'], ['Large', '10 ft', 'd10'], ['Huge', '15 ft', 'd12'], ['Gargantuan', '20 ft+', 'd20']]) +
+      tbl(['Lvl', 'XP', 'Prof', 'Lvl', 'XP', 'Prof'], [
+        [1,'0','+2',11,'85,000','+4'],[2,'300','+2',12,'100,000','+4'],[3,'900','+2',13,'120,000','+5'],[4,'2,700','+2',14,'140,000','+5'],
+        [5,'6,500','+3',15,'165,000','+5'],[6,'14,000','+3',16,'195,000','+5'],[7,'23,000','+3',17,'225,000','+6'],[8,'34,000','+3',18,'265,000','+6'],
+        [9,'48,000','+4',19,'305,000','+6'],[10,'64,000','+4',20,'355,000','+6']], [1, 4]) }
+];
+
+/* -------------------------------------------------------------------------
+   2c. SRD PRICE LISTS (PHB 2014 / DMG)
+   Each list: title, column heads, rows, right-aligned column indexes, note.
+   ------------------------------------------------------------------------- */
+const PRICES = [
+  { t: 'Coinage', h: ['Coin', 'cp', 'sp', 'ep', 'gp', 'pp'], r: [
+    ['Copper (cp)', '1', '1/10', '1/50', '1/100', '1/1,000'], ['Silver (sp)', '10', '1', '1/5', '1/10', '1/100'],
+    ['Electrum (ep)', '50', '5', '1', '1/2', '1/20'], ['Gold (gp)', '100', '10', '2', '1', '1/10'],
+    ['Platinum (pp)', '1,000', '100', '20', '10', '1']], n: '50 coins weigh 1 lb.' },
+
+  { t: 'Weapons — Simple', h: ['Weapon', 'Cost', 'Damage', 'Weight', 'Properties'], ra: [1, 3], r: [
+    ['Club', '1 sp', '1d4 bludgeoning', '2 lb', 'Light'],
+    ['Dagger', '2 gp', '1d4 piercing', '1 lb', 'Finesse, light, thrown (20/60)'],
+    ['Greatclub', '2 sp', '1d8 bludgeoning', '10 lb', 'Two-handed'],
+    ['Handaxe', '5 gp', '1d6 slashing', '2 lb', 'Light, thrown (20/60)'],
+    ['Javelin', '5 sp', '1d6 piercing', '2 lb', 'Thrown (30/120)'],
+    ['Light hammer', '2 gp', '1d4 bludgeoning', '2 lb', 'Light, thrown (20/60)'],
+    ['Mace', '5 gp', '1d6 bludgeoning', '4 lb', '—'],
+    ['Quarterstaff', '2 sp', '1d6 bludgeoning', '4 lb', 'Versatile (1d8)'],
+    ['Sickle', '1 gp', '1d4 slashing', '2 lb', 'Light'],
+    ['Spear', '1 gp', '1d6 piercing', '3 lb', 'Thrown (20/60), versatile (1d8)'],
+    ['Crossbow, light', '25 gp', '1d8 piercing', '5 lb', 'Ammunition (80/320), loading, two-handed'],
+    ['Dart', '5 cp', '1d4 piercing', '¼ lb', 'Finesse, thrown (20/60)'],
+    ['Shortbow', '25 gp', '1d6 piercing', '2 lb', 'Ammunition (80/320), two-handed'],
+    ['Sling', '1 sp', '1d4 bludgeoning', '—', 'Ammunition (30/120)']] },
+
+  { t: 'Weapons — Martial', h: ['Weapon', 'Cost', 'Damage', 'Weight', 'Properties'], ra: [1, 3], r: [
+    ['Battleaxe', '10 gp', '1d8 slashing', '4 lb', 'Versatile (1d10)'],
+    ['Flail', '10 gp', '1d8 bludgeoning', '2 lb', '—'],
+    ['Glaive', '20 gp', '1d10 slashing', '6 lb', 'Heavy, reach, two-handed'],
+    ['Greataxe', '30 gp', '1d12 slashing', '7 lb', 'Heavy, two-handed'],
+    ['Greatsword', '50 gp', '2d6 slashing', '6 lb', 'Heavy, two-handed'],
+    ['Halberd', '20 gp', '1d10 slashing', '6 lb', 'Heavy, reach, two-handed'],
+    ['Lance', '10 gp', '1d12 piercing', '6 lb', 'Reach, special'],
+    ['Longsword', '15 gp', '1d8 slashing', '3 lb', 'Versatile (1d10)'],
+    ['Maul', '10 gp', '2d6 bludgeoning', '10 lb', 'Heavy, two-handed'],
+    ['Morningstar', '15 gp', '1d8 piercing', '4 lb', '—'],
+    ['Pike', '5 gp', '1d10 piercing', '18 lb', 'Heavy, reach, two-handed'],
+    ['Rapier', '25 gp', '1d8 piercing', '2 lb', 'Finesse'],
+    ['Scimitar', '25 gp', '1d6 slashing', '3 lb', 'Finesse, light'],
+    ['Shortsword', '10 gp', '1d6 piercing', '2 lb', 'Finesse, light'],
+    ['Trident', '5 gp', '1d6 piercing', '4 lb', 'Thrown (20/60), versatile (1d8)'],
+    ['War pick', '5 gp', '1d8 piercing', '2 lb', '—'],
+    ['Warhammer', '15 gp', '1d8 bludgeoning', '2 lb', 'Versatile (1d10)'],
+    ['Whip', '2 gp', '1d4 slashing', '3 lb', 'Finesse, reach'],
+    ['Blowgun', '10 gp', '1 piercing', '1 lb', 'Ammunition (25/100), loading'],
+    ['Crossbow, hand', '75 gp', '1d6 piercing', '3 lb', 'Ammunition (30/120), light, loading'],
+    ['Crossbow, heavy', '50 gp', '1d10 piercing', '18 lb', 'Ammunition (100/400), heavy, loading, two-handed'],
+    ['Longbow', '50 gp', '1d8 piercing', '2 lb', 'Ammunition (150/600), heavy, two-handed'],
+    ['Net', '1 gp', '—', '3 lb', 'Special, thrown (5/15)']],
+    n: 'Silvering a weapon or ten pieces of ammunition: 100 gp.' },
+
+  { t: 'Armour', h: ['Armour', 'Cost', 'AC', 'Str', 'Stealth', 'Weight'], ra: [1, 5], r: [
+    ['Padded (light)', '5 gp', '11 + Dex', '—', 'Disadv.', '8 lb'],
+    ['Leather (light)', '10 gp', '11 + Dex', '—', '—', '10 lb'],
+    ['Studded leather (light)', '45 gp', '12 + Dex', '—', '—', '13 lb'],
+    ['Hide (medium)', '10 gp', '12 + Dex (max 2)', '—', '—', '12 lb'],
+    ['Chain shirt (medium)', '50 gp', '13 + Dex (max 2)', '—', '—', '20 lb'],
+    ['Scale mail (medium)', '50 gp', '14 + Dex (max 2)', '—', 'Disadv.', '45 lb'],
+    ['Breastplate (medium)', '400 gp', '14 + Dex (max 2)', '—', '—', '20 lb'],
+    ['Half plate (medium)', '750 gp', '15 + Dex (max 2)', '—', 'Disadv.', '40 lb'],
+    ['Ring mail (heavy)', '30 gp', '14', '—', 'Disadv.', '40 lb'],
+    ['Chain mail (heavy)', '75 gp', '16', 'Str 13', 'Disadv.', '55 lb'],
+    ['Splint (heavy)', '200 gp', '17', 'Str 15', 'Disadv.', '60 lb'],
+    ['Plate (heavy)', '1,500 gp', '18', 'Str 15', 'Disadv.', '65 lb'],
+    ['Shield', '10 gp', '+2', '—', '—', '6 lb']],
+    n: 'Don / doff: light 1 min / 1 min · medium 5 min / 1 min · heavy 10 min / 5 min · shield 1 action / 1 action. Heavy armour without the Str score: −10 ft speed.' },
+
+  { t: 'Adventuring Gear', h: ['Item', 'Cost', 'Weight'], ra: [1, 2], r: [
+    ['Abacus', '2 gp', '2 lb'], ['Acid (vial)', '25 gp', '1 lb'], ['Alchemist’s fire (flask)', '50 gp', '1 lb'], ['Antitoxin (vial)', '50 gp', '—'],
+    ['Arrows (20)', '1 gp', '1 lb'], ['Blowgun needles (50)', '1 gp', '1 lb'], ['Crossbow bolts (20)', '1 gp', '1½ lb'], ['Sling bullets (20)', '4 cp', '1½ lb'],
+    ['Arcane focus: crystal', '10 gp', '1 lb'], ['Arcane focus: orb', '20 gp', '3 lb'], ['Arcane focus: rod', '10 gp', '2 lb'], ['Arcane focus: staff', '5 gp', '4 lb'], ['Arcane focus: wand', '10 gp', '1 lb'],
+    ['Backpack', '2 gp', '5 lb'], ['Ball bearings (bag of 1,000)', '1 gp', '2 lb'], ['Barrel', '2 gp', '70 lb'], ['Basket', '4 sp', '2 lb'], ['Bedroll', '1 gp', '7 lb'],
+    ['Bell', '1 gp', '—'], ['Blanket', '5 sp', '3 lb'], ['Block and tackle', '1 gp', '5 lb'], ['Book', '25 gp', '5 lb'], ['Bottle, glass', '2 gp', '2 lb'], ['Bucket', '5 cp', '2 lb'],
+    ['Caltrops (bag of 20)', '1 gp', '2 lb'], ['Candle', '1 cp', '—'], ['Case, crossbow bolt', '1 gp', '1 lb'], ['Case, map or scroll', '1 gp', '1 lb'], ['Chain (10 ft)', '5 gp', '10 lb'],
+    ['Chalk (1 piece)', '1 cp', '—'], ['Chest', '5 gp', '25 lb'], ['Climber’s kit', '25 gp', '12 lb'], ['Clothes, common', '5 sp', '3 lb'], ['Clothes, costume', '5 gp', '4 lb'],
+    ['Clothes, fine', '15 gp', '6 lb'], ['Clothes, traveller’s', '2 gp', '4 lb'], ['Component pouch', '25 gp', '2 lb'], ['Crowbar', '2 gp', '5 lb'],
+    ['Druidic focus: sprig of mistletoe', '1 gp', '—'], ['Druidic focus: totem', '1 gp', '—'], ['Druidic focus: wooden staff', '5 gp', '4 lb'], ['Druidic focus: yew wand', '10 gp', '1 lb'],
+    ['Fishing tackle', '1 gp', '4 lb'], ['Flask or tankard', '2 cp', '1 lb'], ['Grappling hook', '2 gp', '4 lb'], ['Hammer', '1 gp', '3 lb'], ['Hammer, sledge', '2 gp', '10 lb'],
+    ['Healer’s kit', '5 gp', '3 lb'], ['Holy symbol: amulet', '5 gp', '1 lb'], ['Holy symbol: emblem', '5 gp', '—'], ['Holy symbol: reliquary', '5 gp', '2 lb'], ['Holy water (flask)', '25 gp', '1 lb'],
+    ['Hourglass', '25 gp', '1 lb'], ['Hunting trap', '5 gp', '25 lb'], ['Ink (1 oz bottle)', '10 gp', '—'], ['Ink pen', '2 cp', '—'], ['Jug or pitcher', '2 cp', '4 lb'], ['Ladder (10 ft)', '1 sp', '25 lb'],
+    ['Lamp', '5 sp', '1 lb'], ['Lantern, bullseye', '10 gp', '2 lb'], ['Lantern, hooded', '5 gp', '2 lb'], ['Lock', '10 gp', '1 lb'], ['Magnifying glass', '100 gp', '—'], ['Manacles', '2 gp', '6 lb'],
+    ['Mess kit', '2 sp', '1 lb'], ['Mirror, steel', '5 gp', '½ lb'], ['Oil (flask)', '1 sp', '1 lb'], ['Paper (one sheet)', '2 sp', '—'], ['Parchment (one sheet)', '1 sp', '—'], ['Perfume (vial)', '5 gp', '—'],
+    ['Pick, miner’s', '2 gp', '10 lb'], ['Piton', '5 cp', '¼ lb'], ['Poison, basic (vial)', '100 gp', '—'], ['Pole (10 ft)', '5 cp', '7 lb'], ['Pot, iron', '2 gp', '10 lb'], ['Potion of healing', '50 gp', '½ lb'],
+    ['Pouch', '5 sp', '1 lb'], ['Quiver', '1 gp', '1 lb'], ['Ram, portable', '4 gp', '35 lb'], ['Rations (1 day)', '5 sp', '2 lb'], ['Robes', '1 gp', '4 lb'], ['Rope, hempen (50 ft)', '1 gp', '10 lb'],
+    ['Rope, silk (50 ft)', '10 gp', '5 lb'], ['Sack', '1 cp', '½ lb'], ['Scale, merchant’s', '5 gp', '3 lb'], ['Sealing wax', '5 sp', '—'], ['Shovel', '2 gp', '5 lb'], ['Signal whistle', '5 cp', '—'],
+    ['Signet ring', '5 gp', '—'], ['Soap', '2 cp', '—'], ['Spellbook', '50 gp', '3 lb'], ['Spikes, iron (10)', '1 gp', '5 lb'], ['Spyglass', '1,000 gp', '1 lb'], ['Tent, two-person', '2 gp', '20 lb'],
+    ['Tinderbox', '5 sp', '1 lb'], ['Torch', '1 cp', '1 lb'], ['Vial', '1 gp', '—'], ['Waterskin', '2 sp', '5 lb (full)'], ['Whetstone', '1 cp', '1 lb']] },
+
+  { t: 'Equipment Packs', h: ['Pack', 'Cost'], ra: [1], r: [
+    ['Burglar’s pack', '16 gp'], ['Diplomat’s pack', '39 gp'], ['Dungeoneer’s pack', '12 gp'], ['Entertainer’s pack', '40 gp'],
+    ['Explorer’s pack', '10 gp'], ['Priest’s pack', '19 gp'], ['Scholar’s pack', '40 gp']] },
+
+  { t: 'Tools', h: ['Tool', 'Cost', 'Weight'], ra: [1, 2], r: [
+    ['Alchemist’s supplies', '50 gp', '8 lb'], ['Brewer’s supplies', '20 gp', '9 lb'], ['Calligrapher’s supplies', '10 gp', '5 lb'], ['Carpenter’s tools', '8 gp', '6 lb'],
+    ['Cartographer’s tools', '15 gp', '6 lb'], ['Cobbler’s tools', '5 gp', '5 lb'], ['Cook’s utensils', '1 gp', '8 lb'], ['Glassblower’s tools', '30 gp', '5 lb'],
+    ['Jeweller’s tools', '25 gp', '2 lb'], ['Leatherworker’s tools', '5 gp', '5 lb'], ['Mason’s tools', '10 gp', '8 lb'], ['Painter’s supplies', '10 gp', '5 lb'],
+    ['Potter’s tools', '10 gp', '3 lb'], ['Smith’s tools', '20 gp', '8 lb'], ['Tinker’s tools', '50 gp', '10 lb'], ['Weaver’s tools', '1 gp', '5 lb'], ['Woodcarver’s tools', '1 gp', '5 lb'],
+    ['Disguise kit', '25 gp', '3 lb'], ['Forgery kit', '15 gp', '5 lb'], ['Herbalism kit', '5 gp', '3 lb'], ['Navigator’s tools', '25 gp', '2 lb'], ['Poisoner’s kit', '50 gp', '2 lb'], ['Thieves’ tools', '25 gp', '1 lb'],
+    ['Dice set', '1 sp', '—'], ['Dragonchess set', '1 gp', '½ lb'], ['Playing card set', '5 sp', '—'], ['Three-Dragon Ante set', '1 gp', '—'],
+    ['Bagpipes', '30 gp', '6 lb'], ['Drum', '6 gp', '3 lb'], ['Dulcimer', '25 gp', '10 lb'], ['Flute', '2 gp', '1 lb'], ['Horn', '3 gp', '2 lb'], ['Lute', '35 gp', '2 lb'],
+    ['Lyre', '30 gp', '2 lb'], ['Pan flute', '12 gp', '2 lb'], ['Shawm', '2 gp', '1 lb'], ['Viol', '30 gp', '1 lb']] },
+
+  { t: 'Mounts & Animals', h: ['Animal', 'Cost', 'Speed', 'Carrying'], ra: [1, 2, 3], r: [
+    ['Camel', '50 gp', '50 ft', '480 lb'], ['Donkey or mule', '8 gp', '40 ft', '420 lb'], ['Elephant', '200 gp', '40 ft', '1,320 lb'], ['Horse, draft', '50 gp', '40 ft', '540 lb'],
+    ['Horse, riding', '75 gp', '60 ft', '480 lb'], ['Mastiff', '25 gp', '40 ft', '195 lb'], ['Pony', '30 gp', '40 ft', '225 lb'], ['Warhorse', '400 gp', '60 ft', '540 lb']],
+    n: 'An animal pulling a vehicle can move up to five times its carrying capacity, including the vehicle.' },
+
+  { t: 'Tack, Harness & Vehicles', h: ['Item', 'Cost', 'Weight'], ra: [1, 2], r: [
+    ['Barding', '×4', '×2'], ['Bit and bridle', '2 gp', '1 lb'], ['Carriage', '100 gp', '600 lb'], ['Cart', '15 gp', '200 lb'], ['Chariot', '250 gp', '100 lb'],
+    ['Feed (per day)', '5 cp', '10 lb'], ['Saddle, exotic', '60 gp', '40 lb'], ['Saddle, military', '20 gp', '30 lb'], ['Saddle, pack', '5 gp', '15 lb'], ['Saddle, riding', '10 gp', '25 lb'],
+    ['Saddlebags', '4 gp', '8 lb'], ['Sled', '20 gp', '300 lb'], ['Stabling (per day)', '5 sp', '—'], ['Wagon', '35 gp', '400 lb']] },
+
+  { t: 'Waterborne Vessels', h: ['Ship', 'Cost', 'Speed'], ra: [1, 2], r: [
+    ['Galley', '30,000 gp', '4 mph'], ['Keelboat', '3,000 gp', '1 mph'], ['Longship', '10,000 gp', '3 mph'], ['Rowing boat', '50 gp', '1½ mph'],
+    ['Sailing ship', '10,000 gp', '2 mph'], ['Warship', '25,000 gp', '2½ mph']] },
+
+  { t: 'Food, Drink & Lodging', h: ['Item', 'Cost'], ra: [1], r: [
+    ['Ale, gallon', '2 sp'], ['Ale, mug', '4 cp'], ['Banquet (per person)', '10 gp'], ['Bread, loaf', '2 cp'], ['Cheese, hunk', '1 sp'], ['Meat, chunk', '3 sp'],
+    ['Wine, common (pitcher)', '2 sp'], ['Wine, fine (bottle)', '10 gp'],
+    ['Inn stay (per day): squalid', '7 cp'], ['Inn stay: poor', '1 sp'], ['Inn stay: modest', '5 sp'], ['Inn stay: comfortable', '8 sp'], ['Inn stay: wealthy', '2 gp'], ['Inn stay: aristocratic', '4 gp'],
+    ['Meals (per day): squalid', '3 cp'], ['Meals: poor', '6 cp'], ['Meals: modest', '3 sp'], ['Meals: comfortable', '5 sp'], ['Meals: wealthy', '8 sp'], ['Meals: aristocratic', '2 gp']] },
+
+  { t: 'Services', h: ['Service', 'Cost'], ra: [1], r: [
+    ['Coach cab, between towns', '3 cp per mile'], ['Coach cab, within a city', '1 cp'], ['Hireling, skilled', '2 gp per day'], ['Hireling, untrained', '2 sp per day'],
+    ['Messenger', '2 cp per mile'], ['Road or gate toll', '1 cp'], ['Ship’s passage', '1 sp per mile']],
+    n: 'Spellcasting for hire: typically 10–50 gp for a cantrip or 1st-level spell, rising steeply with level, plus any costly components (DM’s call).' },
+
+  { t: 'Lifestyle Expenses', h: ['Lifestyle', 'Per day'], ra: [1], r: [
+    ['Wretched', '—'], ['Squalid', '1 sp'], ['Poor', '2 sp'], ['Modest', '1 gp'], ['Comfortable', '2 gp'], ['Wealthy', '4 gp'], ['Aristocratic', '10 gp minimum']] },
+
+  { t: 'Trade Goods', h: ['Cost', 'Goods'], r: [
+    ['1 cp', '1 lb of wheat'], ['2 cp', '1 lb of flour or one chicken'], ['5 cp', '1 lb of salt'], ['1 sp', '1 lb of iron or 1 sq yd of canvas'],
+    ['5 sp', '1 lb of copper or 1 sq yd of cotton cloth'], ['1 gp', '1 lb of ginger or one goat'], ['2 gp', '1 lb of cinnamon or pepper, or one sheep'],
+    ['3 gp', '1 lb of cloves or one pig'], ['5 gp', '1 lb of silver or 1 sq yd of linen'], ['10 gp', '1 sq yd of silk or one cow'], ['15 gp', '1 lb of saffron or one ox'],
+    ['50 gp', '1 lb of gold'], ['500 gp', '1 lb of platinum']], n: 'For Evershroud market prices, see the Exchange under Places.' },
+
+  { t: 'Poisons (DMG)', h: ['Poison', 'Type', 'Price / dose'], ra: [2], r: [
+    ['Assassin’s blood', 'Ingested', '150 gp'], ['Burnt othur fumes', 'Inhaled', '500 gp'], ['Carrion crawler mucus', 'Contact', '200 gp'], ['Drow poison', 'Injury', '200 gp'],
+    ['Essence of ether', 'Inhaled', '300 gp'], ['Malice', 'Inhaled', '250 gp'], ['Midnight tears', 'Ingested', '1,500 gp'], ['Oil of taggit', 'Contact', '400 gp'],
+    ['Pale tincture', 'Ingested', '250 gp'], ['Purple worm poison', 'Injury', '2,000 gp'], ['Serpent venom', 'Injury', '200 gp'], ['Torpor', 'Ingested', '600 gp'],
+    ['Truth serum', 'Ingested', '150 gp'], ['Wyvern poison', 'Injury', '1,200 gp']] },
+
+  { t: 'Gemstones by Value (DMG)', h: ['Value', 'Stones'], r: [
+    ['10 gp', 'Azurite, banded agate, blue quartz, eye agate, haematite, lapis lazuli, malachite, moss agate, obsidian, rhodochrosite, tiger eye, turquoise'],
+    ['50 gp', 'Bloodstone, carnelian, chalcedony, chrysoprase, citrine, jasper, moonstone, onyx, quartz, sardonyx, star rose quartz, zircon'],
+    ['100 gp', 'Amber, amethyst, chrysoberyl, coral, garnet, jade, jet, pearl, spinel, tourmaline'],
+    ['500 gp', 'Alexandrite, aquamarine, black pearl, blue spinel, peridot, topaz'],
+    ['1,000 gp', 'Black opal, blue sapphire, emerald, fire opal, opal, star ruby, star sapphire, yellow sapphire'],
+    ['5,000 gp', 'Black sapphire, diamond, jacinth, ruby']] },
+
+  { t: 'Magic Items by Rarity', h: ['Rarity', 'Min. level', 'Value'], ra: [2], r: [
+    ['Common', '1st', '50–100 gp'], ['Uncommon', '1st', '101–500 gp'], ['Rare', '5th', '501–5,000 gp'],
+    ['Very rare', '11th', '5,001–50,000 gp'], ['Legendary', '17th', '50,001+ gp']],
+    n: 'Consumables (potions, scrolls) are usually priced at half. Spell scroll: cantrip/1st common, 2nd–3rd uncommon, 4th–5th rare, 6th–8th very rare, 9th legendary.' }
+];
+
+/* -------------------------------------------------------------------------
+   2d. SHOP CATALOGUES
+   ORIGINAL arrays below are copied verbatim from the standalone shop pages
+   (general-store.html, smithy.html, ...). If you edit a shop's list there,
+   mirror it here — or ask Claude to sync them.
+   ------------------------------------------------------------------------- */
+const ORIGINAL = {};
+/* from general-store.html */
+ORIGINAL.general = [
+    // Tools and Gear
+    { name: "Backpack", description: "A sturdy leather backpack.", basePrice: 2, weight: "5 lbs", properties: ["Capacity: 30 lbs"] },
+    { name: "Bedroll", description: "A basic roll for sleeping.", basePrice: 1, weight: "5 lbs", properties: ["Comfortable in most weather"] },
+    { name: "Rope (50 ft)", description: "50 feet of hempen rope.", basePrice: 1, weight: "10 lbs", properties: ["Durable"] },
+    { name: "Rope (Silk, 50 ft)", description: "50 feet of lightweight silk rope.", basePrice: 10, weight: "5 lbs", properties: ["Durable", "Light"] },
+    { name: "Lantern, Hooded", description: "A hooded lantern to light your way.", basePrice: 5, weight: "2 lbs", properties: ["Bright light (30 ft)", "Dim light (60 ft)"] },
+    { name: "Lantern, Bullseye", description: "A focused light source.", basePrice: 10, weight: "2 lbs", properties: ["Bright cone (60 ft)", "Dim light (120 ft)"] },
+    { name: "Torch", description: "A simple wooden torch.", basePrice: 0.1, weight: "1 lb", properties: ["Burns for 1 hour"] },
+    { name: "Flint and Steel", description: "Used to start a fire.", basePrice: 1, weight: "0.5 lbs", properties: ["Essential for survival"] },
+    { name: "Crowbar", description: "A sturdy iron crowbar.", basePrice: 2, weight: "5 lbs", properties: ["+2 bonus to leverage checks"] },
+    { name: "Hammer", description: "A basic tool for driving nails.", basePrice: 1, weight: "3 lbs", properties: ["Versatile utility"] },
+    { name: "Pitons (10)", description: "Metal spikes for climbing.", basePrice: 5, weight: "5 lbs", properties: ["Used with rope"] },
+    { name: "Grappling Hook", description: "A hook for climbing.", basePrice: 2, weight: "4 lbs", properties: ["Useful with rope"] },
+    { name: "Healer's Kit", description: "A kit for stabilising wounds.", basePrice: 5, weight: "3 lbs", properties: ["10 uses"] },
+    { name: "Signal Whistle", description: "A small, loud whistle.", basePrice: 0.5, weight: "0.1 lbs", properties: ["Carries sound for 1 mile"] },
+    { name: "Spyglass", description: "A magnifying telescope.", basePrice: 1000, weight: "1 lb", properties: ["Magnifies distant objects"] },
+    { name: "Climber's Kit", description: "A kit for climbing.", basePrice: 25, weight: "12 lbs", properties: ["Includes pitons and gloves"] },
+    { name: "Portable Ram", description: "A ram for breaking doors.", basePrice: 4, weight: "35 lbs", properties: ["+4 bonus to break checks"] },
+    { name: "Shovel", description: "A simple digging tool.", basePrice: 2, weight: "5 lbs", properties: ["Essential for excavation"] },
+    { name: "Tinderbox", description: "A box to light fires.", basePrice: 0.5, weight: "1 lb", properties: ["Essential for survival"] },
+    { name: "Watertight Chest", description: "A small, sealed chest.", basePrice: 15, weight: "20 lbs", properties: ["Keeps contents dry"] },
+
+    // Food and Provisions
+    { name: "Rations (1 day)", description: "Food for one day.", basePrice: 0.5, weight: "2 lbs", properties: ["Non-perishable"] },
+    { name: "Waterskin", description: "A leather container for water.", basePrice: 0.5, weight: "5 lbs when full", properties: ["Holds 4 pints"] },
+    { name: "Cooking Pot", description: "A basic metal pot.", basePrice: 2, weight: "4 lbs", properties: ["Useful for cooking"] },
+    { name: "Bag of Flour", description: "A small sack of flour.", basePrice: 1, weight: "1 lb", properties: ["Cooking ingredient"] },
+    { name: "Wheel of Cheese", description: "A large wheel of cheese.", basePrice: 5, weight: "4 lbs", properties: ["Long-lasting"] },
+    { name: "Bottle of Wine", description: "A fine bottle of wine.", basePrice: 10, weight: "2 lbs", properties: ["Restores morale"] },
+    { name: "Dried Meat (1 lb)", description: "Preserved for long journeys.", basePrice: 1, weight: "1 lb", properties: ["Long-lasting"] },
+    { name: "Honey Jar", description: "A small jar of honey.", basePrice: 3, weight: "1 lb", properties: ["Sweet and nutritious"] },
+    { name: "Herbal Tea (Bundle)", description: "Dried leaves for tea.", basePrice: 1, weight: "0.5 lbs", properties: ["Restores morale"] },
+    { name: "Salt (Bag)", description: "A small bag of salt.", basePrice: 1, weight: "1 lb", properties: ["Preserves food"] },
+    { name: "Fruit Basket", description: "A basket of fresh fruit.", basePrice: 3, weight: "5 lbs", properties: ["Perishable"] },
+
+    // Miscellaneous Items
+    { name: "Pouch", description: "A small leather pouch.", basePrice: 1, weight: "1 lb", properties: ["Holds 5 lbs of items"] },
+    { name: "Bag of Ball Bearings (1000)", description: "A bag of metal balls.", basePrice: 1, weight: "2 lbs", properties: ["Covers a 10-foot square area"] },
+    { name: "Ink and Quill", description: "For writing notes.", basePrice: 10, weight: "0.5 lbs", properties: ["Essential for scribes"] },
+    { name: "Paper (1 sheet)", description: "A blank sheet of paper.", basePrice: 0.2, weight: "0.1 lbs", properties: ["For recording information"] },
+    { name: "Chalk (1 piece)", description: "A small piece of chalk.", basePrice: 0.1, weight: "0.1 lbs", properties: ["Used for marking"] },
+    { name: "Mirror, Steel", description: "A polished steel mirror.", basePrice: 5, weight: "0.5 lbs", properties: ["Reflects images"] },
+    { name: "Holy Water (flask)", description: "Sacred water to repel undead.", basePrice: 25, weight: "1 lb", properties: ["1d6 radiant damage to undead"] },
+    { name: "Perfume (vial)", description: "A fine vial of perfume.", basePrice: 5, weight: "0.1 lbs", properties: ["Adds flair to conversations"] },
+    { name: "Candle", description: "A small wax candle.", basePrice: 0.1, weight: "0.1 lbs", properties: ["Burns for 1 hour"] },
+    { name: "Marbles (Bag)", description: "A bag of smooth marbles.", basePrice: 1, weight: "2 lbs", properties: ["Disrupts footing"] },
+    { name: "Net", description: "A small net for capturing prey.", basePrice: 1, weight: "3 lbs", properties: ["Restrains small targets"] },
+    { name: "Bucket", description: "A simple wooden bucket.", basePrice: 0.5, weight: "2 lbs", properties: ["Carries liquid"] },
+    { name: "Bell", description: "A small, metal bell.", basePrice: 1, weight: "0.5 lbs", properties: ["Audible alarm"] },
+    { name: "Vial", description: "A small glass vial.", basePrice: 1, weight: "0.1 lbs", properties: ["Holds 4 ounces"] }
+];
+/* from smithy.html */
+ORIGINAL.smithyWeapons = [
+    // Simple Melee Weapons
+    { name: "Club", description: "A small wooden club.", basePrice: 0.1, damage: "1d4 bludgeoning", properties: ["Light"] },
+    { name: "Dagger", description: "Sharp and throwable.", basePrice: 2, damage: "1d4 piercing", properties: ["Finesse", "Light", "Thrown (20/60)"] },
+    { name: "Greatclub", description: "A large, two-handed club.", basePrice: 0.2, damage: "1d8 bludgeoning", properties: ["Two-Handed"] },
+    { name: "Handaxe", description: "A small axe for combat or throwing.", basePrice: 5, damage: "1d6 slashing", properties: ["Light", "Thrown (20/60)"] },
+    { name: "Javelin", description: "A throwable spear.", basePrice: 0.5, damage: "1d6 piercing", properties: ["Thrown (30/120)"] },
+    { name: "Light Hammer", description: "A small hammer.", basePrice: 2, damage: "1d4 bludgeoning", properties: ["Light", "Thrown (20/60)"] },
+    { name: "Mace", description: "A heavy, spiked club.", basePrice: 5, damage: "1d6 bludgeoning", properties: [] },
+    { name: "Quarterstaff", description: "A wooden staff.", basePrice: 0.2, damage: "1d6 bludgeoning", properties: ["Versatile (1d8)"] },
+    { name: "Sickle", description: "A small farming implement.", basePrice: 1, damage: "1d4 slashing", properties: ["Light"] },
+    { name: "Spear", description: "A long spear for melee or throwing.", basePrice: 1, damage: "1d6 piercing", properties: ["Thrown (20/60)", "Versatile (1d8)"] },
+    // Simple Ranged Weapons
+    { name: "Crossbow, Light", description: "A simple ranged weapon.", basePrice: 25, damage: "1d8 piercing", properties: ["Ammunition (80/320)", "Loading", "Two-Handed"] },
+    { name: "Dart", description: "A small throwable weapon.", basePrice: 0.05, damage: "1d4 piercing", properties: ["Finesse", "Thrown (20/60)"] },
+    { name: "Shortbow", description: "A small, lightweight bow.", basePrice: 25, damage: "1d6 piercing", properties: ["Ammunition (80/320)", "Two-Handed"] },
+    { name: "Sling", description: "A small sling for stones.", basePrice: 0.1, damage: "1d4 bludgeoning", properties: ["Ammunition (30/120)"] },
+    // Martial Melee Weapons
+    { name: "Battleaxe", description: "A heavy axe for combat.", basePrice: 10, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
+    { name: "Flail", description: "A spiked weapon with a chain.", basePrice: 10, damage: "1d8 bludgeoning", properties: [] },
+    { name: "Glaive", description: "A polearm with a blade.", basePrice: 20, damage: "1d10 slashing", properties: ["Heavy", "Reach", "Two-Handed"] },
+    { name: "Greataxe", description: "A massive axe.", basePrice: 30, damage: "1d12 slashing", properties: ["Heavy", "Two-Handed"] },
+    { name: "Greatsword", description: "A massive sword.", basePrice: 50, damage: "2d6 slashing", properties: ["Heavy", "Two-Handed"] },
+    { name: "Halberd", description: "A polearm with an axe head.", basePrice: 20, damage: "1d10 slashing", properties: ["Heavy", "Reach", "Two-Handed"] },
+    { name: "Lance", description: "A long weapon for mounted combat.", basePrice: 10, damage: "1d12 piercing", properties: ["Reach", "Special"] },
+    { name: "Longsword", description: "A versatile blade.", basePrice: 15, damage: "1d8 slashing", properties: ["Versatile (1d10)"] },
+    { name: "Maul", description: "A large hammer.", basePrice: 10, damage: "2d6 bludgeoning", properties: ["Heavy", "Two-Handed"] },
+    { name: "Morningstar", description: "A spiked mace.", basePrice: 15, damage: "1d8 piercing", properties: [] },
+    { name: "Pike", description: "A long spear.", basePrice: 5, damage: "1d10 piercing", properties: ["Heavy", "Reach", "Two-Handed"] },
+    { name: "Rapier", description: "A thin, piercing blade.", basePrice: 25, damage: "1d8 piercing", properties: ["Finesse"] },
+    { name: "Scimitar", description: "A curved blade.", basePrice: 25, damage: "1d6 slashing", properties: ["Finesse", "Light"] },
+    { name: "Shortsword", description: "A small, sharp blade.", basePrice: 10, damage: "1d6 piercing", properties: ["Finesse", "Light"] },
+    { name: "Trident", description: "A three-pronged spear.", basePrice: 5, damage: "1d6 piercing", properties: ["Thrown (20/60)", "Versatile (1d8)"] },
+    { name: "War Pick", description: "A spiked weapon.", basePrice: 5, damage: "1d8 piercing", properties: [] },
+    { name: "Warhammer", description: "A large hammer.", basePrice: 15, damage: "1d8 bludgeoning", properties: ["Versatile (1d10)"] },
+    { name: "Whip", description: "A long, flexible weapon.", basePrice: 2, damage: "1d4 slashing", properties: ["Finesse", "Reach"] },
+    // Martial Ranged Weapons
+    { name: "Blowgun", description: "A small, stealthy weapon.", basePrice: 10, damage: "1 piercing", properties: ["Ammunition (25/100)", "Loading"] },
+    { name: "Crossbow, Hand", description: "A compact crossbow.", basePrice: 75, damage: "1d6 piercing", properties: ["Ammunition (30/120)", "Light", "Loading"] },
+    { name: "Crossbow, Heavy", description: "A large crossbow.", basePrice: 50, damage: "1d10 piercing", properties: ["Ammunition (100/400)", "Heavy", "Loading", "Two-Handed"] },
+    { name: "Longbow", description: "A powerful bow.", basePrice: 50, damage: "1d8 piercing", properties: ["Ammunition (150/600)", "Heavy", "Two-Handed"] },
+    { name: "Net", description: "A throwing trap.", basePrice: 1, damage: "None", properties: ["Special", "Thrown (5/15)"] }
+];
+/* from smithy.html */
+ORIGINAL.smithyArmour = [
+    // Light Armour
+    { name: "Padded", description: "A quilted outfit.", basePrice: 5, armourClass: "AC 11 + Dex", properties: ["Disadvantage on Stealth"] },
+    { name: "Leather", description: "A basic leather armour.", basePrice: 10, armourClass: "AC 11 + Dex", properties: [] },
+    { name: "Studded Leather", description: "Reinforced leather armour.", basePrice: 45, armourClass: "AC 12 + Dex", properties: [] },
+    // Medium Armour
+    { name: "Hide", description: "Armour made of animal hides.", basePrice: 10, armourClass: "AC 12 + Dex (max 2)", properties: [] },
+    { name: "Chain Shirt", description: "A chainmail shirt.", basePrice: 50, armourClass: "AC 13 + Dex (max 2)", properties: [] },
+    { name: "Scale Mail", description: "Armour with metal scales.", basePrice: 50, armourClass: "AC 14 + Dex (max 2)", properties: ["Disadvantage on Stealth"] },
+    { name: "Breastplate", description: "A metal chest piece.", basePrice: 400, armourClass: "AC 14 + Dex (max 2)", properties: [] },
+    { name: "Half Plate", description: "Partial plate armour.", basePrice: 750, armourClass: "AC 15 + Dex (max 2)", properties: ["Disadvantage on Stealth"] },
+    // Heavy Armour
+    { name: "Ring Mail", description: "Armour of metal rings.", basePrice: 30, armourClass: "AC 14", properties: ["Disadvantage on Stealth"] },
+    { name: "Chain Mail", description: "Armour made of interlocking rings.", basePrice: 75, armourClass: "AC 16", properties: ["Disadvantage on Stealth"] },
+    { name: "Splint", description: "Armour with splinted plates.", basePrice: 200, armourClass: "AC 17", properties: ["Disadvantage on Stealth"] },
+    { name: "Plate", description: "Full plate armour.", basePrice: 1500, armourClass: "AC 18", properties: ["Disadvantage on Stealth"] },
+    // Shields
+    { name: "Shield", description: "A basic shield.", basePrice: 10, armourClass: "+2 AC", properties: [] }
+];
+/* from alchemist.html */
+ORIGINAL.alchemist = [
+    // Potions
+    { name: "Healing Potion", description: "A red liquid that heals wounds.", basePrice: 50, effect: "Restores 2d4 + 2 HP", properties: ["Consumable"] },
+    { name: "Greater Healing Potion", description: "A stronger healing potion.", basePrice: 150, effect: "Restores 4d4 + 4 HP", properties: ["Consumable"] },
+    { name: "Superior Healing Potion", description: "An even stronger healing potion.", basePrice: 500, effect: "Restores 8d4 + 8 HP", properties: ["Consumable"] },
+    { name: "Supreme Healing Potion", description: "The strongest healing potion.", basePrice: 1350, effect: "Restores 10d4 + 20 HP", properties: ["Consumable"] },
+    { name: "Potion of Fire Breath", description: "Grants the ability to breathe fire.", basePrice: 200, effect: "Exhale fire (4d6 damage)", properties: ["Consumable", "Fire"] },
+    { name: "Potion of Invisibility", description: "Makes you invisible for 1 hour.", basePrice: 300, effect: "Grants invisibility", properties: ["Consumable", "Illusion"] },
+    { name: "Potion of Heroism", description: "Fills the drinker with courage.", basePrice: 180, effect: "Grants 10 temporary HP for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Giant Strength", description: "Enhances physical strength.", basePrice: 500, effect: "Strength becomes 23 for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Speed", description: "Doubles your speed for 1 minute.", basePrice: 300, effect: "Haste effect", properties: ["Consumable"] },
+    { name: "Potion of Resistance", description: "Grants resistance to a damage type.", basePrice: 300, effect: "Choose one resistance for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Water Breathing", description: "Allows breathing underwater.", basePrice: 100, effect: "Breathe underwater for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Climbing", description: "Grants climbing speed.", basePrice: 75, effect: "Climb speed equal to walking speed for 1 hour", properties: ["Consumable"] },
+
+    // Alchemical Items
+    { name: "Alchemist's Fire", description: "A sticky, flammable liquid.", basePrice: 50, effect: "1d4 fire damage per turn", properties: ["Thrown (20/60)"] },
+    { name: "Acid Flask", description: "A flask of corrosive acid.", basePrice: 25, effect: "2d6 acid damage", properties: ["Thrown (20/60)"] },
+    { name: "Smoke Bomb", description: "Creates a cloud of smoke.", basePrice: 30, effect: "Obscures a 10-foot radius", properties: ["Thrown (10/30)"] },
+    { name: "Tanglefoot Bag", description: "Entangles a target in sticky goo.", basePrice: 50, effect: "Restrains target", properties: ["Thrown (20/60)"] },
+    { name: "Thunderstone", description: "Creates a deafening boom.", basePrice: 100, effect: "Deafens and deals 2d6 thunder damage", properties: ["Thrown (30/90)"] },
+    { name: "Oil of Slipperiness", description: "Creates a slick surface.", basePrice: 120, effect: "Grants freedom of movement or creates a slippery surface", properties: ["Consumable"] },
+    { name: "Dust of Disappearance", description: "Turns you and nearby creatures invisible.", basePrice: 350, effect: "Invisibility for 2d4 minutes", properties: ["Consumable"] },
+    { name: "Dust of Dryness", description: "Absorbs water in a 15-foot cube.", basePrice: 150, effect: "Absorbs water into a small bead", properties: ["Consumable"] },
+    { name: "Bead of Force", description: "Creates a force field.", basePrice: 1000, effect: "Traps creatures in a 10-foot sphere", properties: ["Thrown", "Force"] },
+
+    // Reagents
+    { name: "Mandrake Root", description: "A rare magical root.", basePrice: 10, effect: "Enhances spellcasting", properties: ["Spell Component"] },
+    { name: "Pixie Dust", description: "Glittering magical powder.", basePrice: 100, effect: "Grants flight for 1 minute", properties: ["Consumable"] },
+    { name: "Dragon's Blood", description: "Rare reagent from a dragon.", basePrice: 500, effect: "Used for powerful rituals", properties: ["Alchemy"] },
+    { name: "Sulfuric Crystal", description: "A bright yellow crystal.", basePrice: 25, effect: "Key ingredient in explosions", properties: ["Alchemy"] },
+    { name: "Nightshade Berries", description: "Toxic black berries.", basePrice: 5, effect: "Used to create poisons", properties: ["Poison"] },
+    { name: "Frost Lily Petal", description: "A magical ice flower.", basePrice: 50, effect: "Used in cold-based potions", properties: ["Alchemy"] },
+    { name: "Phoenix Feather", description: "A single feather from a phoenix.", basePrice: 1000, effect: "Used in resurrection magic", properties: ["Spell Component"] },
+    { name: "Unicorn Horn Powder", description: "Powdered unicorn horn.", basePrice: 500, effect: "Restores 1 level of exhaustion", properties: ["Spell Component"] },
+    { name: "Amber Shard", description: "A shard of glowing amber.", basePrice: 25, effect: "Used in lightning-based potions", properties: ["Alchemy"] }
+];
+/* from artificer.html */
+ORIGINAL.artificer = [
+    // Gadgets and Mechanical Devices
+    { name: "Clockwork Spider", description: "A tiny mechanical spider that scuttles about.", basePrice: 50, properties: ["Can climb walls", "Mildly creepy"] },
+    { name: "Gnomish Timekeeper", description: "A precise pocket watch.", basePrice: 75, properties: ["Tracks time accurately"] },
+    { name: "Automaton Hand", description: "A mechanical hand capable of simple tasks.", basePrice: 200, properties: ["Can hold small objects"] },
+    { name: "Music Box", description: "Plays a hauntingly beautiful tune.", basePrice: 30, properties: ["Creates ambience"] },
+    { name: "Arcane Dynamo", description: "Generates minor magical energy.", basePrice: 300, properties: ["Powers small devices"] },
+    { name: "Mechanical Bird", description: "Flaps its wings and whistles tunes.", basePrice: 100, properties: ["Amusing and decorative"] },
+    
+    // Utility Tools
+    { name: "Goggles of Detection", description: "Reveals hidden objects.", basePrice: 250, properties: ["Advantage on Perception checks"] },
+    { name: "Tinker’s Toolkit", description: "All the tools needed for mechanical work.", basePrice: 50, properties: ["Essential for repairs"] },
+    { name: "Portable Forge", description: "A compact smithing setup.", basePrice: 500, properties: ["Heats metal for crafting"] },
+    { name: "Self-Writing Quill", description: "Writes on command.", basePrice: 75, properties: ["Requires dictation"] },
+    { name: "Magnetic Gloves", description: "Attract metal objects.", basePrice: 100, properties: ["Advantage on Sleight of Hand checks involving metal"] },
+    { name: "Miniature Drill", description: "Perfect for delicate work.", basePrice: 25, properties: ["Battery lasts 1 hour"] },
+    
+    // Explosives and Projectiles
+    { name: "Clockwork Grenade", description: "A timed explosive device.", basePrice: 150, properties: ["Deals 3d6 fire damage"] },
+    { name: "Spring-Loaded Dart Launcher", description: "A hidden dart launcher.", basePrice: 200, properties: ["Deals 1d4 piercing damage"] },
+    { name: "Firestarter Capsule", description: "Instantly ignites a small fire.", basePrice: 10, properties: ["Single-use"] },
+    { name: "Net Launcher", description: "Fires a net to entangle targets.", basePrice: 300, properties: ["Restrains targets"] },
+    { name: "Smoke Capsule", description: "Creates a 10 ft cloud of smoke.", basePrice: 20, properties: ["Obscures vision"] },
+    
+    // Enchanted and Rare Items
+    { name: "Perpetual Motion Orb", description: "A magical sphere that never stops spinning.", basePrice: 1000, properties: ["Hypnotic to watch"] },
+    { name: "Mechanical Familiar Core", description: "Transforms into a mechanical animal companion.", basePrice: 500, properties: ["Choose form on activation"] },
+    { name: "Arcane Battery", description: "Stores and releases magical energy.", basePrice: 750, properties: ["Holds 3 spell levels"] },
+    { name: "Automaton Kit", description: "Build your own small automaton.", basePrice: 400, properties: ["Takes 8 hours to assemble"] },
+    { name: "Flame Turret", description: "Deploys a small turret that shoots fire.", basePrice: 1000, properties: ["Deals 2d8 fire damage"] },
+    { name: "Hover Disk", description: "A levitating platform for carrying items.", basePrice: 600, properties: ["Carries up to 300 lbs"] }
+];
+/* from clothier.html */
+ORIGINAL.clothier = [
+    // Everyday Clothing
+    { name: "Traveller's Outfit", description: "Durable clothing for long journeys.", basePrice: 2, properties: ["Practical", "Weather-resistant"] },
+    { name: "Fine Clothes", description: "Elegant clothing for nobles and events.", basePrice: 15, properties: ["Stylish", "Expensive-looking"] },
+    { name: "Winter Clothing", description: "Warm clothing for cold climates.", basePrice: 10, properties: ["Cold-resistant"] },
+    { name: "Peasant's Garb", description: "Simple and inexpensive clothing.", basePrice: 0.5, properties: ["Modest"] },
+
+    // Disguises and Costumes
+    { name: "Disguise Kit", description: "A kit for altering appearance.", basePrice: 25, properties: ["10 uses", "Includes wigs and makeup"] },
+    { name: "Festival Costume", description: "Colourful outfit for celebrations.", basePrice: 5, properties: ["Eye-catching"] },
+    { name: "Noble Disguise", description: "Clothing to impersonate nobility.", basePrice: 25, properties: ["Convincing if well-used"] },
+
+    // Cloaks and Capes
+    { name: "Hooded Cloak", description: "A sturdy, hooded cloak.", basePrice: 5, properties: ["Provides modest protection from the weather"] },
+    { name: "Cape of Fashions", description: "A reversible cape with different designs.", basePrice: 10, properties: ["Adjustable style"] },
+    { name: "Woolen Shawl", description: "A warm shawl for cool weather.", basePrice: 3, properties: ["Comfortable"] },
+    { name: "Silk Cloak", description: "A luxurious silk cloak.", basePrice: 50, properties: ["Very stylish"] },
+
+    // Hats and Headwear
+    { name: "Wide-Brimmed Hat", description: "Shades the wearer from the sun.", basePrice: 2, properties: ["Practical"] },
+    { name: "Feathered Cap", description: "A jaunty cap with a feather.", basePrice: 5, properties: ["Stylish"] },
+    { name: "Wizard's Hat", description: "A tall, pointed hat.", basePrice: 15, properties: ["Enhances arcane presence"] },
+    { name: "Veiled Headdress", description: "A mysterious and elegant headpiece.", basePrice: 20, properties: ["Conceals features"] },
+
+    // Enchanted Apparel
+    { name: "Cloak of Shadows", description: "Blends into darkness when worn.", basePrice: 100, properties: ["Advantage on Stealth checks"] },
+    { name: "Boots of Silence", description: "Muffle the wearer's steps.", basePrice: 150, properties: ["Stealth bonus"] },
+    { name: "Hat of Disguise", description: "Allows the wearer to alter their appearance.", basePrice: 250, properties: ["Illusion magic"] },
+    { name: "Gloves of Dexterity", description: "Enhance manual dexterity.", basePrice: 300, properties: ["Grants +2 to Sleight of Hand"] }
+];
+/* from jeweller.html */
+ORIGINAL.jeweller = [
+    // Gemstones
+    { name: "Ruby", description: "A deep red gemstone.", basePrice: 100, properties: ["Rare"] },
+    { name: "Sapphire", description: "A dazzling blue gemstone.", basePrice: 150, properties: ["Rare"] },
+    { name: "Emerald", description: "A vibrant green gemstone.", basePrice: 200, properties: ["Rare"] },
+    { name: "Amethyst", description: "A purple gemstone with magical properties.", basePrice: 75, properties: ["Enhances concentration"] },
+    { name: "Topaz", description: "A golden-yellow gemstone.", basePrice: 50, properties: ["Resilient"] },
+    { name: "Onyx", description: "A black gemstone with a polished surface.", basePrice: 40, properties: ["Mysterious"] },
+    { name: "Diamond", description: "A brilliant gemstone of unmatched beauty.", basePrice: 500, properties: ["Extremely rare"] },
+    // Rings
+    { name: "Gold Ring", description: "A simple gold band.", basePrice: 50, properties: ["Stylish"] },
+    { name: "Silver Ring", description: "A finely crafted silver band.", basePrice: 25, properties: ["Elegant"] },
+    { name: "Platinum Ring", description: "A luxurious platinum ring.", basePrice: 150, properties: ["Expensive"] },
+    { name: "Ring of Protection", description: "Grants a bonus to AC.", basePrice: 500, properties: ["+1 AC"] },
+    { name: "Ring of Spell Storing", description: "Can hold up to 5 levels of spells.", basePrice: 1000, properties: ["Stores spells"] },
+    { name: "Ring of Fire Resistance", description: "Reduces fire damage.", basePrice: 700, properties: ["Fire resistance"] },
+    // Necklaces
+    { name: "Gold Necklace", description: "A delicate gold chain.", basePrice: 75, properties: ["Stylish"] },
+    { name: "Silver Pendant", description: "A silver chain with a small pendant.", basePrice: 50, properties: ["Elegant"] },
+    { name: "Amulet of Health", description: "Boosts Constitution to 19.", basePrice: 4000, properties: ["Enchanted"] },
+    { name: "Necklace of Adaptation", description: "Allows the wearer to breathe normally in any environment.", basePrice: 500, properties: ["Environmental adaptation"] },
+    { name: "Periapt of Wound Closure", description: "Stabilises you when dying.", basePrice: 300, properties: ["Magical healing"] },
+    // Earrings and Bracelets
+    { name: "Pearl Earrings", description: "Elegant pearl earrings.", basePrice: 200, properties: ["Stylish"] },
+    { name: "Bracelet of Charisma", description: "Enhances social charm.", basePrice: 1000, properties: ["+2 to Charisma checks"] },
+    { name: "Charmed Bracelet", description: "Enhances saving throws against enchantments.", basePrice: 600, properties: ["Enchantment resistance"] },
+    // Miscellaneous
+    { name: "Jeweled Goblet", description: "A golden goblet encrusted with gems.", basePrice: 250, properties: ["Ornate"] },
+    { name: "Tiara of Insight", description: "Grants a bonus to Wisdom checks.", basePrice: 800, properties: ["+2 to Wisdom checks"] },
+    { name: "Brooch of Shielding", description: "Grants resistance to force damage.", basePrice: 1200, properties: ["Force resistance"] },
+    { name: "Crown of Command", description: "Enables the wearer to command loyalty.", basePrice: 2500, properties: ["Command ability"] }
+];
+/* from fletcher.html */
+ORIGINAL.fletcher = [
+    // Bows and Crossbows
+    { name: "Shortbow", description: "A simple, lightweight bow.", basePrice: 25, properties: ["Range 80/320 ft", "Simple weapon"] },
+    { name: "Longbow", description: "A powerful bow for long-range attacks.", basePrice: 50, properties: ["Range 150/600 ft", "Martial weapon"] },
+    { name: "Crossbow, Light", description: "A smaller, easier-to-handle crossbow.", basePrice: 25, properties: ["Range 80/320 ft", "Loading"] },
+    { name: "Crossbow, Heavy", description: "A large crossbow for devastating power.", basePrice: 50, properties: ["Range 100/400 ft", "Heavy", "Loading"] },
+    { name: "Hand Crossbow", description: "A compact crossbow for quick attacks.", basePrice: 75, properties: ["Range 30/120 ft", "Light", "Loading"] },
+    
+    // Ammunition
+    { name: "Arrows (20)", description: "A bundle of standard arrows.", basePrice: 1, properties: ["Used with bows"] },
+    { name: "Bolts (20)", description: "A bundle of standard crossbow bolts.", basePrice: 1, properties: ["Used with crossbows"] },
+    { name: "Barbed Arrows (10)", description: "Arrows with sharp barbs for extra damage.", basePrice: 5, properties: ["+1 to damage"] },
+    { name: "Fire Arrows (10)", description: "Arrows tipped with flammable materials.", basePrice: 10, properties: ["Ignite targets on hit"] },
+    { name: "Silvered Bolts (5)", description: "Bolts coated in silver.", basePrice: 10, properties: ["Bypass resistances to silver"] },
+    { name: "Explosive Arrows (5)", description: "Arrows with small explosive tips.", basePrice: 25, properties: ["1d6 fire damage in a 5 ft radius"] },
+    
+    // Accessories
+    { name: "Quiver", description: "Holds up to 20 arrows.", basePrice: 1, properties: ["Durable"] },
+    { name: "Bolt Case", description: "Holds up to 20 crossbow bolts.", basePrice: 1, properties: ["Compact"] },
+    { name: "Bowstring", description: "A replacement string for bows.", basePrice: 2, properties: ["Essential for maintenance"] },
+    { name: "Crossbow Mechanism", description: "Replacement parts for crossbows.", basePrice: 5, properties: ["Essential for repairs"] },
+    { name: "Tension Wrench", description: "Used for adjusting crossbow tension.", basePrice: 3, properties: ["Improves accuracy"] },
+    
+    // Enchanted Ranged Equipment
+    { name: "Bow of Accuracy", description: "Grants a bonus to attack rolls.", basePrice: 500, properties: ["+1 to attack rolls"] },
+    { name: "Quiver of Endless Arrows", description: "Generates non-magical arrows.", basePrice: 1000, properties: ["Unlimited arrows"] },
+    { name: "Arrows of Slaying (3)", description: "Arrows enchanted to deal extra damage to specific creatures.", basePrice: 500, properties: ["+3d6 damage to chosen creature type"] },
+    { name: "Bracers of Archery", description: "Enhances proficiency with bows.", basePrice: 400, properties: ["+2 damage with bows"] },
+    { name: "Crossbow of Speed", description: "Allows for rapid firing.", basePrice: 750, properties: ["Ignore loading property"] },
+    { name: "Arrow Catching Shield", description: "Attracts arrows aimed at nearby allies.", basePrice: 600, properties: ["Draws ranged attacks to you"] }
+];
+/* from black-market.html */
+ORIGINAL.blackMarket = [
+    // Raw Materials
+    { name: "Raw Arcanum", description: "An orange-to-yellow glowing crystal that is highly unstable and needs to be handled with care.", basePrice: 1000, effect: "Unstable, may explode under duress", properties: ["Arcane", "Dangerous"] },
+    { name: "Refined Arcanum", description: "A bright-yellow glowing powder used in various highly guarded arcane practices. Incredibly powerful but dangerous.", basePrice: 3000, effect: "Enhances spell potency", properties: ["Arcane", "Rare"] },
+    { name: "Blackleaf", description: "A mild relaxant mostly smoked. The best Blackleaf is grown in the former Caldwell Dominion.", basePrice: 25, effect: "Grants mild euphoria", properties: ["Consumable", "Herbal"] },
+    { name: "Rotroot Powder", description: "Ground powder of a root from the Withering Fields. Brewed into a tea, it grants visions of highly variable truth.", basePrice: 500, effect: "Visions of the unknown", properties: ["Consumable", "Mystical"] },
+    // Potions & Alchemical Concoctions
+    { name: "Potion of Shadow Step", description: "Allows the drinker to teleport between shadows for 1 minute.", basePrice: 1200, effect: "Teleport up to 60 ft between shadows", properties: ["Consumable", "Dark Magic"] },
+    { name: "Elixir of Night's Embrace", description: "Grants darkvision for 8 hours.", basePrice: 400, effect: "Gain darkvision (60 ft)", properties: ["Consumable", "Arcane"] },
+    { name: "Bloodfire Elixir", description: "Boosts physical strength but deals damage over time.", basePrice: 1000, effect: "+2 Strength, take 1d6 fire damage per round", properties: ["Consumable", "Cursed"] },
+    { name: "Venomous Salve", description: "A coating that adds poison damage to weapons.", basePrice: 300, effect: "Weapon deals +1d6 poison damage for 1 hour", properties: ["Consumable", "Poison"] },
+    // Poisons
+    { name: "Widow's Kiss", description: "A lethal poison extracted from rare spiders.", basePrice: 1500, effect: "Deals 3d6 poison damage, target must save or be paralyzed for 1 hour", properties: ["Poison", "Deadly"] },
+    { name: "Silent Whisper", description: "A poison that renders the victim unable to speak for 24 hours.", basePrice: 500, effect: "Prevents speech for 24 hours", properties: ["Poison", "Subtle"] },
+    { name: "Nightshade Oil", description: "Coats a weapon to deal poison damage.", basePrice: 250, effect: "Weapon deals +1d4 poison damage for 1 hour", properties: ["Poison"] },
+    // Magical Artefacts
+    { name: "Amulet of Lost Souls", description: "Holds the spirits of the deceased, whispering their secrets to the wearer.", basePrice: 2000, effect: "Grants advantage on Insight rolls", properties: ["Cursed", "Arcane"] },
+    { name: "Ring of Shadows", description: "Allows the wearer to hide in plain sight while in dim light or darkness.", basePrice: 1500, effect: "Grants invisibility in darkness", properties: ["Stealth"] },
+    { name: "Tome of Forbidden Knowledge", description: "Contains dangerous rituals and spells.", basePrice: 3000, effect: "Grants access to forbidden spells", properties: ["Arcane", "Cursed"] },
+    { name: "Orb of Night", description: "An orb that casts magical darkness over a large area.", basePrice: 1800, effect: "Casts Darkness (radius 30 ft)", properties: ["Dark Magic"] },
+    // Rare Goods
+    { name: "Void Crystal", description: "A fragment of the void, cold to the touch and pulsating with dark energy.", basePrice: 5000, effect: "Used in powerful necromantic rituals", properties: ["Arcane", "Rare"] },
+    { name: "Ethereal Silk", description: "Silk harvested from ethereal spiders, shimmering with otherworldly colours.", basePrice: 1200, effect: "Used to craft magical robes", properties: ["Material", "Arcane"] },
+    { name: "Phoenix Ash", description: "Ash from a resurrected phoenix, said to hold the secret to immortality.", basePrice: 4000, effect: "Can resurrect a dead creature", properties: ["Rare", "Life Magic"] },
+    { name: "Dragon's Eye Gem", description: "A gem imbued with the essence of a dragon's soul.", basePrice: 8000, effect: "Grants resistance to a damage type (chosen at attunement)", properties: ["Rare", "Arcane"] },
+    // Illegal Trade Goods
+    { name: "Slaver's Collar", description: "A magical collar used to subdue and control the wearer.", basePrice: 1500, effect: "Forces wearer to obey commands", properties: ["Dark Magic", "Cursed"] },
+    { name: "Smuggler's Map", description: "Reveals hidden routes and stashes.", basePrice: 1000, effect: "Reveals hidden paths within 1 mile", properties: ["Magical"] },
+    { name: "Powdered Moonstone", description: "A shimmering powder with addictive qualities.", basePrice: 750, effect: "Grants +1 to Charisma rolls for 1 hour, then exhaustion", properties: ["Consumable", "Addictive"] },
+    { name: "Forbidden Spell Scroll", description: "Contains a spell outlawed by most kingdoms.", basePrice: 2000, effect: "Cast a dangerous forbidden spell", properties: ["Magical", "Rare"] },
+    // Cursed Items
+    { name: "Blade of Betrayal", description: "A dagger that curses its wielder to distrust allies.", basePrice: 1200, effect: "Grants +2 to attacks but imposes disadvantage on Insight rolls", properties: ["Cursed"] },
+    { name: "Cursed Coin", description: "A single coin that brings misfortune to its owner.", basePrice: 100, effect: "Grants bad luck (disadvantage on random rolls)", properties: ["Cursed"] },
+    { name: "Mask of Eternal Grief", description: "A mask that traps the wearer's emotions.", basePrice: 800, effect: "Wearer becomes immune to fear but cannot feel joy", properties: ["Cursed"] }
+];
+
+/* -------------------------------------------------------------------------
+   2e. DRAFT ADDITIONS — written 2026-11-23 for review.
+   Shown with a NEW badge and switchable per browser ("Include new items").
+   Same data shape as each shop's originals. Prune freely; anything that
+   survives review can be promoted into the standalone shop page too.
+   ------------------------------------------------------------------------- */
+const ADDED = {
+  general: [
+    // Tools and Gear (SRD)
+    { name: "Caltrops (Bag of 20)", description: "Iron jacks for unwelcome followers.", basePrice: 1, weight: "2 lbs", properties: ["Covers a 5-foot square", "DC 15 Dex save or 1 piercing and stop"] },
+    { name: "Hunting Trap", description: "A toothed iron jaw on a chain.", basePrice: 5, weight: "25 lbs", properties: ["DC 13 Dex save or 1d4 piercing and stuck"] },
+    { name: "Manacles", description: "Iron cuffs with a simple key.", basePrice: 2, weight: "6 lbs", properties: ["DC 20 to slip or break"] },
+    { name: "Lock", description: "A sturdy padlock with key.", basePrice: 10, weight: "1 lb", properties: ["DC 15 to pick"] },
+    { name: "Block and Tackle", description: "Pulleys and cable for heavy lifting.", basePrice: 1, weight: "5 lbs", properties: ["Hoist four times the usual weight"] },
+    { name: "Tent, Two-Person", description: "Canvas shelter for two.", basePrice: 2, weight: "20 lbs", properties: ["Keeps off the worst of the rain"] },
+    { name: "Fishing Tackle", description: "Rod, line, hooks and floats.", basePrice: 1, weight: "4 lbs", properties: ["Helps with foraging by water"] },
+    { name: "Lamp", description: "A clay oil lamp.", basePrice: 0.5, weight: "1 lb", properties: ["Bright light (15 ft)", "Burns 6 hours per flask"] },
+    { name: "Oil (Flask)", description: "Lamp oil, also rather flammable.", basePrice: 0.1, weight: "1 lb", properties: ["Thrown: 5 fire damage if lit"] },
+    { name: "Chain (10 ft)", description: "Ten feet of iron links.", basePrice: 5, weight: "10 lbs", properties: ["DC 20 Strength to burst"] },
+    { name: "Pole (10 ft)", description: "For prodding things one would rather not touch.", basePrice: 0.05, weight: "7 lbs", properties: ["Classic trap detector"] },
+    { name: "Hourglass", description: "Sand measured to the hour.", basePrice: 25, weight: "1 lb", properties: ["Timekeeping"] },
+    // Food and Provisions (harbour-town flavour)
+    { name: "Ship's Biscuit (10)", description: "Hard tack that outlasts most sailors.", basePrice: 0.3, weight: "2 lbs", properties: ["Non-perishable", "Soak before biting"] },
+    { name: "Pickled Herring (Jar)", description: "Briny and unapologetic.", basePrice: 0.4, weight: "2 lbs", properties: ["Keeps for months"] },
+    { name: "Smoked Eel", description: "A coil of dark, oily fish.", basePrice: 0.5, weight: "1 lb", properties: ["Long-lasting"] },
+    // Miscellaneous Items
+    { name: "Soap", description: "A cake of lye soap.", basePrice: 0.02, weight: "-", properties: ["Social advantage, arguably"] },
+    { name: "Sealing Wax", description: "A stick of red wax.", basePrice: 0.5, weight: "-", properties: ["Seals letters"] },
+    { name: "Sack", description: "A plain burlap sack.", basePrice: 0.01, weight: "0.5 lbs", properties: ["Holds 30 lbs"] }
+  ],
+  smithyWeapons: [
+    { name: "Silvered Dagger", description: "A dagger with a silver-washed edge.", basePrice: 102, damage: "1d4 piercing", properties: ["Finesse", "Light", "Thrown (20/60)", "Silvered"] },
+    { name: "Silvered Longsword", description: "Good steel, better manners against lycanthropes.", basePrice: 115, damage: "1d8 slashing", properties: ["Versatile (1d10)", "Silvered"] },
+    { name: "Silvering (any weapon)", description: "Vladek will silver your blade while you wait. Mostly.", basePrice: 100, damage: "As weapon", properties: ["Overcomes resistance to non-silvered attacks"] },
+    { name: "Masterwork Rapier", description: "Balanced so finely it seems to hover.", basePrice: 150, damage: "1d8 piercing", properties: ["Finesse", "Non-magical, but very pretty"] },
+    { name: "Whetstone", description: "For keeping the pointy end pointy.", basePrice: 0.01, damage: "None", properties: ["Maintenance"] }
+  ],
+  smithyArmour: [
+    { name: "Mithral Chain Shirt", description: "Light as linen, strong as steel.", basePrice: 800, armourClass: "AC 13 + Dex (max 2)", properties: ["Uncommon magic", "No Stealth disadvantage"] },
+    { name: "Adamantine Breastplate", description: "Dark, dense, and quite unbothered by blows.", basePrice: 900, armourClass: "AC 14 + Dex (max 2)", properties: ["Uncommon magic", "Critical hits become normal hits"] },
+    { name: "Barding, Chain Mail", description: "Chain mail for your horse.", basePrice: 300, armourClass: "AC 16", properties: ["Disadvantage on Stealth", "Mount armour"] }
+  ],
+  alchemist: [
+    // Potions
+    { name: "Antitoxin", description: "A bitter draught that settles the blood.", basePrice: 50, effect: "Advantage on saves vs. poison for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Animal Friendship", description: "Smells faintly of wet dog.", basePrice: 100, effect: "Cast Animal Friendship (DC 13) for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Growth", description: "A cloudy liquid with a tiny bead that swells.", basePrice: 270, effect: "Enlarge for 1d4 hours", properties: ["Consumable", "Transmutation"] },
+    { name: "Potion of Diminution", description: "A tiny bead in red fluid that shrinks.", basePrice: 270, effect: "Reduce for 1d4 hours", properties: ["Consumable", "Transmutation"] },
+    { name: "Potion of Gaseous Form", description: "Contents appear to be fog in a bottle.", basePrice: 300, effect: "Gaseous Form for 1 hour", properties: ["Consumable"] },
+    { name: "Potion of Mind Reading", description: "Dense purple fluid with a pink cloud.", basePrice: 450, effect: "Detect Thoughts (DC 13) for 1 minute", properties: ["Consumable", "Divination"] },
+    { name: "Philter of Love", description: "Rose-hued, effervescent, regrettable.", basePrice: 90, effect: "Charmed by the next creature seen for 1 hour", properties: ["Consumable", "Enchantment"] },
+    { name: "Potion of Poison", description: "Looks, smells and tastes like a healing potion.", basePrice: 100, effect: "3d6 poison damage, DC 13 Con save or poisoned", properties: ["Consumable", "Poison"] },
+    // Alchemical Items
+    { name: "Basic Poison (Vial)", description: "A coating for blades and arrowheads.", basePrice: 100, effect: "DC 10 Con save or 1d4 poison damage", properties: ["Poison", "Lasts 1 minute on a weapon"] },
+    { name: "Fog Flask", description: "Uncork for a grey cloud that clings to the ground.", basePrice: 40, effect: "20-foot radius heavily obscured for 1 minute", properties: ["Consumable", "Thrown (20/60)"] },
+    // Reagents
+    { name: "Ghostcap Mushroom", description: "A pale fungus that glows faintly in the dark.", basePrice: 15, effect: "Used in darkvision and divination draughts", properties: ["Alchemy"] },
+    { name: "Salt of the Deep", description: "Grey crystals from far below the waves.", basePrice: 40, effect: "Used in water-breathing potions", properties: ["Alchemy"] }
+  ],
+  artificer: [
+    // Gadgets and Mechanical Devices
+    { name: "Wind-Up Mouse", description: "Scurries in a straight line, squeaking.", basePrice: 5, properties: ["Makes a fine distraction"] },
+    { name: "Pocket Foghorn", description: "Brass and bellows, unreasonably loud.", basePrice: 15, properties: ["Audible for 2 miles"] },
+    { name: "Clockwork Lockpick", description: "Fiddles with tumblers so you needn't.", basePrice: 150, properties: ["+2 to checks with thieves' tools"] },
+    // Utility Tools
+    { name: "Collapsing Ladder", description: "A 10-foot ladder that folds into a satchel.", basePrice: 40, properties: ["Folds to 2 feet"] },
+    { name: "Brass Ear Trumpet", description: "Amplifies whispers through walls and doors.", basePrice: 35, properties: ["Advantage on Perception checks to listen"] },
+    { name: "Self-Lighting Pipe", description: "Never short of a spark.", basePrice: 10, properties: ["Lights on a twist"] },
+    // Explosives and Projectiles
+    { name: "Flash Capsule", description: "Pops with a blinding burst of light.", basePrice: 60, properties: ["DC 13 Con save or blinded until end of next turn"] },
+    // Enchanted and Rare Items
+    { name: "Lantern of Revealing", description: "Its light shows what was meant to stay hidden.", basePrice: 500, properties: ["Reveals invisible creatures within 30 ft"] },
+    { name: "Bag of Tricks (Grey)", description: "Pull out a fuzzy ball and see what happens.", basePrice: 400, properties: ["Summons a random beast 3/day"] }
+  ],
+  clothier: [
+    // Everyday Clothing
+    { name: "Oilskin Coat", description: "Waxed canvas for harbour weather.", basePrice: 4, properties: ["Rain-resistant", "Smells of the sea"] },
+    { name: "Sailor's Slops", description: "Loose breeches and a striped shirt.", basePrice: 1, properties: ["Practical"] },
+    { name: "Courtier's Outfit", description: "Brocade, lace and a great deal of buttons.", basePrice: 40, properties: ["Very stylish", "Very expensive-looking"] },
+    { name: "Vestments", description: "Robes fit for clergy of any persuasion.", basePrice: 8, properties: ["Respectable"] },
+    // Disguises and Costumes
+    { name: "Masquerade Mask", description: "Gilded, feathered, and suitably mysterious.", basePrice: 12, properties: ["Conceals features"] },
+    { name: "Mourning Veil", description: "Black lace for grief, real or otherwise.", basePrice: 4, properties: ["Conceals features", "Discourages questions"] },
+    // Hats and Headwear
+    { name: "Tricorn Hat", description: "The captain's choice.", basePrice: 3, properties: ["Stylish"] },
+    // Enchanted Apparel
+    { name: "Cloak of the Manta Ray", description: "Hood up, and the sea lets you breathe.", basePrice: 500, properties: ["Water breathing", "Swim speed 60 ft"] },
+    { name: "Cloak of Elvenkind", description: "Shifts colour to suit its surroundings.", basePrice: 500, properties: ["Advantage on Stealth", "Perception to see you has disadvantage"] }
+  ],
+  jeweller: [
+    // Gemstones
+    { name: "Moonstone", description: "A milky stone with a blue sheen.", basePrice: 50, properties: ["Uncommon"] },
+    { name: "Pearl", description: "A lustrous white pearl.", basePrice: 100, properties: ["Uncommon"] },
+    { name: "Black Pearl", description: "A rare dark pearl from deep waters.", basePrice: 500, properties: ["Rare"] },
+    { name: "Jade", description: "A smooth green stone, cool to the touch.", basePrice: 100, properties: ["Uncommon"] },
+    { name: "Aquamarine", description: "Pale blue-green, clear as shallow water.", basePrice: 500, properties: ["Rare"] },
+    { name: "Fire Opal", description: "Glows with a fiery inner light.", basePrice: 1000, properties: ["Very rare"] },
+    { name: "Star Sapphire", description: "A blue gem with a white star at its heart.", basePrice: 1000, properties: ["Very rare"] },
+    // Rings
+    { name: "Signet Ring", description: "Engraved with a crest of your choosing.", basePrice: 5, properties: ["Engraving +10 gp"] },
+    { name: "Ring of Swimming", description: "A band of green-tinted silver.", basePrice: 300, properties: ["Swim speed 40 ft"] },
+    // Necklaces
+    { name: "Silver Locket", description: "Room for a portrait or a lock of hair.", basePrice: 30, properties: ["Sentimental"] }
+  ],
+  fletcher: [
+    // Bows and Crossbows
+    { name: "Sling", description: "Leather cup and two cords.", basePrice: 0.1, properties: ["Range 30/120 ft", "Simple weapon"] },
+    { name: "Blowgun", description: "A slender tube for needle darts.", basePrice: 10, properties: ["Range 25/100 ft", "Loading"] },
+    // Ammunition
+    { name: "Sling Bullets (20)", description: "Lead shot, satisfyingly heavy.", basePrice: 0.04, properties: ["Used with slings"] },
+    { name: "Blowgun Needles (50)", description: "Fine needles, easily poisoned.", basePrice: 1, properties: ["Used with blowguns"] },
+    { name: "Whistling Arrows (10)", description: "Shrieks in flight; a signal across a field.", basePrice: 2, properties: ["Audible for 1 mile"] },
+    { name: "Blunt Arrows (20)", description: "Padded heads for taking prisoners.", basePrice: 1, properties: ["Bludgeoning damage"] },
+    { name: "Silvered Arrows (10)", description: "Silver-tipped shafts.", basePrice: 100, properties: ["Bypass resistances to silver"] },
+    { name: "+1 Arrows (5)", description: "Fletched with fey-grey feathers.", basePrice: 250, properties: ["+1 to attack and damage", "Uncommon magic"] },
+    // Accessories
+    { name: "Bow Wax", description: "Keeps strings supple in damp weather.", basePrice: 0.2, properties: ["Maintenance"] },
+    { name: "Archer's Bracer", description: "Leather guard for the forearm.", basePrice: 1, properties: ["Saves a nasty welt"] }
+  ],
+  blackMarket: [
+    // Poisons
+    { name: "Assassin's Blood", description: "A tasteless poison slipped into food or drink.", basePrice: 150, effect: "DC 10 Con save or 1d12 poison damage and poisoned for 24 hours", properties: ["Poison", "Ingested"] },
+    { name: "Truth Serum", description: "A few drops in wine loosen any tongue.", basePrice: 150, effect: "DC 11 Con save or poisoned for 1 hour and can't knowingly lie", properties: ["Poison", "Ingested"] },
+    { name: "Midnight Tears", description: "Does nothing until the stroke of midnight.", basePrice: 1500, effect: "At midnight: DC 17 Con save or 9d6 poison damage", properties: ["Poison", "Ingested", "Deadly"] },
+    { name: "Oil of Taggit", description: "A greasy contact poison.", basePrice: 400, effect: "DC 13 Con save or poisoned and unconscious for 24 hours", properties: ["Poison", "Contact"] },
+    { name: "Burnt Othur Fumes", description: "Burn it, and breathe elsewhere.", basePrice: 500, effect: "DC 13 Con save or 3d6 poison damage, repeat each turn", properties: ["Poison", "Inhaled"] },
+    // Illegal Trade Goods
+    { name: "Forged Writ of Freeholding", description: "Bears a convincing seal and an unconvincing signature.", basePrice: 750, effect: "Passes casual inspection; DC 15 Investigation exposes it", properties: ["Forgery", "Illegal"] },
+    { name: "Forged Guild Contract", description: "An Adventurer's Guild contract, if you don't look closely.", basePrice: 300, effect: "Grants access to guild postings until discovered", properties: ["Forgery", "Illegal"] },
+    // Tools of the Trade
+    { name: "Thieves' Tools", description: "Picks, files and a tension bar in a soft roll.", basePrice: 40, effect: "Pick locks and disarm traps", properties: ["Tool", "Marked up"] },
+    { name: "Poisoner's Kit", description: "Vials, pipettes and a dark glass mortar.", basePrice: 75, effect: "Craft and apply poisons", properties: ["Tool", "Marked up"] }
+  ]
+};
+
+/* -------------------------------------------------------------------------
+   2f. SHOP CONFIG
+   storageKey / lastKey are the SAME localStorage keys the standalone shop
+   pages use — so this screen and e.g. smithy.html show identical stock.
+   count() mirrors each page's original stock size.
+   stat = which extra field each shop carries (damage, armourClass, effect, weight).
+   ------------------------------------------------------------------------- */
+const between = (a, b) => () => a + Math.floor(Math.random() * (b - a + 1));
+const SHOPS = [
+  { id: 'general', tab: 'General Store', name: 'Pretty Much General Store', page: 'general-store.html', lastKey: 'general-store-last-refresh',
+    blurb: 'Stock up on various items. We sell all kinds of stuff. And also things. Yep, lots of things. Commodities, one might say even.',
+    groups: [{ key: 'general', label: 'Stock', storageKey: 'general-store-stock', count: () => 8, stat: 'weight', statLabel: 'Weight' }] },
+  { id: 'smithy', tab: 'Smithy', name: 'Vladek’s House of Pointy Objects', page: 'smithy.html', lastKey: 'last-refresh',
+    blurb: 'The sheer number of pointy metal objects is enough to give you tetanus by mere sight. You really, really wish you were wearing a suit of armour right now.',
+    groups: [
+      { key: 'smithyWeapons', label: 'Weapons', storageKey: 'weapons-stock', count: () => 8, stat: 'damage', statLabel: 'Damage' },
+      { key: 'smithyArmour', label: 'Armour', storageKey: 'armour-stock', count: () => 4, stat: 'armourClass', statLabel: 'AC' }] },
+  { id: 'alchemist', tab: 'Alchemist', name: 'Alchemists Anonymous', page: 'alchemist.html', lastKey: 'alchemist-last-refresh',
+    blurb: 'The overwhelming smell of sulphur, a dazzling array of tiny glass vials, alembics bubbling with dubious fluids, and small puffs of fluorescent steam.',
+    groups: [{ key: 'alchemist', label: 'Stock', storageKey: 'alchemist-store-stock', count: between(5, 9), stat: 'effect', statLabel: 'Effect' }] },
+  { id: 'artificer', tab: 'Artificer', name: 'Old Rusty’s Shack', page: 'artificer.html', lastKey: 'artificer-last-refresh',
+    blurb: 'Well hi there adventurous looking feller! You look like you could use a knick knack or two. I got just the thing… now, where did I put it?',
+    groups: [{ key: 'artificer', label: 'Stock', storageKey: 'artificer-store-stock', count: () => 5 }] },
+  { id: 'clothier', tab: 'Clothier', name: '-TUSK- The Home of Fashion', page: 'clothier.html', lastKey: 'clothier-last-refresh',
+    blurb: 'If you need to know the price, you can’t afford to wear… -TUSK-',
+    groups: [{ key: 'clothier', label: 'Stock', storageKey: 'clothier-store-stock', count: () => 5 }] },
+  { id: 'jeweller', tab: 'Jeweller', name: 'Xavier Erich', page: 'jeweller.html', lastKey: 'jeweller-last-refresh',
+    blurb: 'Nothing says “I love you” like Xavier Erich. But not all lovers deserve Xavier Erich.',
+    groups: [{ key: 'jeweller', label: 'Stock', storageKey: 'jeweller-store-stock', count: () => 8 }] },
+  { id: 'fletcher', tab: 'Fletcher', name: 'The Polished Shaft', page: 'fletcher.html', lastKey: 'fletcher-last-refresh',
+    blurb: 'Precision. Craftsmanship. Finesse.',
+    groups: [{ key: 'fletcher', label: 'Stock', storageKey: 'fletcher-store-stock', count: () => 5 }] },
+  { id: 'black', tab: 'Blackleaf', name: 'Black Market', page: 'black-market.html', lastKey: 'black-market-last-refresh',
+    blurb: 'A shadowy figure beckons you closer. Here lies the market for forbidden goods and dangerous artefacts. Proceed at your own risk.',
+    groups: [{ key: 'blackMarket', label: 'Stock', storageKey: 'black-market-store-stock', count: between(5, 9), stat: 'effect', statLabel: 'Effect' }] }
+];
+const SHOP_REFRESH_MS = 60 * 60 * 1000;   // same hourly rotation as the standalone pages
+
+/* -------------------------------------------------------------------------
+   2g. PLACES — the existing pages, opened inside this screen.
+   Mirrors the sidebar groups of dmscreen.html.
+   ------------------------------------------------------------------------- */
+const PLACES = [
+  { g: 'Merchant’s Quarter', items: [
+    ['The Pickled Piglet (tavern)', 'tavern.html'], ['Guildhall', 'guildhall.html'], ['The Evershroud Exchange', 'exchange.html'],
+    ['Shop District', 'shopdistrict.html'], ['Trade Simulator 2000', 'evershroudtradesimulator2000.html']] },
+  { g: 'Temple District', items: [
+    ['Pentarchon', 'temple.html'], ['Spire of Kar’El', 'tower.html'], ['Catacombs (Mazd Gildan)', 'catacombs.html']] },
+  { g: 'Upper City', items: [
+    ['Brine Alcazar', 'brinealcazar.html'], ['Council Hall', 'councilhall.html'], ['Continental Embassy', 'embassy.html'],
+    ['Writ of Freeholding (PDF)', 'resources/Writ%20of%20Freeholding%20blank.pdf']] },
+  { g: 'Adventurer’s Guild', items: [
+    ['Notice Board', 'noticeboard.html'], ['Recruitment Poster (PDF)', 'resources/Recruitment%20poster.pdf'], ['Guild Contract (PDF)', 'resources/Contract.pdf']] },
+  { g: 'Oddities', items: [
+    ['Fortune Teller', 'fortune.html'], ['Crystal Harmony by Brigitte', 'harmony.html'], ['Origen’s Forge', 'forge.html'], ['Mad Lab', 'madlab.html']] },
+  { g: 'Utilities', items: [
+    ['Bestiary', 'bestiary.html'], ['Commoner Generator', 'commgen.html'], ['Encounter Generator', 'encgen.html'], ['Instance Generator', 'ingen.html'],
+    ['Battle Map Generator', 'mapgen2.html']] },
+  { g: 'Travel & Sky', items: [
+    ['Coastal Travel', 'harbour.html'], ['Road Travel', 'travel.html'], ['Calendar & Weather', 'calendar.html'], ['Shaniquáan Astrology', 'astrology.html']] },
+  { g: 'Maps', items: [
+    ['The Evershroud Isles', 'resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg'], ['Silt', 'resources/A%20Comprehensive%20Map%20of%20Silt.jpg'],
+    ['The Avernum', 'resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg'], ['Merchant’s Map of Azure', 'resources/Azure.jpg']] },
+  { g: 'Library', items: [
+    ['Common & Uncommon Lore', 'resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf'],
+    ['The Caldwell Commentary', 'resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf'],
+    ['Shaniquáan Chronology', 'resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf'],
+    ['The True Seat of Power', 'resources/seatofpower.pdf'], ['The House of Dust', 'resources/houseofdust.pdf'],
+    ['Gazette, 8th Fellwind 725', 'resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf'], ['Gazette, 1st Verdant 784', 'resources/EvershroudGazette1verdant784.pdf']] }
+];
+
+/* Tiny markdown for stat-block text: **bold**, *italic*, line breaks. */
+const md = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>').replace(/\s*\n/g, '<br>');
+
+/* -------------------------------------------------------------------------
+   3. DICE ROLLER
+   Accepts: 1d20+5, 2d6+1d4+3, d20, 4d6kh3 (keep highest 3), 2d20kl1,
+            "adv" / "dis" (+ modifier) for a d20 with (dis)advantage.
+   ------------------------------------------------------------------------- */
+function rollExpr(input) {
+  let s = String(input).toLowerCase().replace(/\s+/g, '');
+  let mode = null;
+  if (/adv/.test(s)) { mode = 'adv'; s = s.replace(/adv(antage)?/, ''); }
+  else if (/dis/.test(s)) { mode = 'dis'; s = s.replace(/dis(advantage)?/, ''); }
+  if (mode && !/d/.test(s)) s = '1d20' + (s && !/^[+-]/.test(s) ? '+' : '') + s;
+  if (!s) s = '1d20';
+  const re = /([+-])?(?:(\d*)d(\d+)(?:(kh|kl)(\d+))?|(\d+))/g;
+  let m, total = 0, parts = [], consumed = 0, usedMode = false;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index !== consumed) return null;            // junk between terms
+    consumed = re.lastIndex;
+    const sign = m[1] === '-' ? -1 : 1;
+    if (m[3]) {
+      let n = m[2] === '' ? 1 : parseInt(m[2], 10), sides = parseInt(m[3], 10);
+      if (n > 200 || sides < 1 || sides > 1000) return null;
+      let keep = m[4], k = m[5] ? parseInt(m[5], 10) : null;
+      if (mode && !usedMode && sides === 20 && n === 1 && !keep) { n = 2; keep = mode === 'adv' ? 'kh' : 'kl'; k = 1; usedMode = true; }
+      const rolls = Array.from({ length: n }, () => d(sides));
+      let kept = rolls.map((v, i) => ({ v, i }));
+      if (keep) {
+        kept.sort((a, b) => keep === 'kh' ? b.v - a.v : a.v - b.v);
+        kept = kept.slice(0, k);
+      }
+      const keptIdx = new Set(kept.map(x => x.i));
+      const sum = kept.reduce((a, x) => a + x.v, 0);
+      total += sign * sum;
+      parts.push((sign < 0 ? '− ' : parts.length ? '+ ' : '') + '[' + rolls.map((v, i) => keptIdx.has(i) ? v : `<s>${v}</s>`).join(', ') + ']');
+    } else {
+      const v = parseInt(m[6], 10);
+      total += sign * v;
+      parts.push((sign < 0 ? '− ' : '+ ') + v);
+    }
+  }
+  if (consumed !== s.length || !parts.length) return null;
+  return { total, detail: parts.join(' '), expr: input.trim() || 'd20', mode };
+}
+const diceHistory = store.get('dmo-dice', []);
+function renderDiceHistory() {
+  $('#dice-history').innerHTML = diceHistory.length
+    ? diceHistory.map(r => `<div><span><span class="expr">${esc(r.expr)}</span><br><span class="detail">${r.detail}</span></span><b class="num">${r.total}</b></div>`).join('')
+    : '<div class="muted">No rolls yet.</div>';
+}
+function doRoll(expr) {
+  const r = rollExpr(expr);
+  if (!r) { toast('Couldn’t read <b>' + esc(expr) + '</b>. Try 2d6+3, 4d6kh3 or adv+5.', 'warn'); return null; }
+  diceHistory.unshift(r); diceHistory.length = Math.min(diceHistory.length, 30);
+  store.set('dmo-dice', diceHistory);
+  $('#dice-out').textContent = r.total;
+  $('#dice-out').title = r.expr + ': ' + r.detail.replace(/<\/?s>/g, '~');
+  renderDiceHistory();
+  return r;
+}
+
+/* -------------------------------------------------------------------------
+   4. INITIATIVE TRACKER
+   State lives in localStorage ('dmo-combat') so a refresh mid-fight loses nothing.
+   ------------------------------------------------------------------------- */
+let S = store.get('dmo-combat', null) || { round: 0, turnId: null, list: [], level: 3, size: '' };
+const openRows = new Set();
+const save = () => store.set('dmo-combat', S);
+const uid = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const byId = id => S.list.find(c => c.id === id);
+const num = (v, fb = null) => { const n = parseInt(v, 10); return isNaN(n) ? fb : n; };
+
+function crKey(cr) {
+  if (cr === null || cr === undefined || cr === '') return null;
+  const n = typeof cr === 'string' && cr.includes('/') ? eval_frac(cr) : Number(cr);
+  if (isNaN(n)) return null;
+  if (n === 0.125) return '1/8';
+  if (n === 0.25) return '1/4';
+  if (n === 0.5) return '1/2';
+  return String(Math.round(n));
+}
+function eval_frac(s) { const [a, b] = s.split('/').map(Number); return b ? a / b : NaN; }
+
+function sorted() {
+  return [...S.list].sort((a, b) =>
+    ((b.init ?? -99) - (a.init ?? -99)) || ((b.mod || 0) - (a.mod || 0)) ||
+    (a.type === 'pc' ? -1 : 0) - (b.type === 'pc' ? -1 : 0) ||
+    a.name.localeCompare(b.name, undefined, { numeric: true }));
+}
+const isDown = c => c.maxHp != null && c.hp != null && c.hp <= 0;
+const isActive = c => !(c.type !== 'pc' && isDown(c));   // defeated non-PCs are skipped
+
+function addCombatant(o) {
+  const c = Object.assign({
+    id: uid(), name: 'Unnamed', type: 'enemy', init: null, mod: 0, ac: null, hp: null, maxHp: null,
+    temp: 0, conds: [], exh: 0, conc: false, saves: { s: 0, f: 0 }, cr: null, ref: null, note: ''
+  }, o);
+  if (c.init === null) c.init = d(20) + (c.mod || 0);
+  if (c.maxHp == null && c.hp != null) c.maxHp = c.hp;
+  S.list.push(c);
+  return c;
+}
+
+/* Turn order. Scans the full sorted list from the current position, skipping
+   defeated enemies, so removing or downing the active creature never breaks it. */
+function step(dir) {
+  const full = sorted();
+  if (!full.some(isActive)) { toast('Nobody left standing to take a turn.', 'warn'); return; }
+  if (S.round === 0 || !S.turnId || !byId(S.turnId)) {
+    if (S.round === 0) S.round = 1;
+    S.turnId = (dir > 0 ? full : [...full].reverse()).find(isActive).id;
+    if (dir > 0) startOfTurn(byId(S.turnId));
+  } else {
+    let i = full.findIndex(c => c.id === S.turnId);
+    for (let n = 0; n < full.length; n++) {
+      i += dir;
+      if (i >= full.length) { i = 0; S.round++; }
+      if (i < 0) { i = full.length - 1; S.round = Math.max(1, S.round - 1); }
+      if (isActive(full[i])) break;
+    }
+    S.turnId = full[i].id;
+    if (dir > 0) startOfTurn(full[i]);
+  }
+  save(); renderTracker();
+  const cur = $(`#clist [data-id="${S.turnId}"]`);
+  if (cur) reveal(cur, $('#tracker'));
+}
+
+function startOfTurn(c) {
+  if (!c) return;
+  const expired = [];
+  c.conds.forEach(x => { if (x.r != null) { x.r -= 1; if (x.r <= 0) expired.push(x.n); } });
+  if (expired.length) {
+    c.conds = c.conds.filter(x => !(x.r != null && x.r <= 0));
+    toast(`<b>${esc(c.name)}</b>: ${expired.map(esc).join(', ')} ended.`);
+  }
+  if (c.type === 'pc' && isDown(c) && c.saves.s < 3 && c.saves.f < 3) {
+    toast(`<b>${esc(c.name)}</b> is dying &mdash; roll a death save (DC 10).`, 'bad', 6000);
+  }
+}
+
+/* HP input grammar: "7" or "-7" damage, "+7" heal, "t7" temp HP. */
+function applyHp(c, raw) {
+  const s = String(raw).trim().toLowerCase();
+  if (!s) return;
+  let m;
+  if ((m = s.match(/^t\s*(\d+)$/))) {
+    const n = +m[1];
+    if (n > (c.temp || 0)) c.temp = n; else toast('Temp HP don’t stack &mdash; kept the higher value.');
+  } else if ((m = s.match(/^\+\s*(\d+)$/))) {
+    const n = +m[1];
+    const wasDown = isDown(c);
+    c.hp = c.maxHp != null ? Math.min(c.maxHp, (c.hp || 0) + n) : (c.hp || 0) + n;
+    if (wasDown && c.hp > 0) {
+      c.saves = { s: 0, f: 0 };
+      c.conds = c.conds.filter(x => x.n !== 'Unconscious');
+      toast(`<b>${esc(c.name)}</b> is back on their feet (well, prone).`);
+    }
+  } else if ((m = s.match(/^-?\s*(\d+)$/))) {
+    let n = +m[1];
+    const dealt = n;
+    const wasDown = isDown(c);
+    if (c.temp) { const a = Math.min(c.temp, n); c.temp -= a; n -= a; }
+    if (c.hp == null) c.hp = 0;
+    const before = c.hp;
+    c.hp = Math.max(0, c.hp - n);
+    const overflow = n - before;
+    if (c.conc && dealt > 0) toast(`<b>${esc(c.name)}</b> &mdash; concentration save: <b>Con DC ${Math.max(10, Math.floor(dealt / 2))}</b>`, 'warn', 7000);
+    if (c.type === 'pc') {
+      if (wasDown && dealt > 0) {
+        if (dealt >= (c.maxHp || Infinity)) { c.saves.f = 3; toast(`<b>${esc(c.name)}</b> takes massive damage at 0 HP &mdash; dead.`, 'bad', 8000); }
+        else { c.saves.f = Math.min(3, c.saves.f + 1); toast(`<b>${esc(c.name)}</b> takes damage at 0 HP: one death-save failure (two on a crit).`, 'bad', 6000); }
+      } else if (c.hp === 0 && before > 0) {
+        if (c.maxHp && overflow >= c.maxHp) toast(`<b>${esc(c.name)}</b>: ${overflow} damage past 0 equals or exceeds max HP &mdash; <b>instant death</b>.`, 'bad', 9000);
+        else toast(`<b>${esc(c.name)}</b> drops to 0 HP and falls unconscious.`, 'bad');
+        if (!c.conds.some(x => x.n === 'Unconscious')) c.conds.push({ n: 'Unconscious', r: null });
+      }
+    } else if (c.hp === 0 && before > 0) {
+      toast(`<b>${esc(c.name)}</b> is down.`);
+    }
+  } else {
+    toast('HP box: <b>7</b> damages, <b>+7</b> heals, <b>t7</b> sets temp HP.', 'warn');
+    return;
+  }
+  save(); renderTracker();
+}
+
+function hpClass(c) {
+  if (c.maxHp == null || !c.maxHp) return '';
+  const p = c.hp / c.maxHp;
+  return p > .5 ? '' : p > .25 ? 'mid' : 'low';
+}
+
+function renderTracker() {
+  const list = sorted();
+  const el = $('#clist');
+  if (!list.length) {
+    el.innerHTML = '<li class="empty">No one in the fight yet.<br>Add your party as <b>PC</b> once; <i>End combat</i> keeps them for next time.</li>';
+  } else {
+    el.innerHTML = list.map(c => {
+      const cur = c.id === S.turnId && S.round > 0;
+      const chips = [];
+      if (c.conc) chips.push('<span class="chip conc">Concentrating</span>');
+      if (c.exh) chips.push(`<span class="chip cond" title="${esc(EXHAUSTION.slice(0, c.exh).join('; '))}">Exhaustion ${c.exh}</span>`);
+      c.conds.forEach(x => chips.push(`<span class="chip ${CONDITIONS[x.n] ? 'cond' : ''}" title="${esc(CONDITIONS[x.n] || '')}">${esc(x.n)}${x.r != null ? ` <span class="dur">${x.r}r</span>` : ''}</span>`));
+      if (c.type === 'pc' && isDown(c)) chips.push(`<span class="chip cond">Saves ${c.saves.s}✓ ${c.saves.f}✗</span>`);
+      const pct = c.maxHp ? Math.max(0, Math.min(100, c.hp / c.maxHp * 100)) : 0;
+      return `<li class="cb ${c.type}${cur ? ' current' : ''}${!isActive(c) ? ' defeated' : ''}${openRows.has(c.id) ? ' open' : ''}" data-id="${c.id}">
+        <div class="cb-main">
+          <input class="cb-init" data-f="init" value="${c.init ?? ''}" inputmode="numeric" aria-label="Initiative" title="Initiative (mod ${signed(c.mod || 0)})">
+          <div class="cb-name" data-act="toggle" title="Details">
+            <span class="nm">${esc(c.name)}</span>
+            ${chips.length ? `<span class="sub">${chips.join('')}</span>` : ''}
+          </div>
+          <div class="cb-ac num" title="Armour Class">${c.ac ?? '–'}<small>AC</small></div>
+          <div class="cb-hp" title="Hit points">
+            ${c.hp != null ? `<div class="vals"><span><b>${c.hp}</b>${c.maxHp != null ? ' / ' + c.maxHp : ''}</span>${c.temp ? `<span class="temp">+${c.temp}</span>` : ''}</div>
+            ${c.maxHp ? `<div class="bar"><i class="${hpClass(c)}" style="width:${pct}%"></i></div>` : ''}` : '<span class="muted">no HP</span>'}
+          </div>
+          <input class="input cb-dmg num" data-act="hp" placeholder="±" aria-label="Damage or heal" title="7 = damage · +7 = heal · t7 = temp HP">
+        </div>
+        ${openRows.has(c.id) ? renderDetail(c) : ''}
+      </li>`;
+    }).join('');
+    // fill any stat blocks that are open
+    list.filter(c => openRows.has(c.id) && c.ref).forEach(c => fillStatblock(c));
+  }
+  // round + strip
+  const cur = byId(S.turnId);
+  $('#tr-round').textContent = S.round ? `· Round ${S.round}` : '';
+  $('#tr-next').textContent = S.round ? 'Next ›' : 'Start';
+  $('#ts-round').textContent = S.round ? `Round ${S.round} · ` : 'No combat · ';
+  $('#ts-name').textContent = S.round && cur ? cur.name : (S.list.length ? 'press Start' : 'add combatants');
+  $('#ts-next').textContent = S.round ? 'Next ›' : 'Start';
+  renderEncounter();
+}
+
+function renderDetail(c) {
+  const condBtns = Object.keys(CONDITIONS).map(n => {
+    const on = c.conds.find(x => x.n === n);
+    return `<button class="btn${on ? ' on' : ''}" data-cond="${n}" title="${esc(CONDITIONS[n])}">${n}${on && on.r != null ? ' · ' + on.r : ''}</button>`;
+  }).join('');
+  const markBtns = MARKERS.map(n => {
+    const on = c.conds.find(x => x.n === n);
+    return `<button class="btn${on ? ' on' : ''}" data-cond="${n}">${n}${on && on.r != null ? ' · ' + on.r : ''}</button>`;
+  }).join('');
+  const dots = (k, n) => Array.from({ length: 3 }, (_, i) => `<button class="dot${i < n ? ' on' : ''}" data-save="${k}" data-i="${i}" aria-label="${k === 's' ? 'success' : 'failure'} ${i + 1}"></button>`).join('');
+  return `<div class="cb-detail">
+    <div class="fgrid">
+      <label class="wide">Name<input class="input" data-f="name" value="${esc(c.name)}"></label>
+      <label>Side<select class="input" data-f="type">
+        <option value="enemy"${c.type === 'enemy' ? ' selected' : ''}>Enemy</option>
+        <option value="pc"${c.type === 'pc' ? ' selected' : ''}>PC</option>
+        <option value="ally"${c.type === 'ally' ? ' selected' : ''}>Ally</option></select></label>
+      <label>Init mod<input class="input num" data-f="mod" value="${c.mod ?? 0}" inputmode="numeric"></label>
+      <label>AC<input class="input num" data-f="ac" value="${c.ac ?? ''}" inputmode="numeric"></label>
+      <label>HP<input class="input num" data-f="hp" value="${c.hp ?? ''}" inputmode="numeric"></label>
+      <label>Max HP<input class="input num" data-f="maxHp" value="${c.maxHp ?? ''}" inputmode="numeric"></label>
+      <label>Temp HP<input class="input num" data-f="temp" value="${c.temp || ''}" inputmode="numeric"></label>
+      <label>CR<input class="input num" data-f="cr" value="${c.cr ?? ''}" placeholder="e.g. 1/4"></label>
+      <label>Exhaustion<select class="input" data-f="exh">${[0, 1, 2, 3, 4, 5, 6].map(n => `<option${c.exh === n ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    </div>
+    <div class="sect">
+      <span class="label">Conditions &mdash; for <input class="input num dur-in" style="width:48px;padding:2px 4px" placeholder="∞" inputmode="numeric" title="Rounds; counts down at the start of this creature’s turn. Blank = until removed."> rounds</span>
+      <div class="condgrid">${condBtns}</div>
+    </div>
+    <div class="sect">
+      <span class="label">Markers</span>
+      <div class="condgrid">
+        <button class="btn${c.conc ? ' on' : ''}" data-act="conc" title="Prompts a Con save DC whenever this creature takes damage">Concentrating</button>
+        ${markBtns}
+      </div>
+    </div>
+    ${c.type === 'pc' ? `<div class="sect"><span class="label">Death saves</span>
+      <div class="saves"><span class="s">Successes <span class="dots">${dots('s', c.saves.s)}</span></span>
+      <span class="f">Failures <span class="dots">${dots('f', c.saves.f)}</span></span>
+      <button class="btn small" data-act="rollsave">Roll save</button></div></div>` : ''}
+    <div class="sect"><span class="label">Note</span>
+      <input class="input" style="width:100%" data-f="note" value="${esc(c.note)}" placeholder="Bloodied by Aria, holding the bridge, owes a favour&hellip;"></div>
+    ${c.ref ? `<div class="statblock" data-sb>Loading stat block&hellip;</div>` : ''}
+    <div class="row-actions">
+      <button class="btn small" data-act="dup">Duplicate</button>
+      <button class="btn small" data-act="rollinit">Re-roll init</button>
+      ${c.type !== 'pc' ? '<button class="btn small" data-act="kill">Set to 0 HP</button>' : ''}
+      <span style="flex:1"></span>
+      <button class="btn small danger" data-act="remove">Remove</button>
+    </div>
+  </div>`;
+}
+
+function renderEncounter() {
+  const pcs = S.list.filter(c => c.type === 'pc').length;
+  const sizeIn = $('#enc-size'), lvlIn = $('#enc-level');
+  sizeIn.placeholder = pcs || '4';
+  if (document.activeElement !== sizeIn) sizeIn.value = S.size || '';
+  if (document.activeElement !== lvlIn) lvlIn.value = S.level || '';
+  const size = num(S.size) || pcs || 4;
+  const level = Math.min(20, Math.max(1, num(S.level, 1)));
+  const enemies = S.list.filter(c => c.type === 'enemy');
+  const rated = enemies.filter(c => CR_XP[crKey(c.cr)] !== undefined);
+  const out = $('#enc-out');
+  if (!rated.length) {
+    out.className = 'muted';
+    out.innerHTML = enemies.length ? 'Give enemies a CR (in their details) to rate the encounter.' : 'Add enemies with a CR to rate the encounter.';
+    return;
+  }
+  const base = rated.reduce((a, c) => a + CR_XP[crKey(c.cr)], 0);
+  const ladder = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5];
+  const n = rated.length;
+  let idx = n === 1 ? 1 : n === 2 ? 2 : n <= 6 ? 3 : n <= 10 ? 4 : n <= 14 ? 5 : 6;
+  if (size < 3) idx++; else if (size >= 6) idx--;
+  const mult = ladder[Math.max(0, Math.min(ladder.length - 1, idx))];
+  const adj = Math.round(base * mult);
+  const th = XP_THRESHOLDS[level].map(x => x * size);
+  const verdict = adj < th[0] ? 'Trivial' : adj < th[1] ? 'Easy' : adj < th[2] ? 'Medium' : adj < th[3] ? 'Hard' : 'Deadly';
+  const f = x => x.toLocaleString('en-GB');
+  out.className = '';
+  out.innerHTML = `<span class="verdict ${verdict}">${verdict}</span> &mdash; ${n} rated ${n === 1 ? 'enemy' : 'enemies'}, ${f(base)} XP × ${mult} = <b>${f(adj)}</b> adjusted.
+    <div class="muted" style="font-size:12px;margin-top:3px">Party of ${size} at level ${level}: easy ${f(th[0])} · medium ${f(th[1])} · hard ${f(th[2])} · deadly ${f(th[3])}.
+    Award ${f(Math.floor(base / size))} XP each.${rated.length < enemies.length ? ` ${enemies.length - rated.length} without CR ignored.` : ''}</div>`;
+}
+
+function discordOrder() {
+  const lines = [`**Initiative — Round ${S.round || 0}**`];
+  sorted().forEach(c => {
+    const cur = c.id === S.turnId && S.round > 0;
+    let status = '';
+    if (c.type !== 'pc' && c.maxHp) {
+      if (c.hp <= 0) status = ' — *down*';
+      else if (c.hp <= c.maxHp / 2) status = ' — *bloodied*';
+    } else if (c.type === 'pc' && isDown(c)) status = ' — *dying*';
+    const conds = c.conds.map(x => x.n.toLowerCase());
+    lines.push(`${cur ? '▶ **' : '• '}${c.init ?? '?'} · ${c.name}${cur ? '**' : ''}${status}${conds.length ? ` (${conds.join(', ')})` : ''}`);
+  });
+  return lines.join('\n');
+}
+
+/* ---------- tracker events ---------- */
+function wireTracker() {
+  $('#add-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target;
+    const base = f.name.value.trim();
+    if (!base) { f.name.focus(); return; }
+    const qty = Math.max(1, Math.min(30, num(f.qty.value, 1)));
+    const mod = num(f.mod.value.replace('+', ''), 0);
+    const hp = num(f.hp.value), ac = num(f.ac.value), init = num(f.init.value);
+    const ref = f.ref.value ? JSON.parse(f.ref.value) : null;
+    const cr = f.cr.value || null;
+    // number duplicates, continuing from any existing "Goblin 3"
+    let start = 1;
+    if (qty > 1) {
+      const re = new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' (\\d+)$');
+      S.list.forEach(c => { const m = c.name.match(re); if (m) start = Math.max(start, +m[1] + 1); });
+    }
+    for (let i = 0; i < qty; i++) {
+      addCombatant({
+        name: qty > 1 ? `${base} ${start + i}` : base, type: f.type.value, mod, ac, hp, maxHp: hp,
+        init: init != null ? init : null, cr, ref
+      });
+    }
+    save(); renderTracker();
+    const keepType = f.type.value;
+    f.reset(); f.qty.value = 1; f.type.value = keepType; f.ref.value = ''; f.cr.value = '';
+    hideSuggest();
+    f.name.focus();
+  });
+
+  const L = $('#clist');
+  L.addEventListener('click', e => {
+    const li = e.target.closest('.cb'); if (!li) return;
+    const c = byId(li.dataset.id); if (!c) return;
+    const t = e.target.closest('[data-act],[data-cond],[data-save]');
+    if (!t) return;
+    if (t.dataset.cond) {
+      const n = t.dataset.cond;
+      const i = c.conds.findIndex(x => x.n === n);
+      if (i >= 0) c.conds.splice(i, 1);
+      else c.conds.push({ n, r: num($('.dur-in', li)?.value) });
+    } else if (t.dataset.save) {
+      const k = t.dataset.save, i = +t.dataset.i;
+      c.saves[k] = c.saves[k] === i + 1 ? i : i + 1;
+      if (c.saves.s >= 3) toast(`<b>${esc(c.name)}</b> is stable.`);
+      if (c.saves.f >= 3) toast(`<b>${esc(c.name)}</b> has died.`, 'bad', 8000);
+    } else {
+      switch (t.dataset.act) {
+        case 'toggle': openRows.has(c.id) ? openRows.delete(c.id) : openRows.add(c.id); break;
+        case 'conc': c.conc = !c.conc; break;
+        case 'dup': {
+          const copy = JSON.parse(JSON.stringify(c));
+          copy.id = uid(); copy.name = c.name.replace(/(\d+)$/, (m) => +m + 1);
+          if (copy.name === c.name) copy.name += ' 2';
+          copy.hp = copy.maxHp; copy.conds = []; copy.init = d(20) + (copy.mod || 0);
+          S.list.push(copy); break;
+        }
+        case 'rollinit': c.init = d(20) + (c.mod || 0); toast(`${esc(c.name)} rolls ${c.init} for initiative.`); break;
+        case 'kill': c.hp = 0; break;
+        case 'remove':
+          if (S.turnId === c.id) { step(1); }
+          S.list = S.list.filter(x => x.id !== c.id); openRows.delete(c.id); break;
+        case 'rollsave': {
+          const r = d(20);
+          if (r === 20) { c.hp = 1; c.saves = { s: 0, f: 0 }; c.conds = c.conds.filter(x => x.n !== 'Unconscious'); toast(`<b>${esc(c.name)}</b> rolls a natural 20 and regains 1 HP!`); }
+          else if (r === 1) { c.saves.f = Math.min(3, c.saves.f + 2); toast(`<b>${esc(c.name)}</b> rolls a 1: two failures.`, 'bad'); }
+          else if (r >= 10) { c.saves.s = Math.min(3, c.saves.s + 1); toast(`<b>${esc(c.name)}</b> rolls ${r}: success.`); }
+          else { c.saves.f = Math.min(3, c.saves.f + 1); toast(`<b>${esc(c.name)}</b> rolls ${r}: failure.`, 'bad'); }
+          if (c.saves.s >= 3) toast(`<b>${esc(c.name)}</b> is stable.`);
+          if (c.saves.f >= 3) toast(`<b>${esc(c.name)}</b> has died.`, 'bad', 8000);
+          break;
+        }
+        default: return;
+      }
+    }
+    save(); renderTracker();
+  });
+
+  L.addEventListener('change', e => {
+    const li = e.target.closest('.cb'); if (!li) return;
+    const c = byId(li.dataset.id); const f = e.target.dataset.f;
+    if (!c || !f) return;
+    const v = e.target.value.trim();
+    if (f === 'name') c.name = v || c.name;
+    else if (f === 'type') c.type = v;
+    else if (f === 'note') c.note = v;
+    else if (f === 'cr') c.cr = v || null;
+    else if (f === 'exh') c.exh = +v;
+    else if (f === 'temp') c.temp = num(v, 0);
+    else if (f === 'mod') c.mod = num(v.replace('+', ''), 0);
+    else c[f] = num(v);
+    if (f === 'maxHp' && c.hp == null) c.hp = c.maxHp;
+    save(); renderTracker();
+  });
+
+  L.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const li = e.target.closest('.cb'); if (!li) return;
+    if (e.target.dataset.act === 'hp') {
+      e.preventDefault();
+      const id = li.dataset.id;
+      applyHp(byId(id), e.target.value);
+      const again = $(`#clist [data-id="${id}"] .cb-dmg`);
+      if (again) again.focus();
+    } else if (e.target.dataset.f) {
+      e.target.blur();
+    }
+  });
+
+  const next = () => step(1), prev = () => { if (S.round) step(-1); };
+  $('#tr-next').onclick = next; $('#ts-next').onclick = next;
+  $('#tr-prev').onclick = prev; $('#ts-prev').onclick = prev;
+
+  $('#tr-menu-btn').onclick = e => { e.stopPropagation(); $('#tr-menu').classList.toggle('hidden'); };
+  document.addEventListener('click', e => { if (!e.target.closest('.menu')) $('#tr-menu').classList.add('hidden'); });
+  $('#tr-menu').addEventListener('click', e => {
+    const act = e.target.dataset.act; if (!act) return;
+    $('#tr-menu').classList.add('hidden');
+    if (act === 'copy') copyText(discordOrder(), 'Initiative order copied');
+    if (act === 'rollnpc') { S.list.forEach(c => { if (c.type !== 'pc') c.init = d(20) + (c.mod || 0); }); toast('Non-PC initiative re-rolled.'); }
+    if (act === 'cleardef') { S.list = S.list.filter(c => isActive(c)); }
+    if (act === 'end') {
+      if (!confirm('End combat? Enemies and allies are removed; PCs stay (initiative cleared).')) return;
+      S.list = S.list.filter(c => c.type === 'pc');
+      S.list.forEach(c => { c.init = null; c.conds = c.conds.filter(x => x.n === 'Unconscious' && isDown(c)); c.conc = false; c.temp = 0; });
+      S.round = 0; S.turnId = null; openRows.clear();
+    }
+    if (act === 'clearall') {
+      if (!confirm('Remove everyone, PCs included?')) return;
+      S = { round: 0, turnId: null, list: [], level: S.level, size: S.size }; openRows.clear();
+    }
+    save(); renderTracker();
+  });
+
+  $('#enc-size').addEventListener('input', e => { S.size = e.target.value; save(); renderEncounter(); });
+  $('#enc-level').addEventListener('input', e => { S.level = e.target.value; save(); renderEncounter(); });
+
+  // Keyboard: N / P / slash, only when not typing
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); next(); }
+    else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); prev(); }
+    else if (e.key === '/') { e.preventDefault(); $('#dice-input').focus(); }
+  });
+}
+
+/* -------------------------------------------------------------------------
+   5. BESTIARY (resources/bestiary.yml) + OPEN5E (SRD API)
+   ------------------------------------------------------------------------- */
+let BEAST = [];
+let beastReady = null;
+function loadBestiary() {
+  if (beastReady) return beastReady;
+  beastReady = (async () => {
+    for (let i = 0; i < 50 && !window.jsyaml; i++) await new Promise(r => setTimeout(r, 100));
+    if (!window.jsyaml) throw new Error('YAML parser did not load');
+    const res = await fetch('resources/bestiary.yml', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = jsyaml.load(await res.text());
+    BEAST = [];
+    Object.entries(data || {}).forEach(([region, list]) => (list || []).forEach(m => BEAST.push(Object.assign({ region }, m))));
+    return BEAST;
+  })().catch(err => { console.warn('Bestiary unavailable:', err); BEAST = []; return BEAST; });
+  return beastReady;
+}
+
+const O5E = 'https://api.open5e.com/v1/';
+let srdOnly = store.get('dmo-srd', true);
+async function o5e(path, params = {}) {
+  const u = new URL(O5E + path);
+  Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, v));
+  if (srdOnly && params.search !== undefined) u.searchParams.set('document__slug', 'wotc-srd');
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch(u, { signal: ctl.signal });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+/* Normalise both sources into one stat-block shape. */
+function sbFromLocal(m) {
+  const lines = [];
+  if (m.saves) lines.push(['Saving Throws', m.saves]);
+  if (m.skills) lines.push(['Skills', m.skills]);
+  if (m.resist) lines.push(['Damage Resistances', m.resist]);
+  if (m.immune) lines.push(['Damage Immunities', m.immune]);
+  if (m.cond_immune) lines.push(['Condition Immunities', m.cond_immune]);
+  if (m.senses) lines.push(['Senses', m.senses]);
+  if (m.languages) lines.push(['Languages', m.languages]);
+  lines.push(['Challenge', `${crKey(m.cr) ?? m.cr} (${(CR_XP[crKey(m.cr)] || 0).toLocaleString('en-GB')} XP)`]);
+  const sections = [];
+  if (m.spells) sections.push({ h: 'Spellcasting', pre: String(m.spells), e: [] });
+  if (m.traits) sections.push({ h: 'Traits', e: m.traits });
+  if (m.actions) sections.push({ h: 'Actions', e: m.actions });
+  return {
+    name: m.name, meta: `${m.size || ''} ${m.type || ''}, ${m.alignment || ''} · ${m.region}`,
+    ac: m.ac, hp: m.hp, speed: m.speed,
+    abil: m.str != null ? [m.str, m.dex, m.con, m.int, m.wis, m.cha] : null,
+    lines, sections, link: { label: 'Open in Bestiary', place: 'bestiary.html' }
+  };
+}
+function sbFromO5e(m) {
+  const lines = [];
+  const sv = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
+    .map(a => m[a + '_save'] != null ? `${a.slice(0, 3).replace(/^./, c => c.toUpperCase())} ${signed(m[a + '_save'])}` : null).filter(Boolean);
+  if (sv.length) lines.push(['Saving Throws', sv.join(', ')]);
+  if (m.skills && Object.keys(m.skills).length) lines.push(['Skills', Object.entries(m.skills).map(([k, v]) => `${k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())} ${signed(v)}`).join(', ')]);
+  if (m.damage_vulnerabilities) lines.push(['Damage Vulnerabilities', m.damage_vulnerabilities]);
+  if (m.damage_resistances) lines.push(['Damage Resistances', m.damage_resistances]);
+  if (m.damage_immunities) lines.push(['Damage Immunities', m.damage_immunities]);
+  if (m.condition_immunities) lines.push(['Condition Immunities', m.condition_immunities]);
+  if (m.senses) lines.push(['Senses', m.senses]);
+  if (m.languages) lines.push(['Languages', m.languages]);
+  lines.push(['Challenge', `${m.challenge_rating} (${(CR_XP[crKey(m.challenge_rating)] || 0).toLocaleString('en-GB')} XP)`]);
+  const sections = [];
+  const arr = x => Array.isArray(x) && x.length ? x : null;
+  if (arr(m.special_abilities)) sections.push({ h: 'Traits', e: m.special_abilities });
+  if (arr(m.actions)) sections.push({ h: 'Actions', e: m.actions });
+  if (arr(m.bonus_actions)) sections.push({ h: 'Bonus Actions', e: m.bonus_actions });
+  if (arr(m.reactions)) sections.push({ h: 'Reactions', e: m.reactions });
+  if (arr(m.legendary_actions)) sections.push({ h: 'Legendary Actions', pre: m.legendary_desc || '', e: m.legendary_actions });
+  const speed = m.speed && typeof m.speed === 'object'
+    ? Object.entries(m.speed).filter(([, v]) => typeof v === 'number').map(([k, v]) => k === 'walk' ? `${v} ft.` : `${k} ${v} ft.`).join(', ')
+    : m.speed;
+  return {
+    name: m.name, meta: `${m.size} ${m.type}${m.subtype ? ` (${m.subtype})` : ''}, ${m.alignment} · ${m.document__title || 'Open5e'}`,
+    ac: `${m.armor_class}${m.armor_desc ? ` (${m.armor_desc})` : ''}`, hp: `${m.hit_points} (${m.hit_dice})`, speed,
+    abil: [m.strength, m.dexterity, m.constitution, m.intelligence, m.wisdom, m.charisma],
+    lines, sections, link: { label: 'Open5e page', href: `https://open5e.com/monsters/${m.slug}` }
+  };
+}
+
+/* Wrap dice formulas and "+7 to hit" in clickable roll links. */
+function rollify(html) {
+  // One pass, so a link's own data-roll="1d20+4" is never re-wrapped.
+  // Handles SRD "+4 to hit", Evershroud "Melee +6," and any "2d6 + 3".
+  return html.replace(/([+-]\d+) to hit|\b(Melee|Ranged) ([+-]\d+)|(\d+d\d+(?:\s*[+−-]\s*\d+)?)/g, (m, hit, kind, bonus, dice) => {
+    if (hit) return `<a class="rl" data-roll="1d20${hit}">${m}</a>`;
+    if (kind) return `${kind} <a class="rl" data-roll="1d20${bonus}">${bonus}</a>`;
+    return `<a class="rl" data-roll="${dice.replace(/−/g, '-').replace(/\s/g, '')}">${m}</a>`;
+  });
+}
+function renderSB(o) {
+  const ab = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+  return `<h4>${esc(o.name)}</h4><div class="meta">${esc(o.meta)}</div>
+    <p><b>AC</b> ${esc(o.ac)} · <b>HP</b> ${esc(o.hp)} · <b>Speed</b> ${esc(o.speed || '—')}</p>
+    ${o.abil ? `<div class="abil">${o.abil.map((v, i) => `<div><b>${ab[i]}</b>${v ?? '–'}${v != null ? ` <a class="rl" data-roll="1d20${signed(modOf(v))}">(${signed(modOf(v))})</a>` : ''}</div>`).join('')}</div>` : ''}
+    ${o.lines.map(([k, v]) => `<p><b>${k}</b> ${esc(v)}</p>`).join('')}
+    ${o.sections.map(s => `<div class="h">${s.h}</div>${s.pre ? `<p>${rollify(md(s.pre))}</p>` : ''}${(s.e || []).map(x => `<p><b><i>${esc(x.name)}.</i></b> ${rollify(md(x.desc || ''))}</p>`).join('')}`).join('')}
+    ${o.link ? `<p style="margin-top:8px">${o.link.href ? `<a href="${o.link.href}" target="_blank" rel="noopener">${o.link.label} ↗</a>` : `<a href="#" data-place="${o.link.place}">${o.link.label}</a>`}</p>` : ''}`;
+}
+
+const sbCache = {};
+async function fillStatblock(c) {
+  const el = $(`#clist [data-id="${c.id}"] [data-sb]`);
+  if (!el) return;
+  const key = JSON.stringify(c.ref);
+  if (sbCache[key]) { el.innerHTML = sbCache[key]; return; }
+  try {
+    let html;
+    if (c.ref.src === 'local') {
+      await loadBestiary();
+      const m = BEAST.find(b => b.name === c.ref.name);
+      if (!m) throw new Error('not in bestiary');
+      html = renderSB(sbFromLocal(m));
+    } else {
+      html = renderSB(sbFromO5e(await o5e(`monsters/${c.ref.slug}/`)));
+    }
+    sbCache[key] = html;
+    const again = $(`#clist [data-id="${c.id}"] [data-sb]`);
+    if (again) again.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = `<span class="muted">Stat block unavailable (${esc(e.message)}).</span>`;
+  }
+}
+
+/* ---------- add-form suggestions ---------- */
+let sugItems = [], sugIdx = -1, sugTimer = null, sugSeq = 0;
+function hideSuggest() { $('#suggest').classList.add('hidden'); sugItems = []; sugIdx = -1; }
+function showSuggest() {
+  const box = $('#suggest');
+  if (!sugItems.length) { box.classList.add('hidden'); return; }
+  box.innerHTML = sugItems.map((s, i) =>
+    `<button type="button" data-i="${i}" class="${i === sugIdx ? 'hi' : ''}"><span>${esc(s.name)} <span class="muted">· CR ${esc(crKey(s.cr) ?? '?')} · AC ${esc(s.ac)} · HP ${esc(s.hp)}</span></span><span class="src">${esc(s.src)}</span></button>`).join('');
+  box.classList.remove('hidden');
+}
+function pickSuggest(i) {
+  const s = sugItems[i]; if (!s) return;
+  const f = $('#add-form');
+  f.name.value = s.name; f.hp.value = s.hp ?? ''; f.ac.value = parseInt(s.ac, 10) || '';
+  f.mod.value = s.dex != null ? signed(modOf(s.dex)) : ''; f.cr.value = s.cr ?? ''; f.ref.value = JSON.stringify(s.ref);
+  f.type.value = 'enemy';
+  hideSuggest();
+  f.qty.focus(); f.qty.select();
+}
+function wireSuggest() {
+  const input = $('#add-name');
+  input.addEventListener('input', () => {
+    const f = $('#add-form'); f.ref.value = ''; f.cr.value = '';
+    const q = input.value.trim().toLowerCase();
+    clearTimeout(sugTimer);
+    if (q.length < 2) { hideSuggest(); return; }
+    loadBestiary().then(() => {
+      const local = BEAST.filter(b => b.name.toLowerCase().includes(q)).slice(0, 8).map(b => ({
+        name: b.name, hp: b.hp, ac: b.ac, dex: b.dex, cr: b.cr, src: 'Evershroud · ' + b.region, ref: { src: 'local', name: b.name }
+      }));
+      if (input.value.trim().toLowerCase() !== q) return;          // stale lookup
+      const keep = sugItems[sugIdx]?.name;                           // don't drop the highlight
+      sugItems = local; sugIdx = keep ? sugItems.findIndex(s => s.name === keep) : -1; showSuggest();
+    });
+    const seq = ++sugSeq;
+    sugTimer = setTimeout(async () => {
+      try {
+        const data = await o5e('monsters/', { search: q, limit: 8 });
+        if (seq !== sugSeq || $('#suggest').classList.contains('hidden') && !sugItems.length && input.value.trim().toLowerCase() !== q) return;
+        const remote = (data.results || []).map(m => ({
+          name: m.name, hp: m.hit_points, ac: m.armor_class, dex: m.dexterity, cr: m.cr ?? m.challenge_rating,
+          src: srdOnly ? 'SRD' : (m.document__slug === 'wotc-srd' ? 'SRD' : (m.document__title || 'Open5e')), ref: { src: 'o5e', slug: m.slug }
+        }));
+        const names = new Set(sugItems.map(s => s.name.toLowerCase()));
+        sugItems = sugItems.concat(remote.filter(r => !names.has(r.name.toLowerCase())));
+        showSuggest();
+      } catch (e) { /* offline or blocked: local results still work */ }
+    }, 350);
+  });
+  input.addEventListener('keydown', e => {
+    if ($('#suggest').classList.contains('hidden')) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); sugIdx = Math.min(sugItems.length - 1, sugIdx + 1); showSuggest(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sugIdx = Math.max(-1, sugIdx - 1); showSuggest(); }
+    else if (e.key === 'Enter' && sugIdx >= 0) { e.preventDefault(); pickSuggest(sugIdx); }
+    else if (e.key === 'Escape') hideSuggest();
+  });
+  $('#suggest').addEventListener('mousedown', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    e.preventDefault(); pickSuggest(+b.dataset.i);
+  });
+  input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) hideSuggest(); }, 150));
+}
+
+/* -------------------------------------------------------------------------
+   6a. TABS
+   ------------------------------------------------------------------------- */
+const isWide = () => window.matchMedia('(min-width: 1000px)').matches;
+/* Scroll an element into view inside its column only. scrollIntoView() would also
+   scroll the (overflow-hidden) window on wide screens and hide the tab bar. */
+function reveal(el, container, toTop = false) {
+  if (!isWide()) { el.scrollIntoView({ block: toTop ? 'start' : 'nearest', behavior: 'smooth' }); return; }
+  const r = el.getBoundingClientRect(), c = container.getBoundingClientRect();
+  let delta = 0;
+  if (toTop) delta = r.top - c.top - 56;
+  else if (r.top < c.top) delta = r.top - c.top - 8;
+  else if (r.bottom > c.bottom) delta = Math.min(r.bottom - c.bottom + 8, r.top - c.top - 8);
+  if (delta) container.scrollBy({ top: delta, behavior: 'smooth' });
+}
+function setTab(name) {
+  if (name === 'tracker' && isWide()) name = store.get('dmo-tab-ref', 'rules');
+  document.body.dataset.tab = name;
+  $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
+  $$('.tabpanel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+  store.set('dmo-tab', name);
+  if (name !== 'tracker') store.set('dmo-tab-ref', name);
+  if (name === 'places') restorePlace();
+  if (name === 'shops') renderShop();
+}
+
+/* -------------------------------------------------------------------------
+   6b. RULES
+   ------------------------------------------------------------------------- */
+function renderRules() {
+  const openSet = new Set(store.get('dmo-rules-open', ['Conditions', 'Actions in Combat']));
+  $('#rules').innerHTML = RULES.map((r, i) =>
+    `<details class="rule card" data-i="${i}"${openSet.has(r.t) ? ' open' : ''}><summary>${r.t}</summary><div class="body">${r.h}</div></details>`).join('');
+  $('#rules').addEventListener('toggle', () => {
+    if ($('#rules-filter').value) return;       // don't persist filter-driven opening
+    store.set('dmo-rules-open', $$('#rules details[open]').map(d => RULES[d.dataset.i].t));
+  }, true);
+  $('#rules-filter').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    $$('#rules details').forEach(d => {
+      const r = RULES[d.dataset.i];
+      const hit = !q || (r.t + ' ' + r.k + ' ' + d.querySelector('.body').textContent).toLowerCase().includes(q);
+      d.classList.toggle('hidden', !hit);
+      if (q && hit) d.open = true;
+    });
+    if (!q) { const keep = new Set(store.get('dmo-rules-open', [])); $$('#rules details').forEach(d => d.open = keep.has(RULES[d.dataset.i].t)); }
+  });
+  $('#rules-expand').onclick = () => $$('#rules details:not(.hidden)').forEach(d => d.open = true);
+  $('#rules-collapse').onclick = () => $$('#rules details').forEach(d => d.open = false);
+}
+
+/* -------------------------------------------------------------------------
+   6c. SHOPS
+   ------------------------------------------------------------------------- */
+let shopId = store.get('dmo-shop', 'general');
+let includeNew = store.get('dmo-shop-new', true);
+let catFilter = '';
+
+function catalogue(key) {
+  return ORIGINAL[key].concat(includeNew ? (ADDED[key] || []).map(x => Object.assign({ added: true }, x)) : []);
+}
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const rollPrice = base => (base * (0.8 + Math.random() * 0.4)).toFixed(2);   // same 80–120% as the shop pages
+
+function shopExpired(shop) {
+  const last = parseInt(store.raw(shop.lastKey), 10) || 0;
+  return Date.now() - last >= SHOP_REFRESH_MS;
+}
+function restock(shop) {
+  shop.groups.forEach(g => {
+    const stock = shuffle(catalogue(g.key)).slice(0, g.count()).map(it => Object.assign({}, it, { price: rollPrice(it.basePrice) }));
+    store.setRaw(g.storageKey, JSON.stringify(stock));
+  });
+  store.setRaw(shop.lastKey, String(Date.now()));
+}
+function getStock(shop, g) {
+  try { return JSON.parse(store.raw(g.storageKey)) || []; } catch (e) { return []; }
+}
+function setStock(g, stock) { store.setRaw(g.storageKey, JSON.stringify(stock)); }
+
+function itemCell(it) {
+  return `<span class="itemname">${esc(it.name)}</span>${it.added ? '<span class="badge-new">new</span>' : ''}<div class="itemdesc">${esc(it.description || '')}</div>`;
+}
+function renderShop() {
+  const shop = SHOPS.find(s => s.id === shopId) || SHOPS[0];
+  if (shop.groups.some(g => !store.raw(g.storageKey)) || shopExpired(shop)) restock(shop);
+  $('#shoppicker').innerHTML = SHOPS.map(s => `<button class="btn small${s.id === shop.id ? ' on' : ''}" data-shop="${s.id}">${s.tab}</button>`).join('');
+  const newCount = shop.groups.reduce((a, g) => a + (ADDED[g.key] || []).length, 0);
+
+  const stockTables = shop.groups.map((g, gi) => {
+    const stock = getStock(shop, g);
+    return `<div class="shopsect card">
+      <h3>${shop.groups.length > 1 ? g.label : 'In stock'} <span class="muted" style="font-weight:400;font-size:12px">${stock.length} item${stock.length === 1 ? '' : 's'}</span></h3>
+      <div class="tablewrap"><table class="t"><thead><tr><th>Item</th>${g.stat ? `<th>${g.statLabel}</th>` : ''}<th>Properties</th><th class="r">Price</th><th></th></tr></thead><tbody>
+      ${stock.map((it, i) => `<tr><td>${itemCell(it)}</td>${g.stat ? `<td>${esc(it[g.stat] || '—')}</td>` : ''}
+        <td class="props">${esc((it.properties || []).join(', ') || '—')}</td>
+        <td class="r">${coins(it.price)}</td>
+        <td class="r"><button class="btn small" data-sold="${gi}:${i}" title="Sold — remove from stock">Sold</button></td></tr>`).join('') ||
+        `<tr><td colspan="5" class="muted">Sold out until the next restock.</td></tr>`}
+      </tbody></table></div></div>`;
+  }).join('');
+
+  const q = catFilter.toLowerCase();
+  const catTables = shop.groups.map((g, gi) => {
+    const items = catalogue(g.key).filter(it => !q || (it.name + ' ' + it.description + ' ' + (it.properties || []).join(' ') + ' ' + (it[g.stat] || '')).toLowerCase().includes(q));
+    return `${shop.groups.length > 1 ? `<div class="label" style="margin:10px 0 4px">${g.label}</div>` : ''}
+      <div class="tablewrap"><table class="t"><thead><tr><th>Item</th>${g.stat ? `<th>${g.statLabel}</th>` : ''}<th>Properties</th><th class="r">Base</th><th></th></tr></thead><tbody>
+      ${items.map(it => `<tr><td>${itemCell(it)}</td>${g.stat ? `<td>${esc(it[g.stat] || '—')}</td>` : ''}
+        <td class="props">${esc((it.properties || []).join(', ') || '—')}</td>
+        <td class="r">${coins(it.basePrice)}</td>
+        <td class="r"><button class="btn small" data-stock="${gi}:${esc(it.name)}" title="Put this in today’s stock at a fresh 80–120% price">+ Stock</button></td></tr>`).join('') ||
+        '<tr><td colspan="5" class="muted">Nothing matches.</td></tr>'}
+      </tbody></table></div>`;
+  }).join('');
+
+  $('#shop').innerHTML = `
+    <div class="shophead card">
+      <h2>${esc(shop.name)}</h2>
+      <div class="blurb">${esc(shop.blurb)}</div>
+      <div class="bar2">
+        <span class="timer" id="shop-timer"></span>
+        <button class="btn small" data-shopact="copy">Copy for Discord</button>
+        <button class="btn small" data-shopact="restock">Restock now</button>
+        <button class="btn small" data-shopact="open">Original page</button>
+      </div>
+    </div>
+    ${stockTables}
+    <div class="shopsect card">
+      <h3>Full catalogue
+        <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input class="input" id="cat-filter" placeholder="Filter&hellip;" value="${esc(catFilter)}" style="width:160px;padding:4px 8px">
+          ${newCount ? `<button class="btn small${includeNew ? ' on' : ''}" data-shopact="new" title="Draft additions from 2026-11-23, marked NEW">Include new items (${newCount})</button>` : ''}
+        </span>
+      </h3>
+      ${catTables}
+    </div>`;
+  updateShopTimer();
+  const fi = $('#cat-filter');
+  fi.addEventListener('input', () => { catFilter = fi.value; const pos = fi.selectionStart; renderShop(); const n = $('#cat-filter'); n.focus(); n.setSelectionRange(pos, pos); });
+}
+function updateShopTimer() {
+  const el = $('#shop-timer'); if (!el) return;
+  const shop = SHOPS.find(s => s.id === shopId) || SHOPS[0];
+  const left = (parseInt(store.raw(shop.lastKey), 10) || 0) + SHOP_REFRESH_MS - Date.now();
+  if (left <= 0) { if (document.body.dataset.tab === 'shops') { restock(shop); renderShop(); toast(`${esc(shop.name)} has restocked.`); } return; }
+  const m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
+  el.textContent = `Restocks in ${m}m ${String(s).padStart(2, '0')}s`;
+}
+function wireShops() {
+  $('#shoppicker').addEventListener('click', e => {
+    const b = e.target.closest('[data-shop]'); if (!b) return;
+    shopId = b.dataset.shop; store.set('dmo-shop', shopId); catFilter = ''; renderShop();
+  });
+  $('#shop').addEventListener('click', e => {
+    const shop = SHOPS.find(s => s.id === shopId);
+    const t = e.target.closest('[data-shopact],[data-sold],[data-stock]'); if (!t) return;
+    if (t.dataset.sold) {
+      const [gi, i] = t.dataset.sold.split(':').map(Number);
+      const g = shop.groups[gi], stock = getStock(shop, g);
+      const [gone] = stock.splice(i, 1); setStock(g, stock);
+      toast(`Sold: ${esc(gone.name)} for ${coins(gone.price)}.`);
+    } else if (t.dataset.stock) {
+      const idx = t.dataset.stock.indexOf(':');
+      const gi = +t.dataset.stock.slice(0, idx), name = t.dataset.stock.slice(idx + 1);
+      const g = shop.groups[gi], it = catalogue(g.key).find(x => x.name === name);
+      const stock = getStock(shop, g);
+      stock.push(Object.assign({}, it, { price: rollPrice(it.basePrice) })); setStock(g, stock);
+      toast(`${esc(it.name)} added to stock.`);
+    } else {
+      const a = t.dataset.shopact;
+      if (a === 'restock') { restock(shop); toast(`${esc(shop.name)} restocked.`); }
+      if (a === 'new') { includeNew = !includeNew; store.set('dmo-shop-new', includeNew); }
+      if (a === 'open') { setTab('places'); openPlace(shop.page, shop.name); return; }
+      if (a === 'copy') {
+        const lines = [`**${shop.name}** — today’s stock`];
+        shop.groups.forEach(g => {
+          if (shop.groups.length > 1) lines.push(`__${g.label}__`);
+          getStock(shop, g).forEach(it => lines.push(`• ${it.name} — ${coins(it.price)}${g.stat && it[g.stat] ? ` · ${it[g.stat]}` : ''}`));
+        });
+        copyText(lines.join('\n'), 'Stock list copied'); return;
+      }
+    }
+    renderShop();
+  });
+  setInterval(updateShopTimer, 1000);
+}
+
+/* -------------------------------------------------------------------------
+   6d. PRICES
+   ------------------------------------------------------------------------- */
+function renderPrices() {
+  $('#prices').innerHTML = PRICES.map((p, i) => `<div class="pricecat card" data-i="${i}"><h3>${p.t}</h3>${tbl(p.h, p.r, p.ra || [])}${p.n ? `<div class="note">${p.n}</div>` : ''}</div>`).join('');
+  $('#prices-filter').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    $$('#prices .pricecat').forEach(card => {
+      const titleHit = !q || card.querySelector('h3').textContent.toLowerCase().includes(q);
+      let any = false;
+      $$('tbody tr', card).forEach(tr => { const hit = titleHit || tr.textContent.toLowerCase().includes(q); tr.classList.toggle('hidden', !hit); any = any || hit; });
+      card.classList.toggle('hidden', !any);
+    });
+  });
+}
+
+/* -------------------------------------------------------------------------
+   6e. SEARCH — local catalogues first, then Open5e, plus outbound links
+   ------------------------------------------------------------------------- */
+const RARITY_VALUE = { 'common': '50–100 gp', 'uncommon': '101–500 gp', 'rare': '501–5,000 gp', 'very rare': '5,001–50,000 gp', 'legendary': '50,001+ gp' };
+const EXTERNAL = [
+  ['D&D Beyond', q => `https://www.dndbeyond.com/search?q=${encodeURIComponent(q)}`],
+  ['Roll20 Compendium', q => `https://www.google.com/search?q=${encodeURIComponent('site:roll20.net/compendium/dnd5e ' + q)}`],
+  ['dnd5e.wikidot', q => `https://www.google.com/search?q=${encodeURIComponent('site:dnd5e.wikidot.com ' + q)}`],
+  ['Google (5e)', q => `https://www.google.com/search?q=${encodeURIComponent('dnd 5e ' + q)}`]
+];
+const scopes = new Set(store.get('dmo-scopes', ['magicitems', 'spells', 'monsters', 'weapons', 'armor']));
+
+function renderExternal(q) {
+  $('#search-ext').innerHTML = '<span class="label">Open elsewhere:</span>' +
+    EXTERNAL.map(([n, f]) => q ? `<a class="btn small" href="${f(q)}" target="_blank" rel="noopener">${n} ↗</a>` : `<span class="btn small" style="opacity:.5">${n}</span>`).join('');
+}
+function localHits(q) {
+  const out = [];
+  SHOPS.forEach(s => s.groups.forEach(g => catalogue(g.key).forEach(it => {
+    if ((it.name + ' ' + it.description).toLowerCase().includes(q))
+      out.push({ name: it.name, meta: `${s.tab} · base ${coins(it.basePrice)}`, body: `<p>${esc(it.description)}</p>${g.stat && it[g.stat] ? `<p><b>${g.statLabel}:</b> ${esc(it[g.stat])}</p>` : ''}<p><b>Properties:</b> ${esc((it.properties || []).join(', ') || '—')}</p>`, shop: s.id });
+  })));
+  PRICES.forEach(p => p.r.forEach(row => {
+    if (String(row[0]).toLowerCase().includes(q)) out.push({ name: row[0], meta: `${p.t} · ${row[1]}`, body: tbl(p.h, [row], p.ra || []) });
+  }));
+  BEAST.filter(b => b.name.toLowerCase().includes(q)).forEach(b =>
+    out.push({ name: b.name, meta: `Evershroud bestiary · CR ${crKey(b.cr)}`, body: `<div class="statblock">${renderSB(sbFromLocal(b))}</div>`, add: { name: b.name, hp: b.hp, ac: b.ac, dex: b.dex, cr: b.cr, ref: { src: 'local', name: b.name } } }));
+  return out;
+}
+function resultCard(r) {
+  return `<details class="res card"><summary><span class="rname">${esc(r.name)}</span><span class="rmeta">${r.meta}</span></summary>
+    <div class="body">${r.body}${r.add ? `<p><button class="btn small primary" data-addmon='${esc(JSON.stringify(r.add))}'>Add to initiative</button></p>` : ''}${r.shop ? `<p><button class="btn small" data-goshop="${r.shop}">Go to shop</button></p>` : ''}</div></details>`;
+}
+function o5eResult(scope, m) {
+  if (scope === 'magicitems') {
+    const rv = RARITY_VALUE[String(m.rarity || '').toLowerCase().replace(/\s*\(.*$/, '')] || '';
+    return { name: m.name, meta: `${esc(m.type)} · ${esc(m.rarity)}${m.requires_attunement ? ' · attunement' : ''}${rv ? ` · ~${rv}` : ''}`, body: `<p>${md(m.desc)}</p>` };
+  }
+  if (scope === 'spells') {
+    const lvl = m.level_int === 0 ? `${m.school} cantrip` : `${m.level} ${String(m.school || '').toLowerCase()}`;
+    return { name: m.name, meta: `${esc(lvl)}${m.concentration === 'yes' || m.requires_concentration ? ' · conc.' : ''}${m.ritual === 'yes' || m.can_be_cast_as_ritual ? ' · ritual' : ''}`,
+      body: `<p><b>Casting time</b> ${esc(m.casting_time)} · <b>Range</b> ${esc(m.range)} · <b>Components</b> ${esc(m.components)}${m.material ? ` (${esc(m.material)})` : ''} · <b>Duration</b> ${esc(m.duration)}</p>
+        <p>${rollify(md(m.desc))}</p>${m.higher_level ? `<p><b>At higher levels.</b> ${rollify(md(m.higher_level))}</p>` : ''}<p class="muted">${esc(m.dnd_class || '')}</p>` };
+  }
+  if (scope === 'monsters') {
+    return { name: m.name, meta: `CR ${esc(m.challenge_rating)} · ${esc(m.size)} ${esc(m.type)}`, body: `<div class="statblock">${renderSB(sbFromO5e(m))}</div>`,
+      add: { name: m.name, hp: m.hit_points, ac: m.armor_class, dex: m.dexterity, cr: m.cr ?? m.challenge_rating, ref: { src: 'o5e', slug: m.slug } } };
+  }
+  if (scope === 'weapons') {
+    return { name: m.name, meta: `${esc(m.category)} · ${esc(m.cost)}`, body: `<p><b>Damage</b> ${esc(m.damage_dice)} ${esc(m.damage_type)} · <b>Weight</b> ${esc(m.weight)}</p><p><b>Properties</b> ${esc((m.properties || []).join(', ') || '—')}</p>` };
+  }
+  if (scope === 'armor') {
+    return { name: m.name, meta: `${esc(m.category)} · ${esc(m.cost)}`, body: `<p><b>AC</b> ${esc(m.ac_string)} · <b>Weight</b> ${esc(m.weight)}${m.strength_requirement ? ` · <b>Str</b> ${esc(m.strength_requirement)}` : ''}${m.stealth_disadvantage ? ' · Stealth disadvantage' : ''}</p>` };
+  }
+}
+const SCOPE_LABEL = { magicitems: 'Magic items', spells: 'Spells', monsters: 'Monsters', weapons: 'Weapons', armor: 'Armour' };
+let searchSeq = 0;
+async function runSearch(q) {
+  q = q.trim(); renderExternal(q);
+  const box = $('#search-results');
+  if (!q) { box.innerHTML = '<div class="status">Type something to search.</div>'; return; }
+  const seq = ++searchSeq;
+  await loadBestiary();
+  const local = localHits(q.toLowerCase());
+  let html = local.length ? `<div class="label">In the Evershroud (${local.length})</div>` + local.slice(0, 30).map(resultCard).join('') : '';
+  box.innerHTML = html + '<div class="status" id="o5e-status">Searching Open5e&hellip;</div>';
+  const jobs = [...scopes].map(sc => o5e(sc + '/', { search: q, limit: 12 }).then(d => [sc, d.results || []]).catch(e => [sc, null, e]));
+  const res = await Promise.all(jobs);
+  if (seq !== searchSeq) return;
+  let failed = 0, total = 0;
+  res.forEach(([sc, list]) => {
+    if (list === null) { failed++; return; }
+    if (!list.length) return;
+    total += list.length;
+    html += `<div class="label" style="margin-top:8px">${SCOPE_LABEL[sc]} &middot; Open5e (${list.length})</div>` + list.map(m => resultCard(o5eResult(sc, m))).join('');
+  });
+  if (failed === res.length && res.length) html += '<div class="status">Open5e didn’t answer (offline, or the API is down). The “Open elsewhere” buttons still work.</div>';
+  else if (!total && !local.length) html += '<div class="status">Nothing found. Try the buttons above, or turn off “SRD only”.</div>';
+  box.innerHTML = html;
+}
+function wireSearch() {
+  $$('#search-scopes [data-scope]').forEach(b => b.classList.toggle('on', scopes.has(b.dataset.scope)));
+  $('#search-srd').classList.toggle('on', srdOnly);
+  $('#search-scopes').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'search-srd') { srdOnly = !srdOnly; store.set('dmo-srd', srdOnly); b.classList.toggle('on', srdOnly); }
+    else { const s = b.dataset.scope; scopes.has(s) ? scopes.delete(s) : scopes.add(s); b.classList.toggle('on', scopes.has(s)); store.set('dmo-scopes', [...scopes]); }
+  });
+  $('#search-form').addEventListener('submit', e => { e.preventDefault(); runSearch($('#search-q').value); });
+  $('#search-q').addEventListener('input', e => renderExternal(e.target.value.trim()));
+  $('#search-results').addEventListener('click', e => {
+    const a = e.target.closest('[data-addmon]');
+    if (a) {
+      const m = JSON.parse(a.dataset.addmon);
+      addCombatant({ name: m.name, hp: m.hp, maxHp: m.hp, ac: parseInt(m.ac, 10) || null, mod: m.dex != null ? modOf(m.dex) : 0, cr: m.cr, ref: m.ref, type: 'enemy' });
+      save(); renderTracker(); toast(`${esc(m.name)} joins the fight.`);
+    }
+    const g = e.target.closest('[data-goshop]');
+    if (g) { shopId = g.dataset.goshop; store.set('dmo-shop', shopId); setTab('shops'); }
+  });
+  renderExternal('');
+}
+
+/* -------------------------------------------------------------------------
+   6f. PLACES — existing pages in an iframe (same site, same localStorage)
+   ------------------------------------------------------------------------- */
+function renderPlaces() {
+  $('#placegrid').innerHTML = PLACES.map(g => `<div class="placegroup card"><span class="label">${g.g}</span>${g.items.map(([n, u]) => `<button data-place="${u}">${esc(n)}</button>`).join('')}</div>`).join('');
+}
+function openPlace(url, title) {
+  if (!title) { PLACES.forEach(g => g.items.forEach(([n, u]) => { if (u === url) title = n; })); }
+  $('#viewer').classList.remove('hidden');
+  $('#viewer-title').textContent = title || url;
+  $('#viewer-newtab').href = url;
+  if ($('#viewer-frame').getAttribute('src') !== url) $('#viewer-frame').src = url;
+  $$('#placegrid [data-place]').forEach(b => b.classList.toggle('on', b.dataset.place === url));
+  store.set('dmo-place', { url, title });
+  reveal($('#viewer'), $('.col-ref'), true);
+}
+function restorePlace() {
+  const p = store.get('dmo-place', null);
+  if (p && !$('#viewer-frame').getAttribute('src')) {
+    $('#viewer').classList.remove('hidden');
+    $('#viewer-title').textContent = p.title; $('#viewer-newtab').href = p.url; $('#viewer-frame').src = p.url;
+    $$('#placegrid [data-place]').forEach(b => b.classList.toggle('on', b.dataset.place === p.url));
+  }
+}
+function wirePlaces() {
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-place]'); if (!b) return;
+    e.preventDefault();
+    if (document.body.dataset.tab !== 'places') setTab('places');
+    openPlace(b.dataset.place);
+  });
+  $('#viewer-reload').onclick = () => { const f = $('#viewer-frame'); f.src = f.src; };
+  $('#viewer-close').onclick = () => {
+    $('#viewer').classList.add('hidden'); $('#viewer-frame').removeAttribute('src');
+    $$('#placegrid [data-place]').forEach(b => b.classList.remove('on')); store.set('dmo-place', null);
+  };
+}
+
+/* -------------------------------------------------------------------------
+   6g. NOTES
+   ------------------------------------------------------------------------- */
+function wireNotes() {
+  const ta = $('#notes');
+  ta.value = store.raw('dmo-notes') || '';
+  let t;
+  ta.addEventListener('input', () => {
+    $('#notes-status').textContent = 'Saving…';
+    clearTimeout(t);
+    t = setTimeout(() => { store.setRaw('dmo-notes', ta.value); $('#notes-status').textContent = 'Saved in this browser.'; }, 400);
+  });
+  $('#notes-stamp').onclick = () => {
+    const stamp = `\n— ${new Date().toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${S.round ? ` · round ${S.round}` : ''} —\n`;
+    const p = ta.selectionStart ?? ta.value.length;
+    ta.value = ta.value.slice(0, p) + stamp + ta.value.slice(p);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = p + stamp.length;
+    ta.dispatchEvent(new Event('input'));
+  };
+  $('#notes-copy').onclick = () => copyText(ta.value, 'Notes copied');
+}
+
+/* -------------------------------------------------------------------------
+   7. BOOT
+   ------------------------------------------------------------------------- */
+function syncTopbarHeight() {
+  document.documentElement.style.setProperty('--topbar-h-actual', $('#topbar').offsetHeight + 'px');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  // theme
+  $('#theme-toggle').onclick = () => {
+    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    store.setRaw('theme', t);
+  };
+  // dice
+  $('#dice-form').addEventListener('submit', e => { e.preventDefault(); doRoll($('#dice-input').value || 'd20'); });
+  $('#dice-out').onclick = e => { e.stopPropagation(); renderDiceHistory(); $('#dice-history').classList.toggle('hidden'); };
+  document.addEventListener('click', e => { if (!e.target.closest('.dice')) $('#dice-history').classList.add('hidden'); });
+  if (diceHistory[0]) $('#dice-out').textContent = diceHistory[0].total;
+  // clickable dice anywhere (stat blocks, spells)
+  document.addEventListener('click', e => {
+    const r = e.target.closest('[data-roll]'); if (!r) return;
+    e.preventDefault();
+    const res = doRoll(r.dataset.roll);
+    if (res) toast(`<b>${esc(res.expr)}</b> → <b>${res.total}</b> <span class="muted">${res.detail}</span>`);
+  });
+  // tabs
+  $('#tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) setTab(t.dataset.tab); });
+  if (window.ResizeObserver) new ResizeObserver(syncTopbarHeight).observe($('#topbar'));
+  window.addEventListener('resize', () => { syncTopbarHeight(); if (isWide() && document.body.dataset.tab === 'tracker') setTab('tracker'); });
+  syncTopbarHeight();
+
+  wireTracker(); wireSuggest(); wireShops(); wireSearch(); wirePlaces(); wireNotes();
+  renderTracker(); renderRules(); renderPrices(); renderPlaces();
+  setTab(store.get('dmo-tab', 'rules'));
+  loadBestiary();
+});
+</script>
+</body>
+</html>
