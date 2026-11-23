@@ -79,6 +79,7 @@ Before committing a page change:
 | `aberrantworks.html` | Aberrant Works section |
 | `tavern.html`, `forge.html`, `smithy.html`, etc. | Location/shop pages |
 | `fortune.html` | Fortune telling tool |
+| `slots.html` | The Curio Bandit: a tavern slot machine (3x3, 5 lines, rarity-weighted, one wild joker per reel). Three in a line opens the item card and prints it to a card-sized PDF. Item data is in `ITEMS` and the portraits are in `resources/slotitems/`. |
 | `harmony.html` | Crystal Harmony tool |
 | `isekaid.html` / `isekaidcards.html` | Isekai'd game |
 | `imogen/chonkinvaders.html` | Chonk Invaders mini-game |
