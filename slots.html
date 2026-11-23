@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Curio Bandit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    /* ============================================================
+       PAGE
+       ============================================================ */
+    :root {
+      --cell: 92px;               /* height/width of one reel cell */
+      --brass: #c9a24a;
+      --brass-hi: #f3dc8e;
+      --brass-lo: #7a5a1c;
+      --wood: #4a2b16;
+      --wood-hi: #6d4224;
+      --parch: #FAF4E0;
+    }
+    @media (max-width: 520px) { :root { --cell: 72px; } }
+    @media (max-width: 380px) { :root { --cell: 62px; } }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #120a05 url('resources/tavern.png') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--parch);
+      font-family: 'Almendra', serif;
+      text-align: center;
+    }
+    .container {
+      max-width: 720px;
+      margin: 2rem auto;
+      background: rgba(0,0,0,0.7);
+      padding: 1.5rem 1rem 2rem;
+      border-radius: 10px;
+    }
+    h1 { font-family: 'Cinzel', serif; margin: 0 0 .25rem; }
+    .lede { margin: 0 auto 1.5rem; max-width: 34rem; opacity: .9; }
+    .home-button {
+      background: #8B0000; color: var(--parch); border: 1px solid #660000;
+      padding: .5rem 1rem; border-radius: 5px; font-family: 'Cinzel', serif;
+      display: inline-block; margin-top: 1.5rem; text-decoration: none;
+    }
+    .home-button:hover { background: #660000; }
+
+    /* ============================================================
+       THE MACHINE — wooden cabinet, brass trim, lever on the right
+       ============================================================ */
+    .machine-wrap {
+      position: relative;
+      display: inline-block;
+      padding-right: 46px;          /* room for the lever */
+    }
+    .cabinet {
+      position: relative;
+      padding: 18px 18px 22px;
+      border-radius: 28px 28px 14px 14px;
+      background:
+        repeating-linear-gradient(92deg, rgba(0,0,0,.10) 0 3px, transparent 3px 11px),
+        linear-gradient(180deg, var(--wood-hi), var(--wood) 60%, #2c190c);
+      border: 4px solid var(--brass);
+      box-shadow:
+        inset 0 0 0 2px var(--brass-lo),
+        inset 0 3px 12px rgba(255,220,150,.15),
+        0 12px 30px rgba(0,0,0,.7);
+    }
+    .plaque {
+      font-family: 'Cinzel', serif; font-weight: 700;
+      letter-spacing: .12em;
+      color: #2a1606;
+      background: linear-gradient(180deg, var(--brass-hi), var(--brass) 55%, var(--brass-lo));
+      border-radius: 8px;
+      padding: .35rem 1rem;
+      margin: 0 auto 14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 2px 4px rgba(0,0,0,.6);
+      text-shadow: 0 1px 0 rgba(255,240,200,.6);
+      font-size: clamp(.85rem, 3.4vw, 1.2rem);
+    }
+    .window-row { display: flex; align-items: center; gap: 8px; }
+    .lamps { display: flex; flex-direction: column; justify-content: space-between; height: calc(var(--cell) * 3); padding: 4px 0; }
+    .lamp {
+      width: 22px; height: 22px; border-radius: 50%;
+      font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; line-height: 22px;
+      color: #3b2408;
+      background: radial-gradient(circle at 35% 35%, #8a6a32, #4a3410);
+      border: 2px solid var(--brass-lo);
+      transition: background .2s, box-shadow .2s;
+    }
+    .lamp.lit {
+      background: radial-gradient(circle at 35% 35%, #fff6c8, #ffbf3a 60%, #c46a00);
+      box-shadow: 0 0 12px 3px rgba(255,190,60,.8);
+    }
+
+    .window {
+      position: relative;
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      background: #1a0f07;
+      border: 3px solid var(--brass);
+      border-radius: 8px;
+      box-shadow: inset 0 0 0 2px #000, inset 0 0 18px rgba(0,0,0,.9);
+    }
+    .reel {
+      position: relative;
+      width: var(--cell);
+      height: calc(var(--cell) * 3);
+      overflow: hidden;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #cbbf9e, #f4ecd4 30%, #f4ecd4 70%, #cbbf9e);
+    }
+    /* curved-drum shading over each reel */
+    .reel::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      background: linear-gradient(180deg, rgba(0,0,0,.55), transparent 22%, transparent 78%, rgba(0,0,0,.55));
+    }
+    .strip { position: absolute; left: 0; top: 0; width: 100%; will-change: transform; }
+    .strip.spinning { filter: blur(1.2px); }
+    .cell {
+      width: var(--cell); height: var(--cell);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cell img {
+      width: 84%; height: 84%; object-fit: cover;
+      border: 2px solid #2a1a0c; border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.5);
+      background: #000;
+    }
+    .cell.joker span {
+      width: 84%; height: 84%;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      border: 2px solid #2a1a0c; border-radius: 4px;
+      background: radial-gradient(circle at 50% 40%, #5a1a6e, #1d0726);
+      color: var(--brass-hi);
+      font-family: 'Cinzel', serif; font-weight: 700;
+      font-size: calc(var(--cell) * .12);
+      letter-spacing: .08em;
+    }
+    .cell.joker span b { font-size: calc(var(--cell) * .38); line-height: 1; }
+
+    /* win highlight sits above the reels, aligned to the 3x3 grid */
+    .grid-overlay {
+      position: absolute; inset: 6px; pointer-events: none; z-index: 3;
+      display: grid; grid-template-columns: repeat(3, var(--cell)); grid-template-rows: repeat(3, var(--cell));
+      column-gap: 6px;
+    }
+    .grid-overlay div { border-radius: 6px; }
+    .grid-overlay div.win {
+      box-shadow: inset 0 0 0 3px #ffcf4a, 0 0 14px 2px rgba(255,200,60,.85);
+      animation: pulse .7s ease-in-out infinite alternate;
+    }
+    @keyframes pulse { from { opacity: .55; } to { opacity: 1; } }
+    svg.lines { position: absolute; inset: 6px; z-index: 4; pointer-events: none; overflow: visible; }
+    svg.lines line { stroke: #ffcf4a; stroke-width: 4; stroke-linecap: round; opacity: .85; filter: drop-shadow(0 0 4px #ff9a00); }
+
+    .controls { margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .spin-btn {
+      font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.05rem; letter-spacing: .1em;
+      color: var(--parch);
+      background: radial-gradient(circle at 50% 30%, #c0392b, #7a0b0b);
+      border: 3px solid var(--brass);
+      border-radius: 999px;
+      padding: .55rem 1.6rem;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #3d0505, 0 6px 10px rgba(0,0,0,.6);
+    }
+    .spin-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #3d0505; }
+    .spin-btn:disabled { filter: grayscale(.6) brightness(.7); cursor: default; }
+    .mute {
+      background: none; border: 1px solid var(--brass-lo); color: var(--brass-hi);
+      border-radius: 6px; font-family: 'Cinzel', serif; font-size: .75rem; padding: .3rem .6rem; cursor: pointer;
+    }
+    .message { min-height: 1.6em; margin-top: 12px; font-size: 1.1rem; color: var(--brass-hi); }
+
+    /* The lever */
+    .lever {
+      position: absolute; right: 0; top: 70px;
+      width: 40px; height: 230px;
+      cursor: pointer; background: none; border: none; padding: 0;
+    }
+    .lever .mount {
+      position: absolute; left: 0; bottom: 20px; width: 22px; height: 56px;
+      border-radius: 0 10px 10px 0;
+      background: linear-gradient(90deg, var(--brass-lo), var(--brass-hi) 45%, var(--brass));
+      box-shadow: 0 2px 6px rgba(0,0,0,.6);
+    }
+    .lever .arm {
+      position: absolute; left: 12px; bottom: 48px;
+      width: 8px; height: 170px;
+      transform-origin: 50% 100%;
+      background: linear-gradient(90deg, #6b6b6b, #e8e8e8 50%, #777);
+      border-radius: 4px;
+      transition: transform .18s ease-in;
+    }
+    .lever .arm::before {
+      content: ""; position: absolute; left: 50%; top: -22px; transform: translateX(-50%);
+      width: 30px; height: 30px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ff8a7a, #b3120f 55%, #5c0202);
+      box-shadow: 0 3px 6px rgba(0,0,0,.6);
+    }
+    .lever.pulled .arm { transform: scaleY(-0.55); transition: transform .22s ease-in; }
+    .lever.release .arm { transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
+
+    /* ============================================================
+       PAYOUT POPUP
+       ============================================================ */
+    .overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(0,0,0,.9);
+      display: none; align-items: flex-start; justify-content: center;
+      overflow-y: auto; padding: 1.2rem .8rem 2rem;
+    }
+    .overlay.open { display: flex; }
+    .payout { max-width: 100%; }
+    .payout h2 { font-family: 'Cinzel', serif; color: var(--brass-hi); margin: .2rem 0; font-size: 1.3rem; }
+    .payout .flavour { margin: 0 0 .9rem; opacity: .9; }
+    .payout-buttons { margin-top: 1rem; display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+    .payout-buttons button {
+      font-family: 'Cinzel', serif; font-size: .9rem;
+      background: #8B0000; color: var(--parch); border: 1px solid var(--brass);
+      border-radius: 5px; padding: .5rem 1rem; cursor: pointer;
+    }
+    .payout-buttons button.secondary { background: #2a1a0c; }
+    .payout-buttons button:hover { filter: brightness(1.2); }
+    .pager { margin-top: .6rem; font-family: 'Cinzel', serif; font-size: .85rem; opacity: .85; }
+
+    /* ============================================================
+       ITEM CARD — replica of the printed black-and-white card frame.
+       Everything is sized in em off .card's font-size, so the same
+       card scales from screen to print (63.5 x 88.9 mm) unchanged.
+       ============================================================ */
+    .card {
+      --k: #111;
+      font-size: 13px;
+      width: 25em; height: 35em;
+      position: relative;
+      margin: 0 auto;
+      color: #111;
+      font-family: 'Crimson Text', Georgia, serif;
+      text-align: left;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    @media (max-width: 380px) { .card { font-size: 12px; } }
+    .card .frame, .card .frame-in {
+      position: absolute;
+      clip-path: polygon(1.4em 0, calc(100% - 1.4em) 0, 100% 1.4em, 100% calc(100% - 1.4em), calc(100% - 1.4em) 100%, 1.4em 100%, 0 calc(100% - 1.4em), 0 1.4em);
+    }
+    .card .frame { inset: 0; background: var(--k); }
+    .card .frame-in { inset: .22em; background: #fff; }
+    .card .frame-in2 {
+      position: absolute; inset: .6em;
+      border: .1em solid var(--k);
+      border-radius: .9em .9em .3em .3em;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .card .title {
+      margin: .45em .45em 0;
+      background: #e6e6e6;
+      border-radius: .5em;
+      font-family: 'Cinzel', serif;
+      font-variant: small-caps;
+      font-size: 1.3em;
+      letter-spacing: .04em;
+      text-align: center;
+      padding: .12em .3em;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .card .head { display: flex; gap: .6em; padding: .5em .45em .55em; }
+    .card .portrait {
+      flex: 0 0 7.2em; height: 7.2em;
+      background: #dcdcdc;
+      border-radius: .9em;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card .portrait .pf {
+      width: 5.9em; height: 5.9em;
+      background: var(--k);
+      padding: .25em;
+      clip-path: polygon(.7em 0, calc(100% - .7em) 0, 100% .7em, 100% calc(100% - .7em), calc(100% - .7em) 100%, .7em 100%, 0 calc(100% - .7em), 0 .7em);
+    }
+    .card .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .card .tiny { font-family: 'Cinzel', serif; font-size: .55em; letter-spacing: .05em; text-transform: uppercase; }
+    .card .type {
+      margin-top: .15em;
+      background: #e6e6e6; border-radius: .35em;
+      font-family: 'Cinzel', serif; font-variant: small-caps;
+      font-size: .95em; letter-spacing: .04em;
+      padding: .2em .5em;
+      white-space: nowrap; overflow: hidden;
+    }
+    .card .price-row { display: flex; align-items: center; justify-content: space-between; margin-top: .55em; gap: .3em; }
+    .card .price {
+      position: relative; width: 5.2em; height: 2.5em;
+      background: var(--k);
+      clip-path: polygon(18% 0, 82% 0, 100% 50%, 82% 100%, 18% 100%, 0 50%);
+    }
+    .card .price span {
+      position: absolute; inset: .12em;
+      background: #fff;
+      clip-path: polygon(18% 0, 82% 0, 100% 50%, 82% 100%, 18% 100%, 0 50%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif; font-size: 1.25em;
+    }
+    .card .price sup { font-size: .4em; margin-left: .2em; align-self: flex-start; margin-top: .55em; }
+    .card .attune { text-align: center; line-height: 1.05; }
+    .card .attune .tiny { font-size: .5em; }
+    .card .boxes { display: flex; align-items: center; gap: .25em; justify-content: center; margin-top: .15em; }
+    .card .boxes i { font-style: normal; font-family: 'Cinzel', serif; font-size: .5em; color: #888; }
+    .card .boxes b { width: .95em; height: .95em; border: .1em solid var(--k); display: inline-block; }
+    .card .boxes b.on { background: var(--k); }
+    .card .body {
+      flex: 1;
+      border-top: .1em solid var(--k);
+      padding: .6em .75em .4em;
+      overflow: hidden;
+      font-size: .95em;
+      line-height: 1.22;
+    }
+    .card .body p { margin: 0 0 .5em; }
+    .card .body .i { font-style: italic; }
+    .card .body .b { font-weight: 700; }
+    .card .body .bi { font-weight: 700; font-style: italic; }
+    .card .body .q { font-weight: 700; font-style: italic; font-size: 1.15em; line-height: 1.2; }
+    .card .body .by { font-weight: 700; font-size: .8em; }
+    .card .body hr { border: 0; border-top: .2em solid #aaa; margin: .55em 0 .6em; }
+    .card .foot {
+      flex: 0 0 2.2em;
+      border-top: .1em solid var(--k);
+      display: flex; align-items: center; justify-content: center; gap: .3em;
+      position: relative;
+    }
+    .card .foot b { width: .9em; height: .9em; border: .1em solid var(--k); border-radius: 50%; display: inline-block; }
+    .card .foot .gem {
+      width: 4.2em; height: 1.6em; margin: 0 .4em;
+      background: var(--k);
+      clip-path: polygon(15% 0, 85% 0, 100% 40%, 80% 100%, 20% 100%, 0 40%);
+      position: relative; top: -.35em;
+    }
+    .card .foot .gem::after {
+      content: ""; position: absolute; inset: .12em;
+      background: #fff;
+      clip-path: polygon(15% 0, 85% 0, 100% 40%, 80% 100%, 20% 100%, 0 40%);
+    }
+
+    /* ============================================================
+       PRINT — only the card in the open popup, on a card-sized page.
+       "Save as PDF" in the print dialog turns it into a standalone PDF.
+       ============================================================ */
+    @page { size: 63.5mm 88.9mm; margin: 0; }
+    @media print {
+      body { background: #fff !important; }
+      body > *:not(.overlay) { display: none !important; }
+      .overlay { position: static; display: block !important; background: none; padding: 0; overflow: visible; }
+      .payout > *:not(.card-holder) { display: none !important; }
+      .card { font-size: 2.53mm; margin: 0; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>The Curio Bandit</h1>
+    <p class="lede">A one-armed contraption of brass and blackened oak, wedged into the corner of the taproom. Pull the lever; should three curios align upon a row or a diagonal, the machine shall surrender one.</p>
+
+    <div class="machine-wrap">
+      <div class="cabinet">
+        <div class="plaque">❖ The Curio Bandit ❖</div>
+        <div class="window-row">
+          <div class="lamps" id="lampsL"></div>
+          <div class="window" id="window">
+            <div class="reel"><div class="strip" id="strip0"></div></div>
+            <div class="reel"><div class="strip" id="strip1"></div></div>
+            <div class="reel"><div class="strip" id="strip2"></div></div>
+            <div class="grid-overlay" id="gridOverlay"></div>
+            <svg class="lines" id="lines"></svg>
+          </div>
+          <div class="lamps" id="lampsR"></div>
+        </div>
+        <div class="controls">
+          <button class="spin-btn" id="spinBtn">Spin</button>
+          <button class="mute" id="muteBtn" title="Toggle sound">Sound: on</button>
+        </div>
+        <div class="message" id="message">&nbsp;</div>
+      </div>
+      <button class="lever" id="lever" aria-label="Pull the lever"><span class="mount"></span><span class="arm"></span></button>
+    </div>
+
+    <br>
+    <a href="caldwell-repo.html" class="home-button">Home</a>
+  </div>
+
+  <!-- Payout popup -->
+  <div class="overlay" id="overlay">
+    <div class="payout">
+      <h2 id="payoutTitle">The machine relents!</h2>
+      <p class="flavour" id="payoutFlavour"></p>
+      <div class="card-holder" id="cardHolder"></div>
+      <div class="pager" id="pager"></div>
+      <div class="payout-buttons">
+        <button id="printBtn">Save as PDF</button>
+        <button id="nextBtn" class="secondary">Next curio</button>
+        <button id="closeBtn" class="secondary">Back to the machine</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ==================================================================
+   ITEMS — transcribed verbatim from the printed card sheets.
+   Body blocks: [style, text]
+     p  plain      i  italic     b  bold     bi bold italic
+     q  quote (large bold italic)   by attribution   hr divider
+   rarity drives reel weighting (see WEIGHTS below).
+   ================================================================== */
+const ITEMS = [
+  // ---- Sheet one ----------------------------------------------------
+  { id:'folding-pier', name:'Folding Pier', type:'Tool, Very Rare', rarity:'very rare', price:80, attune:true, body:[
+    ['p','Unfolds into a stable pier or bridge up to 30 feet long, with the magical durability to support great weight.'],
+    ['p','Uses: 1/day'] ]},
+  { id:'rogues-velvet-cape', name:"Rogue's Velvet Cape", type:'Clothing, Unique', rarity:'unique', price:85, attune:true, body:[
+    ['q','Haha! It seemeth thy sword hath gone as limp as thine manhood! Now prepare to die!'],
+    ['hr'],
+    ['p','Once per day;'],
+    ['p','Nullifies one hit per day when the wearer delivers a witty remark as a reaction'] ]},
+  { id:'dramatic-monocle', name:'Dramatic Monocle', type:'Accessory, Rare', rarity:'rare', price:80, attune:false, body:[
+    ['p','Grants advantage on Insight checks but compels the wearer to exclaim, “Most intriguing!” whenever they learn something surprising.'],
+    ['p','Uses: 1/day'] ]},
+  { id:'infinite-teacup', name:'Infinite Teacup', type:'Container, Rare', rarity:'rare', price:200, attune:true, body:[
+    ['p','Always full of perfectly steeped tea. Drinking it restores 2 hit points but requires a full minute of polite sipping.'] ]},
+  { id:'wig-of-momentous-hair', name:'Wig of Momentous Hair', type:'Clothing, Very Rare', rarity:'very rare', price:55, attune:true, body:[
+    ['p','An impressive mane of hair that billows heroically, granting advantage on Intimidation checks. With a succesful insight check (17 or higher) an NPC may notice it is in fact not the user’s own hair, thus negating the effect.'],
+    ['hr'],
+    ['q','Maybe she was born with it. Maybe it’s an arcane item from beyond the veil of reality.'] ]},
+  { id:'pocket-raincloud', name:'Pocket Raincloud', type:'Magic item, uncommon', rarity:'uncommon', price:20, attune:true, body:[
+    ['p','Summons a tiny raincloud above the target’s head for 10 minutes. The rain is refreshing, harmless, and thoroughly inconvenient.'],
+    ['hr'],
+    ['q','“Well, that’s just bloody marvellous, isn’t it? First the famine, then the war, and now personal precipitation. Truly, the gods have a sense of humour.”'] ]},
+  { id:'compulsively-counting-abacus', name:'Compulsively Counting Abacus', type:'Tool, very rare', rarity:'very rare', price:10, attune:false, body:[
+    ['p','Counts everything nearby, often loudly: coins, teeth, sword swings. I.e. “There are exactly 32 flies in this room.”'],
+    ['hr'],
+    ['b','“Oh, for the love of—yes, abacus, I know there are fifty-eight stone tiles in this chamber! You’ve only mentioned it ten times in the last minute!”'],
+    ['b','“Correction: eleven times.”'] ]},
+  { id:'eternal-ball-of-yarn', name:'Eternal Ball of Yarn', type:'Item, unique', rarity:'unique', price:50, attune:false, body:[
+    ['p','Unravels endlessly, providing rope in a pinch. Attracts cats from far and wide.'],
+    ['hr'],
+    ['b','“Oh no. Not the cat. Someone stop it!”'] ]},
+  { id:'sock-puppet-of-diplomacy', name:'Sock Puppet of Diplomacy', type:'Item, unique', rarity:'unique', price:40, attune:true, body:[
+    ['p','Speaking through this enchanted sock puppet grants advantage on Persuasion checks but imposes disadvantage on Intimidation.'],
+    ['hr'],
+    ['b','“Yes, yes. You’ve been through a lot, haven’t you? So many feelings, so many worries. It’s okay. You can trust Mr. Sockins. I’m a very good listener.”'] ]},
+
+  // ---- Sheet two ----------------------------------------------------
+  { id:'dwarven-throwing-star', name:'Dwarven Throwing Star', type:'Ranged weapon, Very Rare', rarity:'very rare', price:400, attune:true, body:[
+    ['b','Though not known for their ranged combat prowess, the duergar use these self-burrowing throwing stars quite efficiently.'],
+    ['hr'],
+    ['p','Once per short rest;'],
+    ['i','finesse, hidden, thrown (20/60)'],
+    ['i','Damage/type: 1d4 piercing'],
+    ['p','Target must make a DC15 strength saving throw. On a failed save, the star burrows into the target’s flesh. At the end of each of your turns, the target takes 3d6 slashing damage. The target can attempt to remove the star by succeeding on a DC15 strength saving throw.'] ]},
+  { id:'yellow-snow', name:'Yellow Snow', type:'Scroll, Unique', rarity:'unique', price:45, attune:true, body:[
+    ['bi','Is it lemon juice? Is it urine? Only one way to find out.'],
+    ['hr'],
+    ['p','Once per day;'],
+    ['p','You conjure forth a freezing blast of yellow snow in a 30 foot cone. All affected creatures must make a DC11 dexterity saving throw or suffer 2d4 cold damage.'],
+    ['i','If the amount of damage inflicted is an even number, it tastes like lemon ice cream. If the number is uneven, it is clearly urine, and the target is appropriately disgusted, unable to move for the next round.'] ]},
+  { id:'ornate-blackleaf-pipe', name:'Ornate Blackleaf Pipe', type:'Accessory, uncommon', rarity:'uncommon', price:80, attune:false, body:[
+    ['p','This blackleaf pipe is made from a rare variety of rosewood. The lifelike imagery depicts halflings working the fields under the watchful eyes of their masters.'],
+    ['i','Negates the adverse effects of blackleaf.'],
+    ['hr'],
+    ['q','"Smoke weed every day"'],
+    ['by','~ Snope Hound'] ]},
+  { id:'satchel-of-obfusciation', name:'Satchel of Obfusciation', type:'Container, Rare', rarity:'rare', price:200, attune:true, body:[
+    ['p','This container can hold a single item no larger than a 2-foot cube. As long as the item is inside, it is entirely forgotten by anyone but the Satchel’s owner.'],
+    ['hr'],
+    ['q','"If you don’t miss it, perhaps it was never truly yours to begin with."'],
+    ['by','~ Anonymous'] ]},
+  { id:'cameo-of-senescense', name:'Cameo of Senescense', type:'Jewelry, Very Rare', rarity:'very rare', price:55, attune:false, body:[
+    ['p','This finely crafted cameo instantly ages whoever puts it on to by at least 50 years.'],
+    ['p','This includes creatures whose lifespans would naturally have ended within those 50 years, but does not kill the creature. The effect is undone when the cameo is removed.'],
+    ['hr'],
+    ['bi','"Tried it on my wife, got divorced soon after. 10/10, would recommend."'],
+    ['by','~ Jaerig the Unwed'] ]},
+  { id:'tiny-little-dog', name:'Tiny Little Dog', type:'Ranged weapon, uncommon', rarity:'uncommon', price:20, attune:true, body:[
+    ['p','A ferocious creature, it is best thrown before engaging melee combat.'],
+    ['i','Thrown (30/60)'],
+    ['i','Damage/type: 1d6 piercing'],
+    ['i','After being thrown, will return to its owner automatically at a speed of 30ft. per round'],
+    ['b','HP: 15'] ]},
+  { id:'heartwood-lute', name:'Heartwood Lute', type:'Instrument, Very Rare', rarity:'very rare', price:230, attune:true, body:[
+    ['p','This deep purple lute was carved from a single log of heartwood and cured for 30 years in a barrel of fermented orphan tears. The result is an extraordinary instrument that soaks up sadness from the room like a sponge.'],
+    ['i','A skillful bard can play it in the background when bad news is being delivered. Who ever should receive bad news while hearing the Lute, will see it in the most positive light possible.'] ]},
+  { id:'ring-of-unintended-empathy', name:'Ring of Unintended Empathy', type:'Rare', rarity:'rare', price:50, attune:false, body:[
+    ['p','This ring allows the wearer to feel the emotions of nearby creatures, but it’s not limited to sentient beings. As a result, the wearer might suddenly experience the joy of a squirrel finding a nut or the frustration of a rock caught in a stream.'] ]},
+  { id:'sway', name:'Sway', type:'Narcotic', rarity:'uncommon', price:60, attune:false, body:[
+    ['p','Sylvan Sway is a narcotic substance derived from the vibrantly colored Luminafungus mushrooms found deep within enchanted forests. When carefully harvested and processed, these luminescent mushrooms release a soothing and euphoric aroma. When inhaled or consumed, Sylvan Sway induces a state of serene relaxation and heightened sensory awareness. Users often describe feeling as if they are gently swaying in harmony with the natural world, their worries dissipating like morning mist...'] ]},
+
+  // ---- Sheet three --------------------------------------------------
+  { id:'really-cool-dagger', name:'Really cool dagger (cursed)', type:'Epic', rarity:'epic', price:500, attune:false, body:[
+    ['p','Damage/type: 1d4 piercing + 1d4 slashing'],
+    ['p','This dagger is really cool, bro, just look. It’s got all these spikes, it’s like...woah man it’s really cool. Pls bro, just check it out I promise it’ll be cool... It’s really cool just try it out bro...'],
+    ['hr'],
+    ['p','This dagger replenishes the user’s health for 1 HP per every 3 damage it inflicts on living humanoids. However, if the player doesn’t say how cool the dagger is, they take that amount of force damage each time they wield it.'],
+    ['p','This item, once used, cannot be unequipped without the use of “Dispel” or similar magic.'] ]},
+  { id:'nipple-pasties-of-distraction', name:'Nipple Pasties of Distraction', type:'Unique', rarity:'unique', price:20, attune:true, body:[
+    ['p','These brass nipple pasties perhaps do not provide the mmost optimal chest protection - they do, however, distract your enemies, which is effective in it’s own right.'],
+    ['p','AC: 13 + CON + CHAR'],
+    ['p','+1 to hit'],
+    ['q','"Nice..."'],
+    ['by','-Sir David Halflingburrow'] ]},
+  { id:'elven-incense', name:'Elven Incense', type:'Rare', rarity:'rare', price:80, attune:false, body:[
+    ['p','A fragrant concoction of herbs, minerals and resins. Its carefully guarded recipe is known only to a select few alchemists across the realms, but it is said to have great benefits to those who use it.'],
+    ['hr'],
+    ['p','Burning this rare and otherworldly resin allows for the casting of a single spell at one level above the caster’s current ability.'],
+    ['q','"I love the smell of napalm in the morning!"'],
+    ['by','-Benji'] ]},
+  { id:'weighted-coin', name:'Weighted Coin', type:'Uncommon', rarity:'uncommon', price:10, attune:false, body:[
+    ['p','This ordinary looking coin is weighted and land on heads 80% of the time.'],
+    ['hr'],
+    ['i','"In life, it is important to seize an opportunity. As you get older you’ll see that you come to regret a lot more frequently the things you haven’t done than the things you did. So take a chance. You never know what might happen."'],
+    ['by','-Benji'] ]},
+  { id:'spectral-key', name:'Spectral Key', type:'Rare', rarity:'rare', price:150, attune:false, body:[
+    ['p','This key glows with an unearthly light, and can be used to open a 6 by 3 ft. door anywhere leading to a small pocket dimension. The dimension takes the form of a small room not unlike a broom closet, 5 by 5 ft. across and about 7 ft. in height.'] ]},
+  { id:'fake-moustache', name:'Fake Moustache', type:'Uncommon', rarity:'uncommon', price:50, attune:false, body:[
+    ['p','A luxurious moustache made from black horsehair.'],
+    ['p','Sure to make the wearer look very distinguished indeed.'],
+    ['p','+1 Charisma'],
+    ['p','+2 Intimidation'],
+    ['p','+2 Persuasion'],
+    ['q','Fake it till you make it!'],
+    ['by','-Benji'] ]},
+  { id:'chopmaster-1000', name:'Chopmaster 1000 Platinum Plus+ (+2)', type:'Rare', rarity:'rare', price:150, attune:false, body:[
+    ['p','A highly decorated piece of weaponry, fit for a king.'],
+    ['i','Introducing the “Chopmaster 1000 Platinum Plus+” – the ultimate fusion of form and function for your chopping needs. Crafted with precision, its sleek, razor-sharp edge effortlessly glides through any obstacle, akin to a stylist’s scissors through silk. With each swing, experience the sheer satisfaction as it parts foes like unruly strands, leaving a flawless finish that even the fiercest battles can’t frizz. Embrace the allure of the Chopmaster 1000 Platinum Plus+ and let your chopping game reach new heights of elegance.'] ]},
+];
+
+/* ==================================================================
+   REELS
+   Each reel is a fixed physical strip: every item appears WEIGHTS[rarity]
+   times, plus exactly one joker (wild). Strips are shuffled with a
+   seeded PRNG so they are the same strip for everyone, every visit —
+   like a real machine. Only where the reel stops is left to chance.
+   Roughly one winning spin in 28.
+   ================================================================== */
+const WEIGHTS = { 'uncommon':3, 'rare':2, 'very rare':1, 'unique':1, 'epic':1 };
+const JOKER = 'joker';
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function buildStrip(seed) {
+  const s = [];
+  ITEMS.forEach(it => { for (let n = 0; n < WEIGHTS[it.rarity]; n++) s.push(it.id); });
+  s.push(JOKER);
+  const rnd = mulberry32(seed);
+  for (let i = s.length - 1; i > 0; i--) {           // Fisher–Yates
+    const j = Math.floor(rnd() * (i + 1));
+    [s[i], s[j]] = [s[j], s[i]];
+  }
+  // nudge apart identical neighbours so a column rarely shows a pair
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === s[i-1]) { const k = (i + 7) % s.length; [s[i], s[k]] = [s[k], s[i]]; }
+  }
+  return s;
+}
+const STRIPS = [buildStrip(784), buildStrip(1725), buildStrip(2654)];
+const L = STRIPS[0].length;
+const COPIES = 6;                                    // strip rendered 6x for long spins
+const byId = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+
+function cellHTML(sym) {
+  if (sym === JOKER) return '<div class="cell joker"><span><b>★</b>Joker</span></div>';
+  const it = byId[sym];
+  return `<div class="cell"><img src="resources/slotitems/${it.id}.jpg" alt="${it.name}" draggable="false"></div>`;
+}
+const stripEls = [0,1,2].map(r => document.getElementById('strip' + r));
+stripEls.forEach((el, r) => {
+  let html = '';
+  for (let c = 0; c < COPIES; c++) html += STRIPS[r].map(cellHTML).join('');
+  el.innerHTML = html;
+});
+
+const cellPx = () => parseFloat(getComputedStyle(document.querySelector('.cell')).height);
+// pos[r] = index on the strip of the TOP visible symbol on reel r
+const pos = [0,1,2].map(() => Math.floor(Math.random() * L));
+function place(r, index, animate, ms) {
+  const el = stripEls[r];
+  el.style.transition = animate ? `transform ${ms}ms cubic-bezier(.15,.55,.25,1.04)` : 'none';
+  el.style.transform = `translateY(${-index * cellPx()}px)`;
+}
+pos.forEach((p, r) => place(r, p, false));
+window.addEventListener('resize', () => pos.forEach((p, r) => place(r, p, false)));
+
+/* ==================================================================
+   LAMPS & PAYLINES
+   Lines: 1-3 rows, 4 = diagonal top-left→bottom-right,
+          5 = diagonal bottom-left→top-right.
+   ================================================================== */
+const LINES = [
+  [[0,0],[1,0],[2,0]],
+  [[0,1],[1,1],[2,1]],
+  [[0,2],[1,2],[2,2]],
+  [[0,0],[1,1],[2,2]],
+  [[0,2],[1,1],[2,0]],
+];
+const lampsL = document.getElementById('lampsL'), lampsR = document.getElementById('lampsR');
+// left: 4 (top), 1, 2, 3, 5 (bottom) — right mirrors with diagonals swapped
+const lampOrder = [[4,1,2,3,5],[5,1,2,3,4]];
+[lampsL, lampsR].forEach((box, side) => {
+  box.innerHTML = lampOrder[side].map(n => `<div class="lamp" data-line="${n}">${n}</div>`).join('');
+});
+const overlayGrid = document.getElementById('gridOverlay');
+overlayGrid.innerHTML = Array.from({length:9}, (_, i) => `<div data-cell="${i % 3},${Math.floor(i / 3)}"></div>`).join('');
+const linesSvg = document.getElementById('lines');
+
+function clearWins() {
+  document.querySelectorAll('.lamp.lit, .grid-overlay .win').forEach(e => e.classList.remove('lit','win'));
+  linesSvg.innerHTML = '';
+}
+function showWinLine(n) {
+  document.querySelectorAll(`.lamp[data-line="${n}"]`).forEach(e => e.classList.add('lit'));
+  const pts = LINES[n - 1];
+  pts.forEach(([c, row]) => overlayGrid.querySelector(`[data-cell="${c},${row}"]`).classList.add('win'));
+  const cp = cellPx(), gap = 6;
+  const cx = c => c * (cp + gap) + cp / 2, cy = row => row * cp + cp / 2;
+  const [a, , b] = pts;
+  const x1 = cx(a[0]), y1 = cy(a[1]), x2 = cx(b[0]), y2 = cy(b[1]);
+  const len = Math.hypot(x2 - x1, y2 - y1), ext = cp * 0.42;
+  const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+  linesSvg.insertAdjacentHTML('beforeend',
+    `<line x1="${x1 - ux*ext}" y1="${y1 - uy*ext}" x2="${x2 + ux*ext}" y2="${y2 + uy*ext}"/>`);
+}
+
+/* ==================================================================
+   SOUND — tiny WebAudio clicks and a chime; no files needed.
+   ================================================================== */
+let audio = null, muted = false;
+function tone(freq, dur, type = 'square', vol = .05, when = 0) {
+  if (muted) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audio.currentTime + when;
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const clunk = () => { tone(110, .12, 'square', .08); tone(70, .18, 'sine', .12); };
+const chime = () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .45, 'triangle', .07, i * .12));
+document.getElementById('muteBtn').onclick = e => { muted = !muted; e.target.textContent = 'Sound: ' + (muted ? 'off' : 'on'); };
+
+/* ==================================================================
+   SPIN
+   ================================================================== */
+const spinBtn = document.getElementById('spinBtn');
+const lever = document.getElementById('lever');
+const msg = document.getElementById('message');
+let spinning = false;
+
+function symbolAt(r, row) { return STRIPS[r][(pos[r] + row) % L]; }
+
+function evaluate() {
+  const wins = [];                                   // {line, item}
+  LINES.forEach((pts, i) => {
+    const syms = pts.map(([c, row]) => symbolAt(c, row));
+    const real = syms.filter(s => s !== JOKER);
+    if (real.every(s => s === real[0])) {
+      // three jokers: the machine picks a curio itself, by reel weight
+      const item = real.length ? real[0] : STRIPS[0].filter(s => s !== JOKER)[Math.floor(Math.random() * (L - 1))];
+      wins.push({ line: i + 1, item, allJokers: !real.length });
+    }
+  });
+  return wins;
+}
+
+function spin() {
+  if (spinning) return;
+  spinning = true;
+  spinBtn.disabled = true;
+  clearWins();
+  msg.innerHTML = '&nbsp;';
+  const durations = [1500, 2000, 2500];
+  pos.forEach((p, r) => {
+    const target = Math.floor(Math.random() * L);
+    // jump (invisibly) to the same symbol four strip-lengths down, then roll back up to the target
+    place(r, p + 4 * L, false);
+    stripEls[r].getBoundingClientRect();              // force reflow so the jump isn't animated
+    stripEls[r].classList.add('spinning');
+    place(r, target + (2 - r) * L, true, durations[r]);
+    pos[r] = target;
+    setTimeout(() => {
+      stripEls[r].classList.remove('spinning');
+      clunk();
+      if (r === 2) finish();
+    }, durations[r]);
+  });
+}
+
+function finish() {
+  pos.forEach((p, r) => place(r, p, false));        // settle onto the first copy
+  spinning = false;
+  spinBtn.disabled = false;
+  const wins = evaluate();
+  if (!wins.length) {
+    msg.textContent = ['Nothing. The machine is unmoved.', 'A hollow clatter, and no more.', 'The brass grins at you. Try again.', 'Not this time, friend.'][Math.floor(Math.random() * 4)];
+    return;
+  }
+  wins.forEach(w => showWinLine(w.line));
+  chime();
+  // one card per distinct item won this spin
+  const seen = new Set(), queue = [];
+  wins.forEach(w => { if (!seen.has(w.item)) { seen.add(w.item); queue.push(w); } });
+  msg.textContent = queue.length > 1 ? `${queue.length} curios tumble into the tray!` : `${byId[queue[0].item].name}!`;
+  setTimeout(() => openPayout(queue), 900);
+}
+
+let pulling = false;
+function pull() {
+  if (spinning || pulling) return;
+  pulling = true;
+  lever.classList.remove('release');
+  lever.classList.add('pulled');
+  setTimeout(() => { lever.classList.remove('pulled'); lever.classList.add('release'); pulling = false; spin(); }, 230);
+}
+lever.onclick = pull;
+spinBtn.onclick = pull;
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !overlay.classList.contains('open')) { e.preventDefault(); if (!e.repeat) pull(); }
+  if (e.code === 'Escape') closePayout();
+});
+
+/* ==================================================================
+   PAYOUT POPUP + CARD
+   ================================================================== */
+const overlay = document.getElementById('overlay');
+const holder = document.getElementById('cardHolder');
+const nextBtn = document.getElementById('nextBtn');
+let queue = [], qi = 0;
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function cardHTML(it) {
+  const body = it.body.map(([k, t]) => k === 'hr' ? '<hr>' : `<p class="${k}">${esc(t)}</p>`).join('');
+  const foot = '<b></b>'.repeat(5) + '<span class="gem"></span>' + '<b></b>'.repeat(5);
+  return `
+  <div class="card">
+    <div class="frame"></div><div class="frame-in"></div>
+    <div class="frame-in2">
+      <div class="title">${esc(it.name)}</div>
+      <div class="head">
+        <div class="portrait"><div class="pf"><img src="resources/slotitems/${it.id}.jpg" alt=""></div></div>
+        <div class="meta">
+          <div class="tiny">Type</div>
+          <div class="type">${esc(it.type)}</div>
+          <div class="price-row">
+            <div class="price"><span>${it.price}<sup>GP</sup></span></div>
+            <div class="attune">
+              <div class="tiny">Requires<br>attunement?</div>
+              <div class="boxes"><i>YES</i><b class="${it.attune ? 'on' : ''}"></b><i>NO</i><b class="${it.attune ? '' : 'on'}"></b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="body">${body}</div>
+      <div class="foot">${foot}</div>
+    </div>
+  </div>`;
+}
+// shrink a box's font-size (in em, so it scales to print) until its content fits
+function fitEm(el, horizontal, start = 1, min = .55) {
+  let s = start;
+  el.style.fontSize = s + 'em';
+  const over = () => horizontal ? el.scrollWidth > el.clientWidth + 1 : el.scrollHeight > el.clientHeight + 1;
+  while (over() && s > min) { s -= .02; el.style.fontSize = s + 'em'; }
+}
+function fitCard() {
+  const card = holder.querySelector('.card');
+  fitEm(card.querySelector('.title'), true, 1.3);
+  fitEm(card.querySelector('.type'), true, .95);
+  fitEm(card.querySelector('.body'), false, 1.15, .5);
+}
+
+const FLAVOUR = [
+  'With a wheeze of bellows and a grinding of cogs, the tray swings open.',
+  'Three alike! The cabinet shudders and coughs up its prize.',
+  'Bells, a puff of soot, and something clatters into the tray.',
+];
+function showCard() {
+  const w = queue[qi], it = byId[w.item];
+  document.getElementById('payoutTitle').textContent = w.allJokers ? 'Three jokers — the machine chooses!' : 'The machine relents!';
+  document.getElementById('payoutFlavour').textContent = FLAVOUR[Math.floor(Math.random() * FLAVOUR.length)];
+  holder.innerHTML = cardHTML(it);
+  const img = holder.querySelector('img');
+  fitCard();
+  if (!img.complete) img.onload = fitCard;
+  document.fonts && document.fonts.ready.then(fitCard);
+  document.getElementById('pager').textContent = queue.length > 1 ? `Curio ${qi + 1} of ${queue.length}` : '';
+  nextBtn.style.display = queue.length > 1 ? '' : 'none';
+}
+function openPayout(q) { queue = q; qi = 0; showCard(); overlay.classList.add('open'); }
+function closePayout() { overlay.classList.remove('open'); }
+nextBtn.onclick = () => { qi = (qi + 1) % queue.length; showCard(); };
+document.getElementById('closeBtn').onclick = closePayout;
+overlay.addEventListener('click', e => { if (e.target === overlay) closePayout(); });
+
+// Print → "Save as PDF". The document title becomes the PDF's default filename.
+document.getElementById('printBtn').onclick = () => {
+  const old = document.title;
+  document.title = byId[queue[qi].item].name;
+  window.print();
+  setTimeout(() => { document.title = old; }, 500);
+};
+// re-fit for the print size and back again
+window.addEventListener('beforeprint', () => { if (overlay.classList.contains('open')) fitCard(); });
+window.addEventListener('afterprint',  () => { if (overlay.classList.contains('open')) fitCard(); });
+</script>
+</body>
+</html>
