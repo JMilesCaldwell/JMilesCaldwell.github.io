@@ -1,288 +1,292 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Caldwell's Repository</title>
   <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
-
+  <script src="resources/evershroud.js"></script>
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* Navigation Bar Styling */
-.navbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.7);      /* now matches .container */
-  padding: 0.5rem 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  border-bottom: 3px solid rgba(0, 0, 0, 0.7); /* likewise toned down */
-  flex-wrap: wrap;
-}
+    body.es { background-image: url('resources/index.png'); }
 
-    .navbar a {
-      color: #FAF4E0;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      font-size: 1rem;
-      text-decoration: none;
-      margin: 0 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      transition: background 0.3s ease;
-    }
+    .hub { max-width: 1180px; margin: 0 auto; padding: 1.25rem max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 1.25rem; }
+    .hub > .es-panel { margin: 0; max-width: none; }
 
-.navbar a:hover {
-  background: rgba(0, 0, 0, 0.5);  /* lighter than the 0.7 base */
-  color: #FAF4E0;                  /* keep the text colour */
-}
+    /* Masthead */
+    .masthead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 1.5rem; align-items: center; }
+    .masthead img { width: 100%; height: auto; border-radius: calc(var(--es-radius) * 0.7); display: block; }
+    .masthead h1 { margin-top: 0; }
+    .masthead details { margin-top: 0.4rem; }
+    .masthead summary { cursor: pointer; color: var(--es-link); font-style: italic; min-height: 44px; display: flex; align-items: center; }
+    .letter { font-style: italic; max-width: 62ch; }
+    .letter p:last-child { text-align: right; font-style: normal; }
+    @media (max-width: 760px) { .masthead { grid-template-columns: 1fr; } }
 
+    /* At the table */
+    .table-strip { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 1.25rem 2rem; align-items: start; }
+    .table-strip h2 { margin: 0 0 0.5rem; }
+    .today-date { font-family: var(--es-f-head); font-weight: var(--es-head-weight); font-size: 1.3rem; color: var(--es-head); letter-spacing: 0.03em; }
+    .today-wx { margin: 0.2rem 0 0.6rem; }
+    .today-wx b { font-weight: 600; }
+    .today-wx span { color: var(--es-muted); font-style: italic; }
+    .quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+    .quick .es-btn { margin: 0; width: 100%; }
+    @media (max-width: 760px) { .table-strip { grid-template-columns: 1fr; } }
 
-    /* General Styling */
-    body {
-      margin: 0;
-      background: url('resources/index.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-    h1, h2 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      margin: 0.5rem 0;
-    }
-    a {
-      text-decoration: none;
-      color: #FAF4E0;
-      transition: color 0.3s ease;
-    }
-    a:hover {
-      color: #8B0000;
-    }
-    .divider {
-      margin: 1rem auto;
-      font-size: 1.5rem;
-    }
-    .divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
-    }
-    footer {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #CFC6B0;
-      text-shadow: 0 1px 3px #000;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
+    /* Finder */
+    .finder { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; padding: 1rem 1.25rem; }
+    .finder .es-small:empty { display: none; }
+    .finder label { font-family: var(--es-f-head); font-weight: var(--es-head-weight); color: var(--es-head); letter-spacing: 0.04em; }
+    .finder input { flex: 1; min-width: 0; max-width: 28rem; }
+    .finder .es-small { flex-basis: 100%; margin: 0; }
 
-    .home-button {
-      display: inline-block;
-      margin: 2rem 0;
-      padding: 0.5rem 1rem;
-      font-size: 1.2rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      color: #FAF4E0;
-      background: #8B0000;
-      text-decoration: none;
-      border-radius: 5px;
-      border: 2px solid #660000;
-      letter-spacing: 0.1rem;
-      transition: background 0.3s ease;
+    /* District cards */
+    .districts { columns: 3 320px; column-gap: 1.25rem; }
+    .district { break-inside: avoid; margin: 0 0 1.25rem; }
+    .district.es-panel { padding: 1.1rem 1.1rem 0.6rem; }
+    .district h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+    .district h3 { margin: 0.9rem 0 0.25rem; font-size: 0.95rem; color: var(--es-copper); }
+    .district ul { list-style: none; margin: 0 0 0.5rem; padding: 0; border-top: 1px solid var(--es-rule); }
+    .district li a {
+      display: flex; align-items: center; gap: 0.6rem; min-height: 46px; padding: 0.35rem 0.3rem;
+      border-bottom: 1px solid var(--es-rule); color: var(--es-ink); text-decoration: none; line-height: 1.3;
     }
-
-    .home-button:hover {
-      background: #660000;
-      border-color: #8B0000;
-      color: #FAF4E0;
-    }
-
-    @media (max-width: 600px) {
-      li {
-        font-size: 0.9rem;
-      }
-    }
+    .district li a:hover, .district li a:focus-visible { background: var(--es-well); outline: none; }
+    .district li a .t { flex: 1; min-width: 0; }
+    .district li a::after { content: "›"; color: var(--es-copper); font-size: 1.25rem; line-height: 1; }
+    .kind { flex: none; font: 600 0.68rem/1 var(--es-f-num); letter-spacing: 0.08em; text-transform: uppercase; color: var(--es-muted); border: 1px solid var(--es-rule-strong); border-radius: 3px; padding: 0.2rem 0.3rem; }
+    .none-found { text-align: center; }
   </style>
 </head>
-<body>
+<body class="es">
 
-  <div class="container">
-    <h1>Caldwell's Repository</h1>
-    <img src="resources/Caldwell's%20Repository.jpg" alt="Caldwell's Repository Banner" style="max-width: 100%; height: auto;">
+  <nav class="es-trail" aria-label="Where you are">
+    <ol><li><span aria-current="page">Caldwell's Repository</span></li></ol>
+    <button class="es-skin" type="button">Mistglass</button>
+  </nav>
 
-    <p>
-     Welcome, Traveler, to Caldwell’s Repository.<br>
-      <br>
-  Here before you stands a compendium of maps, histories, and well-worn truths that may or may not be of use to those who travel the Evershroud Isles. These pages hold the wisdom of sages, scholars and wanderers, and it is my hope that they may shed but a sliver of light on your path in these uncertain times.
+  <main class="hub">
 
-  Read voraciously, for knowledge is a powerful companion. But remember, what is clear from the warmth of one's library may remain shrouded to those who walk the mists. Understanding unfolds in its own time, and even the greatest of truths can slip through the grasp of the unprepared.<br>
-      <br>
-      May this repository serve you well on your journey, wherever the mists may take you.<br>
-      <br>
-      -J.M.C.
-    </p>
+    <section class="es-panel masthead">
+      <img src="resources/Caldwell's%20Repository.jpg" alt="The Caldwell's Repository banner: a compass rose between two scrolls above a stormy sea">
+      <div>
+        <h1>Caldwell's Repository</h1>
+        <p>Maps, histories, places and tools for the Evershroud Isles.</p>
+        <details>
+          <summary>A word of welcome from J.M.C.</summary>
+          <div class="letter">
+            <p>Welcome, Traveler, to Caldwell’s Repository.</p>
+            <p>Here before you stands a compendium of maps, histories, and well-worn truths that may or may not be of use to those who travel the Evershroud Isles. These pages hold the wisdom of sages, scholars and wanderers, and it is my hope that they may shed but a sliver of light on your path in these uncertain times.</p>
+            <p>Read voraciously, for knowledge is a powerful companion. But remember, what is clear from the warmth of one's library may remain shrouded to those who walk the mists. Understanding unfolds in its own time, and even the greatest of truths can slip through the grasp of the unprepared.</p>
+            <p>May this repository serve you well on your journey, wherever the mists may take you.</p>
+            <p>J.M.C.</p>
+          </div>
+        </details>
+      </div>
+    </section>
 
-    <div class="divider"></div>
+    <section class="es-panel table-strip" aria-labelledby="table-h">
+      <div>
+        <h2 id="table-h">At the Table</h2>
+        <div class="today-date" id="today-date">&nbsp;</div>
+        <p class="today-wx"><b id="today-wx-name"></b> <span id="today-wx-desc"></span></p>
+        <span class="es-pill" id="today-lanes"></span>
+        <a href="calendar.html" class="es-small" style="margin-left:0.6rem">Calendar and weather</a>
+      </div>
+      <div class="quick">
+        <a class="es-btn" href="exchange.html">Exchange</a>
+        <a class="es-btn" href="bestiary.html">Bestiary</a>
+        <a class="es-btn" href="dmscreen.html">DM Screen</a>
+        <a class="es-btn" href="dmscreen-online.html">Online DM Screen</a>
+      </div>
+    </section>
 
-    <!-- The Caldwell Chronicles -->
-    <h2>The Caldwell Chronicles</h2>
-    <ul>
-      <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank">Common and Uncommon Lore of the Evershroud Isles, 3rd Edition</a></li>
-      <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank">The Caldwell Commentary, 4th Edition</a></li>
-      <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank">A Treatise on Shaniquáan Chronology and Meteorology, 1st Edition</a></li>
-    </ul>
+    <div class="es-panel finder">
+      <label for="find">Find a page</label>
+      <input type="search" id="find" placeholder="Map, gazette, smithy…" autocomplete="off">
+      <p class="es-small" id="find-status" aria-live="polite"></p>
+    </div>
 
-    <div class="divider"></div>
-    
-      <!-- Other books -->
-    <h2>Other Books</h2>
-    <ul>
-      <li><a href="resources/seatofpower.pdf" target="_blank">The True Seat of Power</a></li>
-      <li><a href="resources/houseofdust.pdf" target="_blank">The House of Dust</a></li>
-      <li><a href="resources/A Visitor's Guide to Gunnar's Rest.pdf" target="_blank">A Visitor's Guide to Gunnar's Rest</a></li>
-      <li><a href="resources/Flight of a Verdant Dragon 2nd Edition.pdf" target="_blank">Flight of a Verdant Dragon, 2nd Edition</a></li>
-      <li><a href="resources/The Book of Truth.pdf" target="_blank">The Book of Truth</a></li>
+    <div class="districts" id="districts">
 
-    </ul>
+      <section class="es-panel district">
+        <h2>The Library</h2>
+        <h3>The Caldwell Chronicles</h3>
+        <ul>
+          <li><a href="resources/Common%20and%20uncommon%20lore%20of%20the%20Evershroud%20Isles%2C%203rd%20Edition.pdf" target="_blank"><span class="t">Common and Uncommon Lore of the Evershroud Isles, 3rd Edition</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/The%20Caldwell%20Commentary,%204th%20Edition.pdf" target="_blank"><span class="t">The Caldwell Commentary, 4th Edition</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/A%20Treatise%20on%20Shaniqu%C3%A1an%20Chronology%20and%20Meteorology,%201st%20Edition.pdf" target="_blank"><span class="t">A Treatise on Shaniquáan Chronology and Meteorology, 1st Edition</span><span class="kind">PDF</span></a></li>
+        </ul>
+        <h3>Other Books</h3>
+        <ul>
+          <li><a href="resources/seatofpower.pdf" target="_blank"><span class="t">The True Seat of Power</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/houseofdust.pdf" target="_blank"><span class="t">The House of Dust</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/A Visitor's Guide to Gunnar's Rest.pdf" target="_blank"><span class="t">A Visitor's Guide to Gunnar's Rest</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/Flight of a Verdant Dragon 2nd Edition.pdf" target="_blank"><span class="t">Flight of a Verdant Dragon, 2nd Edition</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/The Book of Truth.pdf" target="_blank"><span class="t">The Book of Truth</span><span class="kind">PDF</span></a></li>
+        </ul>
+        <h3>The Evershroud Gazette</h3>
+        <ul>
+          <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank"><span class="t">8th Fellwind, 725 Y.S.</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/EvershroudGazette1verdant784.pdf" target="_blank"><span class="t">1st Verdant, 784 Y.S.</span><span class="kind">PDF</span></a></li>
+        </ul>
+      </section>
 
+      <section class="es-panel district">
+        <h2>Maps</h2>
+        <ul>
+          <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank"><span class="t">A Comprehensive Map of the Evershroud Isles</span><span class="kind">Image</span></a></li>
+          <li><a href="evershroud3dlite.html" target="_blank"><span class="t">A Naturalist's Maquette of the Evershroud Isles and its situation amidst the natural world</span><span class="kind">3D</span></a></li>
+          <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank"><span class="t">A Comprehensive Map of Silt</span><span class="kind">Image</span></a></li>
+          <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank"><span class="t">An Approximate Map of the Evershroud Avernum</span><span class="kind">Image</span></a></li>
+          <li><a href="resources/Azure.jpg" target="_blank"><span class="t">A Merchant's Map of Azure Proper</span><span class="kind">Image</span></a></li>
+          <li><a href="resources/A%20Comprehensive%20Map%20of%20The%20Known%20World.png" target="_blank"><span class="t">A Comprehensive Map of The Known World</span><span class="kind">Image</span></a></li>
+          <li><a href="resources/An Illustrated Map of Gunnar's Rest.png" target="_blank"><span class="t">An Illustrated Map of Gunnar's Rest</span><span class="kind">Image</span></a></li>
+          <li><a href="resources/An Artist's Impression of the Undercity.png" target="_blank"><span class="t">An Artist's Impression of the Undercity</span><span class="kind">Image</span></a></li>
+          <li><a href="resources/Mikkelsen's Map.png" target="_blank"><span class="t">Mikkelsen's Map of Imperial Zhi-La</span><span class="kind">Image</span></a></li>
+        </ul>
+      </section>
 
-    <div class="divider"></div>
+      <section class="es-panel district">
+        <h2>Adventurer's Guild</h2>
+        <ul>
+          <li><a href="resources/Recruitment%20poster.pdf" target="_blank"><span class="t">Recruitment Poster</span><span class="kind">PDF</span></a></li>
+          <li><a href="resources/Contract.pdf" target="_blank"><span class="t">Guild Contract</span><span class="kind">PDF</span></a></li>
+          <li><a href="noticeboard.html" target="_blank"><span class="t">Notice Board</span></a></li>
+        </ul>
+      </section>
 
-    <!-- The Evershroud Gazette -->
-    <h2>The Evershroud Gazette</h2>
-    <ul>
-      <li><a href="resources/Evershroud%20Gazette%208th%20Fellwind%20725.pdf" target="_blank">8th Fellwind, 725 Y.S.</a></li>
-      <li><a href="resources/EvershroudGazette1verdant784.pdf" target="_blank">1st Verdant, 784 Y.S.</a></li>
-    </ul>
+      <section class="es-panel district">
+        <h2>Upper City</h2>
+        <ul>
+          <li><a href="brinealcazar.html"><span class="t">Brine Alcazar</span></a></li>
+          <li><a href="resources/Writ%20of%20Freeholding%20blank.pdf" target="_blank"><span class="t">Writ of Freeholding</span><span class="kind">PDF</span></a></li>
+          <li><a href="councilhall.html"><span class="t">Council Hall</span></a></li>
+          <li><a href="embassy.html"><span class="t">Continental Embassy</span></a></li>
+        </ul>
+      </section>
 
-    <div class="divider"></div>
+      <section class="es-panel district">
+        <h2>Merchant's Quarter</h2>
+        <ul>
+          <li><a href="exchange.html"><span class="t">The Evershroud Exchange</span></a></li>
+          <li><a href="shopdistrict.html"><span class="t">Shop District</span></a></li>
+          <li><a href="guildhall.html"><span class="t">Guildhall</span></a></li>
+          <li><a href="tavern.html"><span class="t">The Pickled Piglet</span></a></li>
+        </ul>
+      </section>
 
-    <!-- Maps -->
-    <h2>Maps</h2>
-    <ul>
-      <li><a href="resources/A%20Comprehensive%20Map%20of%20the%20Evershroud%20Isles.jpg" target="_blank">A Comprehensive Map of the Evershroud Isles</a></li>
-      <li><a href="evershroud3dlite.html" target="_blank">A Naturalist's Maquette of the Evershroud Isles and its situation amidst the natural world</a></li>
-      <li><a href="resources/A%20Comprehensive%20Map%20of%20Silt.jpg" target="_blank">A Comprehensive Map of Silt</a></li>
-      <li><a href="resources/An%20Approximate%20Map%20of%20the%20Evershroud%20Avernum.jpg" target="_blank">An Approximate Map of the Evershroud Avernum</a></li>
-      <li><a href="resources/Azure.jpg" target="_blank">A Merchant's Map of Azure Proper</a></li>
-      <li><a href="resources/A%20Comprehensive%20Map%20of%20The%20Known%20World.png" target="_blank">A Comprehensive Map of The Known World</a></li>
-      <li><a href="resources/An Illustrated Map of Gunnar's Rest.png" target="_blank">An Illustrated Map of Gunnar's Rest</a></li>
-      <li><a href="resources/An Artist's Impression of the Undercity.png" target="_blank">An Artist's Impression of the Undercity</a></li>
-      <li><a href="resources/Mikkelsen's Map.png" target="_blank">Mikkelsen's Map of Imperial Zhi-La</a></li>
-    </ul>
+      <section class="es-panel district">
+        <h2>Temple District</h2>
+        <ul>
+          <li><a href="temple.html"><span class="t">Pentarchon</span></a></li>
+          <li><a href="tower.html"><span class="t">Spire of Kar'El</span></a></li>
+          <li><a href="catacombs.html"><span class="t">Catacombs</span></a></li>
+        </ul>
+      </section>
 
-    <div class="divider"></div>
+      <section class="es-panel district">
+        <h2>Utilities</h2>
+        <ul>
+          <li><a href="commgen.html"><span class="t">Commoner Generator</span></a></li>
+          <li><a href="encgen.html"><span class="t">Encounter Generator</span><span class="kind">Beta</span></a></li>
+          <li><a href="ingen.html"><span class="t">Instance Generator</span><span class="kind">Beta</span></a></li>
+          <li><a href="mapgen2.html"><span class="t">Battle Map Generator</span></a></li>
+          <li><a href="mapgen.html"><span class="t">Battle Map Generator</span><span class="kind">Legacy</span></a></li>
+          <li><a href="dmscreen.html"><span class="t">DM Screen</span></a></li>
+          <li><a href="dmscreen-online.html"><span class="t">DM Screen (online play)</span></a></li>
+          <li><a href="bestiary.html"><span class="t">Bestiary</span></a></li>
+          <li><a href="slots.html"><span class="t">The Curio Bandit (item slot machine)</span></a></li>
+        </ul>
+      </section>
 
-    <!-- Adventurer's Guild -->
-    <h2>Adventurer's Guild</h2>
-    <ul>
-      <li><a href="resources/Recruitment%20poster.pdf" target="_blank">Recruitment Poster</a></li>
-      <li><a href="resources/Contract.pdf" target="_blank">Guild Contract</a></li>
-      <li><a href="noticeboard.html" target="_blank">Notice Board</a></li>
-    </ul>
+      <section class="es-panel district">
+        <h2>Travel</h2>
+        <ul>
+          <li><a href="harbour.html"><span class="t">Coastal Travel System</span><span class="kind">Beta</span></a></li>
+          <li><a href="travel.html"><span class="t">Road Travel System</span><span class="kind">Beta</span></a></li>
+        </ul>
+      </section>
 
-    <div class="divider"></div>
+      <section class="es-panel district">
+        <h2>Observatory</h2>
+        <ul>
+          <li><a href="calendar.html"><span class="t">Berynian Calendar and Weather</span></a></li>
+          <li><a href="astrology.html"><span class="t">Shaniquáan Astrology</span></a></li>
+        </ul>
+      </section>
 
-     <!-- Political Buildings -->
-    <h2>Upper City</h2>
-    <ul>
-      <li><a href="brinealcazar.html">Brine Alcazar</a></li>
-      <li><a href="resources/Writ%20of%20Freeholding%20blank.pdf" target="_blank">Writ of Freeholding</a></li>
-      <li><a href="councilhall.html">Council Hall</a></li>
-      <li><a href="embassy.html">Continental Embassy</a></li>
-    </ul>
-    
-    <div class="divider"></div>
-    <!-- Merchant's Quarter -->
-    <h2>Merchant's Quarter</h2>
-    <ul>
-      <li><a href="exchange.html">The Evershroud Exchange</a></li>
-      <li><a href="shopdistrict.html">Shop District</a></li>
-      <li><a href="guildhall.html">Guildhall</a></li>
-      <li><a href="tavern.html">The Pickled Piglet</a></li>
-    </ul>
+      <section class="es-panel district">
+        <h2>Other</h2>
+        <ul>
+          <li><a href="fortune.html"><span class="t">Fortune Teller</span></a></li>
+          <li><a href="harmony.html"><span class="t">Crystal Harmony By Brigitte</span></a></li>
+          <li><a href="forge.html"><span class="t">Origen's Forge</span></a></li>
+          <li><a href="madlab.html"><span class="t">Mad Lab</span></a></li>
+          <li><a href="isekaid.html"><span class="t">Isekai Protagonist Generator</span></a></li>
+        </ul>
+      </section>
 
-    <div class="divider"></div>
+    </div>
 
-  <!-- Temple District -->
-    <h2>Temple District</h2>
-    <ul>
-      <li><a href="temple.html">Pentarchon</a></li>
-      <li><a href="tower.html">Spire of Kar'El</a></li>
-      <li><a href="catacombs.html">Catacombs</a></li>
-    </ul>
-
-    <div class="divider"></div>
-    
-    <!-- Utilities -->
-    <h2>Utilities</h2>
-    <ul>
-      <li><a href="commgen.html">Commoner Generator</a></li>
-      <li><a href="encgen.html">Encounter Generator (beta)</a></li>
-      <li><a href="ingen.html">Instance Generator (beta)</a></li>
-      <li><a href="mapgen.html">Battle Map Generator (legacy)</a></li>
-      <li><a href="mapgen2.html">Battle Map Generator (flagship)</a></li>
-      <li><a href="dmscreen.html">DM Screen</a></li>
-      <li><a href="dmscreen-online.html">DM Screen (online play)</a></li>
-      <li><a href="bestiary.html">Bestiary</a></li>
-      <li><a href="slots.html">The Curio Bandit (item slot machine)</a></li>
-    </ul>
-
-    <div class="divider"></div>
-
-      <!-- Travel -->
-    <h2>Travel</h2>
-    <ul>
-      <li><a href="harbour.html">Coastal Travel System (beta)</a></li>
-      <li><a href="travel.html">Road Travel System (beta)</a></li>
-    </ul>
-
-    <div class="divider"></div>
-      
-      <!-- Observatory -->
-    <h2>Observatory</h2>
-    <ul>
-      <li><a href="calendar.html">Berynian Calendar and Weather</a></li>
-      <li><a href="astrology.html">Shaniquáan Astrology</a></li>
-    </ul>
-
-    <div class="divider"></div>
-
-    <!-- Other -->
-    <h2>Other</h2>
-    <ul>
-      <li><a href="fortune.html">Fortune Teller</a></li>
-      <li><a href="harmony.html">Crystal Harmony By Brigitte</a></li>
-      <li><a href="forge.html">Origen's Forge</a></li>
-      <li><a href="madlab.html">Mad Lab</a></li>
-      <li><a href="isekaid.html">Isekai Protagonist Generator</a></li>
-    </ul>
-  </div>
-
-  <div style="text-align: center;">
-    <a href="index.html" class="home-button">Home</a>
-  </div>
+    <p class="es-panel none-found" id="none-found" hidden>Nothing in the Repository matches that. Try a shorter word.</p>
+  </main>
 
   <footer>
-    &copy; 2025 Caldwell. The repository for the Evershroud Isles.
+    &copy; 2025 Caldwell. The repository for the Evershroud Isles. · <a href="index.html" style="color:inherit">jmilescaldwell.github.io</a>
   </footer>
 
+  <script src="resources/berynian.js"></script>
+  <script>
+    // "At the table": the same date, weather and sea lanes as the Calendar page.
+    (function () {
+      function update() {
+        const date = Berynian.getDate();
+        const wx = Berynian.getWeather(date);
+        const open = Berynian.seaLanesOpen(date);
+        document.getElementById("today-date").textContent = date.label;
+        document.getElementById("today-wx-name").textContent = wx.name + ".";
+        document.getElementById("today-wx-desc").textContent = wx.description;
+        const pill = document.getElementById("today-lanes");
+        pill.textContent = open ? "Sea lanes open" : "Sea lanes closed";
+        pill.className = "es-pill " + (open ? "good" : "bad");
+      }
+      update();
+      setInterval(update, 60 * 1000);
+    })();
+
+    // Finder: hides links (and whole cards) that do not match.
+    (function () {
+      const input = document.getElementById("find");
+      const cards = [...document.querySelectorAll("#districts .district")];
+      const status = document.getElementById("find-status");
+      const none = document.getElementById("none-found");
+      input.addEventListener("input", () => {
+        const q = input.value.trim().toLowerCase();
+        let shown = 0;
+        cards.forEach(card => {
+          const title = card.querySelector("h2").textContent.toLowerCase();
+          const cardMatch = q && title.includes(q);
+          let cardShown = 0;
+          card.querySelectorAll("li").forEach(li => {
+            const group = li.parentElement.previousElementSibling;
+            const groupMatch = q && group && group.tagName === "H3" && group.textContent.toLowerCase().includes(q);
+            const hit = !q || cardMatch || groupMatch || li.textContent.toLowerCase().includes(q);
+            li.hidden = !hit;
+            if (hit) cardShown++;
+          });
+          card.querySelectorAll("h3").forEach(h3 => {
+            const list = h3.nextElementSibling;
+            h3.hidden = !list || [...list.children].every(li => li.hidden);
+          });
+          card.hidden = cardShown === 0;
+          shown += cardShown;
+        });
+        none.hidden = !q || shown > 0;
+        status.textContent = q ? (shown === 1 ? "1 page found" : shown + " pages found") : "";
+      });
+    })();
+  </script>
 </body>
 </html>

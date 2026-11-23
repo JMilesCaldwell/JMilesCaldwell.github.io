@@ -21,8 +21,7 @@ A GitHub Pages site serving as the central hub for **The Evershroud Isles** tabl
 
 ## Tech Stack
 - Static HTML files with inline CSS and JavaScript
-- Google Fonts: `Almendra` (body), `Cinzel` (headings/nav)
-- Color palette: dark backgrounds (`rgba(0,0,0,0.7)`), parchment text (`#FAF4E0`)
+- D&D pages are MOVING to a shared look (see "Voice & conventions"): `resources/evershroud.css` + `resources/evershroud.js`, self-hosted fonts in `resources/fonts/`. Unconverted pages still use the old look: Google Fonts `Almendra` (body) / `Cinzel` (headings), dark `rgba(0,0,0,0.7)` panels, parchment `#FAF4E0` text.
 - Jekyll config (`_config.yml`) with the `minima` theme, though most pages are fully custom HTML
 - No npm, no bundler, no build step
 
@@ -64,7 +63,7 @@ Before committing a page change:
 | File | Purpose |
 |------|---------|
 | `index.html` | Placeholder landing page (future general hub) |
-| `caldwell-repo.html` | D&D hub — Evershroud Isles tools and lore (was `index.html`) |
+| `caldwell-repo.html` | D&D hub — Evershroud Isles tools and lore (was `index.html`). Tablet-first: "At the table" strip (Berynian date, weather, sea lanes, quick links), finder box, district cards. |
 | `sandbox.html` | Claude's scratch workspace — see "The Sandbox" section below |
 | `commgen.html` / `genericcommgen.html` | NPC/commoner generators |
 | `encgen.html` | Encounter generator |
@@ -73,7 +72,7 @@ Before committing a page change:
 | `dmscreen.html` | DM screen (in-person table play) |
 | `dmscreen-online.html` | DM screen for online play (Discord/Owlbear): initiative/HP/AC tracker, 2014 rules, shops (shared stock with the shop pages + draft additions), SRD prices, Open5e search, other pages in an iframe. Modern-utility look by request. |
 | `bestiary.html` | Monster bestiary |
-| `calendar.html` | In-game calendar with weather/sea conditions |
+| `calendar.html` | In-game calendar with weather/sea conditions. Date/weather/sea-lane logic lives in `resources/berynian.js` (shared with the hub); sea lanes and the 10% freak weather are seeded by the in-world date, so everyone sees the same answer all day. |
 | `astrology.html` | Astrology/stars tool |
 | `exchange.html` / `evershroudtradesimulator2000.html` | Simulated stock exchange |
 | `aberrantworks.html` | Aberrant Works section |
@@ -119,7 +118,13 @@ Where you see seeded hashing (e.g. `hashSeed` in `exchange.html`), it's load-bea
 The user designs systems in their head first, then iterates with an AI to render them into code. Your job is **faithful rendering, not freelance redesign**. Receive the concept, render it. Ask before changing shape.
 
 ### Voice & conventions
-- **Fantasy aesthetic** on the D&D pages: dark translucent containers (`rgba(0,0,0,0.7)`), parchment text (`#FAF4E0`), Almendra body, Cinzel headings, sticky centered nav.
+- **Two skins on the D&D pages** (decided 2026-11-23), both from `resources/evershroud.css`:
+  - **Chartroom** (mouse/keyboard): light chart-paper panels, sea-ink text, teal buttons, copper details. Cormorant SC headings, EB Garamond body and numbers.
+  - **Mistglass** (touch screens): frosted teal panels over the painting, pale text, copper glints. Marcellus SC headings, Alegreya body, Alegreya Sans numbers.
+  - Picked by input type, not width; the trail-bar toggle overrides per device. Almendra and Cinzel are retired.
+  - **On trial:** a third skin, **Verdigris & Copper** (`data-skin="copper"`: mottled verdigris panels, parchment text, copper buttons; IM Fell English SC / IM Fell English / Spectral). Only reachable through the toggle, which cycles Chartroom → Mistglass → Verdigris & Copper. Joe is comparing it against Chartroom; once he decides, drop the loser's tokens and fonts.
+  - **Converting a page**: `<script src="resources/evershroud.js">` then `<link rel="stylesheet" href="resources/evershroud.css">` in `<head>`; `<body class="es">`; set the painting with `body.es { background-image: url(...) }`; add an `.es-trail` breadcrumb (with the `.es-skin` button); delete the page's own copies of `.container`, `.button`, `.home-button`, `.divider`, `table`/`th`/`td`, `footer` and font rules. Colours come from `--es-*` tokens; never hard-code a colour that only works in one skin. Leave the page's scripts and element IDs alone.
+  - Converted so far: `caldwell-repo.html`, `exchange.html`, `smithy.html`. `dmscreen.html` is in scope; `dmscreen-online.html` keeps its own minimal look.
 - **British spelling** in the D&D tools: `harbour`, `honour`, `armour`, `colour`, `favourite`. This is a rule, not a preference.
 - **Prose voice**: measured, slightly archaic, literary. No casual modern idiom. "I harbour a quiet disdain for ostentatious wealth" is the register.
 - **Self-contained files**: styles and scripts inline. No external JS frameworks (vanilla JS throughout). No bundler.
