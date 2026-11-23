@@ -7,14 +7,16 @@
      <link rel="stylesheet" href="resources/evershroud.css">
 
    Touch screens get Mistglass, mouse and keyboard get Chartroom, whatever the
-   window size. Any element with class "es-skin" becomes the toggle. A choice
-   that differs from the device's default is remembered on that device;
-   switching back to the default forgets it again, so "auto" comes back.
+   window size. Any element with class "es-skin" becomes the toggle: each
+   press moves to the next look (Chartroom, Mistglass, Verdigris & Copper).
+   A choice that differs from the device's default is remembered on that
+   device; cycling back to the default forgets it, so "auto" comes back.
    ========================================================================== */
 (function () {
   var KEY = "evershroud-skin";
   var root = document.documentElement;
-  var NAMES = { chart: "Chartroom", mist: "Mistglass" };
+  var NAMES = { chart: "Chartroom", mist: "Mistglass", copper: "Verdigris & Copper" };
+  var ORDER = ["chart", "mist", "copper"];
 
   function deviceDefault() {
     try {
@@ -26,16 +28,17 @@
   }
   function apply(skin) {
     root.setAttribute("data-skin", skin);
+    var next = ORDER[(ORDER.indexOf(skin) + 1) % ORDER.length];
     var buttons = document.querySelectorAll(".es-skin");
     for (var i = 0; i < buttons.length; i++) {
-      var other = skin === "mist" ? "chart" : "mist";
-      buttons[i].textContent = NAMES[other];
-      buttons[i].setAttribute("aria-label", "Switch to the " + NAMES[other] + " look");
-      buttons[i].title = "Showing " + NAMES[skin] + (stored() ? " (your choice on this device)" : " (this device's default)");
+      buttons[i].textContent = NAMES[skin];
+      buttons[i].setAttribute("aria-label", "Look: " + NAMES[skin] + ". Switch to " + NAMES[next]);
+      buttons[i].title = "Showing " + NAMES[skin] + (stored() ? " (your choice on this device)" : " (this device's default)") + ". Press for " + NAMES[next] + ".";
     }
   }
   function toggle() {
-    var next = root.getAttribute("data-skin") === "mist" ? "chart" : "mist";
+    var now = root.getAttribute("data-skin");
+    var next = ORDER[(ORDER.indexOf(now) + 1) % ORDER.length];
     try {
       if (next === deviceDefault()) localStorage.removeItem(KEY);
       else localStorage.setItem(KEY, next);
