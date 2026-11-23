@@ -1,0 +1,367 @@
+/* ==========================================================================
+   evershroud.css: the shared look for the Evershroud (D&D) pages.
+
+   Two skins, one set of pages:
+     Chartroom  (default, mouse + keyboard): light chart paper, sea ink, copper.
+     Mistglass  (touch screens): frosted teal panels over the painting.
+   resources/evershroud.js picks one before the page paints and sets
+   <html data-skin="chart"> or <html data-skin="mist">. The toggle in the
+   trail bar overrides it per device.
+
+   Pages opt in with <body class="es">. Everything is scoped to body.es so
+   pages that have not been converted yet are unaffected.
+
+   It also styles the class names the older pages already share
+   (.container, .button, .home-button, .divider, table, footer), so a page
+   can drop its own copy of those rules when it is converted.
+
+   Rules for bare elements (headings, links, tables, inputs) are wrapped in
+   :where(body.es), which gives them the lowest possible priority: any class
+   rule, shared or page-specific, beats them without a fight.
+   ========================================================================== */
+@import url('fonts/fonts.css');
+
+/* ---------- Tokens: Chartroom ---------- */
+:root {
+  --es-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.028' numOctaves='4' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.2 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --es-panel: rgba(239, 227, 196, 0.96);
+  --es-panel-solid: #EFE3C4;
+  --es-texture-op: 0.10;
+  --es-blur: none;
+  --es-ink: #26252E;
+  --es-muted: #5B5546;
+  --es-head: #1B3E46;
+  --es-link: #1D5F6A;
+  --es-accent: #1F6E7A;
+  --es-accent-hover: #185863;
+  --es-accent-ink: #F6EEDA;
+  --es-accent-rim: #154C55;
+  --es-copper: #A4592E;
+  --es-rule: rgba(84, 62, 38, 0.22);
+  --es-rule-strong: #8C6A45;
+  --es-well: rgba(31, 110, 122, 0.07);
+  --es-row-alt: rgba(84, 62, 38, 0.05);
+  --es-th-bg: #1F5C66;
+  --es-th-ink: #F3E9CF;
+  --es-input-bg: #FBF6E8;
+  --es-input-ink: #26252E;
+  --es-up: #2E7A4C;
+  --es-down: #A3372A;
+  --es-price: #1B3E46;
+  --es-bar: rgba(239, 227, 196, 0.94);
+  --es-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --es-scrim: rgba(38, 37, 46, 0.55);
+  --es-radius: 4px;
+  --es-f-head: 'Cormorant SC', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --es-f-body: 'EB Garamond', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --es-f-num: 'EB Garamond', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --es-head-weight: 700;
+  --es-body-size: 1.13rem;
+  color-scheme: light;
+}
+
+/* ---------- Tokens: Mistglass ---------- */
+:root[data-skin="mist"] {
+  --es-panel: rgba(18, 38, 42, 0.62);
+  --es-panel-solid: #16302F;
+  --es-texture-op: 0;
+  --es-blur: blur(14px) saturate(1.2);
+  --es-ink: #E9F2EF;
+  --es-muted: #A9C4C1;
+  --es-head: #F2F7F5;
+  --es-link: #9FD9D3;
+  --es-accent: rgba(159, 217, 211, 0.18);
+  --es-accent-hover: rgba(159, 217, 211, 0.3);
+  --es-accent-ink: #E9F2EF;
+  --es-accent-rim: rgba(159, 217, 211, 0.6);
+  --es-copper: #D39A6A;
+  --es-rule: rgba(170, 225, 220, 0.16);
+  --es-rule-strong: rgba(170, 225, 220, 0.45);
+  --es-well: rgba(230, 250, 248, 0.06);
+  --es-row-alt: rgba(230, 250, 248, 0.04);
+  --es-th-bg: rgba(159, 217, 211, 0.14);
+  --es-th-ink: #CFEDEA;
+  --es-input-bg: rgba(8, 20, 22, 0.55);
+  --es-input-ink: #E9F2EF;
+  --es-up: #9BE3B0;
+  --es-down: #F5AE93;
+  --es-price: #FFFFFF;
+  --es-bar: rgba(14, 30, 33, 0.72);
+  --es-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --es-scrim: rgba(4, 12, 14, 0.6);
+  --es-radius: 14px;
+  --es-f-head: 'Marcellus SC', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --es-f-body: 'Alegreya', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --es-f-num: 'Alegreya Sans', 'Gill Sans', 'Segoe UI', sans-serif;
+  --es-head-weight: 400;
+  --es-body-size: 1.08rem;
+  color-scheme: dark;
+}
+
+/* ---------- Page ---------- */
+body.es {
+  margin: 0;
+  color: var(--es-ink);
+  font-family: var(--es-f-body);
+  font-size: var(--es-body-size);
+  line-height: 1.55;
+  background-color: #2a2420;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  -webkit-text-size-adjust: 100%;
+}
+/* Fixed backgrounds stutter or zoom wildly on iPads; let them scroll there. */
+@media (hover: none) and (pointer: coarse) {
+  body.es { background-attachment: scroll; }
+}
+body.es *, body.es *::before, body.es *::after { box-sizing: border-box; }
+
+:where(body.es) h1, :where(body.es) h2, :where(body.es) h3, :where(body.es) h4 {
+  font-family: var(--es-f-head);
+  font-weight: var(--es-head-weight);
+  color: var(--es-head);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+:where(body.es) h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); margin: 0.2rem 0 0.8rem; }
+:where(body.es) h2 { font-size: 1.45rem; margin: 1.6rem 0 0.6rem; }
+:where(body.es) h3 { font-size: 1.15rem; margin: 1.2rem 0 0.4rem; }
+:where(body.es) a { color: var(--es-link); }
+:where(body.es) p { margin: 0 0 0.8rem; }
+
+/* ---------- Trail bar ---------- */
+.es-trail {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+  padding: 0.35rem max(16px, env(safe-area-inset-right, 0px)) 0.35rem max(16px, env(safe-area-inset-left, 0px));
+  background: var(--es-bar);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--es-rule-strong);
+  font-family: var(--es-f-num);
+  font-size: 0.95rem;
+  color: var(--es-muted);
+}
+.es-trail ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+.es-trail li { display: flex; align-items: center; gap: 0.45rem; }
+.es-trail li + li::before { content: "›"; color: var(--es-copper); }
+.es-trail a {
+  color: var(--es-link);
+  text-decoration: none;
+  border-bottom: 1px solid var(--es-rule-strong);
+  padding: 0.35rem 0;
+}
+.es-trail [aria-current] { color: var(--es-ink); }
+.es-skin {
+  flex: none;
+  min-height: 36px;
+  padding: 0 0.8rem;
+  border-radius: 99px;
+  border: 1px solid var(--es-rule-strong);
+  background: transparent;
+  color: var(--es-ink);
+  font: 0.85rem/1 var(--es-f-num);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.es-skin:hover { background: var(--es-well); }
+
+/* Sister-page tabs under the trail (e.g. the seven shops) */
+.es-tabs {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.6rem max(16px, env(safe-area-inset-right, 0px)) 0.6rem max(16px, env(safe-area-inset-left, 0px));
+  scrollbar-width: thin;
+}
+.es-tabs a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 99px;
+  background: var(--es-bar);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--es-rule-strong);
+  color: var(--es-ink);
+  text-decoration: none;
+  font-family: var(--es-f-head);
+  font-weight: var(--es-head-weight);
+  letter-spacing: 0.04em;
+}
+.es-tabs a[aria-current] { background: var(--es-th-bg); color: var(--es-th-ink); border-color: transparent; }
+:root[data-skin="mist"] .es-tabs a[aria-current] { background: var(--es-copper); color: #1B1310; }
+
+/* ---------- Panels ---------- */
+body.es .container,
+.es-panel {
+  position: relative;
+  max-width: 1000px;
+  margin: 1.5rem auto;
+  padding: 1.75rem clamp(1rem, 3vw, 2rem);
+  background: var(--es-panel);
+  -webkit-backdrop-filter: var(--es-blur);
+  backdrop-filter: var(--es-blur);
+  border: 1px solid var(--es-rule-strong);
+  border-radius: var(--es-radius);
+  box-shadow: var(--es-shadow);
+  color: var(--es-ink);
+  isolation: isolate;
+}
+body.es .container::before,
+.es-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--es-mottle);
+  opacity: var(--es-texture-op);
+  pointer-events: none;
+  z-index: -1;
+}
+@media (max-width: 1032px) {
+  body.es .container, .es-panel { margin-left: 16px; margin-right: 16px; }
+}
+@media (max-width: 480px) {
+  body.es .container, .es-panel { margin-left: 8px; margin-right: 8px; padding: 1.25rem 0.9rem; }
+}
+
+/* ---------- Buttons ---------- */
+body.es .button,
+body.es .home-button,
+.es-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  margin: 0.25rem;
+  border-radius: calc(var(--es-radius) * 0.7);
+  border: 1px solid var(--es-accent-rim);
+  background: var(--es-accent);
+  color: var(--es-accent-ink);
+  font-family: var(--es-f-head);
+  font-weight: var(--es-head-weight);
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+body.es .button:hover,
+body.es .home-button:hover,
+.es-btn:hover { background: var(--es-accent-hover); color: var(--es-accent-ink); }
+body.es .button:focus-visible,
+body.es .home-button:focus-visible,
+.es-btn:focus-visible,
+.es-skin:focus-visible,
+.es-trail a:focus-visible { outline: 2px solid var(--es-copper); outline-offset: 2px; }
+.es-btn.ghost { background: transparent; color: var(--es-ink); border-color: var(--es-rule-strong); }
+.es-btn.ghost:hover { background: var(--es-well); }
+
+/* ---------- Form controls ---------- */
+:where(body.es) select,
+:where(body.es) input[type="text"],
+:where(body.es) input[type="number"],
+:where(body.es) input[type="search"] {
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border-radius: calc(var(--es-radius) * 0.7);
+  border: 1px solid var(--es-rule-strong);
+  background-color: var(--es-input-bg);
+  color: var(--es-input-ink);
+  font-family: var(--es-f-body);
+  font-size: 1rem;
+}
+:where(body.es) select option { background: var(--es-panel-solid); color: var(--es-ink); }
+
+/* ---------- Tables ---------- */
+:where(body.es) table {
+  width: 100%;
+  border-collapse: collapse;
+  color: inherit;
+  font-family: var(--es-f-num);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+:where(body.es) th {
+  background: var(--es-th-bg);
+  color: var(--es-th-ink);
+  font-family: var(--es-f-head);
+  font-weight: var(--es-head-weight);
+  letter-spacing: 0.05em;
+  padding: 0.55rem 0.6rem;
+  border: none;
+}
+:where(body.es) td {
+  padding: 0.55rem 0.6rem;
+  border: none;
+  border-bottom: 1px solid var(--es-rule);
+}
+:where(body.es) tbody tr:nth-child(even) { background: var(--es-row-alt); }
+
+/* ---------- Ornaments, footer ---------- */
+body.es .divider { margin: 1.2rem auto; text-align: center; font-size: 1.1rem; line-height: 1; }
+body.es .divider::after { content: "✦ ✧ ✦"; color: var(--es-copper); letter-spacing: 0.5rem; }
+body.es footer {
+  text-align: center;
+  margin: 1.5rem auto 2.5rem;
+  padding: 0 16px;
+  font-size: 0.9rem;
+  color: #F3ECDD;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+body.es .es-small { font-size: 0.9rem; color: var(--es-muted); }
+
+/* ---------- Pills, numbers ---------- */
+.es-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 99px;
+  border: 1px solid currentColor;
+  font: 600 0.8rem/1 var(--es-f-num);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.es-pill.good { color: var(--es-up); }
+.es-pill.bad { color: var(--es-down); }
+.es-num { font-family: var(--es-f-num); font-variant-numeric: lining-nums tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.es *, body.es *::before, body.es *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- Print: always plain ink on white ---------- */
+@media print {
+  body.es { background: #fff !important; color: #000; }
+  .es-trail, .es-tabs, .es-skin { display: none !important; }
+  body.es .container, .es-panel {
+    background: #fff; box-shadow: none; border: none; backdrop-filter: none; -webkit-backdrop-filter: none; margin: 0; max-width: none;
+  }
+  body.es .container::before, .es-panel::before { display: none; }
+  :where(body.es) h1, :where(body.es) h2, :where(body.es) h3, :where(body.es) h4 { color: #000; }
+}
