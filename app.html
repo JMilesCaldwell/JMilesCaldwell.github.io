@@ -140,7 +140,26 @@
     .viewer-scroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; background: rgba(6, 14, 15, 0.72); }
     .pdf-pages { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; }
     .pdf-page { background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.5); position: relative; }
-    .pdf-page canvas { display: block; width: 100%; height: 100%; }
+    .pdf-page img { display: block; width: 100%; height: 100%; }
+    .viewer.is-book .scroll-only, .viewer.is-scroll .book-only { display: none; }
+
+    /* the book */
+    .book-stage { overflow: hidden; padding: 12px; touch-action: pan-y; }
+    .book-holder { width: 100%; height: 100%; --stack-l: 0px; --stack-r: 7px; }
+    .paper { background: #fdfbf6; overflow: hidden; }
+    .paper img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-select: none; }
+    /* the remaining pages, seen edge-on, and a shadow down the spine (two-page view only) */
+    .book-holder.landscape .paper.left  { box-shadow: calc(-1 * var(--stack-l)) 1px 0 0 #d9d1bf, calc(-1 * var(--stack-l)) 3px 10px rgba(0, 0, 0, 0.45); }
+    .book-holder.landscape .paper.right,
+    .book-holder.landscape .paper.single { box-shadow: var(--stack-r) 1px 0 0 #d9d1bf, var(--stack-r) 3px 10px rgba(0, 0, 0, 0.45); }
+    .book-holder:not(.landscape) .paper { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45); }
+    .book-holder.landscape .paper.left::after,
+    .book-holder.landscape .paper.right::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+    }
+    .book-holder.landscape .paper.left::after  { background: linear-gradient(to left,  rgba(60, 40, 20, 0.32), rgba(60, 40, 20, 0.08) 4%, rgba(60, 40, 20, 0) 10%); }
+    .book-holder.landscape .paper.right::after { background: linear-gradient(to right, rgba(60, 40, 20, 0.32), rgba(60, 40, 20, 0.08) 4%, rgba(60, 40, 20, 0) 10%); }
+
     .img-wrap { padding: 12px; display: flex; justify-content: center; align-items: flex-start; min-height: 100%; }
     .img-wrap img { display: block; max-width: none; height: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
     .loading { padding: 2rem; text-align: center; color: var(--es-muted); font-style: italic; }
@@ -381,64 +400,223 @@
       });
     }
 
-    // PDFs: drawn page by page with PDF.js, only the pages you scroll to.
-    let pdfjsReady = null;
+    // PDFs: opened with PDF.js. Two ways to read: as a book whose pages turn
+    // (StPageFlip), or as one long scroll. The choice is remembered per device.
+    let pdfjsReady = null, flipReady = null;
     function loadPdfjs() {
       if (!pdfjsReady) pdfjsReady = import("./resources/pdfjs/pdf.min.mjs").then(m => {
         m.GlobalWorkerOptions.workerSrc = "resources/pdfjs/pdf.worker.min.mjs"; return m;
       });
       return pdfjsReady;
     }
+    function loadFlip() {
+      if (!flipReady) flipReady = new Promise((ok, fail) => {
+        const sc = document.createElement("script"); sc.src = "resources/pageflip/page-flip.browser.js";
+        sc.onload = () => ok(window.St); sc.onerror = fail; document.head.appendChild(sc);
+      });
+      return flipReady;
+    }
+
+    // A page turning: a short burst of filtered noise, made on the spot (no sound file).
+    let audio = null;
+    function rustle() {
+      if (store.get("pageSound", true) === false) return;
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        if (audio.state === "suspended") audio.resume();
+        const t = audio.currentTime, len = 0.42;
+        const buf = audio.createBuffer(1, Math.floor(audio.sampleRate * len), audio.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) {
+          const x = i / d.length;
+          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - x, 2.2) * (0.6 + 0.4 * Math.sin(x * 38));
+        }
+        const src = audio.createBufferSource(); src.buffer = buf;
+        const bp = audio.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.8;
+        bp.frequency.setValueAtTime(3200, t); bp.frequency.exponentialRampToValueAtTime(900, t + len);
+        const g = audio.createGain(); g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.32, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        src.connect(bp); bp.connect(g); g.connect(audio.destination); src.start(t);
+      } catch (e) { /* no sound on this device */ }
+    }
+
     function pdfView(it, v) {
       const wrap = document.createElement("div"); wrap.className = "viewer";
-      wrap.appendChild(viewerBar(it, `<span class="pageno">…</span><button type="button" data-z="-1" aria-label="Zoom out">−</button><button type="button" data-z="0">Fit</button><button type="button" data-z="1" aria-label="Zoom in">+</button>`));
+      const bar = viewerBar(it, `<span class="pageno">…</span>
+        <button type="button" data-nav="-1" aria-label="Previous page" class="book-only">‹</button>
+        <button type="button" data-nav="1" aria-label="Next page" class="book-only">›</button>
+        <button type="button" data-z="-1" aria-label="Zoom out" class="scroll-only">−</button>
+        <button type="button" data-z="0" class="scroll-only">Fit</button>
+        <button type="button" data-z="1" aria-label="Zoom in" class="scroll-only">+</button>
+        <button type="button" data-sound class="book-only" aria-label="Page-turn sound"></button>
+        <button type="button" data-mode></button>`);
+      wrap.appendChild(bar);
       const sc = document.createElement("div"); sc.className = "viewer-scroll";
       sc.innerHTML = `<p class="loading">Opening the document…</p>`;
       wrap.appendChild(sc); v.appendChild(wrap);
-      const pageno = wrap.querySelector(".pageno");
-      let doc, base, zoom = 1, pages = [];
-      const width = () => Math.max(200, sc.clientWidth - 24) * zoom;
-      function layout() {
-        if (!doc) return;
-        const w = width(), scale = w / base.width;
-        pages.forEach(p => {
-          p.el.style.width = w + "px"; p.el.style.height = (p.h || base.height) * scale + "px";
-          if (p.scale !== scale) { p.scale = scale; p.drawn = false; }
+      const pageno = bar.querySelector(".pageno");
+      const soundBtn = bar.querySelector("[data-sound]"), modeBtn = bar.querySelector("[data-mode]");
+      const showSound = () => { const on = store.get("pageSound", true) !== false; soundBtn.textContent = on ? "🔊" : "🔇"; soundBtn.title = on ? "Page-turn sound on" : "Page-turn sound off"; };
+      showSound();
+      soundBtn.onclick = () => { store.set("pageSound", store.get("pageSound", true) === false); showSound(); };
+
+      let doc = null, base = null, mode = store.get("pdfMode", "book"), current = null, lastPage = 1;
+      const cache = new Map();   // page number -> { w, url } : each page drawn once as a picture
+
+      async function pagePicture(n, cssWidth) {
+        const want = Math.round(cssWidth * Math.min(window.devicePixelRatio || 1, 2));
+        const c = cache.get(n); if (c && c.w >= want * 0.9) return c.url;
+        const page = await doc.getPage(n); const vp1 = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: want / vp1.width });
+        const cv = document.createElement("canvas"); cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
+        await page.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
+        const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", 0.9));
+        const url = URL.createObjectURL(blob);
+        if (c) setTimeout(() => URL.revokeObjectURL(c.url), 4000);
+        cache.set(n, { w: want, url }); return url;
+      }
+
+      function setMode(m) {
+        if (current && current.stop) current.stop();
+        mode = m; store.set("pdfMode", m);
+        wrap.classList.toggle("is-book", m === "book"); wrap.classList.toggle("is-scroll", m === "scroll");
+        modeBtn.textContent = m === "book" ? "Scroll" : "Book";
+        modeBtn.title = m === "book" ? "Read as one long scroll" : "Read as a book";
+        current = m === "book" ? bookMode() : scrollMode();
+      }
+      modeBtn.onclick = () => setMode(mode === "book" ? "scroll" : "book");
+      bar.querySelectorAll("[data-nav]").forEach(b => b.onclick = () => current && current.nav && current.nav(+b.dataset.nav));
+      bar.querySelectorAll("[data-z]").forEach(b => b.onclick = () => current && current.zoom && current.zoom(+b.dataset.z));
+      v.pdfKeys = e => current && current.nav && (e.key === "ArrowRight" || e.key === "PageDown" ? current.nav(1) : e.key === "ArrowLeft" || e.key === "PageUp" ? current.nav(-1) : 0);
+
+      /* ---------- book: pages turn like paper ---------- */
+      function bookMode() {
+        sc.className = "viewer-scroll book-stage"; sc.replaceChildren();
+        let flip = null, holder = null, alive = true, orient = null, ro = null;
+        const ratio = base.width / base.height, count = doc.numPages;
+        const want = () => {
+          const W = sc.clientWidth - 24, H = sc.clientHeight - 24;
+          return W / Math.max(H, 1) < ratio * 2 * 0.85 ? "portrait" : "landscape";
+        };
+        function build(start) {
+          if (flip) { try { flip.destroy(); } catch (e) {} }
+          sc.replaceChildren();
+          holder = document.createElement("div"); holder.className = "book-holder"; sc.appendChild(holder);
+          orient = want();
+          const pages = [];
+          for (let n = 1; n <= count; n++) {
+            const pg = document.createElement("div"); pg.className = "paper"; pg.dataset.n = n;
+            if (orient === "landscape") pg.classList.add(n === 1 || n === count && count % 2 === 0 ? "single" : n % 2 === 0 ? "left" : "right");
+            const img = document.createElement("img"); img.alt = ""; img.draggable = false;
+            const c = cache.get(n); if (c) img.src = c.url;
+            pg.appendChild(img); holder.appendChild(pg); pages.push(pg);
+          }
+          const portrait = orient === "portrait";
+          flip = new St.PageFlip(holder, {
+            width: Math.round(base.width), height: Math.round(base.height), size: "stretch",
+            minWidth: portrait ? Math.ceil(sc.clientWidth / 2) + 1 : 40, maxWidth: 3000, minHeight: 40, maxHeight: 4000,
+            usePortrait: portrait, showCover: true, autoSize: false, maxShadowOpacity: 0.45,
+            mobileScrollSupport: false, flippingTime: 650, startPage: Math.max(0, start - 1), drawShadow: true
+          });
+          holder.classList.toggle("landscape", !portrait);
+          flip.on("changeState", e => { if (e.data === "flipping") rustle(); });
+          flip.on("flip", e => turned(e.data));
+          flip.loadFromHTML(pages);
+          turned(flip.getCurrentPageIndex());
+        }
+        function turned(i) {
+          if (!alive || !flip) return;
+          const n = i + 1; lastPage = n;
+          const two = orient === "landscape" && n > 1 && n < count;
+          const a = two && n % 2 === 1 ? n - 1 : n, b = two ? Math.min(a + 1, count) : a;
+          pageno.textContent = a === b ? `Page ${a} of ${count}` : `Pages ${a}–${b} of ${count}`;
+          const frac = count > 1 ? i / (count - 1) : 0;
+          holder.style.setProperty("--stack-l", (frac * 7).toFixed(1) + "px");
+          holder.style.setProperty("--stack-r", ((1 - frac) * 7).toFixed(1) + "px");
+          const pw = flip.getBoundsRect ? flip.getBoundsRect().pageWidth : sc.clientWidth / 2;
+          for (let k = Math.max(1, n - 2); k <= Math.min(count, n + 5); k++) {
+            const nk = k;
+            pagePicture(nk, pw).then(url => {
+              if (!alive) return;
+              holder.querySelectorAll(`.paper[data-n="${nk}"] img`).forEach(im => { if (im.src !== url) im.src = url; });
+            }).catch(() => {});
+          }
+        }
+        let rt = null;
+        ro = new ResizeObserver(() => {
+          if (!sc.clientWidth || !sc.clientHeight) return;
+          clearTimeout(rt);
+          rt = setTimeout(() => {
+            if (!alive) return;
+            if (!flip || want() !== orient) build(lastPage);
+            else { window.dispatchEvent(new Event("resize")); turned(flip.getCurrentPageIndex()); }
+          }, 120);
         });
-        draw();
+        ro.observe(sc);
+        build(lastPage);
+        return {
+          nav: d => flip && (d > 0 ? flip.flipNext("bottom") : flip.flipPrev("bottom")),
+          stop: () => { alive = false; ro.disconnect(); try { flip && flip.destroy(); } catch (e) {} flip = null; }
+        };
       }
-      async function render(p) {
-        if (p.drawn || p.busy) return; p.busy = true;
-        const page = await doc.getPage(p.n); const vp1 = page.getViewport({ scale: 1 }); p.h = vp1.height * (base.width / vp1.width);
-        const scale = width() / vp1.width, dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const vp = page.getViewport({ scale: scale * dpr });
-        const c = document.createElement("canvas"); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
-        await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
-        p.el.style.height = vp.height / dpr + "px";
-        p.el.replaceChildren(c); p.drawn = true; p.busy = false;
-      }
-      function draw() {
-        const top = sc.scrollTop, bottom = top + sc.clientHeight;
-        let first = null;
-        pages.forEach(p => {
-          const y = p.el.offsetTop, h = p.el.offsetHeight;
-          if (y + h > top - sc.clientHeight && y < bottom + sc.clientHeight) render(p);
-          if (first === null && y + h > top + 40) first = p.n;
-        });
-        if (first) pageno.textContent = `Page ${first} of ${doc.numPages}`;
-      }
-      loadPdfjs().then(pdfjs => pdfjs.getDocument(it.url).promise).then(async d => {
-        doc = d; const p1 = await doc.getPage(1); base = p1.getViewport({ scale: 1 });
+
+      /* ---------- scroll: one long column, only the pages in view are drawn ---------- */
+      function scrollMode() {
+        sc.className = "viewer-scroll"; sc.replaceChildren();
+        let zoom = 1, alive = true, settled = false; const pages = [], startAt = lastPage;
+        const width = () => Math.max(200, sc.clientWidth - 24) * zoom;
         const box = document.createElement("div"); box.className = "pdf-pages";
-        for (let n = 1; n <= doc.numPages; n++) { const el = document.createElement("div"); el.className = "pdf-page"; box.appendChild(el); pages.push({ n, el }); }
-        sc.replaceChildren(box); layout();
-        sc.addEventListener("scroll", () => requestAnimationFrame(draw), { passive: true });
-        new ResizeObserver(() => layout()).observe(sc);
-      }).catch(err => { sc.innerHTML = `<p class="loading">This document could not be opened here. Use ↗ to open it on its own.</p>`; console.error(err); });
-      wrap.querySelectorAll("[data-z]").forEach(b => b.onclick = () => {
-        const z = +b.dataset.z; zoom = z === 0 ? 1 : Math.min(4, Math.max(0.4, zoom * (z > 0 ? 1.25 : 0.8))); layout();
-      });
+        for (let n = 1; n <= doc.numPages; n++) { const el = document.createElement("div"); el.className = "pdf-page"; el.dataset.n = n; box.appendChild(el); pages.push({ n, el, w: 0 }); }
+        sc.appendChild(box);
+        function layout() {
+          const w = width(), h = w * base.height / base.width;
+          pages.forEach(p => { p.el.style.width = w + "px"; p.el.style.height = h + "px"; });
+          draw();
+        }
+        function draw() {
+          if (!alive) return;
+          const top = sc.scrollTop, bottom = top + sc.clientHeight; let first = null;
+          pages.forEach(p => {
+            const y = p.el.offsetTop, h = p.el.offsetHeight;
+            if (y + h > top - sc.clientHeight && y < bottom + sc.clientHeight && p.w !== width()) {
+              const w = width(); p.w = w;
+              pagePicture(p.n, w).then(url => {
+                if (!alive) return;
+                let im = p.el.querySelector("img"); if (!im) { im = document.createElement("img"); im.alt = ""; p.el.appendChild(im); }
+                im.src = url;
+              }).catch(() => {});
+            }
+            if (first === null && y + h > top + 40) first = p.n;
+          });
+          if (first) { pageno.textContent = `Page ${first} of ${doc.numPages}`; if (settled) lastPage = first; }
+        }
+        const onScroll = () => requestAnimationFrame(draw);
+        sc.addEventListener("scroll", onScroll, { passive: true });
+        const ro = new ResizeObserver(() => sc.clientWidth && layout()); ro.observe(sc);
+        layout();
+        // open at the page you were reading in the book; only then start tracking the page
+        requestAnimationFrame(() => { const el = pages[startAt - 1]; if (el) sc.scrollTop = el.el.offsetTop - 12; settled = true; draw(); });
+        return {
+          zoom: z => { zoom = z === 0 ? 1 : Math.min(4, Math.max(0.4, zoom * (z > 0 ? 1.25 : 0.8))); layout(); },
+          stop: () => { alive = false; ro.disconnect(); sc.removeEventListener("scroll", onScroll); }
+        };
+      }
+
+      Promise.all([loadPdfjs(), loadFlip().catch(() => null)])
+        .then(([pdfjs]) => pdfjs.getDocument(it.url).promise)
+        .then(async d => {
+          doc = d; base = (await doc.getPage(1)).getViewport({ scale: 1 });
+          if (!window.St && mode === "book") mode = "scroll";
+          setMode(mode);
+        })
+        .catch(err => { sc.innerHTML = `<p class="loading">This document could not be opened here. Use ↗ to open it on its own.</p>`; console.error(err); });
     }
+
+    // Arrow keys and Page Up/Down turn the pages of the PDF in front of you.
+    document.addEventListener("keydown", e => {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName)) return;
+      const v = active && views.get(active); if (v && v.pdfKeys) v.pdfKeys(e);
+    });
 
     /* ================= panels ================= */
     function setLeft(open) { $("panel-left").classList.toggle("closed", !open); $("tb-left").setAttribute("aria-pressed", open); store.set("left", open); }
