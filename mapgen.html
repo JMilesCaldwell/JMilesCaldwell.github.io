@@ -6,46 +6,28 @@
   <title>Procedural Battle Map Generator |LEGACY|</title>
 
   <!-- Example fonts; adapt if needed -->
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
 
 
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* Page Styling */
-    body {
-      margin: 0;
-      background: url('resources/mapgen.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
-      /* Prevent iOS Safari overscroll background bounce in some cases */
-      overscroll-behavior: none;
+    body.es::before { background-image: url('resources/mapgen.png'); }
+    body.es { overscroll-behavior: none; }
+    .container { max-width: 95vw; text-align: center; }
+    .description { font-size: 1.15rem; font-style: italic; margin: 0 0 0.5rem; }
+    .controls { margin: 0.8rem auto; display: flex; justify-content: center; align-items: center; gap: 0.6rem 1rem; flex-wrap: wrap; }
+    .controls label { font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); }
+    .controls input[type="checkbox"] { accent-color: var(--es-copper); width: 1.1rem; height: 1.1rem; vertical-align: -3px; }
+    .controls input[type="range"] { accent-color: var(--es-copper); }
+    .mapButton {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin: 0.25rem; padding: 0 1rem;
+      border-radius: calc(var(--es-radius) * 0.7); border: 1px solid var(--es-accent-rim);
+      background: var(--es-accent); color: var(--es-accent-ink);
+      font-family: var(--es-f-head); font-size: 1rem; letter-spacing: 0.06em; text-decoration: none; cursor: pointer;
     }
+    .mapButton:hover { background: var(--es-accent-hover); }
 
-    .container {
-      /* Let the container width adapt as needed */
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 95vw;
-    }
-
-    h1, h2 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin: 0.5rem 0;
-    }
-
-    .description {
-      font-size: 1.2rem;
-      margin-top: 1rem;
-    }
-
-    /* Responsive map wrapper */
+    /* The map window (sizes and positioning below are load-bearing for pan/zoom) */
     .mapWrapper {
       /* Try to keep it from overflowing on narrow screens. 
          You can tweak these to your preference. */
@@ -61,7 +43,6 @@
       border: 2px solid #660000;
       background: #202020;
     }
-
     #mapCanvas {
       /* The canvas is physically 1000x1000. We let transforms do the rest. */
       width: 1000px;
@@ -74,38 +55,20 @@
       /* Prevent default gestures on mobile so we can pinch ourselves. */
       touch-action: none;  
     }
-
-    .mapButton {
-      display: inline-block;
-      margin: 0.5rem;
-      padding: 0.6rem 1rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .mapButton:hover {
-      background: #660000;
-    }
-
-    .controls {
-      margin: 1rem auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .controls label {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      font-size: 1rem;
-    }
+    /* restyle colours only: same 2px border, same content-box sizing the pan/zoom maths was written for */
+    body.es .mapWrapper, body.es .mapWrapper * { box-sizing: content-box; }
+    .mapWrapper { border-color: var(--es-rule-strong) !important; border-radius: 10px; background: #0e1b1d !important; }
   </style>
 </head>
-<body>
+<body class="es">
+  <nav class="es-trail" aria-label="Where you are">
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span>Utilities</span></li>
+      <li><span aria-current="page">Battle Map Generator (legacy)</span></li>
+    </ol>
+  </nav>
+
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
     <p class="description">
@@ -199,7 +162,6 @@
     </div>
 
     <div style="margin-top: 1rem;">
-      <a href="caldwell-repo.html" class="mapButton">Home</a>
     </div>
   </div>
 
