@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Caldwell's Repository · App</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
+  <style>
+    /* ======================================================================
+       PROTOTYPE (2026-11-24): the Repository as an app.
+       Top: At the Table. Left: the Repository menu (read live from the hub).
+       Middle: whatever is open (pages, PDFs, maps). Right: DM reference
+       (read live from dmscreen.html) and an initiative tracker.
+       Bottom: a task bar with every open item, like Windows.
+       Not linked from anywhere yet.
+       ====================================================================== */
+    body.es::before { background-image: url('resources/index.png'); }
+    html, body.es { height: 100%; overflow: hidden; overflow: clip; }
+    body.es {
+      display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr);   /* never wider than the screen, however many items are open */
+      min-height: 0; padding: env(safe-area-inset-top, 0px) 0 0;
+    }
+
+    /* ---------- top bar ---------- */
+    .topbar {
+      display: flex; align-items: center; gap: 0.6rem 1.25rem; flex-wrap: wrap;
+      padding: 0.45rem max(14px, env(safe-area-inset-right, 0px)) 0.45rem max(14px, env(safe-area-inset-left, 0px));
+      background: var(--es-bar); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--es-rule-strong);
+    }
+    .brand { font-family: var(--es-f-head); font-size: 1.15rem; letter-spacing: 0.05em; color: var(--es-copper); white-space: nowrap; }
+    .today { display: flex; align-items: center; gap: 0.5rem 0.9rem; flex-wrap: wrap; flex: 1; min-width: 0; }
+    .today-date { font-family: var(--es-f-head); letter-spacing: 0.03em; color: var(--es-head); background: none; border: none; padding: 0; cursor: pointer; font-size: 1rem; }
+    .today-date:hover { color: var(--es-link); }
+    .today-wx { color: var(--es-muted); font-style: italic; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; }
+    .es-pill { font-size: 0.72rem; padding: 0.28rem 0.6rem; }
+
+    /* ---------- the three columns ---------- */
+    .workspace { position: relative; display: flex; min-height: 0; }
+    .panel {
+      flex: none; display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+      background: var(--es-panel); -webkit-backdrop-filter: var(--es-blur); backdrop-filter: var(--es-blur);
+      transition: width 0.22s ease, margin 0.22s ease;
+    }
+    .panel.left { width: 300px; border-right: 1px solid var(--es-rule-strong); }
+    .panel.right { width: 360px; border-left: 1px solid var(--es-rule-strong); }
+    .panel.closed { width: 0 !important; border: none; }
+    .panel-inner { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0.8rem 0.8rem 1.2rem; scrollbar-width: thin; }
+    .panel h2 { font-size: 1.05rem; margin: 0 0 0.5rem; color: var(--es-copper); }
+
+    /* left: Repository menu */
+    .menu-search { width: 100%; margin: 0 0 0.6rem; }
+    .menu details { border-bottom: 1px solid var(--es-rule); }
+    .menu summary {
+      display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0.2rem 0.3rem;
+      cursor: pointer; list-style: none; font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); border-radius: 8px;
+    }
+    .menu summary::-webkit-details-marker { display: none; }
+    .menu summary::after { content: "\203A"; color: var(--es-copper); font-size: 1.25rem; transition: transform 0.2s ease; }
+    .menu details[open] > summary::after { transform: rotate(90deg); }
+    .menu summary:hover { background: var(--es-well); }
+    .menu h3 { margin: 0.5rem 0.3rem 0.15rem; font-size: 0.82rem; color: var(--es-copper); }
+    .menu ul { list-style: none; margin: 0 0 0.5rem; padding: 0; }
+    .menu li button {
+      display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 40px; padding: 0.25rem 0.5rem;
+      background: none; border: none; border-radius: 7px; text-align: left; cursor: pointer;
+      color: var(--es-ink); font: inherit; font-size: 0.98rem; line-height: 1.25;
+    }
+    .menu li button:hover, .menu li button:focus-visible { background: var(--es-well); color: var(--es-link); outline: none; }
+    .menu li button .t { flex: 1; min-width: 0; }
+    .kind { flex: none; font: 600 0.62rem/1 var(--es-f-num); letter-spacing: 0.08em; text-transform: uppercase; color: var(--es-muted); border: 1px solid var(--es-rule-strong); border-radius: 3px; padding: 0.18rem 0.28rem; }
+
+    /* right: reference + initiative */
+    .seg { display: flex; gap: 0.3rem; padding: 0.6rem 0.8rem 0; }
+    .seg button {
+      flex: 1; min-height: 40px; border-radius: 10px; cursor: pointer;
+      background: transparent; color: var(--es-ink); border: 1px solid var(--es-rule-strong);
+      font-family: var(--es-f-head); letter-spacing: 0.04em; font-size: 0.95rem;
+    }
+    .seg button[aria-pressed="true"] { background: var(--es-copper); color: #1B1310; border-color: transparent; }
+    .ref details { border-bottom: 1px solid var(--es-rule); }
+    .ref summary { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; cursor: pointer; list-style: none; font-family: var(--es-f-head); letter-spacing: 0.03em; color: var(--es-head); padding: 0.2rem 0.2rem; font-size: 0.95rem; }
+    .ref summary::-webkit-details-marker { display: none; }
+    .ref summary::after { content: "\203A"; color: var(--es-copper); font-size: 1.2rem; transition: transform 0.2s ease; }
+    .ref details[open] > summary::after { transform: rotate(90deg); }
+    .ref .body { font-size: 0.92rem; line-height: 1.45; padding: 0 0.2rem 0.8rem; }
+    .ref .body ul { list-style: none; margin: 0; padding: 0; }
+    .ref .body li { padding: 0.25rem 0; border-bottom: 1px solid var(--es-rule); }
+    .ref .body li:last-child { border-bottom: none; }
+    .ref .body table { font-size: 0.88rem; margin: 0.3rem 0 0.6rem; }
+    .ref .body th, .ref .body td { padding: 0.3rem 0.4rem; }
+
+    .init-add { display: grid; grid-template-columns: minmax(0, 1fr) 4.2rem 4.2rem; gap: 0.4rem; margin-bottom: 0.4rem; }
+    .init-add input { min-height: 40px; min-width: 0; padding: 0 0.5rem; }
+    .init-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .init-actions .es-btn { margin: 0; min-height: 40px; padding: 0 0.8rem; font-size: 0.9rem; }
+    .round { font-family: var(--es-f-num); color: var(--es-muted); margin: 0 0 0.4rem; }
+    .init-list { list-style: none; margin: 0; padding: 0; }
+    .init-list li {
+      display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) 4.4rem 2rem; gap: 0.4rem; align-items: center;
+      padding: 0.3rem 0.4rem; border-radius: 8px; border: 1px solid transparent;
+    }
+    .init-list li + li { margin-top: 0.2rem; }
+    .init-list li.current { border-color: var(--es-copper); background: rgba(211, 154, 106, 0.12); }
+    .init-list .n { font-family: var(--es-f-num); font-weight: 600; text-align: center; color: var(--es-copper); }
+    .init-list .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .init-list input { width: 100%; min-height: 36px; padding: 0 0.3rem; text-align: center; }
+    .init-list .x { background: none; border: none; color: var(--es-muted); font-size: 1.2rem; cursor: pointer; border-radius: 6px; min-height: 36px; }
+    .init-list .x:hover { color: var(--es-ink); }
+    .empty { color: var(--es-muted); font-style: italic; }
+
+    /* ---------- the stage ---------- */
+    .stage { position: relative; flex: 1; min-width: 0; min-height: 0; }
+    .view { position: absolute; inset: 0; display: none; }
+    .view.active { display: block; }
+    .view iframe { width: 100%; height: 100%; border: 0; display: block; background: transparent; }
+
+    .welcome { display: grid; place-items: center; height: 100%; padding: 1rem; }
+    .welcome .es-panel { margin: 0; max-width: 560px; text-align: center; }
+    .welcome .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 1rem; }
+    .welcome .grid .es-btn { margin: 0; width: 100%; }
+
+    /* PDF and image viewers */
+    .viewer { display: flex; flex-direction: column; height: 100%; }
+    .viewer-bar {
+      flex: none; display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.6rem; flex-wrap: wrap;
+      background: var(--es-bar); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--es-rule-strong);
+    }
+    .viewer-bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--es-f-head); color: var(--es-head); letter-spacing: 0.03em; }
+    .viewer-bar button, .viewer-bar a {
+      min-height: 36px; min-width: 40px; padding: 0 0.6rem; border-radius: 8px; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; color: var(--es-ink); border: 1px solid var(--es-rule-strong); font: inherit; font-size: 0.9rem;
+    }
+    .viewer-bar button:hover, .viewer-bar a:hover { background: var(--es-well); }
+    .viewer-bar .pageno { font-family: var(--es-f-num); color: var(--es-muted); font-size: 0.9rem; min-width: 5.5rem; text-align: center; }
+    .viewer-scroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; background: rgba(6, 14, 15, 0.72); }
+    .pdf-pages { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; }
+    .pdf-page { background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.5); position: relative; }
+    .pdf-page canvas { display: block; width: 100%; height: 100%; }
+    .img-wrap { padding: 12px; display: flex; justify-content: center; align-items: flex-start; min-height: 100%; }
+    .img-wrap img { display: block; max-width: none; height: auto; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .loading { padding: 2rem; text-align: center; color: var(--es-muted); font-style: italic; }
+
+    /* ---------- the task bar ---------- */
+    .topbar, .workspace, .taskbar { min-width: 0; }
+    .taskbar {
+      display: flex; align-items: stretch; gap: 0.35rem; min-height: 54px;
+      padding: 0.35rem max(10px, env(safe-area-inset-right, 0px)) calc(0.35rem + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
+      background: var(--es-bar); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--es-rule-strong);
+    }
+    .tb-btn {
+      flex: none; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 0.85rem; border-radius: 10px; cursor: pointer;
+      background: transparent; color: var(--es-ink); border: 1px solid var(--es-rule-strong);
+      font-family: var(--es-f-head); letter-spacing: 0.04em; font-size: 0.92rem;
+    }
+    .tb-btn[aria-pressed="true"] { background: var(--es-accent-hover); border-color: var(--es-accent-rim); }
+    .tb-items { flex: 1; min-width: 0; display: flex; gap: 0.35rem; overflow-x: auto; scrollbar-width: thin; }
+    .tb-item {
+      flex: none; display: inline-flex; align-items: center; max-width: 15rem; border-radius: 10px;
+      background: var(--es-well); border: 1px solid var(--es-rule); border-bottom: 2px solid transparent;
+    }
+    .tb-item.active { background: var(--es-accent-hover); border-color: var(--es-accent-rim); border-bottom-color: var(--es-copper); }
+    .tb-item .open { flex: 1; min-width: 0; height: 100%; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 0.3rem 0 0.7rem; background: none; border: none; color: var(--es-ink); cursor: pointer; font: inherit; font-size: 0.92rem; }
+    .tb-item .open span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tb-item .close { flex: none; width: 34px; height: 100%; background: none; border: none; color: var(--es-muted); font-size: 1.1rem; cursor: pointer; border-radius: 0 10px 10px 0; }
+    .tb-item .close:hover { color: var(--es-ink); background: var(--es-well); }
+    .tb-btn:focus-visible, .tb-item button:focus-visible, .seg button:focus-visible, .viewer-bar button:focus-visible { outline: 2px solid var(--es-copper); outline-offset: 1px; }
+
+    /* ---------- tablets and narrow windows: panels slide over the stage ---------- */
+    @media (max-width: 1100px) {
+      .panel { position: absolute; top: 0; bottom: 0; z-index: 20; box-shadow: var(--es-shadow); --es-panel: rgba(14, 30, 33, 0.94); }
+      .panel.left { left: 0; width: min(320px, 86vw); }
+      .panel.right { right: 0; width: min(380px, 92vw); }
+      .today-wx { display: none; }
+    }
+    @media (max-width: 560px) {
+      .brand { display: none; }
+      .tb-btn .lbl { display: none; }
+    }
+  </style>
+</head>
+<body class="es">
+
+  <header class="topbar">
+    <span class="brand">Caldwell's Repository</span>
+    <div class="today">
+      <button class="today-date" id="today-date" type="button" title="Open the Berynian Calendar">&nbsp;</button>
+      <span class="today-wx" id="today-wx"></span>
+      <span class="es-pill" id="today-lanes"></span>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="panel left" id="panel-left" aria-label="Repository">
+      <div class="panel-inner">
+        <h2>Repository</h2>
+        <input type="search" class="menu-search" id="menu-search" placeholder="Find a page…" autocomplete="off" aria-label="Find a page">
+        <nav class="menu" id="menu"><p class="loading">Reading the Repository…</p></nav>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <section class="view active" id="view-welcome">
+        <div class="welcome">
+          <div class="es-panel">
+            <h1 style="color: var(--es-copper); margin-top: 0;">Caldwell's Repository</h1>
+            <p>Open anything from the Repository on the left. It appears here, and in the task bar below, so you can switch between everything you have open.</p>
+            <div class="grid" id="welcome-quick"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="panel right closed" id="panel-right" aria-label="DM tools">
+      <div class="seg" role="group" aria-label="DM tools">
+        <button type="button" id="seg-ref" aria-pressed="true">Reference</button>
+        <button type="button" id="seg-init" aria-pressed="false">Initiative</button>
+      </div>
+      <div class="panel-inner" id="pane-ref"><div class="ref" id="ref"><p class="loading">Reading the DM screen…</p></div></div>
+      <div class="panel-inner" id="pane-init" hidden>
+        <form class="init-add" id="init-form" autocomplete="off">
+          <input id="init-name" placeholder="Name" aria-label="Name" required>
+          <input id="init-roll" type="number" placeholder="Init" aria-label="Initiative">
+          <input id="init-hp" type="number" placeholder="HP" aria-label="Hit points">
+        </form>
+        <div class="init-actions">
+          <button class="es-btn" type="submit" form="init-form">Add</button>
+          <button class="es-btn" type="button" id="init-next">Next turn</button>
+          <button class="es-btn ghost" type="button" id="init-clear">Clear</button>
+        </div>
+        <p class="round" id="init-round"></p>
+        <ol class="init-list" id="init-list"></ol>
+      </div>
+    </aside>
+  </div>
+
+  <div class="taskbar" role="toolbar" aria-label="Task bar">
+    <button class="tb-btn" type="button" id="tb-left" aria-pressed="true" aria-controls="panel-left">☰ <span class="lbl">Repository</span></button>
+    <div class="tb-items" id="tb-items" role="tablist" aria-label="Open items"></div>
+    <button class="tb-btn" type="button" id="tb-ref" aria-pressed="false" aria-controls="panel-right">§ <span class="lbl">Reference</span></button>
+    <button class="tb-btn" type="button" id="tb-init" aria-pressed="false" aria-controls="panel-right">⚔ <span class="lbl">Initiative</span></button>
+  </div>
+
+  <script src="resources/berynian.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    const $ = id => document.getElementById(id);
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem("app:" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+      set(k, v) { try { localStorage.setItem("app:" + k, JSON.stringify(v)); } catch (e) {} }
+    };
+    const narrow = () => window.matchMedia("(max-width: 1100px)").matches;
+
+    /* ================= At the Table ================= */
+    function today() {
+      const d = Berynian.getDate(), wx = Berynian.getWeather(d), open = Berynian.seaLanesOpen(d);
+      $("today-date").textContent = d.label;
+      $("today-wx").textContent = wx.name;
+      $("today-wx").title = wx.description;
+      const p = $("today-lanes");
+      p.textContent = open ? "Sea lanes open" : "Sea lanes closed";
+      p.className = "es-pill " + (open ? "good" : "bad");
+    }
+    today(); setInterval(today, 60000);
+    $("today-date").onclick = () => openItem("calendar.html", "Berynian Calendar");
+
+    /* ================= open items ================= */
+    const PDF = /\.pdf(\?|#|$)/i, IMG = /\.(png|jpe?g|gif|webp)(\?|#|$)/i;
+    const kindOf = url => PDF.test(url) ? "pdf" : IMG.test(url) ? "image" : "page";
+    let items = store.get("items", []);
+    let active = store.get("active", null);
+    const views = new Map();
+
+    function save() { store.set("items", items); store.set("active", active); }
+    function norm(url) { const u = new URL(url, location.href); return u.origin === location.origin ? u.pathname.replace(/^\//, "") + u.hash : u.href; }
+
+    function openItem(url, title) {
+      url = norm(url);
+      let it = items.find(i => i.url === url);
+      if (!it) { it = { id: "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), url, title: title || url, kind: kindOf(url) }; items.push(it); }
+      activate(it.id);
+      if (narrow()) setLeft(false);
+    }
+    function activate(id) {
+      active = id;
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      if (!id || !items.find(i => i.id === id)) { active = null; $("view-welcome").classList.add("active"); }
+      else { ensureView(items.find(i => i.id === id)).classList.add("active"); }
+      renderTaskbar(); save();
+    }
+    function closeItem(id) {
+      const i = items.findIndex(x => x.id === id); if (i < 0) return;
+      items.splice(i, 1);
+      const v = views.get(id); if (v) { v.remove(); views.delete(id); }
+      if (active === id) activate(items[i] ? items[i].id : items[i - 1] ? items[i - 1].id : null); else { renderTaskbar(); save(); }
+    }
+    function renderTaskbar() {
+      const bar = $("tb-items"); bar.innerHTML = "";
+      items.forEach(it => {
+        const el = document.createElement("div");
+        el.className = "tb-item" + (it.id === active ? " active" : "");
+        const icon = it.kind === "pdf" ? "▤" : it.kind === "image" ? "◈" : "◆";
+        el.innerHTML = `<button class="open" type="button" role="tab" aria-selected="${it.id === active}"><span aria-hidden="true">${icon}</span><span></span></button><button class="close" type="button" aria-label="Close">×</button>`;
+        el.querySelector(".open span:last-child").textContent = it.title;
+        el.querySelector(".open").title = it.title;
+        el.querySelector(".open").onclick = () => activate(it.id);
+        el.querySelector(".close").onclick = () => closeItem(it.id);
+        bar.appendChild(el);
+        // keep the active item visible by scrolling the bar only (scrollIntoView would nudge the whole page)
+        if (it.id === active) requestAnimationFrame(() => {
+          const l = el.offsetLeft - bar.offsetLeft, r = l + el.offsetWidth;
+          if (l < bar.scrollLeft) bar.scrollLeft = l; else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = r - bar.clientWidth;
+        });
+      });
+    }
+
+    /* ================= views ================= */
+    function ensureView(it) {
+      if (views.has(it.id)) return views.get(it.id);
+      const v = document.createElement("section"); v.className = "view"; v.id = "view-" + it.id;
+      $("stage").appendChild(v); views.set(it.id, v);
+      if (it.kind === "page") pageView(it, v);
+      else if (it.kind === "pdf") pdfView(it, v);
+      else imageView(it, v);
+      return v;
+    }
+
+    // Pages: shown in a frame. Their own trail bar is hidden (the app is the trail);
+    // links to PDFs, images or new tabs inside them open as app items instead.
+    function pageView(it, v) {
+      const f = document.createElement("iframe");
+      f.title = it.title; f.src = it.url; v.appendChild(f);
+      f.addEventListener("load", () => {
+        let doc; try { doc = f.contentDocument; } catch (e) { return; }
+        if (!doc) return;
+        const st = doc.createElement("style");
+        st.textContent = ".es-trail { display: none !important; }";
+        doc.head && doc.head.appendChild(st);
+        const t = (doc.title || it.title).replace(/\s*[·|–-]\s*Caldwell.*$/, "");
+        it.title = t; it.url = norm(f.contentWindow.location.href); save(); renderTaskbar();
+        doc.addEventListener("click", e => {
+          const a = e.target.closest && e.target.closest("a[href]"); if (!a) return;
+          const href = a.getAttribute("href"); if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+          const u = new URL(href, f.contentWindow.location.href);
+          if (u.origin !== location.origin) { a.target = "_blank"; a.rel = "noopener"; return; }
+          const k = kindOf(u.pathname);
+          if (k !== "page" || a.target === "_blank") {
+            e.preventDefault();
+            openItem(u.href, (a.textContent || "").trim().replace(/\s+/g, " ").slice(0, 80) || u.pathname.split("/").pop());
+          }
+        }, true);
+      });
+    }
+
+    function viewerBar(it, extra) {
+      const bar = document.createElement("div"); bar.className = "viewer-bar";
+      bar.innerHTML = `<span class="title"></span>${extra}<a href="${it.url}" target="_blank" rel="noopener" title="Open on its own">↗</a>`;
+      bar.querySelector(".title").textContent = it.title;
+      return bar;
+    }
+
+    // Images (maps): fit to width, zoom in and out.
+    function imageView(it, v) {
+      const wrap = document.createElement("div"); wrap.className = "viewer";
+      wrap.appendChild(viewerBar(it, `<button type="button" data-z="-1" aria-label="Zoom out">−</button><button type="button" data-z="0">Fit</button><button type="button" data-z="1" aria-label="Zoom in">+</button>`));
+      const sc = document.createElement("div"); sc.className = "viewer-scroll";
+      sc.innerHTML = `<div class="img-wrap"><img alt=""></div>`;
+      wrap.appendChild(sc); v.appendChild(wrap);
+      const img = sc.querySelector("img"); img.alt = it.title; img.src = it.url;
+      let zoom = 1;
+      const apply = () => { img.style.width = (sc.clientWidth - 24) * zoom + "px"; };
+      img.onload = apply; new ResizeObserver(apply).observe(sc);
+      wrap.querySelectorAll("[data-z]").forEach(b => b.onclick = () => {
+        const z = +b.dataset.z; zoom = z === 0 ? 1 : Math.min(8, Math.max(0.25, zoom * (z > 0 ? 1.4 : 1 / 1.4))); apply();
+      });
+    }
+
+    // PDFs: drawn page by page with PDF.js, only the pages you scroll to.
+    let pdfjsReady = null;
+    function loadPdfjs() {
+      if (!pdfjsReady) pdfjsReady = import("./resources/pdfjs/pdf.min.mjs").then(m => {
+        m.GlobalWorkerOptions.workerSrc = "resources/pdfjs/pdf.worker.min.mjs"; return m;
+      });
+      return pdfjsReady;
+    }
+    function pdfView(it, v) {
+      const wrap = document.createElement("div"); wrap.className = "viewer";
+      wrap.appendChild(viewerBar(it, `<span class="pageno">…</span><button type="button" data-z="-1" aria-label="Zoom out">−</button><button type="button" data-z="0">Fit</button><button type="button" data-z="1" aria-label="Zoom in">+</button>`));
+      const sc = document.createElement("div"); sc.className = "viewer-scroll";
+      sc.innerHTML = `<p class="loading">Opening the document…</p>`;
+      wrap.appendChild(sc); v.appendChild(wrap);
+      const pageno = wrap.querySelector(".pageno");
+      let doc, base, zoom = 1, pages = [];
+      const width = () => Math.max(200, sc.clientWidth - 24) * zoom;
+      function layout() {
+        if (!doc) return;
+        const w = width(), scale = w / base.width;
+        pages.forEach(p => {
+          p.el.style.width = w + "px"; p.el.style.height = (p.h || base.height) * scale + "px";
+          if (p.scale !== scale) { p.scale = scale; p.drawn = false; }
+        });
+        draw();
+      }
+      async function render(p) {
+        if (p.drawn || p.busy) return; p.busy = true;
+        const page = await doc.getPage(p.n); const vp1 = page.getViewport({ scale: 1 }); p.h = vp1.height * (base.width / vp1.width);
+        const scale = width() / vp1.width, dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const vp = page.getViewport({ scale: scale * dpr });
+        const c = document.createElement("canvas"); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+        await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+        p.el.style.height = vp.height / dpr + "px";
+        p.el.replaceChildren(c); p.drawn = true; p.busy = false;
+      }
+      function draw() {
+        const top = sc.scrollTop, bottom = top + sc.clientHeight;
+        let first = null;
+        pages.forEach(p => {
+          const y = p.el.offsetTop, h = p.el.offsetHeight;
+          if (y + h > top - sc.clientHeight && y < bottom + sc.clientHeight) render(p);
+          if (first === null && y + h > top + 40) first = p.n;
+        });
+        if (first) pageno.textContent = `Page ${first} of ${doc.numPages}`;
+      }
+      loadPdfjs().then(pdfjs => pdfjs.getDocument(it.url).promise).then(async d => {
+        doc = d; const p1 = await doc.getPage(1); base = p1.getViewport({ scale: 1 });
+        const box = document.createElement("div"); box.className = "pdf-pages";
+        for (let n = 1; n <= doc.numPages; n++) { const el = document.createElement("div"); el.className = "pdf-page"; box.appendChild(el); pages.push({ n, el }); }
+        sc.replaceChildren(box); layout();
+        sc.addEventListener("scroll", () => requestAnimationFrame(draw), { passive: true });
+        new ResizeObserver(() => layout()).observe(sc);
+      }).catch(err => { sc.innerHTML = `<p class="loading">This document could not be opened here. Use ↗ to open it on its own.</p>`; console.error(err); });
+      wrap.querySelectorAll("[data-z]").forEach(b => b.onclick = () => {
+        const z = +b.dataset.z; zoom = z === 0 ? 1 : Math.min(4, Math.max(0.4, zoom * (z > 0 ? 1.25 : 0.8))); layout();
+      });
+    }
+
+    /* ================= panels ================= */
+    function setLeft(open) { $("panel-left").classList.toggle("closed", !open); $("tb-left").setAttribute("aria-pressed", open); store.set("left", open); }
+    function setRight(which) {
+      const open = !!which;
+      $("panel-right").classList.toggle("closed", !open);
+      $("tb-ref").setAttribute("aria-pressed", which === "ref"); $("tb-init").setAttribute("aria-pressed", which === "init");
+      $("seg-ref").setAttribute("aria-pressed", which !== "init"); $("seg-init").setAttribute("aria-pressed", which === "init");
+      $("pane-ref").hidden = which === "init"; $("pane-init").hidden = which !== "init";
+      if (open && narrow()) setLeft(false);
+      store.set("right", which || null);
+    }
+    let rightNow = null;
+    const showRight = w => { rightNow = (rightNow === w) ? null : w; setRight(rightNow); };
+    $("tb-left").onclick = () => { const open = $("panel-left").classList.contains("closed"); setLeft(open); if (open && narrow()) { rightNow = null; setRight(null); } };
+    $("tb-ref").onclick = () => showRight("ref");
+    $("tb-init").onclick = () => showRight("init");
+    $("seg-ref").onclick = () => { rightNow = "ref"; setRight("ref"); };
+    $("seg-init").onclick = () => { rightNow = "init"; setRight("init"); };
+    $("stage").addEventListener("pointerdown", () => { if (narrow()) { setLeft(false); rightNow = null; setRight(null); } });
+
+    /* ================= the Repository menu, read from the hub ================= */
+    async function buildMenu() {
+      const html = await (await fetch("caldwell-repo.html")).text();
+      const hub = new DOMParser().parseFromString(html, "text/html");
+      const menu = $("menu"); menu.innerHTML = "";
+      hub.querySelectorAll("#districts .district").forEach(sec => {
+        const d = document.createElement("details");
+        const s = document.createElement("summary"); s.textContent = sec.querySelector("h2").textContent; d.appendChild(s);
+        [...sec.children].forEach(ch => {
+          if (ch.tagName === "H3") { const h = document.createElement("h3"); h.textContent = ch.textContent; d.appendChild(h); }
+          if (ch.tagName === "UL") {
+            const ul = document.createElement("ul");
+            ch.querySelectorAll("li a").forEach(a => {
+              const li = document.createElement("li"), b = document.createElement("button");
+              b.type = "button";
+              const t = a.querySelector(".t") ? a.querySelector(".t").textContent : a.textContent.trim();
+              b.innerHTML = `<span class="t"></span>`; b.querySelector(".t").textContent = t;
+              const k = a.querySelector(".kind"); if (k) { const s2 = document.createElement("span"); s2.className = "kind"; s2.textContent = k.textContent; b.appendChild(s2); }
+              const href = a.getAttribute("href");
+              b.onclick = () => openItem(href, t);
+              b.dataset.find = (s.textContent + " " + (ch.previousElementSibling && ch.previousElementSibling.tagName === "H3" ? ch.previousElementSibling.textContent : "") + " " + t).toLowerCase();
+              li.appendChild(b); ul.appendChild(li);
+            });
+            d.appendChild(ul);
+          }
+        });
+        menu.appendChild(d);
+      });
+      // quick buttons on the welcome screen, also from the hub
+      const q = $("welcome-quick");
+      hub.querySelectorAll(".quick a").forEach(a => {
+        const b = document.createElement("button"); b.type = "button"; b.className = "es-btn"; b.textContent = a.textContent;
+        b.onclick = () => openItem(a.getAttribute("href"), a.textContent); q.appendChild(b);
+      });
+    }
+    $("menu-search").addEventListener("input", e => {
+      const q = e.target.value.trim().toLowerCase();
+      $("menu").querySelectorAll("details").forEach(d => {
+        let any = false;
+        d.querySelectorAll("li").forEach(li => { const hit = !q || li.firstChild.dataset.find.includes(q); li.hidden = !hit; any = any || hit; });
+        d.querySelectorAll("h3").forEach(h => { const ul = h.nextElementSibling; h.hidden = !!ul && [...ul.children].every(li => li.hidden); });
+        d.hidden = !any; d.open = !!q && any;
+      });
+    });
+
+    /* ================= DM reference, read from the DM screen ================= */
+    async function buildRef() {
+      const html = await (await fetch("dmscreen.html")).text();
+      const dm = new DOMParser().parseFromString(html, "text/html");
+      const ref = $("ref"); ref.innerHTML = "";
+      dm.querySelectorAll(".dm-accordion-section").forEach(sec => {
+        const d = document.createElement("details");
+        const s = document.createElement("summary"); s.textContent = sec.querySelector(".dm-accordion-header").textContent.trim();
+        const body = document.createElement("div"); body.className = "body";
+        body.innerHTML = sec.querySelector(".dm-accordion-content").innerHTML;
+        d.append(s, body); ref.appendChild(d);
+      });
+    }
+
+    /* ================= initiative ================= */
+    let fighters = store.get("init", []), turn = store.get("turn", 0), round = store.get("round", 1);
+    function saveInit() { store.set("init", fighters); store.set("turn", turn); store.set("round", round); }
+    function drawInit() {
+      fighters.sort((a, b) => (b.init ?? -99) - (a.init ?? -99));
+      const ol = $("init-list"); ol.innerHTML = "";
+      if (!fighters.length) { ol.innerHTML = `<li class="empty" style="display:block">Nobody in the fight yet.</li>`; $("init-round").textContent = ""; return; }
+      if (turn >= fighters.length) turn = 0;
+      $("init-round").textContent = `Round ${round}`;
+      fighters.forEach((f, i) => {
+        const li = document.createElement("li"); if (i === turn) li.className = "current";
+        li.innerHTML = `<span class="n"></span><span class="who"></span><input type="number" aria-label="Hit points"><button class="x" type="button" aria-label="Remove">×</button>`;
+        li.querySelector(".n").textContent = f.init ?? "–";
+        li.querySelector(".who").textContent = f.name;
+        const hp = li.querySelector("input"); hp.value = f.hp ?? ""; hp.oninput = () => { f.hp = hp.value === "" ? null : +hp.value; saveInit(); };
+        li.querySelector(".x").onclick = () => { fighters.splice(i, 1); if (turn > i) turn--; saveInit(); drawInit(); };
+        ol.appendChild(li);
+      });
+    }
+    $("init-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const name = $("init-name").value.trim(); if (!name) return;
+      const r = $("init-roll").value, h = $("init-hp").value;
+      fighters.push({ name, init: r === "" ? null : +r, hp: h === "" ? null : +h });
+      $("init-name").value = $("init-roll").value = $("init-hp").value = ""; $("init-name").focus();
+      saveInit(); drawInit();
+    });
+    $("init-next").onclick = () => { if (!fighters.length) return; turn++; if (turn >= fighters.length) { turn = 0; round++; } saveInit(); drawInit(); };
+    $("init-clear").onclick = () => { fighters = []; turn = 0; round = 1; saveInit(); drawInit(); };
+
+    /* ================= start ================= */
+    setLeft(store.get("left", !narrow()));
+    rightNow = narrow() ? null : store.get("right", null); setRight(rightNow);
+    buildMenu().catch(() => { $("menu").innerHTML = `<p class="loading">The Repository menu could not be read.</p>`; });
+    buildRef().catch(() => { $("ref").innerHTML = `<p class="loading">The DM reference could not be read.</p>`; });
+    drawInit();
+    renderTaskbar(); activate(active);
+  })();
+  </script>
+</body>
+</html>

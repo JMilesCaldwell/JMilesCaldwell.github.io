@@ -65,6 +65,7 @@ Before committing a page change:
 | `index.html` | Placeholder landing page (future general hub) |
 | `caldwell-repo.html` | D&D hub — Evershroud Isles tools and lore (was `index.html`). Tablet-first: "At the table" strip (Berynian date, weather, sea lanes, quick links), finder box, district cards. |
 | `sandbox.html` | Claude's scratch workspace — see "The Sandbox" section below |
+| `app.html` | **PROTOTYPE (2026-11-24), not linked anywhere.** The Repository as an app: top bar (Berynian date/weather/sea lanes), left Repository menu read live from `caldwell-repo.html` (`#districts .district`), centre viewer (pages in iframes with their trail bar hidden; PDFs via self-hosted PDF.js in `resources/pdfjs/`; maps in a zoomable image viewer), right panel with the DM reference read live from `dmscreen.html` (`.dm-accordion-section`) and an initiative tracker, Windows-style task bar of open items. Open items, panels and initiative persist in localStorage. Links inside framed pages to PDFs/images/new tabs open as app items. Joe is evaluating it. |
 | `commgen.html` | NPC/commoner generator |
 | `encgen.html` | Encounter generator |
 | `ingen.html` | InGen tool |
