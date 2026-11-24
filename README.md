@@ -14,7 +14,7 @@ Interactive tools and lore for **The Evershroud Isles** tabletop RPG campaign.
 - Monster Bestiary (`bestiary.html`)
 - In-game calendar with weather/sea conditions (`calendar.html`)
 - Astrology/stars tool (`astrology.html`)
-- Simulated stock exchange (`exchange.html`, `evershroudtradesimulator2000.html`)
+- Simulated stock exchange (`exchange.html`)
 - Location pages: tavern, forge, smithy, temple, harbour, guild hall, and more
 - Fortune telling, crystal harmony, isekai'd game, and other oddities
 
