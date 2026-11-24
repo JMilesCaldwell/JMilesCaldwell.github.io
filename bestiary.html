@@ -6,40 +6,76 @@
   <title>Bestiary & Initiative Tracker</title>
 
   <!-- fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 
   <!-- yaml parser -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* —–– simplified styling (same look as before) —–– */
-    body{margin:0;background:#1c1c1c url('resources/bestiary.png') center/cover fixed no-repeat;color:#faf4e0;font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;text-align:center}
-    h1{font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;margin:.5rem 0 1rem}
-    .container{max-width:840px;margin:2rem auto;background:rgba(0,0,0,.78);padding:2rem;border-radius:10px}
-    select,.button{font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;border:none;border-radius:4px;cursor:pointer}
-    select{padding:.3rem .5rem;background:#fff9ed;color:#333;border:1px solid #999;margin-right:.4rem}
-    .button{background:#8b0000;color:#fff;padding:.5rem 1rem;margin:.3rem}.button:hover{background:#6b0000}
-    .pinned-entry{background:rgba(0,0,0,.85);border-radius:6px;padding:1rem;margin:.7rem 0;text-align:left;position:relative}
-    .remove-btn{position:absolute;top:.25rem;right:.4rem;background:none;border:none;color:#faf4e0;font-size:1.4rem;cursor:pointer}
-    .controls{display:flex;gap:1rem;margin-bottom:.6rem;align-items:center}
-    .controls input{width:4rem;padding:.2rem;border:1px solid #999;border-radius:4px;font-family:inherit}
-    pre{background:#fff9ed;color:#232323;border:1px solid #999;border-radius:6px;padding:1rem;margin:0;white-space:pre-wrap}
-    #definitions{display:none}
-    @media print{body *{visibility:hidden!important}#pinned-container,#pinned-container *{visibility:visible!important}#pinned-container{position:absolute;top:0;left:0;width:100%}}
+    body.es::before { background-image: url('resources/bestiary.png'); }
+    .container { max-width: 900px; }
+    .container > h1 { text-align: center; }
+
+    /* Picker and buttons */
+    .picker { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .picker label { font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); }
+    #creature-select { flex: 1 1 18rem; min-width: 0; max-width: 26rem; }
+    .picker .button { margin: 0; }
+
+    /* Pinned creatures, highest initiative first */
+    .pinned-entry {
+      position: relative; margin: 0.8rem 0; padding: 0.9rem 1.1rem 1rem; text-align: left;
+      border: 1px solid var(--es-rule-strong); border-radius: calc(var(--es-radius) * 0.8); background: var(--es-well);
+    }
+    .remove-btn {
+      position: absolute; top: 0.4rem; right: 0.4rem; width: 40px; height: 40px;
+      background: none; border: 1px solid transparent; border-radius: 10px;
+      color: var(--es-muted); font-size: 1.5rem; line-height: 1; cursor: pointer;
+    }
+    .remove-btn:hover { color: var(--es-ink); border-color: var(--es-rule-strong); }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; align-items: center; margin: 0 3rem 0.7rem 0; }
+    .controls label { display: flex; align-items: center; gap: 0.5rem; font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-copper); }
+    .controls input { width: 5.5rem; text-align: center; font-size: 1.15rem; }
+    .creature-data pre {
+      margin: 0; padding: 0; background: none; border: none; color: var(--es-ink);
+      font-family: var(--es-f-body); font-size: 1rem; line-height: 1.5; white-space: pre-wrap;
+    }
+    .creature-data pre strong:first-child { font-family: var(--es-f-head); font-weight: 400; font-size: 1.15rem; color: var(--es-head); letter-spacing: 0.03em; }
+    .creature-data pre strong, .creature-data pre b { color: var(--es-head); }
+    #definitions { display: none; }
+
+    /* Print: only the pinned creatures, plain ink on white */
+    @media print {
+      body * { visibility: hidden !important; }
+      #pinned-container, #pinned-container * { visibility: visible !important; color: #000 !important; }
+      #pinned-container { position: absolute; top: 0; left: 0; width: 100%; }
+      .pinned-entry { background: #fff !important; border: 1px solid #999; break-inside: avoid; }
+      .remove-btn { display: none; }
+      .controls input { border: 1px solid #999; background: #fff; }
+    }
   </style>
 </head>
-<body>
+<body class="es">
+  <nav class="es-trail" aria-label="Where you are">
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span>Utilities</span></li>
+      <li><span aria-current="page">Bestiary</span></li>
+    </ol>
+  </nav>
+
 
 <div class="container">
   <h1>Bestiary & Initiative Tracker</h1>
 
-  <label for="creature-select">Creature:</label>
-  <select id="creature-select"><option value="">-- choose --</option></select>
-
-  <button class="button" id="pin-button">Pin</button>
-  <button class="button" id="add-blank">Add Blank Entry</button>
-  <button class="button" id="clear-all">Clear All</button>
-  <a class="button" href="caldwell-repo.html" style="display:inline-block;text-decoration:none">Home</a>
+  <div class="picker">
+    <label for="creature-select">Creature:</label>
+    <select id="creature-select"><option value="">-- choose --</option></select>
+    <button class="button" id="pin-button">Pin</button>
+    <button class="button" id="add-blank">Add Blank Entry</button>
+    <button class="button es-btn ghost" id="clear-all">Clear All</button>
+  </div>
 
   <div id="pinned-container"></div>
   <div id="definitions"></div>
