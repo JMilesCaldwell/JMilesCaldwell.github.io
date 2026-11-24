@@ -4,114 +4,72 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Commoner Generator</title>
-  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <!-- GOOGLE FONTS -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap" 
-    rel="stylesheet"
-  >
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
 
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* BASIC STYLES */
-    body {
-      margin: 0;
-      background: url('resources/commoner.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
-    }
-    h1, h2, h3 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin-bottom: 0.5rem;
-    }
-    .fancy-divider {
-      margin: 0.25rem 0 1rem;
-      font-size: 1.2rem;
-      text-align: center;
-    }
-    .fancy-divider::after {
-      content: "✦ ✧ ✦";
-      color: #8B0000;
-      letter-spacing: 0.5rem;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-    label {
-      display: inline-block;
-      width: 150px;
-      margin-right: 8px;
-      font-weight: bold;
-    }
-    select, input[type="text"], input[type="number"] {
-      margin-bottom: 1rem;
-      padding: 0.2rem;
-      font-size: 1rem;
-      background-color: #fff9ed;
-      color: #333;
-      border: 1px solid #999;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
-    .button {
-      background-color: #8B0000;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-    }
-    .button:hover {
-      background-color: #6B0000;
-    }
+    body.es::before { background-image: url('resources/commoner.png'); }
+    .container { max-width: 900px; }
+    .container > h1, .container > p { text-align: center; }
+    .fancy-divider { margin: 0.25rem 0 1rem; font-size: 1.1rem; text-align: center; line-height: 1; }
+    .fancy-divider::after { content: "✦ ✧ ✦"; color: var(--es-copper); letter-spacing: 0.5rem; }
+
+    /* The form: label, field, Random, one row each */
+    #creation-form { display: grid; gap: 0.6rem; max-width: 740px; margin: 0 auto; }
+    #creation-form > div { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+    #creation-form label { flex: 0 0 9rem; font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); }
+    #creation-form input[type="text"], #creation-form select { flex: 1 1 12rem; min-width: 0; }
+    #creation-form .button { margin: 0; }
+    #creation-form > div:last-child { justify-content: center; margin-top: 0.5rem; }
+    #creation-form > div:has(#abilities-display) > br { display: none; }
+    #abilities-display { flex-basis: 100%; font-family: var(--es-f-num); font-variant-numeric: lining-nums tabular-nums; }
+    #abilities-display:empty { display: none; }
+
+    /* The character card: two columns like a sheet, name and traits full width */
     .output {
-      margin-top: 2rem;
-      padding: 1rem;
-      border: 1px solid #aaa;
-      background-color: #fff5e6;
-      color: #333;
+      margin-top: 1.5rem; padding: 1.25rem 1.5rem; text-align: left;
+      border: 1px solid var(--es-rule-strong); border-radius: calc(var(--es-radius) * 0.8); background: var(--es-well);
+      column-count: 2; column-gap: 2rem; column-rule: 1px solid var(--es-rule);
     }
-    .footer {
-      margin-top: 3rem;
-      font-size: 0.9rem;
-      color: #CFC6B0;
-      text-shadow: 0 1px 3px #000;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
-    .footer a {
-      color: #F2C879;
-    }
-    /* Hide print / download buttons until a character is generated */
-    #printButton, #downloadPdfButton {
-      display: none;
-    }
+    .output h2, .output .fancy-divider, .output hr, #charTraits { column-span: all; }
+    .output h2 { text-align: center; color: var(--es-copper); margin: 0; }
+    .output > div { break-inside: avoid; margin-bottom: 1rem; line-height: 1.5; }
+    .output strong { color: var(--es-head); }
+    #charAbilityScores { font-family: var(--es-f-num); font-variant-numeric: lining-nums tabular-nums; }
+    .output hr { border: none; border-top: 1px solid var(--es-rule-strong); margin: 0.5rem 0 0; }
+    #charTraits h3 { margin: 0.5rem 0 0.4rem; color: var(--es-copper); }
+    #charTraits ul { margin: 0; padding-left: 1.2rem; }
+    #charTraits li { margin: 0.25rem 0; font-style: italic; }
+    @media (max-width: 640px) { .output { column-count: 1; } }
+
+    #printButton, #downloadPdfButton { display: none; }
+    .footer { margin-top: 2.5rem; font-size: 0.85rem; color: var(--es-muted); text-align: center; }
+    .footer h3 { font-size: 1rem; }
+    .footer a { color: var(--es-link); }
+
+    /* Print: only the character card, plain ink on white */
     @media print {
       #downloadPdfButton { display: none !important; }
-    }
-    @media print {
       body * { visibility: hidden !important; }
-      #output, #output * { visibility: visible !important; }
-      #output { position: absolute; left: 0; top: 0; width: 100%; }
+      #output, #output * { visibility: visible !important; color: #000 !important; }
+      #output { position: absolute; left: 0; top: 0; width: 100%; background: #fff !important; border: none; }
     }
   </style>
 </head>
-<body>
+<body class="es">
+  <nav class="es-trail" aria-label="Where you are">
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span>Utilities</span></li>
+      <li><span aria-current="page">Commoner Generator</span></li>
+    </ol>
+  </nav>
+
 <div class="container">
   <h1>Commoner Generator</h1>
   <div class="fancy-divider"></div>
 
-  <!-- HOME BUTTON -->
-  <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/caldwell-repo.html'">
-    Home
-  </button>
   
   <p>
     Generate a “level 0” or “level 0.5” commoner.

@@ -65,7 +65,7 @@ Before committing a page change:
 | `index.html` | Placeholder landing page (future general hub) |
 | `caldwell-repo.html` | D&D hub — Evershroud Isles tools and lore (was `index.html`). Tablet-first: "At the table" strip (Berynian date, weather, sea lanes, quick links), finder box, district cards. |
 | `sandbox.html` | Claude's scratch workspace — see "The Sandbox" section below |
-| `commgen.html` / `genericcommgen.html` | NPC/commoner generators |
+| `commgen.html` | NPC/commoner generator |
 | `encgen.html` | Encounter generator |
 | `ingen.html` | InGen tool |
 | `mapgen.html` / `mapgen2.html` | Map generators |
@@ -74,7 +74,7 @@ Before committing a page change:
 | `bestiary.html` | Monster bestiary |
 | `calendar.html` | In-game calendar with weather/sea conditions. Date/weather/sea-lane logic lives in `resources/berynian.js` (shared with the hub); sea lanes and the 10% freak weather are seeded by the in-world date, so everyone sees the same answer all day. |
 | `astrology.html` | Astrology/stars tool |
-| `exchange.html` / `evershroudtradesimulator2000.html` | Simulated stock exchange |
+| `exchange.html` | Simulated stock exchange |
 | `aberrantworks.html` | Aberrant Works section |
 | `tavern.html`, `forge.html`, `smithy.html`, etc. | Location/shop pages |
 | `fortune.html` | Fortune telling tool |
@@ -99,9 +99,8 @@ See `BRANCH-STRATEGY.md` for full details. Summary:
 Assume every HTML file is a substantial self-contained engine with authored data. Read before editing. Notable examples:
 
 - **`mapgen2.html`** (~3,800 lines): procedural gen (cellular automata caverns, BSP-ish dungeons, meandering rivers with auto-bridging, door-to-road pathfinding, irregular city walls), multi-touch pan/zoom, **Foundry VTT `.vtt` import/export**, 15+ creature sprite categories with dozens of variants each.
-- **`commgen.html` / `genericcommgen.html`**: full D&D 5e character math — correct ability modifiers, AC with Dex cap, attack bonuses with proficiency, background-weapon proficiency gating. **~300 culturally-organized names** (Southern, Cajun/French, German, Finnish, Arabic, Phoenician, Southeast Asian, Posh British, Mix). **80+ hand-written personality traits** in consistent literary voice. Per-background nickname pools with 20% attach chance.
+- **`commgen.html`**: full D&D 5e character math — correct ability modifiers, AC with Dex cap, attack bonuses with proficiency, background-weapon proficiency gating. **~300 culturally-organized names** (Southern, Cajun/French, German, Finnish, Arabic, Phoenician, Southeast Asian, Posh British, Mix). **80+ hand-written personality traits** in consistent literary voice. Per-background nickname pools with 20% attach chance.
 - **`exchange.html`**: custom 250-day calendar (10 named months, 4 seasons) driving a **deterministic commodity market** across 32 locations × 19 goods × 4 seasons = 608 hand-tuned availability scores + 76 seasonal multipliers. Real-world date drives the in-world date. Deterministic hashing (Knuth 2654435761) means every player sees the same prices.
-- **`evershroudtradesimulator2000.html`**: Dopewars/Taipan-style trading game layered on `exchange.html`'s economy. Ships, debt (10% daily interest), crew wages, storm events, ship upgrades, scoreboard.
 
 ### Hand-tuned data is content, not fill
 Name lists, availability scores, seasonal multipliers, personality traits, sprite libraries, equipment tables — these are worldbuilding expressed as values. **Never propose replacing curated corpora with procedural generation or LLM output.** The curation IS the work.
@@ -109,7 +108,7 @@ Name lists, availability scores, seasonal multipliers, personality traits, sprit
 When adding to these corpora, preserve the structural grouping (cultural blocks in name lists, seasonal sections in multipliers) with section comments.
 
 ### Systems connect
-The calendar feeds the exchange. The exchange feeds the trade game. Bestiary and character backgrounds likely cross-reference. Astrology/weather feed the calendar. Treat the repo as a connected world, not a collection of unrelated pages. Before changing a shared data shape, consider what else consumes it.
+The calendar feeds the exchange. Bestiary and character backgrounds likely cross-reference. Astrology/weather feed the calendar. Treat the repo as a connected world, not a collection of unrelated pages. Before changing a shared data shape, consider what else consumes it.
 
 ### Determinism is a design choice
 Where you see seeded hashing (e.g. `hashSeed` in `exchange.html`), it's load-bearing: it lets the DM and all players see the same shared state without a backend. Never replace with `Math.random()`.
@@ -119,8 +118,8 @@ The user designs systems in their head first, then iterates with an AI to render
 
 ### Voice & conventions
 - **One look on the D&D pages: Mistglass** (Joe's choice for PC and tablet, 2026-11-23), from `resources/evershroud.css`: frosted teal panels over each page's painting, pale sea-foam text, copper details. Marcellus SC headings, Alegreya body, Alegreya Sans for numbers (all self-hosted in `resources/fonts/`). Almendra and Cinzel are retired. Chartroom and Verdigris & Copper were tried and dropped; there is no skin switch.
-  - **Converting a page**: `<link rel="stylesheet" href="resources/evershroud.css">` in `<head>`; `<body class="es">`; set the painting with `body.es { background-image: url(...) }`; add an `.es-trail` breadcrumb nav; delete the page's own copies of `.container`, `.button`, `.home-button`, `.divider`, `table`/`th`/`td`, `footer` and font rules. Colours come from the `--es-*` tokens; don't hard-code new ones. Leave the page's scripts and element IDs alone.
-  - Converted so far: `caldwell-repo.html`, `exchange.html`, `dmscreen.html`, the whole Merchant's Quarter (`shopdistrict.html`, the seven shops, `black-market.html`, `guildhall.html`, `tavern.html`), the Upper City (`brinealcazar.html`, `councilhall.html`, `embassy.html`) and the Temple District (`temple.html`, `tower.html`, `catacombs.html`, which have shrine tabs instead of the old fixed arrows), Travel (`harbour.html`, `travel.html`), the Observatory (`calendar.html`, `astrology.html`) `noticeboard.html` (its handwritten notes keep Permanent Marker, self-hosted, Apache licence), `fortune.html`, `forge.html` and `madlab.html` (the four lab pages behind it are untouched experiments); `dmscreen-online.html` keeps its own minimal look. **`harmony.html` (Crystal Harmony By Brigitte) keeps its own fonts and look: Joe calls it 'special'. Do not convert it.**
+  - **Converting a page**: `<link rel="stylesheet" href="resources/evershroud.css">` in `<head>`; `<body class="es">`; name the painting with `body.es::before { background-image: url('resources/x.png'); }` in the page's own `<style>` (the shared CSS makes that a fixed layer behind the page; never set `background-image` on the body itself, it breaks on iPads, and never pass the url through a CSS variable, it then resolves relative to `resources/`); add an `.es-trail` breadcrumb nav; delete the page's own copies of `.container`, `.button`, `.home-button`, `.divider`, `table`/`th`/`td`, `footer` and font rules. Colours come from the `--es-*` tokens; don't hard-code new ones. Leave the page's scripts and element IDs alone.
+  - Converted so far: `caldwell-repo.html`, `exchange.html`, `dmscreen.html`, the whole Merchant's Quarter (`shopdistrict.html`, the seven shops, `black-market.html`, `guildhall.html`, `tavern.html`), the Upper City (`brinealcazar.html`, `councilhall.html`, `embassy.html`) and the Temple District (`temple.html`, `tower.html`, `catacombs.html`, which have shrine tabs instead of the old fixed arrows), Travel (`harbour.html`, `travel.html`), the Observatory (`calendar.html`, `astrology.html`) `noticeboard.html` (its handwritten notes keep Permanent Marker, self-hosted, Apache licence), `fortune.html`, `forge.html` and `madlab.html` (the four lab pages behind it are untouched experiments), `commgen.html`, `encgen.html`, `ingen.html`, `bestiary.html` (still loads js-yaml from jsdelivr, untouched), `isekaid.html` and `isekaidcards.html` (lavender accent instead of copper, from the old purple; cards keep their path colour as a top band), `mapgen.html` and `mapgen2.html` (panel only; map window/canvas rules verbatim, content-box sizing kept for the pan/zoom maths) and `slots.html` (page only; the cabinets and prize cards keep their own design, Cinzel there became Marcellus SC, cards keep Crimson Text, now self-hosted). **Every page on the hub is now converted** except `harmony.html` (deliberately) and `dmscreen-online.html` (own look). Not on the hub and not converted: `5eCharacters.html`, `aberrantworks.html`, `madlab1-4.html`, `templesimulator.html` and others; `dmscreen-online.html` keeps its own minimal look. **`harmony.html` (Crystal Harmony By Brigitte) keeps its own fonts and look: Joe calls it 'special'. Do not convert it.**
 - **British spelling** in the D&D tools: `harbour`, `honour`, `armour`, `colour`, `favourite`. This is a rule, not a preference.
 - **Prose voice**: measured, slightly archaic, literary. No casual modern idiom. "I harbour a quiet disdain for ostentatious wealth" is the register.
 - **Self-contained files**: styles and scripts inline. No external JS frameworks (vanilla JS throughout). No bundler.

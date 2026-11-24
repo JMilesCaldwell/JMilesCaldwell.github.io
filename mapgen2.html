@@ -6,87 +6,36 @@
   
   <title>Procedural Battle Map Generator</title>
 
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    body {
-      margin: 0;
-      background: url('resources/mapgen.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
-      overscroll-behavior: none;
+    body.es::before { background-image: url('resources/mapgen.png'); }
+    body.es { overscroll-behavior: none; }
+    .container { max-width: 95vw; text-align: center; }
+    .description { font-size: 1.15rem; font-style: italic; margin: 0 0 0.5rem; }
+
+    /* Controls */
+    .controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.6rem 1rem; margin: 0.5rem auto; }
+    .mapBiomeContainer, .checkboxContainer { display: flex; flex-wrap: wrap; gap: 0.6rem 1.1rem; justify-content: center; align-items: center; }
+    .controls label { font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); user-select: none; }
+    .controls input[type="checkbox"] { accent-color: var(--es-copper); width: 1.1rem; height: 1.1rem; vertical-align: -3px; }
+    .collapsibleContainer { margin: 0.8rem 0; }
+    .collapsibleContainer button, .mapButton {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin: 0.25rem; padding: 0 1rem;
+      border-radius: calc(var(--es-radius) * 0.7); border: 1px solid var(--es-accent-rim);
+      background: var(--es-accent); color: var(--es-accent-ink);
+      font-family: var(--es-f-head); font-size: 1rem; letter-spacing: 0.06em; text-decoration: none; cursor: pointer;
     }
-    .container {
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 95vw;
-    }
-    h1, h2 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin: 0.5rem 0;
-    }
-    .description {
-      font-size: 1.2rem;
-      margin-top: 1rem;
-    }
-    .controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 0.5rem auto;
-    }
-    .mapBiomeContainer,
-    .checkboxContainer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-      align-items: center;
-    }
-    .collapsibleContainer {
-      margin: 1rem 0;
-    }
-    .collapsibleContainer button {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-bottom: 0.5rem;
-    }
-    .sliderGrid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      max-width: 600px;
-      margin: 0 auto;
-      justify-items: center;
-    }
-    @media (max-width: 600px) {
-      .sliderGrid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .sliderContainer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    .hidden {
-      display: none !important;
-    }
+    .collapsibleContainer button:hover, .mapButton:hover { background: var(--es-accent-hover); }
+    .sliderGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 640px; margin: 0 auto; justify-items: center; }
+    @media (max-width: 600px) { .sliderGrid { grid-template-columns: 1fr; } }
+    .sliderContainer { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .sliderContainer label { margin: 3px 0; font-family: var(--es-f-body); color: var(--es-ink); }
+    .sliderContainer input[type='range'] { width: 150px; accent-color: var(--es-copper); }
+    #occupantName { font-family: var(--es-f-body) !important; }
+    #spritePreviewContainer { background: var(--es-well) !important; }
+
+    /* The map window (sizes and positioning below are load-bearing for pan/zoom) */
     .mapWrapper {
       width: 90vw;
       max-width: 1000px;
@@ -99,7 +48,6 @@
       border: 2px solid #660000;
       background: #202020;
     }
-
     /* Ensure transform origin is top-left. */
     .mapWrapper > canvas,
     .mapWrapper > div#nameOverlay {
@@ -108,92 +56,48 @@
       top: 0;
       left: 0;
     }
-
-    .fullscreenBtn {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      z-index: 10; /* Ensure it's above the canvas */
-      padding: 0.5rem 1rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 2px;
-      cursor: pointer;
-    }
-    .fullscreenBtn:hover {
-      background: #660000;
-    }
     #mapCanvas {
       width: 1000px;
       height: 1000px;
       image-rendering: pixelated;
       touch-action: none;
     }
-    .mapButton {
-      display: inline-block;
-      margin: 0.5rem;
-      padding: 0.6rem 1rem;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      background: #8B0000;
-      color: #FAF4E0;
-      border: 1px solid #660000;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
+    .hidden {
+      display: none !important;
     }
-    .mapButton:hover {
-      background: #660000;
+    /* restyle colours only: same 2px border, same content-box sizing the pan/zoom maths was written for */
+    body.es .mapWrapper, body.es .mapWrapper * { box-sizing: content-box; }
+    .mapWrapper { border-color: var(--es-rule-strong) !important; border-radius: 10px; background: #0e1b1d !important; }
+    body.es .mapWrapper .fullscreenBtn { box-sizing: border-box; }
+    .fullscreenBtn {
+      position: absolute; top: 6px; right: 6px; z-index: 10; min-height: 40px; padding: 0 0.9rem;
+      font-family: var(--es-f-head); letter-spacing: 0.05em; color: var(--es-ink);
+      background: var(--es-bar); border: 1px solid var(--es-rule-strong); border-radius: 10px; cursor: pointer;
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
-    .controls label {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      font-size: 1rem;
-      user-select: none;
-    }
-    .sliderContainer label {
-      margin: 3px 0;
-    }
-    .sliderContainer input[type='range'] {
-      width: 140px;
-    }
-    /* Tile menu styling */
-    .tileMenuGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-      gap: 0.5rem;
-      max-width: 600px;
-      margin: 0 auto;
-      justify-items: center;
-    }
+    .fullscreenBtn:hover { background: var(--es-accent-hover); }
+
+    /* Tile menu */
+    .tileMenuGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.5rem; max-width: 640px; margin: 0 auto; justify-items: center; }
     .tileItem {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #333;
-      border: 1px solid #660000;
-      padding: 0.5rem;
-      border-radius: 4px;
-      cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; padding: 0.5rem; cursor: pointer;
+      background: var(--es-well); border: 1px solid var(--es-rule-strong); border-radius: 8px;
     }
-    .tileItem:hover {
-      background: #555;
-    }
-    .tileItem img {
-      image-rendering: pixelated;
-      width: 32px;
-      height: 32px;
-      margin-bottom: 4px;
-    }
-    .tileItem span {
-      font-size: 0.8rem;
-      text-transform: lowercase;
-      text-align: center;
-    }
+    .tileItem:hover { background: var(--es-accent-hover); }
+    .tileItem img { image-rendering: pixelated; width: 32px; height: 32px; margin-bottom: 4px; }
+    .tileItem span { font-size: 0.8rem; text-transform: lowercase; text-align: center; }
   </style>
 </head>
 
-<body>
+<body class="es">
+  <nav class="es-trail" aria-label="Where you are">
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span>Utilities</span></li>
+      <li><span aria-current="page">Battle Map Generator</span></li>
+    </ol>
+  </nav>
+
   <div class="container">
     <h1>Procedural Battle Map Generator</h1>
     <p class="description">
@@ -301,7 +205,7 @@
       
       <label>
         Name:
-        <input type="text" id="occupantName" placeholder="e.g. Sir Reginald" style="font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;">
+        <input type="text" id="occupantName" placeholder="e.g. Sir Reginald" style="">
       </label>
       
       <label>
@@ -332,7 +236,6 @@
 
     <!-- Navigation and new Import/Export features -->
     <div style="margin-top: 1rem;">
-      <a href="caldwell-repo.html" class="mapButton">Home</a>
       <button id="printBtn" class="mapButton">Print</button>
       <!-- Export/Import: .vtt -->
       <button id="exportBtn" class="mapButton">Save</button>

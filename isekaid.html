@@ -4,101 +4,72 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Isekai Protagonist Generator</title>
-  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
   <!-- GOOGLE FONTS -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Almendra&family=Cinzel:wght@400;700&display=swap"
-    rel="stylesheet"
-  >
 
+  <link rel="icon" href="/resources/compass_favicon_32x32.png" type="image/png">
+  <link rel="stylesheet" href="resources/evershroud.css">
   <style>
-    /* BASIC STYLES */
-    body {
-      margin: 0;
-      background: url('resources/isekaid.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #FAF4E0;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-      text-align: center;
+    body.es::before { background-image: url('resources/isekaid.png'); }
+    /* Isekai keeps an otherworldly lavender where other pages use copper */
+    body.es { --es-copper: #B9A2EE; }
+    .container { max-width: 900px; }
+    .container > h1 { text-align: center; }
+    .fancy-divider { margin: 0.25rem 0 1rem; font-size: 1.1rem; text-align: center; line-height: 1; }
+    .fancy-divider::after { content: "✦ ✧ ✦"; color: var(--es-copper); letter-spacing: 0.5rem; }
+    .isekai-note { margin: 0 auto 1.25rem; max-width: 62ch; padding: 0.9rem 1.2rem; text-align: center; border: 1px dashed var(--es-copper); border-radius: calc(var(--es-radius) * 0.8); background: rgba(185, 162, 238, 0.08); }
+    .isekai-note p { margin: 0.3rem 0; }
+
+    /* The form: label, field, Random, one row each */
+    #creation-form { display: grid; gap: 0.6rem; max-width: 760px; margin: 0 auto; }
+    #creation-form > div { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+    #creation-form label { flex: 0 0 9.5rem; font-family: var(--es-f-head); letter-spacing: 0.04em; color: var(--es-head); }
+    #creation-form input[type="text"], #creation-form select { flex: 1 1 12rem; min-width: 0; }
+    #creation-form .button { margin: 0; }
+    #creation-form > div:has(#abilities-display) > br { display: none; }
+    #abilities-display { flex-basis: 100%; font-family: var(--es-f-num); font-variant-numeric: lining-nums tabular-nums; }
+    #abilities-display:empty { display: none; }
+    #creation-form > div:last-child { justify-content: center; margin-top: 0.5rem; }
+
+    /* Manual ability entry */
+    #manual-entry { flex-basis: 100%; padding: 0.8rem 1rem; border-radius: calc(var(--es-radius) * 0.8); background: var(--es-well); border: 1px solid var(--es-rule); }
+    #manual-entry label { flex: none !important; width: 3rem !important; display: inline-block; text-align: right; margin-right: 0.4rem; }
+    #manual-entry input[type="number"] { width: 4.5rem !important; min-height: 38px; margin: 0.15rem 0; }
+
+    /* Optional feats */
+    .feats-wrapper { display: block !important; text-align: left; }
+    .feats-wrapper > strong { font-family: var(--es-f-head); font-weight: 400; letter-spacing: 0.04em; color: var(--es-head); }
+    #human-features-container, #isekai-traits-container {
+      margin-top: 0.5rem; padding: 0.6rem 0.8rem; max-height: 300px; overflow-y: auto; text-align: left;
+      border: 1px solid var(--es-rule); border-radius: calc(var(--es-radius) * 0.8); background: var(--es-well);
     }
-    h1, h2, h3 {
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-      margin-bottom: 0.5rem;
+    #human-features-container:empty, #isekai-traits-container:empty { display: none; }
+    #human-features-container label, #isekai-traits-container label {
+      display: block !important; padding-left: 1.6rem; text-indent: -1.6rem; width: auto !important; flex: none !important;
+      margin: 0 0 0.35rem; cursor: pointer; font-family: var(--es-f-body); letter-spacing: 0; color: var(--es-ink);
     }
-    .fancy-divider {
-      margin: 0.25rem 0 1rem;
-      font-size: 1.2rem;
-      text-align: center;
-    }
-    .fancy-divider::after {
-      content: "✦ ✧ ✦";
-      color: #4B0082;
-      letter-spacing: 0.5rem;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 2rem;
-      border-radius: 10px;
-    }
-    label {
-      display: inline-block;
-      width: 150px;
-      margin-right: 8px;
-      font-weight: bold;
-    }
-    select, input[type="text"], input[type="number"] {
-      margin-bottom: 1rem;
-      padding: 0.2rem;
-      font-size: 1rem;
-      background-color: #fff9ed;
-      color: #333;
-      border: 1px solid #999;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
-    .button {
-      background-color: #4B0082;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin: 0.5rem 0;
-      font-family: 'Cinzel', 'Trajan Pro', 'Palatino Linotype', Palatino, Georgia, serif;
-    }
-    .button:hover {
-      background-color: #2E0854;
-    }
+    #human-features-container input[type="checkbox"], #isekai-traits-container input[type="checkbox"] { margin: 0 0.5rem 0 0; vertical-align: -2px; text-indent: 0; accent-color: var(--es-copper); }
+
+    /* The character card: two columns like a sheet */
     .output {
-      margin-top: 2rem;
-      padding: 1rem;
-      border: 1px solid #aaa;
-      background-color: #fff5e6;
-      color: #333;
+      margin-top: 1.5rem; padding: 1.25rem 1.5rem; text-align: left;
+      border: 1px solid var(--es-rule-strong); border-radius: calc(var(--es-radius) * 0.8); background: var(--es-well);
+      column-count: 2; column-gap: 2rem; column-rule: 1px solid var(--es-rule);
     }
-    .footer a {
-      color: #F2C879;
-    }
-    .footer {
-      margin-top: 3rem;
-      font-size: 0.9rem;
-      color: #CFC6B0;
-      text-shadow: 0 1px 3px #000;
-      font-family: 'Almendra', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
-    }
-    .isekai-note {
-      background: rgba(75, 0, 130, 0.3);
-      border: 1px dashed #9370DB;
-      padding: 1rem;
-      margin: 1rem 0;
-      border-radius: 5px;
-    }
-    /* Hide print button until a character is generated */
-    #printButton {
-      display: none;
-    }
+    .output h2, .output .fancy-divider, .output hr, #charClass, #charSelectedFeatures, #charTraits { column-span: all; }
+    .output h2 { text-align: center; color: var(--es-copper); margin: 0; }
+    .output > div { break-inside: avoid; margin-bottom: 1rem; line-height: 1.5; }
+    .output strong { color: var(--es-head); }
+    #charAbilityScores { font-family: var(--es-f-num); font-variant-numeric: lining-nums tabular-nums; }
+    .output hr { border: none; border-top: 1px solid var(--es-rule-strong); margin: 0.5rem 0 0; }
+    .output h3 { color: var(--es-copper); margin: 0.5rem 0 0.4rem; }
+    .output ul { margin: 0; padding-left: 1.2rem; }
+    @media (max-width: 640px) { .output { column-count: 1; } }
+
+    #printButton { display: none; }
+    .footer { margin-top: 2.5rem; font-size: 0.85rem; color: var(--es-muted); text-align: center; }
+    .footer h3 { font-size: 1rem; }
+    .footer a { color: var(--es-link); }
+
     @media print {
       @page {
         margin: 0.75in;
@@ -149,70 +120,26 @@
         display: none !important;
       }
     }
-    /* Checkbox container styles */
-    .feats-wrapper {
-      text-align: left;
-      display: inline-block;
-      max-width: 600px;
-    }
-    #human-features-container, #isekai-traits-container {
-      background: rgba(75, 0, 130, 0.2);
-      padding: 0.75rem;
-      border-radius: 5px;
-      margin-top: 0.5rem;
-      text-align: left;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    #human-features-container label, #isekai-traits-container label {
-      cursor: pointer;
-      display: block;
-      margin-bottom: 0.3rem;
-    }
-    #human-features-container input[type="checkbox"], #isekai-traits-container input[type="checkbox"] {
-      margin-right: 0.5rem;
-      cursor: pointer;
-    }
-    /* Custom scrollbar for traits container */
-    #isekai-traits-container::-webkit-scrollbar {
-      width: 8px;
-    }
-    #isekai-traits-container::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-    #isekai-traits-container::-webkit-scrollbar-thumb {
-      background: #4B0082;
-      border-radius: 4px;
-    }
-    #isekai-traits-container::-webkit-scrollbar-thumb:hover {
-      background: #2E0854;
-    }
-    #manual-entry {
-      background: rgba(75, 0, 130, 0.2);
-      padding: 1rem;
-      border-radius: 5px;
-      display: inline-block;
-    }
-    #manual-entry label {
-      width: 45px;
-      text-align: right;
-      margin-right: 5px;
-    }
+    @media print { .output { column-rule: none; } #output * { color: #000 !important; } }
   </style>
 </head>
-<body>
+<body class="es">
+  <nav class="es-trail" aria-label="Where you are">
+    <ol>
+      <li><a href="caldwell-repo.html">Repository</a></li>
+      <li><span>Other</span></li>
+      <li><span aria-current="page">Isekai Protagonist Generator</span></li>
+    </ol>
+  </nav>
+
+  <nav class="es-tabs" aria-label="Isekai'd">
+    <a href="isekaid.html" aria-current="page">Generator</a>
+    <a href="isekaidcards.html">Level-Up Cards</a>
+  </nav>
+
 <div class="container">
   <h1>Isekai Protagonist Generator</h1>
   <div class="fancy-divider"></div>
-
-  <!-- NAVIGATION BUTTONS -->
-  <button class="button" onclick="window.location.href='https://jmilescaldwell.github.io/caldwell-repo.html'">
-    Home
-  </button>
-  <button class="button" onclick="window.location.href='isekaidcards.html'">
-    Level Up
-  </button>
 
   <div class="isekai-note">
     <p>

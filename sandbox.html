@@ -825,6 +825,55 @@
   commgen, genericcommgen, encgen, ingen, mapgen, mapgen2, bestiary,
   slots. Converter for small pages lives only in the session scratchpad;
   re-derive from the pattern in CLAUDE.md if needed.
+
+  [2026-11-24] commgen + encgen converted. BIG shared fix: the painting
+  moved off body background onto a fixed body.es::before layer, because on
+  touch devices (attachment: scroll) a root-propagated background covers
+  only the FIRST SCREEN of a long page. First attempt passed the url via a
+  CSS variable: url() in a custom property resolves against the stylesheet
+  that uses it (resources/), so every painting 404'd silently. Pages now
+  write body.es::before { background-image: url('resources/x.png'); }.
+  Lesson: verify images by status code, not by computed-style string.
+  Converter regex now removes any <link> to fonts.googleapis/gstatic
+  (encgen used a one-line link + preconnect). commgen card uses CSS
+  columns because the script sets inline display:block; print = card only,
+  black on white; PDF export is independent Courier text (untouched).
+
+  [2026-11-24] ingen + bestiary converted. Bestiary test trick: route the
+  jsdelivr js-yaml request to a shim built with python yaml from the page's
+  own <script type="text/yaml"> block (77 creatures, 22 factions). Stat
+  blocks are <pre> from toPre(); restyled in Alegreya, pre-wrap kept.
+
+  [2026-11-24] isekaid + isekaidcards converted. Page-level accent override
+  works: body.es { --es-copper: #B9A2EE; }. "Unnamed" on Full Random is
+  ORIGINAL behaviour (you type the protagonist's name), not a bug. Print
+  rules on card pages need #output * { color:#000 !important } or the pale
+  screen colours of <strong> labels print near-invisible.
+
+  [2026-11-24] mapgen, mapgen2, slots converted: every hub page is done
+  (harmony + dmscreen-online excepted by design). Map generators proven
+  unchanged by seeding Math.random in both old (git show origin/main) and
+  new pages and md5-ing canvas.toDataURL() for 4 biomes. GOTCHA: wait ~2s
+  after Generate or every biome hashes the same (blank canvas). GOTCHA:
+  the shared body.es * { box-sizing: border-box } shrank .mapWrapper by
+  its border (1004 -> 1000); fixed with body.es .mapWrapper * content-box.
+  Slots: machines/cards untouched in design; Marcellus SC has one weight,
+  so Cinzel's font-weight:700 lines were set to 400 (no faux bold).
+
+  [2026-11-24] Joe had evershroudtradesimulator2000.html DELETED (his call;
+  refs removed from dmscreen-online PLACES, README, CLAUDE.md; docks.png
+  kept, harbour uses it). commgen vs genericcommgen, for when he asks
+  again: same 9 races, same 80 traits, same core 5e maths and PDF export.
+  commgen = Evershroud version: ~430 names (Southern, Cajun, German,
+  Finnish, Arabic, Phoenician, SE Asian, Posh British, Mix), 35 back-
+  grounds incl. Contractor/Customer Service Worker/Gunsmith/Store Clerk,
+  skill list with proficiency boxes, random trinket. genericcommgen = 212
+  different names (Roman, Warhammer 40k Sisters of Battle, aristocratic
+  British, African, misc), 31 backgrounds, no skill list, no trinket,
+  no painting. Looks like an older/alternative-setting fork. Not on hub.
+
+  [2026-11-24] genericcommgen.html DELETED at Joe's request: it was a
+  generator he made for his friend Wietze (non-Evershroud setting).
   -->
   <style>
     body {
