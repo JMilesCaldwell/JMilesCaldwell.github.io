@@ -57,6 +57,13 @@
 }
 
 /* ---------- Page ---------- */
+/* Each page names its painting:  body.es::before { background-image: url('resources/x.png'); }
+   (on the layer itself, in the page's own <style>, so the address is read
+   relative to the page; a url() passed through a CSS variable would be read
+   relative to this file instead). The painting sits on its own fixed layer
+   behind the page. (A fixed body
+   background is ignored or zoomed by iPads, and a scrolling one covers only
+   the first screen of a long page.) */
 body.es {
   margin: 0;
   color: var(--es-ink);
@@ -64,17 +71,20 @@ body.es {
   font-size: var(--es-body-size);
   line-height: 1.55;
   background-color: #2a2420;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+}
+body.es::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: #2a2420;
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
-  background-attachment: fixed;
-  min-height: 100vh;
-  min-height: 100dvh; /* short pages: the painting still fills the screen */
-  -webkit-text-size-adjust: 100%;
-}
-/* Fixed backgrounds stutter or zoom wildly on iPads; let them scroll there. */
-@media (hover: none) and (pointer: coarse) {
-  body.es { background-attachment: scroll; }
+  pointer-events: none;
 }
 body.es *, body.es *::before, body.es *::after { box-sizing: border-box; }
 
@@ -292,6 +302,7 @@ body.es .es-small { font-size: 0.9rem; color: var(--es-muted); }
 /* ---------- Print: always plain ink on white ---------- */
 @media print {
   body.es { background: #fff !important; color: #000; }
+  body.es::before { display: none; }
   .es-trail, .es-tabs { display: none !important; }
   body.es .container, .es-panel {
     background: #fff; box-shadow: none; border: none; backdrop-filter: none; -webkit-backdrop-filter: none; margin: 0; max-width: none;

@@ -825,6 +825,19 @@
   commgen, genericcommgen, encgen, ingen, mapgen, mapgen2, bestiary,
   slots. Converter for small pages lives only in the session scratchpad;
   re-derive from the pattern in CLAUDE.md if needed.
+
+  [2026-11-24] commgen + encgen converted. BIG shared fix: the painting
+  moved off body background onto a fixed body.es::before layer, because on
+  touch devices (attachment: scroll) a root-propagated background covers
+  only the FIRST SCREEN of a long page. First attempt passed the url via a
+  CSS variable: url() in a custom property resolves against the stylesheet
+  that uses it (resources/), so every painting 404'd silently. Pages now
+  write body.es::before { background-image: url('resources/x.png'); }.
+  Lesson: verify images by status code, not by computed-style string.
+  Converter regex now removes any <link> to fonts.googleapis/gstatic
+  (encgen used a one-line link + preconnect). commgen card uses CSS
+  columns because the script sets inline display:block; print = card only,
+  black on white; PDF export is independent Courier text (untouched).
   -->
   <style>
     body {
